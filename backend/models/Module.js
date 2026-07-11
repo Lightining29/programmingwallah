@@ -1,0 +1,41 @@
+import mongoose from 'mongoose';
+
+const ModuleSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: [true, 'Please add a module title']
+  },
+  description: {
+    type: String,
+    default: ''
+  },
+  course: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Course',
+    required: true
+  },
+  order: {
+    type: Number,
+    default: 0
+  },
+  isPublished: {
+    type: Boolean,
+    default: false
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+// Update the updatedAt field on save
+ModuleSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
+export default mongoose.model('Module', ModuleSchema);
