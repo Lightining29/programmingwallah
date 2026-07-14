@@ -6,6 +6,7 @@
   /* Light mode (default): warm cream background, dark slate text */
   html {
     background-color: #FAF8F5;
+    --hero-fade: #FAF8F5;
   }
 
   body {
@@ -16,6 +17,7 @@
   /* Dark mode: deep slate background, light text */
   html.dark {
     background-color: #020617;
+    --hero-fade: #020617;
   }
 
   html.dark body {

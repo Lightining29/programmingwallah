@@ -88,9 +88,9 @@ export default function Home() {
           >
             <source src="https://cdn.coverr.co/videos/coverr-coding-on-laptop-1560359230/1080p.mp4" type="video/mp4" />
           </video>
-          <div className="absolute inset-0 bg-slate-950/80" />
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/40 via-transparent to-cyan-900/30" />
-          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#FAF8F5] dark:from-slate-950 to-transparent" />
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(2, 6, 23, 0.8)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom right, rgba(49, 46, 129, 0.4), transparent, rgba(22, 78, 99, 0.3))' }} />
+          <div className="absolute inset-x-0 bottom-0 h-32" style={{ background: 'linear-gradient(to top, var(--hero-fade, #FAF8F5), transparent)' }} />
         </div>
 
         <div className="relative mx-auto max-w-7xl">
