@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
-import { Menu, X, LogOut, LayoutDashboard, LogIn, Sparkles, Sun, Moon } from 'lucide-react';
+import { Menu, X, LogOut, LayoutDashboard, LogIn, UserPlus, BookOpen, Sparkles, Sun, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ConfirmModal from './ConfirmModal.jsx';
 import Logo from './Logo.jsx';
@@ -136,18 +136,18 @@ export default function Navbar() {
                 }`}
               >
                 <LogIn className="w-4 h-4" />
-                <span>PORTAL LOGIN</span>
+                <span>LOGIN</span>
               </Link>
               <Link
-                to="/contact"
+                to="/login?register=true"
                 className={`font-quicksand font-bold text-xs rounded-full border px-5 py-2.5 hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 cursor-pointer flex items-center justify-center space-x-1.5 ${
                   isDark
                     ? 'border-amber-400/20 bg-amber-400/10 text-amber-100 shadow-[0_10px_24px_rgba(251,191,36,0.12)] hover:bg-amber-400/20'
-                    : 'border-brandYellow bg-brandYellow/30 text-amber-800 shadow-sm hover:bg-brandYellow/50'
+                    : 'border-brandCoral/30 bg-brandCoral/10 text-brandCoral shadow-sm hover:bg-brandCoral/20'
                 }`}
               >
-                <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
-                <span>ENROLL NOW →</span>
+                <UserPlus className="w-4 h-4" />
+                <span>SIGN UP FREE</span>
               </Link>
             </>
           )}
@@ -229,16 +229,18 @@ export default function Navbar() {
                   <Link
                     to="/login"
                     onClick={() => setIsOpen(false)}
-                    className="font-quicksand font-bold text-sm text-center w-full rounded-xl bg-indigo-400/10 text-indigo-100 py-2.5 transition-all hover:bg-indigo-400/20"
+                    className="flex items-center justify-center space-x-2 font-quicksand font-bold text-sm text-center w-full rounded-xl bg-indigo-400/10 text-indigo-100 py-2.5 transition-all hover:bg-indigo-400/20"
                   >
-                    PORTAL LOGIN
+                    <LogIn className="w-4 h-4" />
+                    <span>LOGIN</span>
                   </Link>
                   <Link
-                    to="/contact"
+                    to="/login?register=true"
                     onClick={() => setIsOpen(false)}
-                    className="font-quicksand font-bold text-sm text-center w-full rounded-xl bg-amber-400/10 text-amber-100 py-2.5 transition-all hover:bg-amber-400/20"
+                    className="flex items-center justify-center space-x-2 font-quicksand font-bold text-sm text-center w-full rounded-xl bg-brandCoral/10 text-brandCoral py-2.5 transition-all hover:bg-brandCoral/20"
                   >
-                    BOOK A TOUR →
+                    <UserPlus className="w-4 h-4" />
+                    <span>SIGN UP FREE</span>
                   </Link>
                 </div>
               )}

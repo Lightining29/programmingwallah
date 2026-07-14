@@ -376,7 +376,10 @@ const VideoPlayer = ({
               </button>
               
               {showSpeedMenu && (
-                <div className="absolute bottom-full right-0 mb-2 bg-slate-900/95 border border-white border-opacity-5 rounded-2xl shadow-xl py-2 min-w-28 z-50">
+                <div 
+                  className="absolute bottom-full right-0 mb-2 border rounded-2xl shadow-xl py-2 min-w-28 z-50"
+                  style={{ backgroundColor: '#1e293b', borderColor: '#334155' }}
+                >
                   {playbackRates.map((rate) => (
                     <button
                       key={rate}
@@ -384,11 +387,8 @@ const VideoPlayer = ({
                         setPlaybackRate(rate);
                         setShowSpeedMenu(false);
                       }}
-                      className={`block w-full px-4 py-2 text-[10px] font-bold text-left hover:bg-white hover:bg-opacity-5 transition-colors ${
-                        playbackRate === rate
-                          ? 'text-[#FF7043]'
-                          : 'text-gray-300'
-                      }`}
+                      style={{ color: playbackRate === rate ? '#FF7043' : '#cbd5e1' }}
+                      className="block w-full px-4 py-2 text-[10px] font-bold text-left hover:bg-slate-800 transition-colors"
                     >
                       {rate}x speed
                     </button>
@@ -433,15 +433,21 @@ const VideoPlayer = ({
       
       {/* Settings popup panel */}
       {showSettings && (
-        <div className="absolute bottom-20 right-6 bg-slate-950/95 border border-white border-opacity-5 rounded-2xl shadow-xl p-4 min-w-40 z-50 text-[10px] font-bold">
+        <div 
+          className="absolute bottom-20 right-6 border rounded-2xl shadow-xl p-4 min-w-40 z-50 text-[10px] font-bold text-slate-200"
+          style={{ backgroundColor: '#1e293b', borderColor: '#334155' }}
+        >
           <div className="space-y-3">
             <div>
               <label className="block text-slate-400 mb-1">Quality</label>
-              <select className="w-full bg-white bg-opacity-5 border border-white border-opacity-5 text-white rounded-lg px-2.5 py-1.5 outline-none">
-                <option>Auto</option>
-                <option>1080p</option>
-                <option>720p</option>
-                <option>480p</option>
+              <select 
+                className="w-full border rounded-lg px-2.5 py-1.5 outline-none"
+                style={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#f8fafc' }}
+              >
+                <option style={{ backgroundColor: '#0f172a', color: '#f8fafc' }}>Auto</option>
+                <option style={{ backgroundColor: '#0f172a', color: '#f8fafc' }}>1080p</option>
+                <option style={{ backgroundColor: '#0f172a', color: '#f8fafc' }}>720p</option>
+                <option style={{ backgroundColor: '#0f172a', color: '#f8fafc' }}>480p</option>
               </select>
             </div>
           </div>
