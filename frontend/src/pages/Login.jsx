@@ -92,11 +92,24 @@ export default function Login() {
     setPassword(fillPassword);
   };
 
+  // Inline styles to force visibility regardless of light/dark CSS overrides
+  const inputStyle = {
+    backgroundColor: 'rgba(2, 6, 23, 0.4)',
+    color: '#f1f5f9',
+    borderColor: 'rgba(255,255,255,0.08)',
+    caretColor: '#FF7043',
+  };
+
+  const inputFocusClass = "w-full pl-12 pr-4 py-3.5 rounded-2xl outline-none transition-all font-semibold text-sm";
+  const inputFocusClassPr12 = "w-full pl-12 pr-12 py-3.5 rounded-2xl outline-none transition-all font-semibold text-sm";
+
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center py-12 px-4 bg-[linear-gradient(145deg,#020617_0%,#111827_45%,#172554_100%)] overflow-x-hidden relative font-quicksand select-none text-white">
+    <div
+      className="min-h-screen w-full flex flex-col items-center justify-center py-12 px-4 overflow-x-hidden relative font-quicksand select-none"
+      style={{ background: 'linear-gradient(145deg, #020617 0%, #111827 45%, #172554 100%)', color: '#f1f5f9' }}
+    >
       
-      {/* BACKGROUND DECORATIONS (Clay style clouds & plants) */}
-      {/* Cloud Left */}
+      {/* BACKGROUND DECORATIONS */}
       <div className="absolute left-[8%] top-[15%] hidden md:block animate-bounce" style={{ animationDuration: '6s' }}>
         <div className="relative w-24 h-8 bg-white rounded-full shadow-[0_8px_16px_rgba(159,146,236,0.2),inset_0_4px_8px_white]">
           <div className="absolute -top-6 left-4 w-12 h-12 bg-white rounded-full shadow-[inset_0_4px_8px_white]"></div>
@@ -104,7 +117,6 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Cloud Right */}
       <div className="absolute right-[8%] top-[30%] hidden md:block animate-bounce" style={{ animationDuration: '8s', animationDelay: '1s' }}>
         <div className="relative w-28 h-9 bg-white rounded-full shadow-[0_8px_16px_rgba(159,146,236,0.2),inset_0_4px_8px_white]">
           <div className="absolute -top-6 left-6 w-14 h-14 bg-white rounded-full shadow-[inset_0_4px_8px_white]"></div>
@@ -117,27 +129,27 @@ export default function Login() {
         
         {/* Logo and Brand */}
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center space-x-2 bg-white/5 border border-white/10 px-4 py-2 rounded-2xl mb-4 hover:bg-white/10 transition-all">
+          <Link to="/" className="inline-flex items-center space-x-2 px-4 py-2 rounded-2xl mb-4 hover:opacity-80 transition-all" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
             <span className="text-xl">🧸</span>
-            <span className="text-sm font-black tracking-widest text-[#FF7043]">APPLETREE</span>
+            <span className="text-sm font-black tracking-widest" style={{ color: '#FF7043' }}>APPLETREE</span>
           </Link>
-          <h2 className="text-2xl md:text-3xl font-black tracking-tight mt-2">
+          <h2 className="text-2xl md:text-3xl font-black tracking-tight mt-2" style={{ color: '#ffffff' }}>
             {isRegister ? 'Join our Classroom' : 'Welcome Back!'}
           </h2>
-          <p className="text-xs font-bold text-slate-400 mt-2 uppercase tracking-widest">
+          <p className="text-xs font-bold mt-2 uppercase tracking-widest" style={{ color: '#94a3b8' }}>
             {isRegister ? 'Create an account to start learning online' : 'Log in to access your course files'}
           </p>
         </div>
 
         {/* Input Form Card */}
-        <div className="bg-slate-900/60 backdrop-blur-md border border-white border-opacity-5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+        <div className="rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden" style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.05)' }}>
           
           {/* Top category tags */}
           <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-brandCoral via-brandSky to-brandMint" />
 
           {/* Validation Errors */}
           {(validationError || error) && (
-            <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-xs font-bold text-rose-400 flex items-start space-x-2">
+            <div className="mb-6 p-4 rounded-2xl text-xs font-bold flex items-start space-x-2" style={{ backgroundColor: 'rgba(244, 63, 94, 0.1)', border: '1px solid rgba(244, 63, 94, 0.2)', color: '#fb7185' }}>
               <span>⚠️</span>
               <span>{validationError || error}</span>
             </div>
@@ -148,51 +160,61 @@ export default function Login() {
             // REGISTRATION FORM
             <form onSubmit={handleRegisterSubmit} className="space-y-5 text-xs font-bold">
               <div>
-                <label className="block text-slate-400 mb-2">FULL NAME</label>
+                <label className="block mb-2" style={{ color: '#94a3b8' }}>FULL NAME</label>
                 <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#64748b' }} />
                   <input
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Enter your name"
-                    className="w-full pl-12 pr-4 py-3.5 bg-slate-950/40 border border-white border-opacity-5 rounded-2xl text-white outline-none focus:border-[#FF7043] transition-all"
+                    className={inputFocusClass}
+                    style={{ ...inputStyle }}
+                    onFocus={(e) => e.target.style.borderColor = '#FF7043'}
+                    onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-2">EMAIL ADDRESS</label>
+                <label className="block mb-2" style={{ color: '#94a3b8' }}>EMAIL ADDRESS</label>
                 <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#64748b' }} />
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="student@example.com"
-                    className="w-full pl-12 pr-4 py-3.5 bg-slate-950/40 border border-white border-opacity-5 rounded-2xl text-white outline-none focus:border-[#FF7043] transition-all font-semibold"
+                    className={inputFocusClass}
+                    style={{ ...inputStyle }}
+                    onFocus={(e) => e.target.style.borderColor = '#FF7043'}
+                    onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-2">PASSWORD</label>
+                <label className="block mb-2" style={{ color: '#94a3b8' }}>PASSWORD</label>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#64748b' }} />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="At least 6 characters"
-                    className="w-full pl-12 pr-12 py-3.5 bg-slate-950/40 border border-white border-opacity-5 rounded-2xl text-white outline-none focus:border-[#FF7043] transition-all font-semibold"
+                    className={inputFocusClassPr12}
+                    style={{ ...inputStyle }}
+                    onFocus={(e) => e.target.style.borderColor = '#FF7043'}
+                    onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-[#FF7043] outline-none"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 outline-none"
+                    style={{ color: '#64748b' }}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -200,16 +222,19 @@ export default function Login() {
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-2">CONFIRM PASSWORD</label>
+                <label className="block mb-2" style={{ color: '#94a3b8' }}>CONFIRM PASSWORD</label>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#64748b' }} />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm your password"
-                    className="w-full pl-12 pr-12 py-3.5 bg-slate-950/40 border border-white border-opacity-5 rounded-2xl text-white outline-none focus:border-[#FF7043] transition-all font-semibold"
+                    className={inputFocusClassPr12}
+                    style={{ ...inputStyle }}
+                    onFocus={(e) => e.target.style.borderColor = '#FF7043'}
+                    onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
                   />
                 </div>
               </div>
@@ -217,7 +242,8 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 bg-[#FF7043] hover:bg-orange-600 text-white font-extrabold tracking-wider rounded-2xl transition-all shadow-lg shadow-orange-500/10 flex items-center justify-center space-x-2"
+                className="w-full py-4 font-extrabold tracking-wider rounded-2xl transition-all shadow-lg flex items-center justify-center space-x-2"
+                style={{ backgroundColor: '#FF7043', color: '#ffffff' }}
               >
                 {loading ? (
                   <>
@@ -236,36 +262,43 @@ export default function Login() {
             // LOGIN FORM
             <form onSubmit={handleLoginSubmit} className="space-y-5 text-xs font-bold">
               <div>
-                <label className="block text-slate-400 mb-2">EMAIL ADDRESS</label>
+                <label className="block mb-2" style={{ color: '#94a3b8' }}>EMAIL ADDRESS</label>
                 <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#64748b' }} />
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="parent@appletree.com"
-                    className="w-full pl-12 pr-4 py-3.5 bg-slate-950/40 border border-white border-opacity-5 rounded-2xl text-white outline-none focus:border-[#FF7043] transition-all font-semibold"
+                    className={inputFocusClass}
+                    style={{ ...inputStyle }}
+                    onFocus={(e) => e.target.style.borderColor = '#FF7043'}
+                    onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-2">PASSWORD</label>
+                <label className="block mb-2" style={{ color: '#94a3b8' }}>PASSWORD</label>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#64748b' }} />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-12 pr-12 py-3.5 bg-slate-950/40 border border-white border-opacity-5 rounded-2xl text-white outline-none focus:border-[#FF7043] transition-all font-semibold"
+                    className={inputFocusClassPr12}
+                    style={{ ...inputStyle }}
+                    onFocus={(e) => e.target.style.borderColor = '#FF7043'}
+                    onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-[#FF7043] outline-none"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 outline-none"
+                    style={{ color: '#64748b' }}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -275,7 +308,8 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 bg-[#FF7043] hover:bg-orange-600 text-white font-extrabold tracking-wider rounded-2xl transition-all shadow-lg shadow-orange-500/10 flex items-center justify-center space-x-2"
+                className="w-full py-4 font-extrabold tracking-wider rounded-2xl transition-all shadow-lg flex items-center justify-center space-x-2"
+                style={{ backgroundColor: '#FF7043', color: '#ffffff' }}
               >
                 {loading ? (
                   <>
@@ -294,35 +328,39 @@ export default function Login() {
 
           {/* Quick Creds fill dropdown (Only for logins, hidden in registration) */}
           {!isRegister && (
-            <div className="mt-6 border-t border-white border-opacity-5 pt-4">
+            <div className="mt-6 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
               <button
                 type="button"
                 onClick={() => setShowCredentials(!showCredentials)}
-                className="w-full flex items-center justify-between text-[10px] font-black tracking-widest text-[#FF7043] hover:underline uppercase"
+                className="w-full flex items-center justify-between text-[10px] font-black tracking-widest uppercase hover:underline"
+                style={{ color: '#FF7043' }}
               >
                 <span>Demo User Accounts</span>
                 <span>{showCredentials ? '▲' : '▼'}</span>
               </button>
               {showCredentials && (
-                <div className="mt-3 grid grid-cols-2 gap-2 text-[10px] bg-slate-950/30 p-3 rounded-2xl border border-white border-opacity-5">
+                <div className="mt-3 grid grid-cols-2 gap-2 text-[10px] p-3 rounded-2xl" style={{ backgroundColor: 'rgba(2, 6, 23, 0.3)', border: '1px solid rgba(255,255,255,0.05)' }}>
                   <button
                     type="button"
-                    onClick={() => handleQuickFill('admin@appletree.com', 'admin123')}
-                    className="p-1.5 hover:bg-white/5 border border-white/5 rounded-lg text-left"
+                    onClick={() => handleQuickFill('admin@pranidha.edu', 'admin123')}
+                    className="p-1.5 rounded-lg text-left transition-all hover:opacity-80"
+                    style={{ border: '1px solid rgba(255,255,255,0.05)', color: '#e2e8f0' }}
                   >
                     🏢 Admin
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleQuickFill('teacher@appletree.com', 'teacher123')}
-                    className="p-1.5 hover:bg-white/5 border border-white/5 rounded-lg text-left"
+                    onClick={() => handleQuickFill('teacher@pranidha.edu', 'teacher123')}
+                    className="p-1.5 rounded-lg text-left transition-all hover:opacity-80"
+                    style={{ border: '1px solid rgba(255,255,255,0.05)', color: '#e2e8f0' }}
                   >
                     👩‍🏫 Teacher
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleQuickFill('parent@appletree.com', 'parent123')}
-                    className="p-1.5 hover:bg-white/5 border border-white/5 rounded-lg text-left"
+                    onClick={() => handleQuickFill('parent@pranidha.edu', 'parent123')}
+                    className="p-1.5 rounded-lg text-left transition-all hover:opacity-80"
+                    style={{ border: '1px solid rgba(255,255,255,0.05)', color: '#e2e8f0' }}
                   >
                     🧸 Parent
                   </button>
@@ -334,7 +372,7 @@ export default function Login() {
         </div>
 
         {/* Toggle Page link */}
-        <div className="text-center mt-6 text-xs font-bold text-slate-400">
+        <div className="text-center mt-6 text-xs font-bold" style={{ color: '#94a3b8' }}>
           {isRegister ? (
             <p>
               Already have a classroom account?{' '}
@@ -343,7 +381,8 @@ export default function Login() {
                   setIsRegister(false);
                   setValidationError('');
                 }}
-                className="text-[#FF7043] hover:underline"
+                style={{ color: '#FF7043' }}
+                className="hover:underline"
               >
                 Log In
               </button>
@@ -356,7 +395,8 @@ export default function Login() {
                   setIsRegister(true);
                   setValidationError('');
                 }}
-                className="text-[#FF7043] hover:underline"
+                style={{ color: '#FF7043' }}
+                className="hover:underline"
               >
                 Sign Up for Free
               </button>
