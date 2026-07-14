@@ -101,7 +101,7 @@ export default function RazorpayTestPage() {
       const rzpKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TDN5lD1IiJZXoG';
 
       const options = {
-        key: rzpKeyId,
+        key: orderData.keyId || rzpKeyId,
         amount: orderData.amount,
         currency: orderData.currency || 'INR',
         name: 'Pranidha International School',

@@ -56,7 +56,8 @@ router.post('/create-order', protect, async (req, res) => {
       success: true,
       order_id: order.id,
       amount: order.amount,
-      currency: order.currency
+      currency: order.currency,
+      keyId: process.env.RAZORPAY_KEY_ID
     });
   } catch (error) {
     console.error('Error creating Razorpay order:', error);
