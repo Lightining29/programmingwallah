@@ -8,12 +8,10 @@ import {
   Minimize,
   Settings,
   PictureInPicture,
-  Download,
-  ChevronLeft,
-  ChevronRight,
   RotateCcw,
   SkipForward,
-  SkipBack
+  SkipBack,
+  Video
 } from 'lucide-react';
 
 const VideoPlayer = ({ 
@@ -40,8 +38,30 @@ const VideoPlayer = ({
 
   const playbackRates = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
+  // Helper to extract YouTube video ID
+  const getYouTubeId = (url) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
+  // Helper to extract Vimeo video ID
+  const getVimeoId = (url) => {
+    if (!url) return null;
+    const regExp = /vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|album\/(\d+)\/video\/|video\/|)(\d+)(?:$|\/|\?)/;
+    const match = url.match(regExp);
+    return match ? match[3] : null;
+  };
+
+  const ytId = getYouTubeId(videoUrl);
+  const vimeoId = getVimeoId(videoUrl);
+  const isEmbedVideo = !!(ytId || vimeoId);
+
   useEffect(() => {
+    if (isEmbedVideo) return; // Standard player logic only for direct files
     const video = videoRef.current;
+    if (!video) return;
     
     const handleLoadedMetadata = () => {
       setDuration(video.duration);
@@ -80,17 +100,19 @@ const VideoPlayer = ({
       video.removeEventListener('pause', handlePause);
       video.removeEventListener('ended', handleEnded);
     };
-  }, [onProgressUpdate, lessonId, onVideoEnd]);
+  }, [onProgressUpdate, lessonId, onVideoEnd, isEmbedVideo, videoUrl]);
 
   useEffect(() => {
+    if (isEmbedVideo) return;
     const video = videoRef.current;
-    video.playbackRate = playbackRate;
-  }, [playbackRate]);
+    if (video) video.playbackRate = playbackRate;
+  }, [playbackRate, isEmbedVideo]);
 
   useEffect(() => {
+    if (isEmbedVideo) return;
     const video = videoRef.current;
-    video.volume = isMuted ? 0 : volume;
-  }, [volume, isMuted]);
+    if (video) video.volume = isMuted ? 0 : volume;
+  }, [volume, isMuted, isEmbedVideo]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -104,6 +126,7 @@ const VideoPlayer = ({
   }, []);
 
   const togglePlay = () => {
+    if (isEmbedVideo) return;
     const video = videoRef.current;
     if (isPlaying) {
       video.pause();
@@ -113,6 +136,7 @@ const VideoPlayer = ({
   };
 
   const handleSeek = (e) => {
+    if (isEmbedVideo) return;
     const video = videoRef.current;
     const seekTime = (e.target.value / 100) * duration;
     video.currentTime = seekTime;
@@ -152,8 +176,8 @@ const VideoPlayer = ({
   };
 
   const togglePictureInPicture = async () => {
+    if (isEmbedVideo) return;
     const video = videoRef.current;
-    
     try {
       if (document.pictureInPictureElement) {
         await document.exitPictureInPicture();
@@ -166,11 +190,13 @@ const VideoPlayer = ({
   };
 
   const skipForward = (seconds = 10) => {
+    if (isEmbedVideo) return;
     const video = videoRef.current;
     video.currentTime = Math.min(video.currentTime + seconds, duration);
   };
 
   const skipBackward = (seconds = 10) => {
+    if (isEmbedVideo) return;
     const video = videoRef.current;
     video.currentTime = Math.max(video.currentTime - seconds, 0);
   };
@@ -203,10 +229,33 @@ const VideoPlayer = ({
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  // ── 1. IF YOUTUBE / VIMEO EMBED DETECTED ──
+  if (isEmbedVideo) {
+    let embedUrl = '';
+    if (ytId) {
+      embedUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0&enablejsapi=1`;
+    } else if (vimeoId) {
+      embedUrl = `https://player.vimeo.com/video/${vimeoId}?autoplay=1`;
+    }
+
+    return (
+      <div className="relative w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl border border-white/5">
+        <iframe
+          src={embedUrl}
+          className="absolute inset-0 w-full h-full border-0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          title={title}
+        />
+      </div>
+    );
+  }
+
+  // ── 2. HTML5 NATIVE PLAYER WITH PREMIUM STYLES (for Cloudinary / Local storage files) ──
   return (
     <div
       ref={containerRef}
-      className="relative bg-black rounded-lg overflow-hidden"
+      className="relative bg-black rounded-3xl overflow-hidden shadow-2xl aspect-video border border-white/5"
       onMouseMove={handleMouseMove}
       onMouseLeave={() => {
         if (isPlaying && showControls) {
@@ -214,26 +263,25 @@ const VideoPlayer = ({
         }
       }}
     >
-      {/* Video Element */}
       <video
         ref={videoRef}
         src={videoUrl}
-        className="w-full h-full"
+        className="w-full h-full object-contain cursor-pointer"
         onClick={togglePlay}
       />
       
-      {/* Video Title Overlay */}
-      <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent">
-        <h3 className="text-white font-semibold text-lg">{title}</h3>
+      {/* Title Header */}
+      <div className="absolute top-0 left-0 right-0 p-6 bg-gradient-to-b from-black/85 to-transparent">
+        <h3 className="text-white font-extrabold text-sm tracking-wide">{title}</h3>
       </div>
       
       {/* Controls Overlay */}
       <div
-        className={`absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent transition-opacity duration-300 ${
+        className={`absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/85 to-transparent transition-opacity duration-300 ${
           showControls ? 'opacity-100' : 'opacity-0'
         }`}
       >
-        {/* Progress Bar */}
+        {/* Progress seek bar */}
         <div className="mb-4">
           <input
             type="range"
@@ -241,55 +289,55 @@ const VideoPlayer = ({
             max="100"
             value={(currentTime / duration) * 100 || 0}
             onChange={handleSeek}
-            className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-500"
+            className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer outline-none transition-all hover:h-1.5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#FF7043] hover:[&::-webkit-slider-thumb]:scale-110"
           />
-          <div className="flex justify-between text-sm text-gray-300 mt-1">
+          <div className="flex justify-between text-[11px] font-bold text-slate-300 mt-2">
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>
         </div>
         
-        {/* Control Buttons */}
+        {/* Controls action buttons */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {/* Play/Pause */}
             <button
               onClick={togglePlay}
-              className="p-2 hover:bg-white/10 rounded-full transition-colors"
+              className="p-2 hover:bg-white/10 rounded-full transition-colors outline-none"
             >
               {isPlaying ? (
-                <Pause className="w-6 h-6 text-white" />
+                <Pause className="w-5 h-5 text-white fill-white" />
               ) : (
-                <Play className="w-6 h-6 text-white" />
+                <Play className="w-5 h-5 text-white fill-white" />
               )}
             </button>
             
-            {/* Skip Backward */}
+            {/* Skip Back */}
             <button
               onClick={() => skipBackward()}
-              className="p-2 hover:bg-white/10 rounded-full transition-colors"
+              className="p-2 hover:bg-white/10 rounded-full transition-colors outline-none"
             >
-              <SkipBack className="w-5 h-5 text-white" />
+              <SkipBack className="w-4 h-4 text-white" />
             </button>
             
             {/* Skip Forward */}
             <button
               onClick={() => skipForward()}
-              className="p-2 hover:bg-white/10 rounded-full transition-colors"
+              className="p-2 hover:bg-white/10 rounded-full transition-colors outline-none"
             >
-              <SkipForward className="w-5 h-5 text-white" />
+              <SkipForward className="w-4 h-4 text-white" />
             </button>
             
-            {/* Volume Control */}
+            {/* Volume */}
             <div className="flex items-center space-x-2">
               <button
                 onClick={toggleMute}
-                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                className="p-2 hover:bg-white/10 rounded-full transition-colors outline-none"
               >
                 {isMuted || volume === 0 ? (
-                  <VolumeX className="w-5 h-5 text-white" />
-              ) : (
-                  <Volume2 className="w-5 h-5 text-white" />
+                  <VolumeX className="w-4 h-4 text-white" />
+                ) : (
+                  <Volume2 className="w-4 h-4 text-white" />
                 )}
               </button>
               
@@ -300,23 +348,23 @@ const VideoPlayer = ({
                 step="0.1"
                 value={isMuted ? 0 : volume}
                 onChange={handleVolumeChange}
-                className="w-24 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-500"
+                className="w-16 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
               />
             </div>
           </div>
           
           <div className="flex items-center space-x-4">
-            {/* Playback Speed */}
+            {/* Playback speed selector */}
             <div className="relative">
               <button
                 onClick={() => setShowSpeedMenu(!showSpeedMenu)}
-                className="px-3 py-1 bg-white/10 text-white text-sm rounded hover:bg-white/20 transition-colors"
+                className="px-2.5 py-1 bg-white/10 text-white text-[10px] font-extrabold rounded-lg hover:bg-white/20 transition-colors outline-none"
               >
                 {playbackRate}x
               </button>
               
               {showSpeedMenu && (
-                <div className="absolute bottom-full right-0 mb-2 bg-gray-800 rounded-lg shadow-xl py-2 min-w-32 z-50">
+                <div className="absolute bottom-full right-0 mb-2 bg-slate-900/95 border border-white/5 rounded-2xl shadow-xl py-2 min-w-28 z-50">
                   {playbackRates.map((rate) => (
                     <button
                       key={rate}
@@ -324,13 +372,13 @@ const VideoPlayer = ({
                         setPlaybackRate(rate);
                         setShowSpeedMenu(false);
                       }}
-                      className={`block w-full px-4 py-2 text-sm text-left hover:bg-gray-700 transition-colors ${
+                      className={`block w-full px-4 py-2 text-[10px] font-bold text-left hover:bg-white/5 transition-colors ${
                         playbackRate === rate
-                          ? 'text-blue-400 font-semibold'
+                          ? 'text-[#FF7043]'
                           : 'text-gray-300'
                       }`}
                     >
-                      {rate}x
+                      {rate}x speed
                     </button>
                   ))}
                 </div>
@@ -340,71 +388,62 @@ const VideoPlayer = ({
             {/* Picture in Picture */}
             <button
               onClick={togglePictureInPicture}
-              className="p-2 hover:bg-white/10 rounded-full transition-colors"
+              className="p-2 hover:bg-white/10 rounded-full transition-colors outline-none"
               title="Picture in Picture"
             >
-              <PictureInPicture className="w-5 h-5 text-white" />
+              <PictureInPicture className="w-4 h-4 text-white" />
             </button>
             
             {/* Settings */}
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className="p-2 hover:bg-white/10 rounded-full transition-colors"
+              className="p-2 hover:bg-white/10 rounded-full transition-colors outline-none"
               title="Settings"
             >
-              <Settings className="w-5 h-5 text-white" />
+              <Settings className="w-4 h-4 text-white" />
             </button>
             
             {/* Fullscreen */}
             <button
               onClick={toggleFullscreen}
-              className="p-2 hover:bg-white/10 rounded-full transition-colors"
+              className="p-2 hover:bg-white/10 rounded-full transition-colors outline-none"
               title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
             >
               {isFullscreen ? (
-                <Minimize className="w-5 h-5 text-white" />
+                <Minimize className="w-4 h-4 text-white" />
               ) : (
-                <Maximize className="w-5 h-5 text-white" />
+                <Maximize className="w-4 h-4 text-white" />
               )}
             </button>
           </div>
         </div>
       </div>
       
-      {/* Settings Menu */}
+      {/* Settings popup panel */}
       {showSettings && (
-        <div className="absolute bottom-16 right-4 bg-gray-800 rounded-lg shadow-xl p-4 min-w-48 z-50">
+        <div className="absolute bottom-20 right-6 bg-slate-950/95 border border-white/5 rounded-2xl shadow-xl p-4 min-w-40 z-50 text-[10px] font-bold">
           <div className="space-y-3">
             <div>
-              <label className="block text-sm text-gray-300 mb-1">Quality</label>
-              <select className="w-full bg-gray-700 text-white text-sm rounded px-3 py-2">
+              <label className="block text-slate-400 mb-1">Quality</label>
+              <select className="w-full bg-white/5 border border-white/5 text-white rounded-lg px-2.5 py-1.5 outline-none">
                 <option>Auto</option>
                 <option>1080p</option>
                 <option>720p</option>
                 <option>480p</option>
               </select>
             </div>
-            
-            <div>
-              <label className="block text-sm text-gray-300 mb-1">Subtitles</label>
-              <select className="w-full bg-gray-700 text-white text-sm rounded px-3 py-2">
-                <option>Off</option>
-                <option>English</option>
-                <option>Hindi</option>
-              </select>
-            </div>
           </div>
         </div>
       )}
       
-      {/* Play Button Overlay */}
+      {/* Center Big Play Button Overlay */}
       {!isPlaying && (
         <button
           onClick={togglePlay}
-          className="absolute inset-0 flex items-center justify-center group"
+          className="absolute inset-0 flex items-center justify-center bg-black/10 group outline-none"
         >
-          <div className="w-20 h-20 bg-black/50 rounded-full flex items-center justify-center group-hover:bg-black/70 transition-colors">
-            <Play className="w-10 h-10 text-white" />
+          <div className="w-16 h-16 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center text-white shadow-lg transition-transform group-hover:scale-110">
+            <Play className="w-6 h-6 fill-white ml-0.5" />
           </div>
         </button>
       )}
