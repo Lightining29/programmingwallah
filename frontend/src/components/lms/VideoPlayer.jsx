@@ -233,7 +233,7 @@ const VideoPlayer = ({
   if (isEmbedVideo) {
     let embedUrl = '';
     if (ytId) {
-      embedUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0&enablejsapi=1`;
+      embedUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3&controls=1&showinfo=0`;
     } else if (vimeoId) {
       embedUrl = `https://player.vimeo.com/video/${vimeoId}?autoplay=1`;
     }
@@ -247,6 +247,16 @@ const VideoPlayer = ({
           allowFullScreen
           title={title}
         />
+        {/* Invisible overlay over the bottom right corner to block clicks on the YouTube logo */}
+        {ytId && (
+          <div 
+            className="absolute bottom-0 right-0 w-24 h-12 z-20 bg-transparent cursor-default"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          />
+        )}
       </div>
     );
   }
