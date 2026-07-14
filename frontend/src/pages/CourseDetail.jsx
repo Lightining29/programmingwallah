@@ -1,61 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import {
-  PlayCircle,
-  Clock,
-  Users,
-  Star,
-  BookOpen,
-  Award,
-  ChevronRight,
-  ChevronLeft,
-  Download,
-  FileText,
-  CheckCircle,
-  Bookmark,
-  Share2,
-  Menu,
-  X,
-  Video,
-  MessageSquare,
-  BarChart,
-  LogIn,
-  CreditCard,
-  ShieldCheck,
-  Zap
-} from 'lucide-react';
-import VideoPlayer from '../components/lms/VideoPlayer';
-import ModuleList from '../components/lms/ModuleList';
-import InstructorCard from '../components/lms/InstructorCard';
-import ResourceCard from '../components/lms/ResourceCard';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useTheme } from '../context/ThemeContext.jsx';
+import { 
+  PlayCircle, Clock, BookOpen, Star, Users, ChevronRight, 
+  CheckCircle, CreditCard, Lock, ShieldCheck, Zap, LogIn, 
+  Award, Video, Download, MessageSquare, BarChart, ChevronLeft, 
+  Bookmark, Share2, Play, Eye, BookOpenCheck
+} from 'lucide-react';
+import confetti from 'canvas-confetti';
 
-// Load Razorpay script dynamically
-function loadRazorpayScript() {
-  return new Promise((resolve) => {
-    if (window.Razorpay) { resolve(true); return; }
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-}
+// Color theme mapping for gradients
+const CATEGORY_THEMES = {
+  development: 'from-blue-600 to-indigo-800 shadow-blue-500/10',
+  design: 'from-pink-600 to-rose-800 shadow-rose-500/10',
+  marketing: 'from-purple-600 to-violet-800 shadow-purple-500/10',
+  'early-learning': 'from-emerald-600 to-teal-800 shadow-emerald-500/10',
+  default: 'from-orange-500 to-brandCoral shadow-orange-500/10'
+};
 
-const CourseDetail = () => {
+export default function CourseDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, token } = useAuth();
+  const { isDark } = useTheme();
+
+  // Core State
   const [course, setCourse] = useState(null);
   const [modules, setModules] = useState([]);
-  const [selectedLesson, setSelectedLesson] = useState(null);
   const [loading, setLoading] = useState(true);
   const [enrollment, setEnrollment] = useState(null);
   const [enrolling, setEnrolling] = useState(false);
   const [paymentStep, setPaymentStep] = useState('idle'); // idle | creating | checkout | verifying | done
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
+
+  // Accordion active state for modules
+  const [expandedModules, setExpandedModules] = useState({});
 
   useEffect(() => {
     fetchCourseDetails();
@@ -79,10 +58,9 @@ const CourseDetail = () => {
         
         if (modulesData.success) {
           setModules(modulesData.data);
-          if (modulesData.data.length > 0 && 
-              modulesData.data[0].lessons && 
-              modulesData.data[0].lessons.length > 0) {
-            setSelectedLesson(modulesData.data[0].lessons[0]);
+          // Expand first module by default
+          if (modulesData.data.length > 0) {
+            setExpandedModules({ [modulesData.data[0]._id]: true });
           }
         }
       }
@@ -93,6 +71,26 @@ const CourseDetail = () => {
     }
   };
 
+  const toggleModule = (moduleId) => {
+    setExpandedModules(prev => ({
+      ...prev,
+      [moduleId]: !prev[moduleId]
+    }));
+  };
+
+  // Helper to load Razorpay
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) { resolve(true); return; }
+      const s = document.createElement('script');
+      s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      s.onload = () => resolve(true);
+      s.onerror = () => resolve(false);
+      document.body.appendChild(s);
+    });
+  };
+
+  // Handle Enrollment / Purchase Flow
   const handleEnroll = async () => {
     if (!user) {
       navigate('/login');
@@ -100,8 +98,9 @@ const CourseDetail = () => {
     }
 
     const authToken = token || localStorage.getItem('token');
+    const isFree = !course.price || Number(course.price) <= 0;
 
-    // ── FREE COURSE ── direct enroll, no payment
+    // ── FREE COURSE ── direct enroll and redirect to learning page
     if (isFree) {
       setEnrolling(true);
       try {
@@ -112,6 +111,7 @@ const CourseDetail = () => {
         const data = await res.json();
         if (data.success) {
           setEnrollment(data.data);
+          confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
           navigate(`/lms/learn/${id}`);
         } else {
           alert(data.message || 'Enrollment failed');
@@ -125,19 +125,23 @@ const CourseDetail = () => {
       return;
     }
 
-    // ── PAID COURSE ── Razorpay checkout
+    // ── PAID COURSE ── Razorpay standard web checkout
     setPaymentStep('creating');
     try {
-      // Step 1 — check if Razorpay is enabled
-      const configRes = await fetch('/api/razorpay/config');
-      const config = await configRes.json();
-
-      // Step 2 — create order on backend
-      const orderRes = await fetch('/api/razorpay/create-order', {
+      // Create Razorpay order on backend
+      const orderRes = await fetch('/api/create-order', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-        body: JSON.stringify({ courseId: id, courseTitle: course.title, amount: coursePrice })
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': `Bearer ${authToken}` 
+        },
+        body: JSON.stringify({
+          amount: Math.round(Number(course.price) * 100),
+          currency: 'INR',
+          receipt: `course_${id}_${Date.now()}`
+        })
       });
+
       const orderData = await orderRes.json();
       if (!orderData.success) {
         alert(orderData.message || 'Could not initiate payment');
@@ -145,166 +149,106 @@ const CourseDetail = () => {
         return;
       }
 
-      // ── MOCK MODE (no Razorpay keys) ── simulate payment with a confirm dialog
-      if (orderData.mode === 'mock' || !config.enabled) {
-        setPaymentStep('checkout');
-        const confirmed = window.confirm(
-          `[Dev Mode — No Razorpay Keys]\n\nSimulate payment of ₹${coursePrice} for "${course.title}"?\n\nClick OK to complete enrollment.`
-        );
-        if (!confirmed) { setPaymentStep('idle'); return; }
-
-        setPaymentStep('verifying');
-        // Enroll directly since no real payment to verify
-        const enrollRes = await fetch(`/api/lms/courses/${id}/enroll`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` }
-        });
-        const enrollData = await enrollRes.json();
-        if (enrollData.success) {
-          setEnrollment(enrollData.data);
-          setPaymentStep('done');
-          navigate(`/lms/learn/${id}`);
-        } else {
-          alert(enrollData.message || 'Enrollment failed after payment');
-          setPaymentStep('idle');
-        }
-        return;
-      }
-
-      // ── LIVE RAZORPAY ── load script and open checkout
       setPaymentStep('checkout');
       const loaded = await loadRazorpayScript();
       if (!loaded) {
-        alert('Failed to load Razorpay. Please check your connection.');
+        alert('Failed to load Razorpay. Please check your internet connection.');
         setPaymentStep('idle');
         return;
       }
 
       const options = {
-        key: config.keyId,
-        amount: orderData.order.amount,          // already in paise from backend
-        currency: orderData.order.currency || 'INR',
-        name: 'Pranidha International School',
-        description: course.title,
-        order_id: orderData.order.id,
+        key: orderData.keyId || 'rzp_test_TDN5lD1IiJZXoG',
+        amount: orderData.amount,
+        currency: orderData.currency || 'INR',
+        name: 'Appletree Coaching Centre',
+        description: `Enrollment: ${course.title}`,
+        order_id: orderData.order_id,
         prefill: {
           name: user.name || '',
           email: user.email || '',
+          contact: user.phone || ''
         },
-        theme: { color: '#2563eb' },
+        theme: { color: '#FF7043' },
         modal: {
-          ondismiss: () => { setPaymentStep('idle'); }
+          ondismiss: () => {
+            setPaymentStep('idle');
+          }
         },
         handler: async (response) => {
-          // Step 3 — verify payment signature on backend
           setPaymentStep('verifying');
           try {
-            const verifyRes = await fetch('/api/razorpay/verify', {
+            // Verify payment on server
+            const verifyRes = await fetch('/api/verify-payment', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+              },
               body: JSON.stringify({
-                razorpayOrderId: response.razorpay_order_id,
-                razorpayPaymentId: response.razorpay_payment_id,
-                razorpaySignature: response.razorpay_signature,
-                paymentMeta: { courseTitle: course.title, studentName: user.name, email: user.email }
+                order_id: response.razorpay_order_id,
+                payment_id: response.razorpay_payment_id,
+                signature: response.razorpay_signature
               })
             });
+
             const verifyData = await verifyRes.json();
             if (!verifyData.success) {
-              alert('Payment verification failed. Contact support.');
+              alert('Payment verification failed. Please contact support.');
               setPaymentStep('idle');
               return;
             }
 
-            // Step 4 — enroll after verified payment
+            // Enroll after verified payment
             const enrollRes = await fetch(`/api/lms/courses/${id}/enroll`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}` 
+              },
               body: JSON.stringify({ paymentId: response.razorpay_payment_id })
             });
+
             const enrollData = await enrollRes.json();
             if (enrollData.success) {
               setEnrollment(enrollData.data);
               setPaymentStep('done');
+              confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
               navigate(`/lms/learn/${id}`);
             } else {
-              // Already enrolled means payment went through — just navigate
-              if (enrollData.message?.toLowerCase().includes('already enrolled')) {
-                setPaymentStep('done');
-                navigate(`/lms/learn/${id}`);
-              } else {
-                alert(enrollData.message || 'Enrollment failed after payment. Contact support.');
-                setPaymentStep('idle');
-              }
+              alert(enrollData.message || 'Enrollment completion failed. Please contact support.');
+              setPaymentStep('idle');
             }
           } catch (err) {
             console.error('Verify/enroll error:', err);
-            alert('Something went wrong after payment. Contact support with your payment ID: ' + response.razorpay_payment_id);
+            alert('Something went wrong during verification.');
             setPaymentStep('idle');
           }
         }
       };
 
       const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', (response) => {
-        alert('Payment failed: ' + (response.error?.description || 'Unknown error'));
+      rzp.on('payment.failed', (resp) => {
+        alert(resp.error?.description || 'Payment transaction failed.');
         setPaymentStep('idle');
       });
       rzp.open();
 
     } catch (err) {
-      console.error('Payment error:', err);
-      alert('Payment initiation failed. Please try again.');
+      console.error(err);
+      alert('Could not complete checkout initialization.');
       setPaymentStep('idle');
-    }
-  };
-
-  const isProcessingPayment = paymentStep !== 'idle' && paymentStep !== 'done';
-
-  const handleLessonSelect = (lesson) => {
-    setSelectedLesson(lesson);
-    if (window.innerWidth < 1024) {
-      setSidebarOpen(false);
-    }
-  };
-
-  const handleMarkComplete = async () => {
-    if (!selectedLesson) return;
-    
-    try {
-      const response = await fetch(`/api/lms/lessons/${selectedLesson._id}/progress`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          markCompleted: true,
-          currentTime: 0,
-          duration: selectedLesson.videoDuration || 0
-        })
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        // Update local state
-        setEnrollment(prev => ({
-          ...prev,
-          completedLessons: [...(prev?.completedLessons || []), selectedLesson._id]
-        }));
-      }
-    } catch (error) {
-      console.error('Error marking lesson complete:', error);
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <div className="text-gray-600">Loading course details...</div>
+      <div className={`min-h-screen flex items-center justify-center font-quicksand ${
+        isDark ? 'bg-slate-950 text-white' : 'bg-brandCream text-slate-800'
+      }`}>
+        <div className="text-center space-y-3">
+          <div className="animate-spin text-brandCoral text-3xl">⏳</div>
+          <p className="text-xs font-bold uppercase tracking-widest opacity-70">Loading Course details...</p>
         </div>
       </div>
     );
@@ -312,12 +256,13 @@ const CourseDetail = () => {
 
   if (!course) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-2xl font-bold text-gray-900 mb-2">Course not found</div>
-          <p className="text-gray-600 mb-4">The course you're looking for doesn't exist.</p>
-          <Link to="/lms" className="text-blue-600 hover:text-blue-700 font-semibold">
-            ← Back to Courses
+      <div className={`min-h-screen flex flex-col items-center justify-center font-quicksand ${
+        isDark ? 'bg-slate-950 text-white' : 'bg-brandCream text-slate-800'
+      }`}>
+        <div className="text-center space-y-4 max-w-sm p-8 border rounded-3xl bg-white/5 border-white/10">
+          <p className="text-sm font-bold text-rose-500">Course not found or has been removed.</p>
+          <Link to="/lms" className="inline-block px-5 py-2.5 rounded-full bg-brandCoral text-white font-extrabold text-xs tracking-wider">
+            BACK TO COURSES
           </Link>
         </div>
       </div>
@@ -325,618 +270,387 @@ const CourseDetail = () => {
   }
 
   const isEnrolled = !!enrollment;
-  // Normalise price — could arrive as string "0" from FormData-based course creation
-  const coursePrice = Number(course.price) || 0;
-  const courseDiscounted = Number(course.discountedPrice) || 0;
-  const isFree = coursePrice <= 0;
-  const displayPrice = courseDiscounted > 0 && courseDiscounted < coursePrice ? courseDiscounted : coursePrice;
-  const totalLessons = modules.reduce((total, module) => 
-    total + (module.lessons?.length || 0), 0
-  );
-  const completedLessons = enrollment?.completedLessons?.length || 0;
-  const progress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+  const isFree = !course.price || Number(course.price) <= 0;
+  const displayPrice = course.price;
+  const totalLessons = modules.reduce((total, module) => total + (module.lessons?.length || 0), 0);
+  const themeClass = CATEGORY_THEMES[course.category] || CATEGORY_THEMES.default;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Mobile Sidebar Toggle */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 bg-white rounded-lg shadow-md"
-        >
-          {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
-      </div>
+    <div className={`min-h-screen font-quicksand pb-24 transition-colors duration-300 ${
+      isDark ? 'bg-slate-950 text-white' : 'bg-brandCream text-slate-800'
+    }`}>
+      
+      {/* 1. HERO BANNER HEADER */}
+      <div className={`relative overflow-hidden py-16 text-white bg-gradient-to-r ${themeClass}`}>
+        {/* Background glow animations */}
+        <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-white/5 blur-3xl" />
+        <div className="absolute bottom-0 left-10 w-96 h-96 rounded-full bg-white/5 blur-3xl" />
 
-      <div className="flex">
-        {/* Sidebar - Modules List */}
-        <div className={`
-          fixed lg:static inset-y-0 left-0 z-40
-          w-80 bg-white shadow-xl lg:shadow-none
-          transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:translate-x-0 transition-transform duration-300
-          overflow-y-auto
-        `}>
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">Course Content</h2>
-              <button
-                onClick={() => setSidebarOpen(false)}
-                className="lg:hidden p-1 hover:bg-gray-100 rounded"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            {/* Progress */}
-            <div className="mb-6">
-              <div className="flex justify-between text-sm text-gray-600 mb-1">
-                <span>Your Progress</span>
-                <span>{progress}%</span>
-              </div>
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-green-500 transition-all duration-300"
-                  style={{ width: `${progress}%` }}
-                ></div>
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                {completedLessons} of {totalLessons} lessons completed
-              </div>
-            </div>
-
-            {/* Module List */}
-            <ModuleList
-              modules={modules}
-              selectedLesson={selectedLesson}
-              onLessonSelect={handleLessonSelect}
-              enrollment={enrollment}
-            />
+        <div className="container mx-auto px-6 max-w-6xl relative z-10">
+          {/* Breadcrumbs */}
+          <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider opacity-80 mb-6">
+            <Link to="/lms" className="hover:underline flex items-center space-x-1">
+              <ChevronLeft className="w-3.5 h-3.5" />
+              <span>COURSES</span>
+            </Link>
+            <ChevronRight className="w-3 h-3" />
+            <span className="opacity-70">{course.category?.replace('-', ' ')}</span>
           </div>
 
-          {/* Resources */}
-          <div className="p-6 border-t border-gray-200">
-            <h3 className="font-semibold text-gray-900 mb-4">Resources</h3>
-            <div className="space-y-3">
-              <ResourceCard
-                icon={<FileText className="w-4 h-4" />}
-                title="Course Syllabus"
-                type="PDF"
-                size="2.4 MB"
+          {/* Title and Short description */}
+          <div className="max-w-3xl">
+            <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight mb-4">
+              {course.title}
+            </h1>
+            <p className="text-sm md:text-base leading-relaxed opacity-90 font-medium mb-8">
+              {course.description}
+            </p>
+          </div>
+
+          {/* Metadata badges */}
+          <div className="flex flex-wrap items-center gap-5 text-xs font-bold uppercase tracking-wider">
+            <div className="flex items-center space-x-2">
+              <img
+                src={course.instructor?.profileImage || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100'}
+                alt={course.instructor?.name}
+                className="w-7 h-7 rounded-full object-cover border border-white/20"
               />
-              <ResourceCard
-                icon={<Download className="w-4 h-4" />}
-                title="Worksheets Pack"
-                type="ZIP"
-                size="15.2 MB"
-              />
-              <ResourceCard
-                icon={<BookOpen className="w-4 h-4" />}
-                title="Reference Materials"
-                type="PDF"
-                size="8.7 MB"
-              />
+              <span className="opacity-95">{course.instructor?.name || 'School Instructor'}</span>
+            </div>
+
+            <div className="h-4 w-px bg-white/20" />
+
+            <div className="flex items-center text-amber-300">
+              <Star className="w-4 h-4 fill-amber-300 mr-1.5" />
+              <span className="text-white">{course.rating?.toFixed(1) || '5.0'}</span>
+              <span className="opacity-60 lowercase ml-1">({course.totalRatings || 1} ratings)</span>
+            </div>
+
+            <div className="h-4 w-px bg-white/20" />
+
+            <div className="flex items-center">
+              <Users className="w-4 h-4 mr-1.5 opacity-80" />
+              <span>{course.totalEnrollments || 0} students enrolled</span>
+            </div>
+
+            <div className="h-4 w-px bg-white/20" />
+
+            <div className="flex items-center">
+              <Clock className="w-4 h-4 mr-1.5 opacity-80" />
+              <span>{course.totalDuration || 60} mins total duration</span>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Main Content */}
-        <div className="flex-1">
-          {/* Course Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-            <div className="container mx-auto px-4 py-8">
-              <div className="flex items-center text-sm mb-4">
-                <Link to="/lms" className="hover:text-blue-200">Courses</Link>
-                <ChevronRight className="w-4 h-4 mx-2" />
-                <span className="text-blue-200">{course.category.replace('-', ' ')}</span>
+      {/* 2. SPLIT LAYOUT GRID */}
+      <div className="container mx-auto px-6 max-w-6xl mt-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+          
+          {/* LEFT COLUMN: OVERVIEW & CURRICULUM ACCORDION */}
+          <div className="lg:col-span-2 space-y-10">
+            
+            {/* Overview / About Section */}
+            <div className={`p-8 rounded-3xl border ${
+              isDark ? 'bg-slate-900/60 border-white/5' : 'bg-white border-orange-100/50 shadow-sm'
+            }`}>
+              <h2 className="text-xl font-black mb-4 flex items-center gap-2">
+                <PlayCircle className="w-5 h-5 text-brandCoral" />
+                <span>About this Course</span>
+              </h2>
+              <div className={`text-xs leading-relaxed font-semibold space-y-4 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                {course.detailedDescription || course.description}
               </div>
-              
-              <h1 className="text-3xl md:text-4xl font-bold mb-4">{course.title}</h1>
-              
-              <div className="flex flex-wrap items-center gap-4 text-sm">
-                <div className="flex items-center">
-                  <div className="w-8 h-8 rounded-full overflow-hidden mr-2">
-                    <img
-                      src={course.instructor?.profileImage || '/api/placeholder/32/32'}
-                      alt={course.instructor?.name}
-                      className="w-full h-full object-cover"
-                    />
+
+              {/* Milestones grid */}
+              {course.milestones && course.milestones.length > 0 && (
+                <div className="mt-8 pt-6 border-t border-slate-100 dark:border-white/5">
+                  <h3 className="text-sm font-black uppercase tracking-wider mb-4">What you will learn</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {course.milestones.map((milestone, idx) => (
+                      <div key={idx} className="flex items-start space-x-2 text-xs font-semibold">
+                        <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                        <span>{milestone}</span>
+                      </div>
+                    ))}
                   </div>
-                  <span>{course.instructor?.name}</span>
                 </div>
-                
-                <div className="flex items-center">
-                  <Star className="w-4 h-4 mr-1" />
-                  <span>{course.rating?.toFixed(1) || '0.0'} ({course.totalRatings || 0} ratings)</span>
+              )}
+            </div>
+
+            {/* Curriculum Accordion */}
+            <div className={`p-8 rounded-3xl border ${
+              isDark ? 'bg-slate-900/60 border-white/5' : 'bg-white border-orange-100/50 shadow-sm'
+            }`}>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-black flex items-center gap-2">
+                    <BookOpenCheck className="w-5 h-5 text-brandCoral" />
+                    <span>Course Curriculum</span>
+                  </h2>
+                  <p className="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-wider">
+                    {modules.length} Modules • {totalLessons} Lessons
+                  </p>
                 </div>
-                
-                <div className="flex items-center">
-                  <Users className="w-4 h-4 mr-1" />
-                  <span>{course.totalEnrollments || 0} students</span>
+              </div>
+
+              {/* Module list accordion */}
+              {modules.length === 0 ? (
+                <div className="text-center py-10 border border-dashed rounded-2xl border-orange-100 dark:border-white/5">
+                  <PlayCircle className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                  <p className="text-xs font-bold text-slate-400">Curriculum is being prepared. Check back shortly!</p>
                 </div>
-                
-                <div className="flex items-center">
-                  <Clock className="w-4 h-4 mr-1" />
-                  <span>{course.totalDuration || 0} min total</span>
+              ) : (
+                <div className="space-y-4">
+                  {modules.map((mod, modIdx) => {
+                    const isExpanded = expandedModules[mod._id];
+                    return (
+                      <div key={mod._id} className={`border rounded-2xl overflow-hidden transition-all duration-200 ${
+                        isDark ? 'border-white/5 bg-slate-950/40' : 'border-orange-100 bg-slate-50/50'
+                      }`}>
+                        {/* Module header tab */}
+                        <button
+                          onClick={() => toggleModule(mod._id)}
+                          className="w-full flex items-center justify-between p-4 text-left font-bold"
+                        >
+                          <div className="pr-4">
+                            <span className="text-[10px] uppercase tracking-widest text-brandCoral font-black">
+                              Module {modIdx + 1}
+                            </span>
+                            <h3 className="text-sm font-black mt-0.5 text-slate-800 dark:text-white">
+                              {mod.title}
+                            </h3>
+                          </div>
+                          <span className="text-xs text-brandCoral font-black uppercase shrink-0">
+                            {isExpanded ? 'Hide' : 'Show'}
+                          </span>
+                        </button>
+
+                        {/* Module lessons panel */}
+                        {isExpanded && (
+                          <div className="border-t border-slate-100 dark:border-white/5 bg-white dark:bg-slate-900/30">
+                            {!mod.lessons || mod.lessons.length === 0 ? (
+                              <p className="p-4 text-xs font-semibold text-slate-400">No lessons uploaded yet.</p>
+                            ) : (
+                              <div className="divide-y divide-slate-100 dark:divide-white/5">
+                                {mod.lessons.map((lesson, lesIdx) => (
+                                  <div key={lesson._id} className="flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                    <div className="flex items-center space-x-3 pr-4">
+                                      <Play className="w-4 h-4 text-slate-400 shrink-0" />
+                                      <div>
+                                        <h4 className="text-xs font-black text-slate-800 dark:text-slate-105">
+                                          {lesIdx + 1}. {lesson.title}
+                                        </h4>
+                                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-0.5">
+                                          {lesson.description || 'Watch tutorial lesson video'}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center space-x-2 shrink-0">
+                                      {lesson.videoDuration > 0 && (
+                                        <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-full">
+                                          {Math.round(lesson.videoDuration / 60)}m
+                                        </span>
+                                      )}
+                                      {isEnrolled || isFree ? (
+                                        <span className="text-emerald-500 text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 px-2.5 py-0.5 rounded-full">
+                                          Unlocked
+                                        </span>
+                                      ) : (
+                                        <Lock className="w-3.5 h-3.5 text-slate-400" />
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
+              )}
+            </div>
+
+            {/* Instructor Profile card */}
+            <div className={`p-8 rounded-3xl border ${
+              isDark ? 'bg-slate-900/60 border-white/5' : 'bg-white border-orange-100/50 shadow-sm'
+            }`}>
+              <h2 className="text-xl font-black mb-6 flex items-center gap-2">
+                <Users className="w-5 h-5 text-brandCoral" />
+                <span>Your Instructor</span>
+              </h2>
+              <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+                <img
+                  src={course.instructor?.profileImage || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200'}
+                  alt={course.instructor?.name}
+                  className="w-20 h-20 rounded-3xl object-cover shadow-lg border border-brandCoral/20 shrink-0"
+                />
+                <div className="space-y-2 text-center md:text-left">
+                  <h3 className="text-base font-black text-slate-800 dark:text-white">
+                    {course.instructor?.name || 'Miss Emily Stone'}
+                  </h3>
+                  <p className="text-[10px] font-black tracking-widest text-brandCoral uppercase">
+                    {course.instructor?.qualifications || 'Early Childhood Specialist'}
+                  </p>
+                  <p className={`text-xs font-semibold leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-500'}`}>
+                    {course.instructor?.bio || 'Dedicated child education coordinator guiding early developers using sandbox environments, coding toys, and logical visual-reasoning models.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN: STICKY PURCHASE CARD */}
+          <div className="space-y-6 lg:sticky lg:top-24">
+            
+            <div className={`overflow-hidden rounded-3xl border transition-all duration-300 shadow-xl ${
+              isDark 
+                ? 'border-white/10 bg-slate-900/60 backdrop-blur-md shadow-cyan-950/10' 
+                : 'border-orange-100 bg-white shadow-orange-100/40'
+            }`}>
+              {/* Image banner / placeholder */}
+              <div className="relative aspect-video bg-slate-950/20 overflow-hidden flex items-center justify-center border-b dark:border-white/5">
+                {course.imageUrl ? (
+                  <img
+                    src={course.imageUrl}
+                    alt={course.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-tr from-brandCoral/30 to-brandSky/20 flex items-center justify-center">
+                    <Video className="w-10 h-10 text-brandCoral/80 animate-pulse" />
+                  </div>
+                )}
                 
-                {course.isFeatured && (
-                  <span className="inline-flex items-center px-3 py-1 bg-yellow-500 text-white rounded-full text-xs font-semibold">
-                    <Award className="w-3 h-3 mr-1" />
-                    Featured
-                  </span>
+                {/* Floating free preview badge */}
+                {(isEnrolled || isFree) && (
+                  <Link
+                    to={`/lms/learn/${id}`}
+                    className="absolute inset-0 bg-black/40 hover:bg-black/50 transition-all flex items-center justify-center group"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-brandCoral flex items-center justify-center text-white shadow-lg transition-transform group-hover:scale-110">
+                      <Play className="w-5 h-5 fill-white ml-0.5" />
+                    </div>
+                  </Link>
                 )}
               </div>
-            </div>
-          </div>
 
-          {/* Tabs */}
-          <div className="bg-white border-b border-gray-200">
-            <div className="container mx-auto px-4">
-              <div className="flex overflow-x-auto">
-                {['overview', 'curriculum', 'instructor', 'reviews'].map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`px-6 py-4 font-medium text-sm capitalize border-b-2 transition-colors ${
-                      activeTab === tab
-                        ? 'border-blue-600 text-blue-600'
-                        : 'border-transparent text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Tab Content */}
-          <div className="container mx-auto px-4 py-8">
-            {activeTab === 'overview' && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left Column - Video Player */}
-                <div className="lg:col-span-2">
-                  {selectedLesson ? (
-                    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                      <VideoPlayer
-                        videoUrl={selectedLesson.videoUrl}
-                        title={selectedLesson.title}
-                        onProgressUpdate={(progress) => {
-                          // Handle progress updates
-                        }}
-                      />
-                      
-                      {/* Lesson Info */}
-                      <div className="p-6">
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h2 className="text-xl font-bold text-gray-900 mb-2">
-                              {selectedLesson.title}
-                            </h2>
-                            <p className="text-gray-600">
-                              {selectedLesson.description}
-                            </p>
-                          </div>
-                          
-                          {isEnrolled && (
-                            <button
-                              onClick={handleMarkComplete}
-                              className={`inline-flex items-center px-4 py-2 rounded-lg font-semibold ${
-                                enrollment?.completedLessons?.includes(selectedLesson._id)
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                              }`}
-                            >
-                              <CheckCircle className="w-4 h-4 mr-2" />
-                              {enrollment?.completedLessons?.includes(selectedLesson._id)
-                                ? 'Completed'
-                                : 'Mark Complete'}
-                            </button>
-                          )}
-                        </div>
-                        
-                        {/* Lesson Content */}
-                        <div className="prose max-w-none">
-                          {selectedLesson.content && (
-                            <div dangerouslySetInnerHTML={{ __html: selectedLesson.content }} />
-                          )}
-                        </div>
-                      </div>
+              {/* Price & CTA details */}
+              <div className="p-6 space-y-6">
+                
+                {/* Price display tags */}
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">
+                    Course Investment
+                  </span>
+                  {isFree ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-3xl font-black text-emerald-500">FREE</span>
+                      <span className="text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full">
+                        Open Access
+                      </span>
                     </div>
                   ) : (
-                    <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-                      <Video className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                        Select a lesson to start learning
-                      </h3>
-                      <p className="text-gray-600">
-                        Choose a lesson from the sidebar to begin watching
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Right Column - Course Info */}
-                <div className="space-y-6">
-                  {/* Enrollment Card */}
-                  <div className="bg-white rounded-xl shadow-sm p-6">
-                    {isEnrolled ? (
-                      <div>
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="text-lg font-bold text-gray-900">
-                            You're enrolled!
-                          </div>
-                          <div className="text-sm text-green-600 font-semibold">
-                            {progress}% Complete
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-3">
-                          <Link
-                            to={`/lms/learn/${id}`}
-                            className="block w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 text-center transition-colors"
-                          >
-                            Continue Learning
-                          </Link>
-                          
-                          <button className="w-full py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center">
-                            <Bookmark className="w-4 h-4 mr-2" />
-                            Save for Later
-                          </button>
-                          
-                          <button className="w-full py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center">
-                            <Share2 className="w-4 h-4 mr-2" />
-                            Share Course
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <div className="text-lg font-bold text-gray-900 mb-4">
-                          {!isFree ? 'Enroll in this course' : 'Free Course'}
-                        </div>
-                        
-                        <div className="space-y-3">
-                          {!isFree ? (
-                            <>
-                              {/* Price display */}
-                              <div className="flex items-end gap-3 mb-2">
-                                <span className="text-3xl font-bold text-gray-900">
-                                  ₹{displayPrice}
-                                </span>
-                                {courseDiscounted > 0 && courseDiscounted < coursePrice && (
-                                  <span className="text-lg text-gray-400 line-through mb-0.5">₹{coursePrice}</span>
-                                )}
-                              </div>
-
-                              {/* Payment step indicator */}
-                              {isProcessingPayment && (
-                                <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 rounded-lg px-3 py-2">
-                                  <span className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin shrink-0" />
-                                  <span>
-                                    {paymentStep === 'creating' && 'Preparing payment...'}
-                                    {paymentStep === 'checkout' && 'Opening checkout...'}
-                                    {paymentStep === 'verifying' && 'Verifying payment...'}
-                                  </span>
-                                </div>
-                              )}
-
-                              {user ? (
-                                <button
-                                  onClick={handleEnroll}
-                                  disabled={isProcessingPayment}
-                                  className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
-                                >
-                                  {isProcessingPayment
-                                    ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Processing...</>
-                                    : <><CreditCard className="w-4 h-4" />Buy Now — ₹{displayPrice}</>
-                                  }
-                                </button>
-                              ) : (
-                                <Link
-                                  to="/login"
-                                  className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                                >
-                                  <LogIn className="w-4 h-4" />Log In to Purchase
-                                </Link>
-                              )}
-
-                              {/* Trust badges */}
-                              <div className="flex items-center justify-center gap-4 pt-1 text-xs text-gray-500">
-                                <span className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-green-500" />Secure checkout</span>
-                                <span className="flex items-center gap-1"><Zap className="w-3.5 h-3.5 text-yellow-500" />Instant access</span>
-                              </div>
-                            </>
-                          ) : (
-                            /* FREE COURSE — no enroll step, go straight to learning */
-                            <>
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-3xl font-bold text-green-600">Free</span>
-                                <span className="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">No sign-up required</span>
-                              </div>
-                              <p className="text-sm text-gray-500 mb-3">
-                                All lessons are freely accessible. Just click Watch to start.
-                              </p>
-                              <Link
-                                to={`/lms/learn/${id}`}
-                                className="w-full py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                              >
-                                <PlayCircle className="w-5 h-5" />
-                                Watch Free Lessons
-                              </Link>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Course Features */}
-                  <div className="bg-white rounded-xl shadow-sm p-6">
-                    <h3 className="font-semibold text-gray-900 mb-4">This course includes:</h3>
-                    <ul className="space-y-3">
-                      <li className="flex items-center text-sm text-gray-600">
-                        <Video className="w-4 h-4 mr-3 text-blue-600" />
-                        {totalLessons} on-demand video lessons
-                      </li>
-                      <li className="flex items-center text-sm text-gray-600">
-                        <Download className="w-4 h-4 mr-3 text-blue-600" />
-                        Downloadable resources
-                      </li>
-                      <li className="flex items-center text-sm text-gray-600">
-                        <MessageSquare className="w-4 h-4 mr-3 text-blue-600" />
-                        Q&A support
-                      </li>
-                      <li className="flex items-center text-sm text-gray-600">
-                        <CheckCircle className="w-4 h-4 mr-3 text-blue-600" />
-                        Certificate of completion
-                      </li>
-                      <li className="flex items-center text-sm text-gray-600">
-                        <BarChart className="w-4 h-4 mr-3 text-blue-600" />
-                        Progress tracking
-                      </li>
-                    </ul>
-                  </div>
-
-                  {/* Instructor Card */}
-                  {course.instructor && (
-                    <InstructorCard instructor={course.instructor} />
-                  )}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'curriculum' && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Course Curriculum</h2>
-                
-                <div className="space-y-6">
-                  {modules.map((module, moduleIndex) => (
-                    <div key={module._id} className="border border-gray-200 rounded-lg overflow-hidden">
-                      <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="font-semibold text-gray-900">
-                              Module {moduleIndex + 1}: {module.title}
-                            </h3>
-                            <p className="text-sm text-gray-600 mt-1">
-                              {module.lessons?.length || 0} lessons • {module.lessons?.reduce((total, lesson) => total + (lesson.videoDuration || 0), 0) || 0} min
-                            </p>
-                          </div>
-                          <ChevronRight className="w-5 h-5 text-gray-400" />
-                        </div>
-                      </div>
-                      
-                      <div className="divide-y divide-gray-100">
-                        {module.lessons?.map((lesson, lessonIndex) => (
-                          <div key={lesson._id} className="px-6 py-4 hover:bg-gray-50">
-                            <div className="flex items-center">
-                              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-4">
-                                <span className="text-sm font-semibold text-blue-600">
-                                  {lessonIndex + 1}
-                                </span>
-                              </div>
-                              
-                              <div className="flex-1">
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <h4 className="font-medium text-gray-900">
-                                      {lesson.title}
-                                    </h4>
-                                    <p className="text-sm text-gray-500 mt-1">
-                                      {Math.round((lesson.videoDuration || 0) / 60)} min
-                                    </p>
-                                  </div>
-                                  
-                                  <div className="flex items-center space-x-2">
-                                    {isEnrolled && enrollment?.completedLessons?.includes(lesson._id) && (
-                                      <CheckCircle className="w-5 h-5 text-green-500" />
-                                    )}
-                                    <PlayCircle className="w-5 h-5 text-blue-600" />
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'instructor' && course.instructor && (
-              <div className="bg-white rounded-xl shadow-sm p-8">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  <div className="lg:col-span-1">
-                    <div className="text-center">
-                      <div className="w-48 h-48 rounded-full overflow-hidden mx-auto mb-6">
-                        <img
-                          src={course.instructor.profileImage || '/api/placeholder/192/192'}
-                          alt={course.instructor.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      
-                      <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                        {course.instructor.name}
-                      </h2>
-                      
-                      <div className="text-gray-600 mb-4">
-                        {course.instructor.qualifications}
-                      </div>
-                      
-                      <div className="flex items-center justify-center space-x-4">
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-gray-900">50+</div>
-                          <div className="text-sm text-gray-600">Courses</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-gray-900">10K+</div>
-                          <div className="text-sm text-gray-600">Students</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-gray-900">4.9</div>
-                          <div className="text-sm text-gray-600">Rating</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="lg:col-span-2">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-4">About the Instructor</h3>
-                    
-                    <div className="prose max-w-none text-gray-600 mb-8">
-                      {course.instructor.bio || (
-                        <p>
-                          Experienced educator with over 10 years of teaching experience 
-                          in early childhood education. Specialized in creating engaging 
-                          and interactive learning experiences for young children.
-                        </p>
+                    <div className="flex items-end gap-2.5">
+                      <span className="text-3xl font-black text-slate-800 dark:text-white">
+                        ₹{displayPrice}
+                      </span>
+                      {course.discountedPrice > 0 && course.discountedPrice < course.price && (
+                        <span className="text-sm font-bold text-slate-400 line-through mb-1">
+                          ₹{course.discountedPrice}
+                        </span>
                       )}
                     </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="bg-blue-50 p-4 rounded-lg">
-                        <h4 className="font-semibold text-gray-900 mb-2">Teaching Style</h4>
-                        <p className="text-sm text-gray-600">
-                          Interactive, engaging, and child-centered approach with 
-                          emphasis on hands-on learning experiences.
-                        </p>
-                      </div>
-                      
-                      <div className="bg-purple-50 p-4 rounded-lg">
-                        <h4 className="font-semibold text-gray-900 mb-2">Expertise</h4>
-                        <p className="text-sm text-gray-600">
-                          Early childhood development, cognitive skills, social-emotional 
-                          learning, and creative expression.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </div>
-              </div>
-            )}
 
-            {activeTab === 'reviews' && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Student Reviews</h2>
-                
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  {/* Rating Summary */}
-                  <div className="lg:col-span-1">
-                    <div className="text-center mb-6">
-                      <div className="text-5xl font-bold text-gray-900 mb-2">
-                        {course.rating?.toFixed(1) || '0.0'}
-                      </div>
-                      <div className="flex items-center justify-center mb-2">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={`w-6 h-6 ${
-                              star <= Math.round(course.rating || 0)
-                                ? 'text-yellow-400 fill-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <div className="text-gray-600">
-                        Course Rating • {course.totalRatings || 0} reviews
-                      </div>
-                    </div>
-                    
-                    {/* Rating Breakdown */}
-                    <div className="space-y-3">
-                      {[5, 4, 3, 2, 1].map((stars) => (
-                        <div key={stars} className="flex items-center">
-                          <div className="w-10 text-sm text-gray-600">{stars} star</div>
-                          <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden mx-3">
-                            <div 
-                              className="h-full bg-yellow-400"
-                              style={{ width: '70%' }}
-                            ></div>
-                          </div>
-                          <div className="w-10 text-sm text-gray-600">70%</div>
-                        </div>
-                      ))}
-                    </div>
+                {/* Main Action Button */}
+                <div>
+                  {isEnrolled ? (
+                    <Link
+                      to={`/lms/learn/${id}`}
+                      className="w-full py-4 rounded-2xl bg-brandCoral hover:bg-orange-600 text-white font-extrabold text-xs tracking-wider transition-all shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20 flex items-center justify-center space-x-2"
+                    >
+                      <PlayCircle className="w-4 h-4" />
+                      <span>START LEARNING NOW</span>
+                    </Link>
+                  ) : isFree ? (
+                    <button
+                      onClick={handleEnroll}
+                      disabled={enrolling}
+                      className="w-full py-4 rounded-2xl bg-brandCoral hover:bg-orange-600 text-white font-extrabold text-xs tracking-wider transition-all shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20 flex items-center justify-center space-x-2"
+                    >
+                      {enrolling ? (
+                        <>
+                          <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>ENROLLING...</span>
+                        </>
+                      ) : (
+                        <>
+                          <PlayCircle className="w-4 h-4" />
+                          <span>ENROLL & START WATCHING</span>
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleEnroll}
+                      disabled={paymentStep !== 'idle'}
+                      className="w-full py-4 rounded-2xl bg-brandCoral hover:bg-orange-600 text-white font-extrabold text-xs tracking-wider transition-all shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20 flex items-center justify-center space-x-2"
+                    >
+                      {paymentStep !== 'idle' ? (
+                        <>
+                          <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>
+                            {paymentStep === 'creating' && 'PREPARING ORDER...'}
+                            {paymentStep === 'checkout' && 'OPENING CHECKOUT...'}
+                            {paymentStep === 'verifying' && 'VERIFYING...'}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="w-4 h-4" />
+                          <span>BUY NOW & GET ACCESS</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                {/* Bullet details list */}
+                <div className="space-y-4 pt-5 border-t border-slate-100 dark:border-white/5 text-[11px] font-bold text-slate-500">
+                  <div className="flex items-center">
+                    <Video className="w-4 h-4 mr-3 text-brandCoral" />
+                    <span>{totalLessons} Lessons on-demand tutorial video</span>
                   </div>
-                  
-                  {/* Reviews List */}
-                  <div className="lg:col-span-2">
-                    <div className="space-y-6">
-                      {/* Sample Review */}
-                      <div className="border-b border-gray-100 pb-6">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 rounded-full bg-gray-300 mr-3"></div>
-                            <div>
-                              <div className="font-semibold text-gray-900">Parent Name</div>
-                              <div className="text-sm text-gray-500">2 months ago</div>
-                            </div>
-                          </div>
-                          <div className="flex items-center">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Star
-                                key={star}
-                                className="w-4 h-4 text-yellow-400 fill-yellow-400"
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        
-                        <h4 className="font-semibold text-gray-900 mb-2">
-                          Excellent course for early learning
-                        </h4>
-                        
-                        <p className="text-gray-600">
-                          My child has shown remarkable improvement in cognitive skills 
-                          after completing this course. The interactive lessons keep 
-                          them engaged and the progress tracking helps me monitor 
-                          their development.
-                        </p>
-                      </div>
-                      
-                      {/* Add more sample reviews as needed */}
-                    </div>
-                    
-                    <div className="mt-8 text-center">
-                      <button className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors">
-                        Load More Reviews
-                      </button>
-                    </div>
+                  <div className="flex items-center">
+                    <Download className="w-4 h-4 mr-3 text-brandCoral" />
+                    <span>Downloadable learning resources packs</span>
+                  </div>
+                  <div className="flex items-center">
+                    <MessageSquare className="w-4 h-4 mr-3 text-brandCoral" />
+                    <span>Dedicated student support discussions</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Award className="w-4 h-4 mr-3 text-brandCoral" />
+                    <span>Certificate of completion included</span>
+                  </div>
+                  <div className="flex items-center">
+                    <ShieldCheck className="w-4 h-4 mr-3 text-brandCoral" />
+                    <span>PCI-DSS Secured Transaction systems</span>
                   </div>
                 </div>
+
               </div>
-            )}
+            </div>
+
           </div>
+
         </div>
       </div>
+
     </div>
   );
-};
-
-export default CourseDetail;
+}

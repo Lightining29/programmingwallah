@@ -32,6 +32,17 @@ const ModuleSchema = new mongoose.Schema({
   }
 });
 
+// Virtual for lessons belonging to this module
+ModuleSchema.virtual('lessons', {
+  ref: 'Lesson',
+  localField: '_id',
+  foreignField: 'module',
+  justOne: false
+});
+
+ModuleSchema.set('toJSON', { virtuals: true });
+ModuleSchema.set('toObject', { virtuals: true });
+
 // Update the updatedAt field on save
 ModuleSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
