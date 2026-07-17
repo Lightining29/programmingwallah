@@ -214,7 +214,7 @@ router.post('/create-order', protect, async (req, res) => {
       body: JSON.stringify({
         amount: inrToPaise(coursePrice),
         currency: 'INR',
-        receipt: `course_${courseId}_${Date.now()}`,
+        receipt: `crs_${String(courseId).slice(-8)}_${Date.now().toString(36)}`,
         notes: {
           type: 'course',
           courseId: String(courseId),
@@ -365,7 +365,7 @@ router.post('/create-fee-order', async (req, res) => {
       body: JSON.stringify({
         amount: inrToPaise(feeAmount),
         currency: 'INR',
-        receipt: `fee_${feeId}_${Date.now()}`,
+        receipt: `fee_${String(feeId).slice(-8)}_${Date.now().toString(36)}`,
         notes: {
           type: 'installment',
           feeId: String(feeId),
@@ -533,7 +533,7 @@ router.post('/create-admission-order', protect, async (req, res) => {
       body: JSON.stringify({
         amount: inrToPaise(payAmount),
         currency: 'INR',
-        receipt: `admission_${admissionPaymentId}_${Date.now()}`,
+        receipt: `adm_${String(admissionPaymentId).slice(-8)}_${Date.now().toString(36)}`,
         notes: {
           type: 'admission',
           admissionPaymentId: String(admissionPaymentId),
