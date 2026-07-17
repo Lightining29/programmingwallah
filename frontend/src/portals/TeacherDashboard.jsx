@@ -602,7 +602,7 @@ export default function TeacherDashboard() {
                     <div className="bg-white border-2 border-white shadow-[0_15px_30px_rgba(159,146,236,0.12)] rounded-3xl p-5 space-y-4 text-slate-800 relative overflow-hidden">
                       <div className="text-center pb-2.5 border-b-2 border-slate-100 space-y-1">
                         <span className="text-[9px] font-extrabold tracking-widest text-[#7C3AED] bg-[#EAE8FC] px-2.5 py-1 rounded-full">GENERATED RESULT CARD</span>
-                        <h4 className="font-quicksand font-bold text-sm text-[#5B468C] mt-1.5">Pranidha International School</h4>
+                        <h4 className="font-quicksand font-bold text-sm text-[#5B468C] mt-1.5">Appletree Infotech</h4>
                         <p className="text-[9px] text-slate-400 font-semibold">{publishedResult.term}</p>
                       </div>
                       

@@ -104,7 +104,7 @@ export default function RazorpayTestPage() {
         key: orderData.keyId || rzpKeyId,
         amount: orderData.amount,
         currency: orderData.currency || 'INR',
-        name: 'Pranidha International School',
+        name: 'Appletree Infotech',
         description: 'Standard Checkout Integration Demo',
         order_id: orderData.order_id,
         prefill: {

@@ -605,7 +605,7 @@ router.post('/webhook', async (req, res) => {
 
       const paymentId = paymentEntity.id || orderEntity.id;
       if (!paymentId) return;
-      const method = paymentEntity.method || 'upi';
+      const method = paymentEntity.method || 'razorpay';
       const notes = { ...(orderEntity.notes || {}), ...(paymentEntity.notes || {}) };
       const razorpayOrderId = paymentEntity.order_id || orderEntity.id || '';
 

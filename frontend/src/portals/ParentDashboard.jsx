@@ -71,7 +71,7 @@ function FeePayModal({ fee, allFees = [], studentName, onClose, onSuccess }) {
         key: rzpKey || orderData.keyId,
         amount: orderData.order.amount,
         currency: 'INR',
-        name: 'Pranidha International School',
+        name: 'Appletree Infotech',
         description: payMode === 'full' ? `Full Fee Balance — ${studentName}` : fee.term,
         order_id: orderData.order.id,
         prefill: { name: studentName },
@@ -699,7 +699,7 @@ export default function ParentDashboard() {
                 <CheckCircle className="w-6 h-6" />
               </div>
               <span className="text-[9px] font-extrabold tracking-widest text-[#7C3AED] bg-[#EAE8FC] px-2.5 py-0.5 rounded-full">OFFICIAL RECEIPT</span>
-              <h4 className="font-quicksand font-bold text-[#5B468C] text-sm mt-2">Pranidha International School</h4>
+              <h4 className="font-quicksand font-bold text-[#5B468C] text-sm mt-2">Appletree Infotech</h4>
               <p className="text-[10px] text-slate-400 font-semibold font-mono">Receipt No: {activeReceipt.receiptNumber}</p>
             </div>
 

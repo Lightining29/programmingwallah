@@ -1915,7 +1915,7 @@ export default function AdminDashboard() {
           </style>
         </head>
         <body>
-          <h1>Pranidha International School</h1>
+          <h1>Appletree Infotech</h1>
           <p class="subtitle">Active Student Database Report — Generated on ${new Date().toLocaleDateString()}</p>
           <table>
             <thead>
@@ -2399,7 +2399,7 @@ export default function AdminDashboard() {
 
                     {/* Document Upload Section */}
                     <div className="space-y-3">
-                      <h5 className="pb-1 font-bold border-b text-slate-800 font-quicksand">3. Required Documents & Identity Proofs</h5>
+                      <h5 className="pb-1 font-bold border-b text-slate-800 font-quicksand">3. Documents & Identity Proofs (Optional)</h5>
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 text-slate-600">
                         <div className="space-y-1">
                           <label className="font-bold text-slate-600">Birth Certificate (PDF / Image)</label>
@@ -5199,10 +5199,10 @@ export default function AdminDashboard() {
 
               {/* Receipt Header */}
               <div className="relative z-10 pb-6 text-center border-b border-solid border-slate-200 bg-[#F5F5FF] rounded-t-2xl p-4">
-                <img src="/logo.png" alt="Pranidha Logo" className="mx-auto mb-2 h-14" />
-                <h2 className="text-2xl font-serif font-bold tracking-tight text-[#5B468C]">PRANIDHA INTERNATIONAL SCHOOL</h2>
+                <img src="/logo.png" alt="Appletree Logo" className="mx-auto mb-2 h-14" />
+                <h2 className="text-2xl font-serif font-bold tracking-tight text-[#5B468C]">APPLETREE INFOTECH</h2>
                 <p className="text-xs font-bold tracking-wider uppercase text-slate-500">Official Fee Slip / Booklet Receipt</p>
-                <p className="text-[10px] text-slate-400 mt-1">123 Sunshine Street, Sector 5 | Phone: +91 98765 43210 | billing@pranidhainternational.in</p>
+                <p className="text-[10px] text-slate-400 mt-1">Phone: +91 7503962162 | hr@appletreeinfotech.in</p>
               </div>
 
               {/* Receipt Details Grid */}

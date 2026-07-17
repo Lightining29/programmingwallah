@@ -108,7 +108,7 @@ export default function Contact() {
                 Connect directly with our admissions counselor on WhatsApp for immediate feedback on fee models.
               </p>
               <a
-                href="https://wa.me/917503962162?text=Hello%20Pranidha%20School%20Admissions%20Team%2C%20I%20have%20an%20inquiry."
+                href="https://wa.me/917503962162?text=Hello%20Appletree%20Infotech%20Admissions%20Team%2C%20I%20have%20an%20inquiry."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center w-full py-3 space-x-2 text-xs font-bold text-white transition-all shadow-md font-quicksand bg-emerald-500 hover:bg-emerald-600 rounded-xl"

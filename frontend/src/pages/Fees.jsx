@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { 
-  CreditCard, CheckCircle, HelpCircle, AlertCircle, QrCode, 
+  CreditCard, CheckCircle, HelpCircle, AlertCircle, 
   Coins, Wallet, Loader, Check, Search, User, FileText, 
   ArrowLeft, ShieldCheck, Download 
 } from 'lucide-react';
@@ -17,9 +17,8 @@ export default function Fees() {
   const [studentFees, setStudentFees] = useState([]);
   const [searchError, setSearchError] = useState('');
 
-  // Selected Payment Item
   const [selectedFee, setSelectedFee] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState('upi'); // 'upi' | 'razorpay' | 'cash'
+  const [paymentMethod, setPaymentMethod] = useState('razorpay'); // 'razorpay' | 'cash'
   
   // Checkout Stages
   const [checkoutStage, setCheckoutStage] = useState('lookup'); // 'lookup' | 'checkout' | 'success'
@@ -127,7 +126,7 @@ export default function Fees() {
       return;
     }
 
-    // For UPI / online payments via Razorpay (if enabled)
+    // For online payments via Razorpay (if enabled)
     if (rzpKey && window.Razorpay) {
       setLoading(true);
       try {
@@ -148,7 +147,7 @@ export default function Fees() {
             key: rzpKey,
             amount: orderData.order.amount,
             currency: 'INR',
-            name: 'Pranidha International School',
+            name: 'Appletree Infotech',
             description: selectedFee.term,
             order_id: orderData.order.id,
             prefill: {
@@ -177,8 +176,8 @@ export default function Fees() {
         alert('Network error. Failed to initiate payment.');
       }
     } else {
-      // Razorpay is not configured -> stay in pending stage for UPI QR fallback
-      setCheckoutStage('checkout');
+      alert('Razorpay is not configured. Please use Cash at Desk.');
+      setPaymentMethod('cash');
     }
   };
 
@@ -196,7 +195,7 @@ export default function Fees() {
             payment: {
               entity: {
                 id: `pay_mock_${Math.random().toString(36).substr(2, 9)}`,
-                method: 'upi',
+                method: 'razorpay',
                 notes: {
                   type: 'installment',
                   feeId: selectedFee._id,
@@ -487,17 +486,17 @@ export default function Fees() {
                 <label className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-655'}`}>Select Payment Method</label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div
-                    onClick={() => setPaymentMethod('upi')}
+                    onClick={() => setPaymentMethod('razorpay')}
                     className={`flex items-center gap-3 p-4 border rounded-2xl cursor-pointer transition-all ${
-                      paymentMethod === 'upi'
+                      paymentMethod === 'razorpay'
                         ? (isDark ? 'border-brandCoral bg-brandCoral/10 text-white' : 'border-brandCoral bg-brandCoral/5 text-brandCoral-dark')
                         : (isDark ? 'border-white/10 hover:bg-white/5 text-slate-300' : 'border-slate-150 hover:bg-slate-50 text-slate-600')
                     }`}
                   >
-                    <QrCode className="w-5 h-5 shrink-0" />
+                    <CreditCard className="w-5 h-5 shrink-0" />
                     <div>
-                      <p className="text-xs font-bold">UPI / GPay / PhonePe</p>
-                      <p className="text-[10px] opacity-70">Scan QR Code instantly</p>
+                      <p className="text-xs font-bold">Razorpay</p>
+                      <p className="text-[10px] opacity-70">Pay online via Razorpay</p>
                     </div>
                   </div>
 
@@ -518,28 +517,12 @@ export default function Fees() {
                 </div>
               </div>
 
-              {/* Razorpay live checkout is NOT enabled / sandbox fallback QR */}
-              {paymentMethod === 'upi' && !rzpKey && (
+              {/* Sandbox simulation controls (when no keys) */}
+              {paymentMethod === 'razorpay' && !rzpKey && (
                 <div className="space-y-4 pt-2 text-center border-t border-dashed border-slate-200/50">
                   <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    Scan the sandbox VPA QR Code to pay <span className="font-bold text-brandCoral">₹{selectedFee.amount}</span>.
+                    Razorpay keys not configured. Click below to simulate payment.
                   </p>
-                  
-                  <div className="inline-block p-4 rounded-3xl bg-white border border-orange-100">
-                    <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(
-                        `upi://pay?pa=billing@appletree&pn=Appletree%20Coaching&am=${selectedFee.amount}&cu=INR`
-                      )}`}
-                      alt="UPI QR Code"
-                      className="h-40 w-40"
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-center gap-2 text-[11px] font-semibold text-brandSky">
-                    <Loader className="w-3.5 h-3.5 animate-spin" />
-                    <span>Auto-detecting payment… waiting for webhook callback</span>
-                  </div>
-
                   <div className="pt-2">
                     <button
                       onClick={handleSimulateWebhook}
@@ -553,8 +536,8 @@ export default function Fees() {
                 </div>
               )}
 
-              {/* Submit pay buttons */}
-              {(paymentMethod === 'cash' || rzpKey) && (
+              {/* Submit pay button */}
+              {paymentMethod === 'cash' && (
                 <button
                   onClick={handleProceedPayment}
                   disabled={loading}
@@ -589,7 +572,7 @@ export default function Fees() {
                 <div className="bg-white border-[5px] border-slate-50 rounded-[2.5rem] w-full p-6 shadow-md relative text-slate-800 text-left space-y-4">
                   <div className="border-b-2 border-slate-100 pb-3 text-center space-y-1">
                     <span className="text-[8px] font-extrabold tracking-widest text-[#7C3AED] bg-[#EAE8FC] px-2.5 py-0.5 rounded-full">OFFICIAL RECEIPT</span>
-                    <h4 className="font-quicksand font-bold text-[#5B468C] text-sm mt-2">Pranidha International School</h4>
+                    <h4 className="font-quicksand font-bold text-[#5B468C] text-sm mt-2">Appletree Infotech</h4>
                     <p className="text-[10px] text-slate-400 font-semibold font-mono">Receipt No: {receipt.receiptNumber}</p>
                   </div>
 
@@ -624,7 +607,7 @@ export default function Fees() {
                   </div>
                 </div>
               ) : (
-                /* Cash fallback display */
+                /* Fallback display */
                 <div className={`p-5 rounded-2xl text-left text-xs space-y-2.5 font-semibold ${
                   isDark ? 'bg-slate-800/60 border border-white/5 text-slate-300' : 'bg-slate-50 border border-slate-100 text-slate-600'
                 }`}>
@@ -669,7 +652,7 @@ export default function Fees() {
             Customized Installment Schedules
           </h4>
           <p className={`text-xs leading-relaxed mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            By default, dynamic installment plans are calculated as 1/3 of the published course price. If you require custom timeline modifications or experience payment processing issues, please email our billing department at <code className="font-bold">billing@appletreeinfotech.in</code>.
+            By default, dynamic installment plans are calculated as 1/3 of the published course price. If you require custom timeline modifications or experience payment processing issues, please email us at <code className="font-bold">hr@appletreeinfotech.in</code>.
           </p>
         </div>
       </div>

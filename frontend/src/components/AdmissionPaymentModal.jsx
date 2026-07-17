@@ -1,25 +1,16 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Wallet, QrCode, CheckCircle, Loader, Copy, ShieldCheck, Banknote } from 'lucide-react';
+import { X, Wallet, CheckCircle, Loader, ShieldCheck, Banknote, CreditCard } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 /**
- * Admission payment modal: choose Cash or UPI.
+ * Admission payment modal: choose Cash or Razorpay.
  * - Cash: instantly collected → student auto-saved by the backend.
- * - UPI: shows a QR + deep link, then auto-polls the status so the student is
- *        saved automatically once payment is verified ("automatically fetch
- *        that payment done and student save").
- *
- * Props:
- *  - admissionData: { studentDetails, parentDetails, amount }
- *  - onClose()
- *  - onSuccess({ applicationNumber, studentId, receipt })
+ * - Razorpay: opens Razorpay checkout → auto-registers on webhook verification.
  */
 export default function AdmissionPaymentModal({ admissionData, onClose, onSuccess }) {
-  const [method, setMethod] = useState('');        // 'cash' | 'upi'
-  const [stage, setStage] = useState('choose');    // choose | upiPending | verifying | success | error
+  const [method, setMethod] = useState('');        // 'cash' | 'razorpay'
+  const [stage, setStage] = useState('choose');    // choose | processing | verifying | success | error
   const [payment, setPayment] = useState(null);
-  const [upiDeepLink, setUpiDeepLink] = useState('');
-  const [upiQr, setUpiQr] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [rzpKey, setRzpKey] = useState(null);
   const [rzpReady, setRzpReady] = useState(false);
@@ -33,7 +24,6 @@ export default function AdmissionPaymentModal({ admissionData, onClose, onSucces
   const studentName = admissionData?.studentDetails?.name || 'student';
   const photoFile = admissionData?.photo || null;
 
-  // Build a multipart body so the uploaded photo travels with the payment.
   const buildPaymentFormData = (method) => {
     const fd = new FormData();
     fd.append('studentDetails', JSON.stringify(admissionData.studentDetails));
@@ -46,11 +36,9 @@ export default function AdmissionPaymentModal({ admissionData, onClose, onSucces
   const fireSuccess = useCallback((result) => {
     setStage('success');
     confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
-    // Give the confetti a beat, then bubble up to the parent.
     setTimeout(() => onSuccess?.(result), 900);
   }, [onSuccess]);
 
-  // Auto-poll a UPI payment so the student is saved automatically once verified.
   const startPolling = useCallback((paymentId) => {
     if (pollRef.current) clearInterval(pollRef.current);
     pollRef.current = setInterval(async () => {
@@ -126,29 +114,26 @@ export default function AdmissionPaymentModal({ admissionData, onClose, onSucces
     }
   };
 
-  // ---- UPI: create a payment attempt, render QR, then poll ----
-  const handleUpi = async () => {
+  // ---- RAZORPAY: create payment record, open Razorpay checkout, then poll ----
+  const handleRazorpay = async () => {
     if (finalAmount <= 0) {
       alert('Please enter a valid admission fee amount greater than 0.');
       return;
     }
-    setStage('verifying');
+    setStage('processing');
     setErrorMsg('');
     try {
       const res = await fetch('/api/admission-payment/create', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
-        body: buildPaymentFormData('upi')
+        body: buildPaymentFormData('razorpay')
       });
       const data = await res.json();
       if (data.success) {
         const paymentRecord = data.data;
         setPayment(paymentRecord);
-        setUpiDeepLink(data.upiDeepLink || '');
-        setUpiQr(data.upiQrDataUrl || '');
 
         if (rzpKey && window.Razorpay) {
-          // Create Razorpay Order
           const orderRes = await fetch('/api/razorpay/create-admission-order', {
             method: 'POST',
             headers: {
@@ -166,7 +151,7 @@ export default function AdmissionPaymentModal({ admissionData, onClose, onSucces
               key: rzpKey,
               amount: orderData.order.amount,
               currency: 'INR',
-              name: 'Pranidha International School',
+              name: 'Appletree Infotech',
               description: `Admission Fee - ${studentName}`,
               order_id: orderData.order.id,
               prefill: {
@@ -175,7 +160,7 @@ export default function AdmissionPaymentModal({ admissionData, onClose, onSucces
                 contact: admissionData.parentDetails.phone
               },
               theme: { color: '#FF7043' },
-              handler: async (response) => {
+              handler: async () => {
                 startPolling(paymentRecord._id);
               },
               modal: {
@@ -186,26 +171,24 @@ export default function AdmissionPaymentModal({ admissionData, onClose, onSucces
             };
             const rzp = new window.Razorpay(options);
             rzp.open();
+          } else {
+            setStage('error');
+            setErrorMsg(orderData.message || 'Could not create Razorpay order.');
+            return;
           }
         }
-        
-        setStage('upiPending');
-        // Begin auto-detecting payment completion.
         startPolling(paymentRecord._id);
       } else {
         setStage('error');
-        setErrorMsg(data.message || 'Could not start UPI payment.');
+        setErrorMsg(data.message || 'Could not start payment.');
       }
     } catch (err) {
       console.error(err);
       setStage('error');
-      setErrorMsg(err.message || 'Network error. Could not start UPI payment.');
+      setErrorMsg(err.message || 'Network error. Could not start payment.');
     }
   };
 
-
-
-  // ---- Simulate Razorpay Webhook Call (Mock Mode) ----
   const handleSimulateWebhook = async () => {
     if (!payment) return;
     setStage('verifying');
@@ -220,7 +203,7 @@ export default function AdmissionPaymentModal({ admissionData, onClose, onSucces
             payment: {
               entity: {
                 id: `pay_mock_${Math.random().toString(36).substr(2, 9)}`,
-                method: 'upi',
+                method: 'razorpay',
                 notes: {
                   type: 'admission',
                   admissionPaymentId: payment._id
@@ -231,7 +214,6 @@ export default function AdmissionPaymentModal({ admissionData, onClose, onSucces
         })
       });
       if (res.ok) {
-        // Trigger status check immediately to transition state
         const statusRes = await fetch(`/api/admission-payment/status/${payment._id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -245,21 +227,18 @@ export default function AdmissionPaymentModal({ admissionData, onClose, onSucces
             receipt: null
           });
         } else {
-          setStage('upiPending');
+          setStage('error');
+          setErrorMsg('Payment not yet verified.');
         }
       } else {
-        setStage('upiPending');
+        setStage('error');
         setErrorMsg('Failed to trigger simulated webhook.');
       }
     } catch (err) {
       console.error(err);
-      setStage('upiPending');
+      setStage('error');
       setErrorMsg('Network error trying to simulate webhook.');
     }
-  };
-
-  const copyLink = () => {
-    if (upiDeepLink) navigator.clipboard?.writeText(upiDeepLink);
   };
 
   return (
@@ -313,48 +292,35 @@ export default function AdmissionPaymentModal({ admissionData, onClose, onSucces
             </button>
 
             <button
-              onClick={() => setMethod('upi')}
-              className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all ${method === 'upi' ? 'border-brandSky bg-brandSky/5' : 'border-slate-100 hover:border-slate-200'}`}
+              onClick={() => setMethod('razorpay')}
+              className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all ${method === 'razorpay' ? 'border-brandSky bg-brandSky/5' : 'border-slate-100 hover:border-slate-200'}`}
             >
-              <div className="w-10 h-10 rounded-full bg-brandSky/10 text-brandSky flex items-center justify-center"><QrCode className="w-5 h-5" /></div>
+              <div className="w-10 h-10 rounded-full bg-brandSky/10 text-brandSky flex items-center justify-center"><CreditCard className="w-5 h-5" /></div>
               <div className="text-left">
-                <p className="font-quicksand font-bold text-sm text-slate-800">UPI</p>
-                <p className="text-[10px] text-slate-500">Scan QR & pay. Student saved automatically once verified.</p>
+                <p className="font-quicksand font-bold text-sm text-slate-800">Razorpay</p>
+                <p className="text-[10px] text-slate-500">Pay online via Razorpay. Student saved automatically once verified.</p>
               </div>
             </button>
 
             <button
               disabled={!method}
-              onClick={method === 'cash' ? handleCash : handleUpi}
+              onClick={method === 'cash' ? handleCash : handleRazorpay}
               className={`w-full py-3 rounded-2xl font-quicksand font-bold text-xs transition-all ${method ? 'bg-brandCoral hover:bg-brandCoral-dark text-white shadow' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
             >
-              {method === 'cash' ? 'COLLECT CASH & CONFIRM' : method === 'upi' ? 'GENERATE UPI QR' : 'CHOOSE A METHOD'}
+              {method === 'cash' ? 'COLLECT CASH & CONFIRM' : 'PAY VIA RAZORPAY'}
             </button>
           </div>
         )}
 
-        {/* UPI PENDING: QR + auto-poll */}
-        {stage === 'upiPending' && (
-          <div className="py-5 space-y-4">
-            <div className="flex flex-col items-center gap-2">
-              {upiQr ? (
-                <img src={upiQr} alt="UPI QR" className="w-48 h-48 border border-slate-100 rounded-2xl bg-white p-1" />
-              ) : (
-                <div className="flex items-center justify-center w-48 h-48 border border-dashed rounded-2xl border-slate-200"><Loader className="w-6 h-6 animate-spin text-slate-400" /></div>
-              )}
-              <p className="text-[11px] font-semibold text-slate-500">Scan with any UPI app to pay <span className="text-brandCoral font-bold">₹{finalAmount.toLocaleString('en-IN')}</span></p>
-              <div className="flex items-center gap-2 text-[10px] font-mono text-slate-400 bg-slate-50 rounded-full px-3 py-1">
-                <span className="max-w-[180px] truncate">{upiDeepLink}</span>
-                <button onClick={copyLink} className="text-slate-500 hover:text-brandCoral"><Copy className="w-3.5 h-3.5" /></button>
-              </div>
-            </div>
-
+        {/* PROCESSING / AUTO-POLLING */}
+        {stage === 'processing' && (
+          <div className="py-10 space-y-4 text-center">
+            <Loader className="w-8 h-8 mx-auto animate-spin text-brandSky" />
+            <p className="text-xs font-semibold text-slate-500">Opening Razorpay checkout…</p>
             <div className="flex items-center justify-center gap-2 text-[11px] font-semibold text-brandSky">
               <Loader className="w-3.5 h-3.5 animate-spin" />
               <span>Auto-detecting payment… waiting for confirmation</span>
             </div>
-
-            {/* Simulation trigger (Mock mode fallback) */}
             {!rzpKey && (
               <div className="pt-3 border-t border-slate-100 space-y-2">
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Sandbox Controls</p>
@@ -362,14 +328,14 @@ export default function AdmissionPaymentModal({ admissionData, onClose, onSucces
                   onClick={handleSimulateWebhook}
                   className="w-full py-2.5 rounded-xl bg-brandCoral hover:bg-brandCoral-dark text-white font-quicksand font-bold text-xs flex items-center justify-center gap-1.5"
                 >
-                  <QrCode className="w-4 h-4" /> SIMULATE WEBHOOK SUCCESS (MOCK RAZORPAY)
+                  <ShieldCheck className="w-4 h-4" /> SIMULATE WEBHOOK SUCCESS (MOCK)
                 </button>
               </div>
             )}
           </div>
         )}
 
-        {/* VERIFYING / CASH PROCESSING */}
+        {/* VERIFYING */}
         {stage === 'verifying' && (
           <div className="py-10 text-center">
             <Loader className="w-8 h-8 mx-auto animate-spin text-brandCoral" />

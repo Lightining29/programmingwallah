@@ -3,7 +3,6 @@ import AdmissionPayment from '../models/AdmissionPayment.js';
 import { protect } from '../middleware/auth.js';
 import mockStore from '../config/mockStore.js';
 import { createAdmissionFromPayment } from '../utils/admissionService.js';
-import { buildUpiDeepLink, buildUpiQrDataUrl, UPI_PAYEE_VPA } from '../utils/upi.js';
 import { uploadAdmissions } from '../middleware/upload.js';
 import Course from '../models/Course.js';
 
@@ -36,23 +35,19 @@ async function mockUpdatePayment(id, updates) {
   return item;
 }
 
-// @desc    Create an admission payment attempt (cash or upi)
+// @desc    Create an admission payment attempt (cash or razorpay)
 // @route   POST /api/admission-payment/create
 // @access  Public (admin desk / public apply flow)
-// Accepts multipart/form-data so the student photo can travel with the request.
 router.post('/create', uploadAdmissions.single('photo'), async (req, res) => {
-  // Fields arrive as JSON strings under multipart — parse them safely.
   const parseObj = (v, fallback = {}) => {
     if (typeof v === 'string') { try { return JSON.parse(v); } catch { return fallback; } }
     return v || fallback;
   };
   const studentDetails = parseObj(req.body.studentDetails);
   const parentDetails = parseObj(req.body.parentDetails);
-  const { amount, method, txnRef, paymentPlan = 'installments' } = req.body;
+  const { amount, method, paymentPlan = 'installments' } = req.body;
   const photoFile = req.file || null;
 
-  // Reconstruct a multer-like object from a stored pendingPhoto (not used at create,
-  // kept for symmetry) — here we just pass the live file through.
   const photoForService = photoFile
     ? { buffer: photoFile.buffer, mimetype: photoFile.mimetype, originalname: photoFile.originalname }
     : null;
@@ -60,15 +55,13 @@ router.post('/create', uploadAdmissions.single('photo'), async (req, res) => {
   if (!studentDetails.name || !parentDetails.email) {
     return res.status(400).json({ success: false, message: 'Student name and parent email are required.' });
   }
-  if (!['cash', 'upi'].includes(method)) {
-    return res.status(400).json({ success: false, message: "Payment method must be 'cash' or 'upi'." });
+  if (!['cash', 'razorpay'].includes(method)) {
+    return res.status(400).json({ success: false, message: "Payment method must be 'cash' or 'razorpay'." });
   }
 
   const paymentRef = genPaymentRef();
   let amountNum = Number(amount) || 0;
 
-
-  // Cash is collected at the desk → instantly verified.
   const baseStatus = method === 'cash' ? 'verified' : 'pending';
 
   const payload = {
@@ -77,20 +70,10 @@ router.post('/create', uploadAdmissions.single('photo'), async (req, res) => {
     parentDetails,
     amount: amountNum,
     method,
-    upiId: method === 'upi' ? UPI_PAYEE_VPA : '',
-    txnRef: txnRef || '',
     status: baseStatus,
     verifiedAt: method === 'cash' ? new Date() : null,
     paymentPlan
   };
-  // For UPI, stash the uploaded photo so it survives until verification.
-  if (method === 'upi' && photoFile) {
-    payload.pendingPhoto = {
-      data: mockStore.isMock ? photoFile.buffer.toString('base64') : photoFile.buffer,
-      contentType: photoFile.mimetype,
-      filename: photoFile.originalname
-    };
-  }
 
   try {
     let record;
@@ -100,14 +83,6 @@ router.post('/create', uploadAdmissions.single('photo'), async (req, res) => {
       record = await AdmissionPayment.create(payload);
     }
 
-    let upiDeepLink = '';
-    let upiQrDataUrl = '';
-    if (method === 'upi') {
-      upiDeepLink = buildUpiDeepLink({ amount: amountNum, txnRef: paymentRef, note: `Admission Fee - ${studentDetails.name}` });
-      upiQrDataUrl = await buildUpiQrDataUrl(upiDeepLink);
-    }
-
-    // For cash, auto-register the student immediately (payment is already verified).
     if (method === 'cash') {
       try {
         const result = await createAdmissionFromPayment({
@@ -147,84 +122,10 @@ router.post('/create', uploadAdmissions.single('photo'), async (req, res) => {
     res.status(201).json({
       success: true,
       data: record,
-      upiDeepLink,
-      upiQrDataUrl,
-      message: 'UPI payment initiated. Scan the QR and pay, then verify.'
+      message: 'Razorpay payment initiated. Proceed with checkout.'
     });
   } catch (error) {
     console.error('Create admission payment error:', error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// @desc    Verify a UPI payment → auto-save the student
-// @route   POST /api/admission-payment/verify/:id
-// @access  Public (admin confirms at the desk; could be gated later)
-router.post('/verify/:id', async (req, res) => {
-  const { txnRef } = req.body;
-  try {
-    let payment;
-    if (mockStore.isMock) {
-      payment = await mockFindById(req.params.id);
-    } else {
-      payment = await AdmissionPayment.findById(req.params.id);
-    }
-
-    if (!payment) {
-      return res.status(404).json({ success: false, message: 'Payment attempt not found.' });
-    }
-    if (payment.status === 'verified') {
-      return res.json({ success: true, data: payment, message: 'Payment already verified.' });
-    }
-
-    // Reconstruct the uploaded photo (if any) from the stashed pendingPhoto.
-    let photoForService = null;
-    if (payment.pendingPhoto && payment.pendingPhoto.data) {
-      const buf = Buffer.isBuffer(payment.pendingPhoto.data)
-        ? payment.pendingPhoto.data
-        : Buffer.from(payment.pendingPhoto.data, 'base64');
-      photoForService = {
-        buffer: buf,
-        mimetype: payment.pendingPhoto.contentType || 'image/png',
-        originalname: payment.pendingPhoto.filename || 'photo'
-      };
-    }
-
-    // Auto-register the student once payment is confirmed.
-    const result = await createAdmissionFromPayment({
-      studentDetails: payment.studentDetails,
-      parentDetails: payment.parentDetails,
-      paymentMethod: 'UPI',
-      admissionFee: payment.amount,
-      photo: photoForService,
-      paymentPlan: payment.paymentPlan || 'installments'
-    });
-
-    const update = {
-      status: 'verified',
-      txnRef: txnRef || payment.txnRef || '',
-      applicationNumber: result.applicationNumber,
-      studentDbId: result.studentDbId,
-      verifiedAt: new Date()
-    };
-
-    if (mockStore.isMock) {
-      await mockUpdatePayment(payment._id, update);
-      payment = { ...payment, ...update };
-    } else {
-      payment = await AdmissionPayment.findByIdAndUpdate(payment._id, update, { new: true });
-    }
-
-    res.json({
-      success: true,
-      data: payment,
-      applicationNumber: result.applicationNumber,
-      studentId: result.studentId,
-      receipt: result.receipt,
-      message: 'Payment verified. Student registered automatically.'
-    });
-  } catch (error) {
-    console.error('Verify admission payment error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });

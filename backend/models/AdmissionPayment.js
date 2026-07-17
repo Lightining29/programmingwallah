@@ -28,24 +28,17 @@ const AdmissionPaymentSchema = new mongoose.Schema({
   },
   method: {
     type: String,
-    enum: ['cash', 'upi'],
+    enum: ['cash', 'razorpay'],
     required: true
   },
-  // School UPI VPA used to generate the deep link / QR (upi method only).
-  upiId: {
+  // Razorpay order/payment IDs.
+  razorpayOrderId: {
     type: String,
     default: ''
   },
-  // Transaction reference entered by the parent/admin (UTR / Txn ID) when paying via UPI.
-  txnRef: {
+  razorpayPaymentId: {
     type: String,
     default: ''
-  },
-  // Holds the uploaded student photo between payment-create and verify (UPI flow).
-  pendingPhoto: {
-    data: { type: Buffer },
-    contentType: { type: String },
-    filename: { type: String }
   },
   status: {
     type: String,

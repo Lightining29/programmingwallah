@@ -1,25 +1,17 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Wallet, QrCode, CheckCircle, Loader, ShieldCheck, Banknote, CreditCard, Layers, Split } from 'lucide-react';
+import { X, Wallet, CheckCircle, Loader, ShieldCheck, Banknote, CreditCard, Layers, Split } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 /**
  * CollectPaymentModal — Admin collects fee payment.
  * Payment modes:
- *   - Cash / UPI per single installment (existing)
- *   - Full Balance: pay all pending fees in one shot (new)
- *   - Single Installment: pay one invoice at a time (existing)
- *
- * Props:
- *  fee        — the fee object { _id, amount, term, studentId }
- *  allFees    — full list of fees for the student (to compute full balance)
- *  studentName
- *  onClose()
- *  onSuccess()
+ *   - Cash per single installment
+ *   - Razorpay (online) per single installment or full balance
  */
 export default function CollectPaymentModal({ fee, allFees = [], studentName, onClose, onSuccess }) {
   const [payMode, setPayMode] = useState('single');   // 'single' | 'full'
-  const [method, setMethod] = useState('');           // 'cash' | 'upi'
-  const [stage, setStage] = useState('choose');       // choose | upiPending | verifying | success | error
+  const [method, setMethod] = useState('');           // 'cash' | 'razorpay'
+  const [stage, setStage] = useState('choose');       // choose | processing | verifying | success | error
   const [errorMsg, setErrorMsg] = useState('');
   const [rzpKey, setRzpKey] = useState(null);
   const [rzpReady, setRzpReady] = useState(false);
@@ -109,8 +101,8 @@ export default function CollectPaymentModal({ fee, allFees = [], studentName, on
     }
   };
 
-  // ── UPI / RAZORPAY ──
-  const handleUpi = async () => {
+  // ── RAZORPAY ──
+  const handleRazorpay = async () => {
     setStage('verifying');
     setErrorMsg('');
     try {
@@ -130,7 +122,7 @@ export default function CollectPaymentModal({ fee, allFees = [], studentName, on
             key: rzpKey,
             amount: orderData.order.amount,
             currency: 'INR',
-            name: 'Pranidha International School',
+            name: 'Appletree Infotech',
             description: payMode === 'full' ? `Full Balance — ${studentName}` : fee.term,
             order_id: orderData.order.id,
             prefill: { name: studentName },
@@ -169,25 +161,23 @@ export default function CollectPaymentModal({ fee, allFees = [], studentName, on
           };
           const rzp = new window.Razorpay(options);
           rzp.open();
-          setStage('upiPending');
+          setStage('processing');
           startPollingFee(fee._id);
         } else {
           setStage('error');
           setErrorMsg(orderData.message || 'Could not generate Razorpay order.');
         }
       } else {
-        // No keys — show QR fallback
-        setStage('upiPending');
-        startPollingFee(fee._id);
+        setStage('error');
+        setErrorMsg('Razorpay keys not configured.');
       }
     } catch (err) {
       console.error(err);
       setStage('error');
-      setErrorMsg(err.message || 'Network error. Could not start UPI payment.');
+      setErrorMsg(err.message || 'Network error. Could not start Razorpay payment.');
     }
   };
 
-  // ── Simulate webhook (dev/sandbox) ──
   const handleSimulateWebhook = async () => {
     setStage('verifying');
     setErrorMsg('');
@@ -199,7 +189,7 @@ export default function CollectPaymentModal({ fee, allFees = [], studentName, on
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               event: 'payment.captured',
-              payload: { payment: { entity: { id: `pay_mock_${Math.random().toString(36).substr(2, 9)}`, method: 'upi', notes: { type: 'installment', feeId: f._id, studentId: f.studentId?._id || f.studentId } } } }
+              payload: { payment: { entity: { id: `pay_mock_${Math.random().toString(36).substr(2, 9)}`, method: 'razorpay', notes: { type: 'installment', feeId: f._id, studentId: f.studentId?._id || f.studentId } } } }
             })
           });
         }
@@ -210,7 +200,7 @@ export default function CollectPaymentModal({ fee, allFees = [], studentName, on
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             event: 'payment.captured',
-            payload: { payment: { entity: { id: `pay_mock_${Math.random().toString(36).substr(2, 9)}`, method: 'upi', notes: { type: 'installment', feeId: fee._id, studentId: fee.studentId?._id || fee.studentId } } } }
+            payload: { payment: { entity: { id: `pay_mock_${Math.random().toString(36).substr(2, 9)}`, method: 'razorpay', notes: { type: 'installment', feeId: fee._id, studentId: fee.studentId?._id || fee.studentId } } } }
           })
         });
         if (res.ok) {
@@ -218,13 +208,13 @@ export default function CollectPaymentModal({ fee, allFees = [], studentName, on
             const rd = await fetch(`/api/public/receipt/${fee._id}`);
             const rdata = await rd.json();
             if (rdata.success) { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } fireSuccess(rdata); }
-            else setStage('upiPending');
+            else setStage('processing');
           }, 1500);
-        } else { setStage('upiPending'); setErrorMsg('Webhook simulation failed.'); }
+        } else { setStage('processing'); setErrorMsg('Webhook simulation failed.'); }
       }
     } catch (err) {
       console.error(err);
-      setStage('upiPending');
+      setStage('processing');
       setErrorMsg('Simulation network error.');
     }
   };
@@ -295,54 +285,43 @@ export default function CollectPaymentModal({ fee, allFees = [], studentName, on
             </button>
 
             <button
-              onClick={() => setMethod('upi')}
-              className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all ${method === 'upi' ? 'border-brandSky bg-brandSky/5' : 'border-slate-100 hover:border-slate-200'}`}
+              onClick={() => setMethod('razorpay')}
+              className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all ${method === 'razorpay' ? 'border-brandSky bg-brandSky/5' : 'border-slate-100 hover:border-slate-200'}`}
             >
-              <div className="w-10 h-10 rounded-full bg-brandSky/10 text-brandSky flex items-center justify-center"><QrCode className="w-5 h-5" /></div>
+              <div className="w-10 h-10 rounded-full bg-brandSky/10 text-brandSky flex items-center justify-center"><CreditCard className="w-5 h-5" /></div>
               <div className="text-left">
-                <p className="font-quicksand font-bold text-sm text-slate-800">UPI / Razorpay</p>
+                <p className="font-quicksand font-bold text-sm text-slate-800">Razorpay</p>
                 <p className="text-[10px] text-slate-500">Open Razorpay checkout. Auto-detects payment via webhook.</p>
               </div>
             </button>
 
             <button
               disabled={!method}
-              onClick={method === 'cash' ? handleCash : handleUpi}
+              onClick={method === 'cash' ? handleCash : handleRazorpay}
               className={`w-full py-3 rounded-2xl font-quicksand font-bold text-xs transition-all ${method ? 'bg-brandCoral hover:bg-brandCoral-dark text-white shadow' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
             >
               {method === 'cash'
                 ? `COLLECT ₹${activeAmount.toLocaleString('en-IN')} IN CASH`
-                : `PAY ₹${activeAmount.toLocaleString('en-IN')} VIA UPI / RAZORPAY`}
+                : `PAY ₹${activeAmount.toLocaleString('en-IN')} VIA RAZORPAY`}
             </button>
           </div>
         )}
 
-        {/* UPI PENDING */}
-        {stage === 'upiPending' && (
+        {/* PROCESSING */}
+        {stage === 'processing' && (
           <div className="py-5 space-y-4">
             <div className="flex flex-col items-center gap-2">
-              <div className="inline-block p-4 rounded-3xl bg-white border border-slate-100">
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(`upi://pay?pa=billing@appletree&pn=Appletree%20Coaching&am=${activeAmount}&cu=INR`)}`}
-                  alt="UPI QR Code"
-                  className="h-40 w-40"
-                />
+              <div className="flex items-center justify-center gap-2 text-[11px] font-semibold text-brandSky">
+                <Loader className="w-3.5 h-3.5 animate-spin" />
+                <span>Auto-detecting payment… waiting for webhook</span>
               </div>
-              <p className="text-[11px] font-semibold text-slate-500">
-                Scan to pay <span className="text-brandCoral font-bold">₹{activeAmount.toLocaleString('en-IN')}</span>
-                {payMode === 'full' && <span className="text-indigo-500"> (full balance)</span>}
-              </p>
-            </div>
-            <div className="flex items-center justify-center gap-2 text-[11px] font-semibold text-brandSky">
-              <Loader className="w-3.5 h-3.5 animate-spin" />
-              <span>Auto-detecting payment… waiting for webhook</span>
             </div>
             {!rzpKey && (
               <div className="pt-3 border-t border-slate-100 space-y-2">
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Sandbox Controls</p>
                 <button onClick={handleSimulateWebhook}
                   className="w-full py-2.5 rounded-xl bg-brandCoral hover:bg-brandCoral-dark text-white font-quicksand font-bold text-xs flex items-center justify-center gap-1.5 shadow">
-                  <QrCode className="w-4 h-4" /> SIMULATE WEBHOOK SUCCESS (MOCK)
+                  <ShieldCheck className="w-4 h-4" /> SIMULATE WEBHOOK SUCCESS (MOCK)
                 </button>
               </div>
             )}

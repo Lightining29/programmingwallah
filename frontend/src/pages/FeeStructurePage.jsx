@@ -214,9 +214,9 @@ export default function FeeStructurePage() {
 
         {/* Print-only school header */}
         <div className="hidden pb-6 mb-8 text-center border-b-2 print:block border-slate-300">
-          <h1 className="text-3xl font-black font-serif text-[#1E1060]">PRANIDHA INTERNATIONAL SCHOOL</h1>
-          <p className="mt-1 text-sm font-semibold text-slate-600">Montessori & Kindergarten to Senior Secondary</p>
-          <p className="mt-1 text-xs text-slate-500">123 Sunshine Street | +91 98765 43210 | billing@pranidhainternational.in</p>
+          <h1 className="text-3xl font-black font-serif text-[#1E1060]">APPLETREE INFOTECH</h1>
+          <p className="mt-1 text-sm font-semibold text-slate-600">Coaching Centre</p>
+          <p className="mt-1 text-xs text-slate-500">Phone: +91 7503962162 | hr@appletreeinfotech.in</p>
           <p className="mt-2 text-xs font-bold tracking-widest uppercase text-slate-700">Official Fee Structure Booklet — Session {academicYears[0] || '2026-2027'}</p>
         </div>
 
