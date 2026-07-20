@@ -368,7 +368,7 @@ export default function Home() {
             {/* Java — wide card spanning 2 cols on lg */}
             <div className="lg:col-span-2 relative rounded-2xl sm:rounded-3xl overflow-hidden h-52 sm:h-64 group">
               <img
-                src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=80"
+                src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80"
                 alt="Java programming on laptop"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
@@ -380,7 +380,7 @@ export default function Home() {
             {/* C++ */}
             <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden h-52 sm:h-64 group">
               <img
-                src="https://images.unsplash.com/photo-1555949963-aa79dcee981c?auto=format&fit=crop&w=500&q=80"
+                src="https://images.unsplash.com/photo-1607799279861-4dd421887fb3?auto=format&fit=crop&w=500&q=80"
                 alt="C++ competitive programming"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
@@ -392,7 +392,7 @@ export default function Home() {
             {/* MERN Stack */}
             <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden h-52 sm:h-64 group">
               <img
-                src="https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&w=500&q=80"
+                src="https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&w=500&q=80"
                 alt="MERN full stack development"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
@@ -404,7 +404,7 @@ export default function Home() {
             {/* Frontend / React */}
             <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden h-48 sm:h-56 group">
               <img
-                src="https://images.unsplash.com/photo-1593720213428-28a5b9e94613?auto=format&fit=crop&w=500&q=80"
+                src="https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=500&q=80"
                 alt="React frontend development"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
@@ -416,7 +416,7 @@ export default function Home() {
             {/* Code review / mentor session */}
             <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden h-48 sm:h-56 group">
               <img
-                src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=500&q=80"
+                src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=500&q=80"
                 alt="Code on monitor during class"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
@@ -427,7 +427,7 @@ export default function Home() {
             {/* Team collaboration — wide */}
             <div className="lg:col-span-2 relative rounded-2xl sm:rounded-3xl overflow-hidden h-48 sm:h-56 group">
               <img
-                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80"
+                src="https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80"
                 alt="Students collaborating on tech project"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />

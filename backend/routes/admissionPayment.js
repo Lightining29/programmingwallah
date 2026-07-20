@@ -62,7 +62,9 @@ router.post('/create', uploadAdmissions.single('photo'), async (req, res) => {
   const paymentRef = genPaymentRef();
   let amountNum = Number(amount) || 0;
 
-  const baseStatus = method === 'cash' ? 'verified' : 'pending';
+  // Cash is collected at the desk or desk UPI is confirmed → instantly verified.
+  const isInstant = method === 'cash' || (method === 'upi' && req.body.isInstantDeskUpi === 'true');
+  const baseStatus = isInstant ? 'verified' : 'pending';
 
   const payload = {
     paymentRef,
@@ -71,7 +73,7 @@ router.post('/create', uploadAdmissions.single('photo'), async (req, res) => {
     amount: amountNum,
     method,
     status: baseStatus,
-    verifiedAt: method === 'cash' ? new Date() : null,
+    verifiedAt: isInstant ? new Date() : null,
     paymentPlan
   };
 
@@ -83,12 +85,12 @@ router.post('/create', uploadAdmissions.single('photo'), async (req, res) => {
       record = await AdmissionPayment.create(payload);
     }
 
-    if (method === 'cash') {
+    if (isInstant) {
       try {
         const result = await createAdmissionFromPayment({
           studentDetails,
           parentDetails,
-          paymentMethod: 'Cash',
+          paymentMethod: method === 'upi' ? 'UPI' : 'Cash',
           admissionFee: amountNum,
           photo: photoForService,
           paymentPlan: payload.paymentPlan
@@ -111,10 +113,10 @@ router.post('/create', uploadAdmissions.single('photo'), async (req, res) => {
           applicationNumber: result.applicationNumber,
           studentId: result.studentId,
           receipt: result.receipt,
-          message: 'Cash payment collected. Student registered automatically.'
+          message: `${method === 'upi' ? 'UPI' : 'Cash'} payment collected. Student registered automatically.`
         });
       } catch (err) {
-        console.error('Auto-admission (cash) failed:', err);
+        console.error('Auto-admission failed:', err);
         return res.status(500).json({ success: false, message: 'Payment recorded but student registration failed: ' + err.message });
       }
     }

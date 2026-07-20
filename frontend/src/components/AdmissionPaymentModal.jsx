@@ -30,6 +30,9 @@ export default function AdmissionPaymentModal({ admissionData, onClose, onSucces
     fd.append('parentDetails', JSON.stringify(admissionData.parentDetails));
     fd.append('amount', String(finalAmount));
     fd.append('method', method);
+    if (admissionData.paymentPlan) {
+      fd.append('paymentPlan', admissionData.paymentPlan);
+    }
     if (photoFile) fd.append('photo', photoFile);
     return fd;
   };
@@ -111,6 +114,38 @@ export default function AdmissionPaymentModal({ admissionData, onClose, onSucces
       console.error(err);
       setStage('error');
       setErrorMsg('Network error. Could not record cash payment.');
+    }
+  };
+
+  // ---- UPI: collect instantly via Desk UPI QR, student auto-saved by backend ----
+  const handleUpiDirect = async () => {
+    if (finalAmount <= 0) {
+      alert('Please enter a valid admission fee amount greater than 0.');
+      return;
+    }
+    setStage('verifying');
+    setErrorMsg('');
+    try {
+      const fd = buildPaymentFormData('upi');
+      fd.append('isInstantDeskUpi', 'true');
+
+      const res = await fetch('/api/admission-payment/create', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPayment(data.data);
+        fireSuccess({ applicationNumber: data.applicationNumber, studentId: data.studentId, receipt: data.receipt });
+      } else {
+        setStage('error');
+        setErrorMsg(data.message || 'UPI collection failed.');
+      }
+    } catch (err) {
+      console.error(err);
+      setStage('error');
+      setErrorMsg('Network error. Could not record UPI payment.');
     }
   };
 
@@ -303,11 +338,26 @@ export default function AdmissionPaymentModal({ admissionData, onClose, onSucces
             </button>
 
             <button
+              onClick={() => setMethod('upi')}
+              className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all ${method === 'upi' ? 'border-brandCoral bg-brandCoral/5' : 'border-slate-100 hover:border-slate-200'}`}
+            >
+              <div className="w-10 h-10 rounded-full bg-brandCoral/10 text-brandCoral flex items-center justify-center"><Wallet className="w-5 h-5" /></div>
+              <div className="text-left">
+                <p className="font-quicksand font-bold text-sm text-slate-800">Desk UPI</p>
+                <p className="text-[10px] text-slate-500">Collect via desk UPI QR code. Student saved instantly.</p>
+              </div>
+            </button>
+
+            <button
               disabled={!method}
-              onClick={method === 'cash' ? handleCash : handleRazorpay}
+              onClick={method === 'cash' ? handleCash : method === 'upi' ? handleUpiDirect : handleRazorpay}
               className={`w-full py-3 rounded-2xl font-quicksand font-bold text-xs transition-all ${method ? 'bg-brandCoral hover:bg-brandCoral-dark text-white shadow' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
             >
-              {method === 'cash' ? 'COLLECT CASH & CONFIRM' : 'PAY VIA RAZORPAY'}
+              {method === 'cash'
+                ? 'COLLECT CASH & CONFIRM'
+                : method === 'upi'
+                  ? 'COLLECT UPI & CONFIRM'
+                  : 'PAY VIA RAZORPAY'}
             </button>
           </div>
         )}

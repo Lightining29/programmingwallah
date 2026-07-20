@@ -2497,7 +2497,7 @@ export default function AdminDashboard() {
                       <h5 className="pb-1 font-bold border-b text-slate-800 font-quicksand">4. Admission Fees Collection</h5>
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div className="space-y-1">
-                          <label className="font-bold text-slate-600">Admission Fee Amount (₹) (Not a dropdown)</label>
+                          <label className="font-bold text-slate-600">Admission Fee Amount (₹)</label>
                           <input
                             type="number"
                             placeholder="Enter fee amount (e.g. 5000)"
@@ -2505,6 +2505,17 @@ export default function AdminDashboard() {
                             onChange={e => setAdmissionFee(e.target.value)}
                             className="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-700 text-xs"
                           />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="font-bold text-slate-600">Payment Plan</label>
+                          <select
+                            value={admPaymentPlan}
+                            onChange={e => setAdmPaymentPlan(e.target.value)}
+                            className="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-600 text-xs font-quicksand"
+                          >
+                            <option value="installments">Monthly Installments (3 Months)</option>
+                            <option value="full">Full Fee Payment</option>
+                          </select>
                         </div>
                       </div>
                     </div>

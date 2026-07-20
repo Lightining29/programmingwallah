@@ -80,7 +80,7 @@ export default function CollectPaymentModal({ fee, allFees = [], studentName, on
           await fetch(`/api/admin/fees/${f._id}/pay`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ paymentMethod: 'Desk Cash — Full Balance' })
+            body: JSON.stringify({ paymentMethod: 'Admission Desk Cash — Full Balance' })
           });
         }
         fireSuccess({ message: 'Full balance paid in cash' });
@@ -98,6 +98,37 @@ export default function CollectPaymentModal({ fee, allFees = [], studentName, on
       console.error(err);
       setStage('error');
       setErrorMsg('Network error. Could not record cash payment.');
+    }
+  };
+
+  // ── UPI (Direct Desk UPI) ──
+  const handleUpiDirect = async () => {
+    setStage('verifying');
+    setErrorMsg('');
+    try {
+      if (payMode === 'full' && pendingFees.length > 1) {
+        for (const f of pendingFees) {
+          await fetch(`/api/admin/fees/${f._id}/pay`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ paymentMethod: 'Admission Desk UPI — Full Balance' })
+          });
+        }
+        fireSuccess({ message: 'Full balance paid via UPI' });
+      } else {
+        const res = await fetch(`/api/admin/fees/${fee._id}/pay`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ paymentMethod: 'Admission Desk UPI' })
+        });
+        const data = await res.json();
+        if (data.success) fireSuccess(data);
+        else { setStage('error'); setErrorMsg(data.message || 'UPI payment record failed.'); }
+      }
+    } catch (err) {
+      console.error(err);
+      setStage('error');
+      setErrorMsg('Network error. Could not record UPI payment.');
     }
   };
 
@@ -296,13 +327,26 @@ export default function CollectPaymentModal({ fee, allFees = [], studentName, on
             </button>
 
             <button
+              onClick={() => setMethod('upi')}
+              className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all ${method === 'upi' ? 'border-brandCoral bg-brandCoral/5' : 'border-slate-100 hover:border-slate-200'}`}
+            >
+              <div className="w-10 h-10 rounded-full bg-brandCoral/10 text-brandCoral flex items-center justify-center"><Wallet className="w-5 h-5" /></div>
+              <div className="text-left">
+                <p className="font-quicksand font-bold text-sm text-slate-800">Desk UPI</p>
+                <p className="text-[10px] text-slate-500">Collect payment via desk UPI QR code. Marks invoice paid instantly.</p>
+              </div>
+            </button>
+
+            <button
               disabled={!method}
-              onClick={method === 'cash' ? handleCash : handleRazorpay}
+              onClick={method === 'cash' ? handleCash : method === 'upi' ? handleUpiDirect : handleRazorpay}
               className={`w-full py-3 rounded-2xl font-quicksand font-bold text-xs transition-all ${method ? 'bg-brandCoral hover:bg-brandCoral-dark text-white shadow' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
             >
               {method === 'cash'
                 ? `COLLECT ₹${activeAmount.toLocaleString('en-IN')} IN CASH`
-                : `PAY ₹${activeAmount.toLocaleString('en-IN')} VIA RAZORPAY`}
+                : method === 'upi'
+                  ? `COLLECT ₹${activeAmount.toLocaleString('en-IN')} VIA DESK UPI`
+                  : `PAY ₹${activeAmount.toLocaleString('en-IN')} VIA RAZORPAY`}
             </button>
           </div>
         )}
