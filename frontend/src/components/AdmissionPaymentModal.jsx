@@ -350,7 +350,13 @@ export default function AdmissionPaymentModal({ admissionData, onClose, onSucces
 
             <button
               disabled={!method}
-              onClick={method === 'cash' ? handleCash : method === 'upi' ? handleUpiDirect : handleRazorpay}
+              onClick={
+                method === 'cash'
+                  ? handleCash
+                  : method === 'upi'
+                    ? () => setStage('upiScanner')
+                    : handleRazorpay
+              }
               className={`w-full py-3 rounded-2xl font-quicksand font-bold text-xs transition-all ${method ? 'bg-brandCoral hover:bg-brandCoral-dark text-white shadow' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
             >
               {method === 'cash'
@@ -359,6 +365,62 @@ export default function AdmissionPaymentModal({ admissionData, onClose, onSucces
                   ? 'COLLECT UPI & CONFIRM'
                   : 'PAY VIA RAZORPAY'}
             </button>
+          </div>
+        )}
+
+        {/* UPI SCANNER DISPLAY */}
+        {stage === 'upiScanner' && (
+          <div className="py-4 space-y-4 text-center">
+            <style>{`
+              @keyframes scan {
+                0%, 100% { top: 5%; }
+                50% { top: 95%; }
+              }
+            `}</style>
+            <div className="bg-slate-50 border border-slate-100 p-4 rounded-3xl space-y-3">
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-[10px] font-extrabold tracking-widest text-[#7C3AED] bg-[#EAE8FC] px-2.5 py-0.5 rounded-full uppercase">Scan to Pay</span>
+                <h5 className="font-quicksand font-bold text-slate-800 text-sm mt-1">Appletree Infotech</h5>
+                <p className="text-[10px] text-slate-400 font-mono">UPI ID: appletree@upi</p>
+              </div>
+
+              {/* QR Image display */}
+              <div className="w-[200px] h-[200px] mx-auto bg-white border border-slate-150 rounded-2xl p-2.5 flex items-center justify-center shadow-sm relative overflow-hidden">
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=0&data=${encodeURIComponent(
+                    `upi://pay?pa=appletree@upi&pn=Appletree%20Infotech&am=${finalAmount}&cu=INR&tn=${encodeURIComponent(`Admission - ${studentName}`)}`
+                  )}`}
+                  alt="UPI QR Code Scanner"
+                  className="w-full h-full object-contain"
+                />
+                {/* Scanner visual laser line */}
+                <div className="absolute left-0 right-0 h-0.5 bg-brandCoral/75 shadow-[0_0_8px_#FF7043] animate-[scan_2.2s_ease-in-out_infinite]" />
+              </div>
+
+              <div className="text-center">
+                <p className="text-xl font-extrabold text-brandCoral font-quicksand">
+                  ₹{finalAmount.toLocaleString('en-IN')}
+                </p>
+                <p className="text-[9px] text-slate-400 font-medium mt-1 leading-normal max-w-[280px] mx-auto">
+                  Scan this QR code using any UPI app (GPay, PhonePe, Paytm, BHIM, etc.) to pay.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <button
+                onClick={handleUpiDirect}
+                className="w-full py-3 rounded-2xl bg-brandMint hover:bg-brandMint-dark text-white font-quicksand font-bold text-xs shadow-md transition-all active:scale-[0.98]"
+              >
+                CONFIRM PAYMENT RECEIVED
+              </button>
+              <button
+                onClick={() => setStage('choose')}
+                className="w-full py-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-600 font-quicksand font-bold text-xs border border-slate-200 transition-all"
+              >
+                CANCEL / BACK
+              </button>
+            </div>
           </div>
         )}
 
