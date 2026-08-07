@@ -1,10 +1,43 @@
-import bcrypt from 'bcryptjs';
+import fs from 'fs';
+import path from 'path';
 
 // Seed initial password hash helpers (plain-text passwords are: admin123, parent123, teacher123)
 const salt = bcrypt.genSaltSync(10);
 const adminHash = bcrypt.hashSync('admin123', salt);
 const parentHash = bcrypt.hashSync('parent123', salt);
 const teacherHash = bcrypt.hashSync('teacher123', salt);
+
+const DATA_FILE = path.join(process.cwd(), 'mockData.json');
+
+function saveToDisk(store) {
+  try {
+    const dataToSave = {};
+    for (let key in store) {
+      if (Array.isArray(store[key])) {
+        dataToSave[key] = store[key];
+      }
+    }
+    fs.writeFileSync(DATA_FILE, JSON.stringify(dataToSave, null, 2), 'utf8');
+  } catch (err) {
+    // Ignore error
+  }
+}
+
+function loadFromDisk(store) {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      const raw = fs.readFileSync(DATA_FILE, 'utf8');
+      const loaded = JSON.parse(raw);
+      for (let key in loaded) {
+        if (Array.isArray(loaded[key]) && loaded[key].length > 0) {
+          store[key] = loaded[key];
+        }
+      }
+    }
+  } catch (err) {
+    // Ignore error
+  }
+}
 
 const mockStore = {
   isMock: false, // Will be set to true by db.js if MongoDB is offline
@@ -654,6 +687,7 @@ const mockStore = {
     const id = collectionName.slice(0, 3) + '_' + Math.random().toString(36).substr(2, 9);
     const newRecord = { _id: id, ...data, createdAt: new Date() };
     this[collectionName].push(newRecord);
+    saveToDisk(this);
     return newRecord;
   },
 
@@ -661,6 +695,7 @@ const mockStore = {
     const item = await this.findById(collectionName, id);
     if (!item) return null;
     Object.assign(item, updates);
+    saveToDisk(this);
     return item;
   },
 
@@ -668,8 +703,11 @@ const mockStore = {
     const idx = (this[collectionName] || []).findIndex(item => item._id === id);
     if (idx === -1) return null;
     const deleted = this[collectionName].splice(idx, 1);
+    saveToDisk(this);
     return deleted[0];
   }
 };
+
+loadFromDisk(mockStore);
 
 export default mockStore;

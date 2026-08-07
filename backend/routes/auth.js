@@ -147,21 +147,29 @@ router.post('/login', async (req, res) => {
   try {
     if (mockStore.isMock) {
       const user = await mockStore.findOne('users', { email });
-      if (user && bcrypt.compareSync(password, user.password)) {
-        return res.json({
-          success: true,
-          token: generateToken(user._id),
-          user: {
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            profileImage: user.profileImage
-          }
-        });
-      } else {
-        return res.status(401).json({ success: false, message: 'Invalid email or password' });
+      if (user) {
+        let isMatch = false;
+        if (typeof user.password === 'string' && (user.password.startsWith('$2a$') || user.password.startsWith('$2b$'))) {
+          isMatch = bcrypt.compareSync(password, user.password);
+        } else {
+          isMatch = password === user.password;
+        }
+
+        if (isMatch) {
+          return res.json({
+            success: true,
+            token: generateToken(user._id),
+            user: {
+              id: user._id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              profileImage: user.profileImage
+            }
+          });
+        }
       }
+      return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 
     // MongoDB
