@@ -489,6 +489,7 @@ router.post('/admissions/create', uploadAdmissions.fields([
   try {
     if (typeof studentDetails === 'string') studentDetails = JSON.parse(studentDetails);
     if (typeof parentDetails === 'string') parentDetails = JSON.parse(parentDetails);
+    if (parentDetails && parentDetails.email) parentDetails.email = String(parentDetails.email).trim().toLowerCase();
 
     const appNo = `PRN-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
     const generatedStudentId = `STD-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;

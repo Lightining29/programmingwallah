@@ -625,8 +625,14 @@ const mockStore = {
     const list = this[collectionName] || [];
     return list.filter(item => {
       for (let key in filter) {
-        if (filter[key] !== undefined && item[key] !== filter[key]) {
-          return false;
+        if (filter[key] !== undefined) {
+          if (key === 'email' && typeof filter[key] === 'string') {
+            const filterEmail = filter[key].trim().toLowerCase();
+            const itemEmail = String(item[key] || '').trim().toLowerCase();
+            if (filterEmail !== itemEmail) return false;
+          } else if (item[key] !== filter[key]) {
+            return false;
+          }
         }
       }
       return true;

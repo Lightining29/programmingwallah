@@ -17,10 +17,12 @@ const generateToken = (id) => {
 };
 
 // @desc    Register a new user
+// @desc    Register a new user
 // @route   POST /api/auth/register
 // @access  Public
 router.post('/register', async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, password, role } = req.body;
+  const email = String(req.body.email || '').trim().toLowerCase();
 
   try {
     const userRole = role || 'user';
@@ -139,7 +141,8 @@ router.post('/register', async (req, res) => {
 // @route   POST /api/auth/login
 // @access  Public
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { password } = req.body;
+  const email = String(req.body.email || '').trim().toLowerCase();
 
   try {
     if (mockStore.isMock) {
@@ -162,7 +165,7 @@ router.post('/login', async (req, res) => {
     }
 
     // MongoDB
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email: { $regex: new RegExp(`^${email}$`, 'i') } }).select('+password');
     if (user && (await user.matchPassword(password))) {
       res.json({
         success: true,

@@ -89,7 +89,7 @@ export async function createAdmissionFromPayment({ studentDetails, parentDetails
   const normalizedParent = {
     fatherName: parentDetails.fatherName || parentDetails.motherName || '',
     motherName: parentDetails.motherName || '',
-    email: parentDetails.email,
+    email: String(parentDetails.email || '').trim().toLowerCase(),
     phone: parentDetails.phone || '',
     address: parentDetails.address || ''
   };
