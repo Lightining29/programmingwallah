@@ -6,7 +6,7 @@
 import QRCode from 'qrcode';
 
 // School UPI VPA + display name. Override via .env for production.
-export const UPI_PAYEE_VPA = process.env.UPI_PAYEE_VPA || 'appletree@upi';
+export const UPI_PAYEE_VPA = process.env.UPI_PAYEE_VPA || 'umeshchandra221-1@okaxis';
 export const UPI_PAYEE_NAME = process.env.UPI_PAYEE_NAME || 'Appletree Coaching';
 
 // Build a standard UPI deep link per the BHIM/UPI spec.

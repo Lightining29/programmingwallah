@@ -370,14 +370,14 @@ export default function CollectPaymentModal({ fee, allFees = [], studentName, on
               <div className="flex flex-col items-center gap-1">
                 <span className="text-[10px] font-extrabold tracking-widest text-[#7C3AED] bg-[#EAE8FC] px-2.5 py-0.5 rounded-full uppercase">Scan to Pay</span>
                 <h5 className="font-quicksand font-bold text-slate-800 text-sm mt-1">Appletree Infotech</h5>
-                <p className="text-[10px] text-slate-400 font-mono">UPI ID: appletree@upi</p>
+                <p className="text-[10px] text-slate-400 font-mono">UPI ID: umeshchandra221-1@okaxis</p>
               </div>
 
               {/* QR Image display */}
               <div className="w-[200px] h-[200px] mx-auto bg-white border border-slate-150 rounded-2xl p-2.5 flex items-center justify-center shadow-sm relative overflow-hidden">
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=0&data=${encodeURIComponent(
-                    `upi://pay?pa=appletree@upi&pn=Appletree%20Infotech&am=${activeAmount}&cu=INR&tn=${encodeURIComponent(fee.term || 'Tuition Fee')}`
+                    `upi://pay?pa=umeshchandra221-1@okaxis&pn=Appletree%20Infotech&am=${activeAmount}&cu=INR&tn=${encodeURIComponent(fee.term || 'Tuition Fee')}`
                   )}`}
                   alt="UPI QR Code Scanner"
                   className="w-full h-full object-contain"
