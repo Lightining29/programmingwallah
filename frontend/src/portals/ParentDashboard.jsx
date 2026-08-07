@@ -626,6 +626,22 @@ export default function ParentDashboard() {
               {activeTab === 'fees' && (
                 <div className="space-y-6">
                   <h3 className="font-quicksand font-bold text-lg text-slate-800 border-b border-orange-50 pb-3">Outstanding Dues & Receipts</h3>
+                  {fees.length > 0 && fees.every(f => f.status === 'paid') && (
+                    <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold shrink-0">
+                          <CheckCircle className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm text-emerald-900 font-quicksand">Full Fees Submitted</h4>
+                          <p className="text-xs text-emerald-700">All tuition fee installments according to the course fee have been submitted in full.</p>
+                        </div>
+                      </div>
+                      <span className="px-3.5 py-1.5 bg-emerald-600 text-white rounded-full text-xs font-extrabold uppercase tracking-wider shadow shrink-0">
+                        Full Fees Submitted
+                      </span>
+                    </div>
+                  )}
                   {fees.length > 0 ? (
                     <div className="space-y-4">
                       {fees.map((fee) => (

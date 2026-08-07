@@ -82,7 +82,6 @@ export default function Login() {
   const [confirm, setConfirm]       = useState('');
   const [valErr, setValErr]         = useState('');
   const [showPw, setShowPw]         = useState(false);
-  const [showDemo, setShowDemo]     = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -266,6 +265,7 @@ export default function Login() {
               initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0 }}
               exit={{ opacity:0, x:-20 }} transition={{ duration:0.25 }}
               onSubmit={isRegister ? handleRegister : handleLogin}
+              autoComplete="off"
               className="space-y-4 text-xs font-bold">
 
               {isRegister && (
@@ -275,6 +275,7 @@ export default function Login() {
                     <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color:mutedClr }}/>
                     <input type="text" required value={name} onChange={e=>setName(e.target.value)}
                       placeholder="Your full name"
+                      autoComplete="off"
                       className="w-full pl-10 pr-4 py-3 rounded-xl outline-none text-sm font-semibold"
                       style={inp}
                       onFocus={e=>e.target.style.borderColor=accentA}
@@ -289,6 +290,7 @@ export default function Login() {
                   <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color:mutedClr }}/>
                   <input type="email" required value={email} onChange={e=>setEmail(e.target.value)}
                     placeholder="you@example.com"
+                    autoComplete="off"
                     className="w-full pl-10 pr-4 py-3 rounded-xl outline-none text-sm font-semibold"
                     style={inp}
                     onFocus={e=>e.target.style.borderColor=accentA}
@@ -302,6 +304,7 @@ export default function Login() {
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color:mutedClr }}/>
                   <input type={showPw?'text':'password'} required value={password} onChange={e=>setPassword(e.target.value)}
                     placeholder={isRegister?'At least 6 characters':'••••••••'}
+                    autoComplete="new-password"
                     className="w-full pl-10 pr-10 py-3 rounded-xl outline-none text-sm font-semibold"
                     style={inp}
                     onFocus={e=>e.target.style.borderColor=accentA}
@@ -320,6 +323,7 @@ export default function Login() {
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color:mutedClr }}/>
                     <input type={showPw?'text':'password'} required value={confirm} onChange={e=>setConfirm(e.target.value)}
                       placeholder="Repeat password"
+                      autoComplete="new-password"
                       className="w-full pl-10 pr-4 py-3 rounded-xl outline-none text-sm font-semibold"
                       style={inp}
                       onFocus={e=>e.target.style.borderColor=accentA}
@@ -353,33 +357,6 @@ export default function Login() {
               </button>
             </motion.form>
           </AnimatePresence>
-
-          {/* Demo accounts */}
-          {!isRegister && (
-            <div className="mt-5 pt-4" style={{ borderTop:`1px solid ${inputBdr}` }}>
-              <button type="button" onClick={()=>setShowDemo(!showDemo)}
-                className="w-full flex items-center justify-between text-[10px] font-black tracking-widest uppercase hover:underline"
-                style={{ color:accentA }}>
-                <span>Demo Accounts</span><span>{showDemo?'▲':'▼'}</span>
-              </button>
-              {showDemo && (
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  {[['🏢','Admin','admin@pranidha.edu','admin123'],
-                    ['👩‍🏫','Teacher','teacher@pranidha.edu','teacher123'],
-                    ['🧸','Parent','parent@pranidha.edu','parent123']
-                  ].map(([icon,label,em,pw]) => (
-                    <button key={label} type="button"
-                      onClick={()=>{ setEmail(em); setPassword(pw); }}
-                      className="p-2.5 rounded-xl text-center font-bold transition-all hover:scale-105 active:scale-95"
-                      style={{ background:inputBg, border:`1.5px solid ${inputBdr}`, color:textClr }}>
-                      <span className="block text-xl mb-0.5">{icon}</span>
-                      <span className="text-[10px]">{label}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
 
           {/* Switch login/register */}
           <p className="mt-5 text-center text-xs font-semibold" style={{ color:mutedClr }}>

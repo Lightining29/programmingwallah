@@ -208,6 +208,18 @@ export async function createAdmissionFromPayment({ studentDetails, parentDetails
       });
     }
 
+function getInstallmentCount(paymentPlan) {
+  if (paymentPlan === 'full') return 1;
+  if (paymentPlan === '4months') return 4;
+  if (paymentPlan === '5months') return 5;
+  if (paymentPlan === '6months') return 6;
+  if (paymentPlan === '3months') return 3;
+  if (paymentPlan === 'monthly' || paymentPlan === '12months' || paymentPlan === 'installments') return 12;
+  const parsed = parseInt(paymentPlan, 10);
+  if (!isNaN(parsed) && parsed > 0) return parsed;
+  return 4;
+}
+
     if (paymentPlan === 'full') {
       await mockStore.create('fees', {
         studentId: newStudent._id,
@@ -220,14 +232,14 @@ export async function createAdmissionFromPayment({ studentDetails, parentDetails
         paymentMethod
       });
     } else {
-      const durationMonths = 3; // exactly 3 installments monthly
-      const installmentAmount = Math.round(totalAmount / 3);
-      const lastInstallmentAmount = totalAmount - (installmentAmount * 2);
+      const count = getInstallmentCount(paymentPlan);
+      const installmentAmount = Math.round(totalAmount / count);
+      const lastInstallmentAmount = totalAmount - (installmentAmount * (count - 1));
 
-      for (let i = 1; i <= 3; i++) {
+      for (let i = 1; i <= count; i++) {
         const dueDate = new Date();
         dueDate.setMonth(dueDate.getMonth() + (i - 1));
-        const amt = i === durationMonths ? lastInstallmentAmount : installmentAmount;
+        const amt = i === count ? lastInstallmentAmount : installmentAmount;
         await mockStore.create('fees', {
           studentId: newStudent._id,
           amount: amt,
@@ -358,14 +370,14 @@ export async function createAdmissionFromPayment({ studentDetails, parentDetails
       paymentMethod
     });
   } else {
-    const durationMonths = 3; // exactly 3 installments monthly
-    const installmentAmount = Math.round(totalAmount / 3);
-    const lastInstallmentAmount = totalAmount - (installmentAmount * 2);
+    const count = getInstallmentCount(paymentPlan);
+    const installmentAmount = Math.round(totalAmount / count);
+    const lastInstallmentAmount = totalAmount - (installmentAmount * (count - 1));
 
-    for (let i = 1; i <= 3; i++) {
+    for (let i = 1; i <= count; i++) {
       const dueDate = new Date();
       dueDate.setMonth(dueDate.getMonth() + (i - 1));
-      const amt = i === durationMonths ? lastInstallmentAmount : installmentAmount;
+      const amt = i === count ? lastInstallmentAmount : installmentAmount;
       await Fee.create({
         studentId: student._id,
         amount: amt,

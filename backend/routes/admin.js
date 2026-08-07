@@ -628,11 +628,16 @@ router.post('/admissions/create', uploadAdmissions.fields([
         });
       }
 
+      let totalAmount = 15000;
+      const mockCourses = await mockStore.find('courses');
+      const courseMatch = mockCourses.find(c => c.title && c.title.toLowerCase() === (studentDetails.class || '').toLowerCase());
+      if (courseMatch && courseMatch.price) totalAmount = Number(courseMatch.price) || 15000;
+
       if (paymentPlan === 'full') {
         await mockStore.create('fees', {
           studentId: newStudent._id,
-          amount: 1800,
-          term: 'Full Year Tuition Fee',
+          amount: totalAmount,
+          term: 'Full Course Tuition Fee',
           dueDate: new Date(),
           status: 'paid',
           paymentDate: new Date(),
@@ -640,12 +645,17 @@ router.post('/admissions/create', uploadAdmissions.fields([
           paymentMethod: 'Admission Desk Cash'
         });
       } else {
-        for (let i = 1; i <= 12; i++) {
+        const count = paymentPlan === '4months' ? 4 : paymentPlan === '5months' ? 5 : paymentPlan === '6months' ? 6 : paymentPlan === '3months' ? 3 : 12;
+        const installmentAmount = Math.round(totalAmount / count);
+        const lastInstallmentAmount = totalAmount - (installmentAmount * (count - 1));
+
+        for (let i = 1; i <= count; i++) {
           const dueDate = new Date();
           dueDate.setMonth(dueDate.getMonth() + (i - 1));
+          const amt = i === count ? lastInstallmentAmount : installmentAmount;
           await mockStore.create('fees', {
             studentId: newStudent._id,
-            amount: 150,
+            amount: amt,
             term: `Month ${i} Tuition Fee`,
             dueDate,
             status: i === 1 ? 'paid' : 'pending',
@@ -742,11 +752,15 @@ router.post('/admissions/create', uploadAdmissions.fields([
       });
     }
 
+    let totalAmount = 15000;
+    const courseMatch = await Course.findOne({ title: { $regex: new RegExp(`^${studentDetails.class}$`, 'i') } });
+    if (courseMatch && courseMatch.price) totalAmount = Number(courseMatch.price) || 15000;
+
     if (paymentPlan === 'full') {
       await Fee.create({
         studentId: student._id,
-        amount: 1800,
-        term: 'Full Year Tuition Fee',
+        amount: totalAmount,
+        term: 'Full Course Tuition Fee',
         dueDate: new Date(),
         status: 'paid',
         paymentDate: new Date(),
@@ -754,12 +768,17 @@ router.post('/admissions/create', uploadAdmissions.fields([
         paymentMethod: 'Admission Desk Cash'
       });
     } else {
-      for (let i = 1; i <= 12; i++) {
+      const count = paymentPlan === '4months' ? 4 : paymentPlan === '5months' ? 5 : paymentPlan === '6months' ? 6 : paymentPlan === '3months' ? 3 : 12;
+      const installmentAmount = Math.round(totalAmount / count);
+      const lastInstallmentAmount = totalAmount - (installmentAmount * (count - 1));
+
+      for (let i = 1; i <= count; i++) {
         const dueDate = new Date();
         dueDate.setMonth(dueDate.getMonth() + (i - 1));
+        const amt = i === count ? lastInstallmentAmount : installmentAmount;
         await Fee.create({
           studentId: student._id,
-          amount: 150,
+          amount: amt,
           term: `Month ${i} Tuition Fee`,
           dueDate,
           status: i === 1 ? 'paid' : 'pending',

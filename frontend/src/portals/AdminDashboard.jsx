@@ -121,7 +121,7 @@ export default function AdminDashboard() {
   const [admAddressProofType, setAdmAddressProofType] = useState('Aadhaar Card');
   const [admAddressProof, setAdmAddressProof] = useState(null);
   const [admissionFee, setAdmissionFee] = useState('');
-  const [admPaymentPlan, setAdmPaymentPlan] = useState('installments');
+  const [admPaymentPlan, setAdmPaymentPlan] = useState('4months');
 
   // Admission payment modal (Cash / UPI → auto-saves student on verified payment)
   const [admissionPaymentOpen, setAdmissionPaymentOpen] = useState(false);
@@ -1713,7 +1713,7 @@ export default function AdminDashboard() {
             setAdmAddressProofType('Aadhaar Card');
             setAdmAddressProof(null);
             setAdmissionFee('');
-            setAdmPaymentPlan('installments');
+            setAdmPaymentPlan('4months');
 
             const certInput = document.getElementById('adm-cert-input');
             const photoInput = document.getElementById('adm-photo-input');
@@ -2513,7 +2513,11 @@ export default function AdminDashboard() {
                             onChange={e => setAdmPaymentPlan(e.target.value)}
                             className="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-600 text-xs font-quicksand"
                           >
-                            <option value="installments">Monthly Installments (3 Months)</option>
+                            <option value="4months">4 Months Installments</option>
+                            <option value="5months">5 Months Installments</option>
+                            <option value="6months">6 Months Installments</option>
+                            <option value="3months">3 Months Installments</option>
+                            <option value="monthly">Monthly (12 Installments)</option>
                             <option value="full">Full Fee Payment</option>
                           </select>
                         </div>
@@ -3303,12 +3307,28 @@ export default function AdminDashboard() {
                                       </td>
                                       <td className="p-3 text-slate-500">{new Date(f.dueDate).toLocaleDateString()}</td>
                                       <td className="p-3">
-                                        <span className={`px-2.5 py-0.5 rounded-full text-[9px] uppercase font-bold border ${isPaid ? 'bg-brandMint/10 text-brandMint-dark border-brandMint/30' :
-                                          f.status === 'overdue' ? 'bg-red-50 text-red-600 border border-red-100' :
-                                            'bg-brandYellow/10 text-brandYellow-dark border border-brandYellow/30'
-                                          }`}>
-                                          {f.status}
-                                        </span>
+                                        {(() => {
+                                          const studentFees = fees.filter(fee => {
+                                            const info = getStudentInfo(fee);
+                                            return info.id === sInfo.id;
+                                          });
+                                          const isAllPaid = studentFees.length > 0 && studentFees.every(fee => fee.status === 'paid');
+                                          if (isAllPaid) {
+                                            return (
+                                              <span className="px-2.5 py-0.5 rounded-full text-[9px] uppercase font-extrabold border bg-emerald-50 text-emerald-700 border-emerald-200">
+                                                Full Fees Submitted
+                                              </span>
+                                            );
+                                          }
+                                          return (
+                                            <span className={`px-2.5 py-0.5 rounded-full text-[9px] uppercase font-bold border ${isPaid ? 'bg-brandMint/10 text-brandMint-dark border-brandMint/30' :
+                                              f.status === 'overdue' ? 'bg-red-50 text-red-600 border border-red-100' :
+                                                'bg-brandYellow/10 text-brandYellow-dark border border-brandYellow/30'
+                                              }`}>
+                                              {f.status}
+                                            </span>
+                                          );
+                                        })()}
                                       </td>
                                       <td className="p-3 text-right">
                                         {isPaid ? (
@@ -5020,6 +5040,47 @@ export default function AdminDashboard() {
                     <span className="text-sm font-bold text-slate-855">{selectedStudentProfile.parentId?.address || selectedStudentProfile.parentDetails?.address || 'N/A'}</span>
                   </div>
                 </div>
+              </div>
+
+              {/* Fee Payment Status */}
+              <div className="space-y-3">
+                <h5 className="pb-1 text-sm font-bold border-b font-quicksand text-slate-800">3. Fee Payment Status</h5>
+                {(() => {
+                  const sFees = fees.filter(fee => {
+                    const info = getStudentInfo(fee);
+                    return info.id === selectedStudentProfile._id || info.id === selectedStudentProfile.studentId;
+                  });
+                  const isAllPaid = sFees.length > 0 && sFees.every(fee => fee.status === 'paid');
+                  const totalPaid = sFees.filter(f => f.status === 'paid').reduce((sum, f) => sum + f.amount, 0);
+                  const totalPending = sFees.filter(f => f.status !== 'paid').reduce((sum, f) => sum + f.amount, 0);
+
+                  return (
+                    <div className="p-4 rounded-2xl border bg-slate-50 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-600">Tuition Status:</span>
+                        {isAllPaid ? (
+                          <span className="px-3 py-1 bg-emerald-600 text-white text-xs font-extrabold rounded-full uppercase shadow-sm">
+                            Full Fees Submitted
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1 bg-amber-500 text-white text-xs font-extrabold rounded-full uppercase shadow-sm">
+                            Installments In Progress ({sFees.filter(f => f.status === 'paid').length}/{sFees.length} Paid)
+                          </span>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
+                        <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                          <span className="text-[10px] text-slate-400 block font-bold uppercase">Total Paid</span>
+                          <span className="font-mono text-sm font-extrabold text-emerald-600">₹{totalPaid.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                          <span className="text-[10px] text-slate-400 block font-bold uppercase">Outstanding</span>
+                          <span className="font-mono text-sm font-extrabold text-rose-600">₹{totalPending.toLocaleString('en-IN')}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 
