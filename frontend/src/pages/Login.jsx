@@ -155,15 +155,13 @@ export default function Login() {
 
   const handleSelectPortal = (portal) => {
     setSelectedPortalId(portal.id);
-    setEmail(portal.email);
-    setPassword(portal.password);
+    setEmail('');
+    setPassword('');
     setValErr('');
   };
 
   const handleQuickDemoLogin = async (portal) => {
     setSelectedPortalId(portal.id);
-    setEmail(portal.email);
-    setPassword(portal.password);
     setValErr('');
     
     const res = await login(portal.email, portal.password);
@@ -512,7 +510,7 @@ export default function Login() {
                 <div className="relative">
                   <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color:mutedClr }}/>
                   <input type="email" required value={email} onChange={e=>setEmail(e.target.value)}
-                    placeholder={selectedPortal ? selectedPortal.email : "you@example.com"}
+                    placeholder="you@example.com"
                     autoComplete="off"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl outline-none text-sm font-semibold"
                     style={inp}
