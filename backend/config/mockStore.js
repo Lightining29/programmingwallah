@@ -1,11 +1,13 @@
 import fs from 'fs';
 import path from 'path';
+import bcrypt from 'bcryptjs';
 
-// Seed initial password hash helpers (plain-text passwords are: admin123, parent123, teacher123)
+// Seed initial password hash helpers (plain-text passwords are: admin123, parent123, teacher123, student123)
 const salt = bcrypt.genSaltSync(10);
 const adminHash = bcrypt.hashSync('admin123', salt);
 const parentHash = bcrypt.hashSync('parent123', salt);
 const teacherHash = bcrypt.hashSync('teacher123', salt);
+const studentHash = bcrypt.hashSync('student123', salt);
 
 const DATA_FILE = path.join(process.cwd(), 'mockData.json');
 
@@ -68,6 +70,15 @@ const mockStore = {
       password: teacherHash,
       role: 'teacher',
       profileImage: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150',
+      createdAt: new Date()
+    },
+    {
+      _id: 'usr_student_1',
+      name: 'Demo Student',
+      email: 'student@pranidha.edu',
+      password: studentHash,
+      role: 'user',
+      profileImage: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
       createdAt: new Date()
     }
   ],

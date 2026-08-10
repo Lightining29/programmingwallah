@@ -55,6 +55,14 @@ export const seedDatabase = async () => {
       profileImage: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150'
     });
 
+    const studentUser = await User.create({
+      name: 'Demo Student',
+      email: 'student@pranidha.edu',
+      password: 'student123',
+      role: 'user',
+      profileImage: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'
+    });
+
     // 2. Create Teacher Profile
     const teacher = await Teacher.create({
       userId: teacherUser._id,

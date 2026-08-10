@@ -121,6 +121,7 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
           <Route path="/lms/courses/:id" element={<CourseDetail />} />
           <Route path="/lms/learn/:id" element={<LearningPage />} />
           <Route path="/lms/dashboard" element={<StudentDashboard />} />
+          <Route path="/lms/dashboard/*" element={<StudentDashboard />} />
 
           {/* Protected Portal Dashboards */}
           <Route path="/dashboard/parent" element={<ProtectedRoute allowedRoles={['parent']}><ParentDashboard /></ProtectedRoute>} />
