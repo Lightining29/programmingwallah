@@ -425,9 +425,9 @@ export default function Login() {
                 })}
               </div>
 
-              {/* Selected Portal Highlight & One-Click Demo Banner */}
+              {/* Selected Portal Highlight Banner */}
               <div 
-                className="mt-3 p-3.5 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition-all"
+                className="mt-3 p-3.5 rounded-2xl border flex items-center justify-between gap-3 transition-all"
                 style={{
                   backgroundColor: isDark ? 'rgba(30,41,59,0.5)' : 'rgba(248,250,252,0.9)',
                   borderColor: `${selectedPortal.accentColor}40`
@@ -453,19 +453,6 @@ export default function Login() {
                     </p>
                   </div>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => handleQuickDemoLogin(selectedPortal)}
-                  className="w-full sm:w-auto px-3.5 py-2 rounded-xl text-xs font-extrabold text-white flex items-center justify-center gap-1.5 shrink-0 transition-all hover:scale-105 active:scale-95 shadow-sm"
-                  style={{ 
-                    background: `linear-gradient(135deg, ${selectedPortal.accentColor}, ${accentB})`,
-                    boxShadow: `0 4px 12px ${selectedPortal.accentColor}40` 
-                  }}
-                >
-                  <Zap className="w-3.5 h-3.5 fill-current"/>
-                  <span>1-Click Demo Login</span>
-                </button>
               </div>
             </div>
           )}
@@ -578,52 +565,6 @@ export default function Login() {
               </button>
             </motion.form>
           </AnimatePresence>
-
-          {/* Quick Demo Login Grid for all portals */}
-          {!isRegister && (
-            <div className="mt-5 pt-4 border-t" style={{ borderColor: cardBdr }}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider" style={{ color: mutedClr }}>
-                  ⚡ Quick Demo Access to All Portals
-                </span>
-                <span className="text-[10px] font-semibold" style={{ color: mutedClr }}>
-                  Click to auto-login
-                </span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {PORTALS.map((portal) => {
-                  const Icon = portal.icon;
-                  return (
-                    <button
-                      key={`quick-${portal.id}`}
-                      type="button"
-                      onClick={() => handleQuickDemoLogin(portal)}
-                      className="flex items-center gap-2 p-2 rounded-xl border text-left transition-all hover:scale-[1.03] active:scale-95 group"
-                      style={{
-                        backgroundColor: isDark ? 'rgba(30,41,59,0.4)' : '#f8fafc',
-                        borderColor: inputBdr
-                      }}
-                    >
-                      <div 
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-white shrink-0 group-hover:rotate-6 transition-transform"
-                        style={{ backgroundColor: portal.accentColor }}
-                      >
-                        <Icon className="w-3.5 h-3.5"/>
-                      </div>
-                      <div className="overflow-hidden">
-                        <p className="text-[11px] font-extrabold leading-tight truncate" style={{ color: textClr }}>
-                          {portal.name}
-                        </p>
-                        <p className="text-[9px] font-semibold opacity-70 truncate" style={{ color: mutedClr }}>
-                          {portal.role.toUpperCase()}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
           {/* Switch login/register */}
           <p className="mt-4 text-center text-xs font-semibold" style={{ color:mutedClr }}>
