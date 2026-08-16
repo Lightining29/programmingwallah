@@ -276,7 +276,32 @@ export const enrollInCourse = asyncHandler(async (req, res, next) => {
 // @access  Private
 export const getEnrolledCourses = asyncHandler(async (req, res, next) => {
   if (mockStore.isMock) {
-    const enrollments = await mockStore.find('enrollments', { user: req.user.id });
+    let enrollments = await mockStore.find('enrollments', { user: req.user.id });
+    
+    // Fallback: if no direct enrollments, check if user is a parent linked to admitted students with course classes
+    if (!enrollments || enrollments.length === 0) {
+      const parentProfile = await mockStore.findOne('parents', { userId: req.user.id });
+      if (parentProfile && parentProfile.children && parentProfile.children.length > 0) {
+        const allCourses = await mockStore.find('courses') || [];
+        for (const childId of parentProfile.children) {
+          const child = await mockStore.findById('students', childId);
+          if (child && child.class) {
+            const courseMatch = allCourses.find(c => String(c.title).toLowerCase() === String(child.class).toLowerCase());
+            if (courseMatch) {
+              await mockStore.create('enrollments', {
+                user: req.user.id,
+                course: courseMatch._id,
+                paymentStatus: 'paid',
+                status: 'active',
+                enrolledAt: new Date()
+              });
+            }
+          }
+        }
+        enrollments = await mockStore.find('enrollments', { user: req.user.id });
+      }
+    }
+
     const result = await Promise.all(enrollments.map(async (e) => {
       const course = await mockStore.findById('courses', e.course);
       return { ...e, course };
@@ -284,7 +309,7 @@ export const getEnrolledCourses = asyncHandler(async (req, res, next) => {
     return res.status(200).json({ success: true, count: result.length, data: result });
   }
 
-  const enrollments = await CourseEnrollment.find({ user: req.user.id })
+  let enrollments = await CourseEnrollment.find({ user: req.user.id })
     .populate({
       path: 'course',
       populate: {
@@ -293,6 +318,37 @@ export const getEnrolledCourses = asyncHandler(async (req, res, next) => {
       }
     })
     .sort('-lastAccessedAt');
+
+  // Fallback: if no direct enrollments in DB, resolve via admitted student child classes
+  if (!enrollments || enrollments.length === 0) {
+    const Parent = (await import('../models/Parent.js')).default;
+    const Student = (await import('../models/Student.js')).default;
+    const parentProfile = await Parent.findOne({ userId: req.user.id });
+    if (parentProfile && parentProfile.children && parentProfile.children.length > 0) {
+      for (const childId of parentProfile.children) {
+        const child = await Student.findById(childId);
+        if (child && child.class) {
+          const courseMatch = await Course.findOne({ title: { $regex: new RegExp(`^${child.class}$`, 'i') } });
+          if (courseMatch) {
+            await CourseEnrollment.findOneAndUpdate(
+              { user: req.user.id, course: courseMatch._id },
+              { paymentStatus: 'paid', status: 'active', enrolledAt: new Date() },
+              { upsert: true, new: true }
+            );
+          }
+        }
+      }
+      enrollments = await CourseEnrollment.find({ user: req.user.id })
+        .populate({
+          path: 'course',
+          populate: {
+            path: 'instructor',
+            select: 'name profileImage'
+          }
+        })
+        .sort('-lastAccessedAt');
+    }
+  }
 
   res.status(200).json({
     success: true,

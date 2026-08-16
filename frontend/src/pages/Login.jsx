@@ -147,11 +147,17 @@ export default function Login() {
 
   useEffect(() => {
     if (!user) return;
-    if (user.role === 'admin')        navigate('/dashboard/admin');
-    else if (user.role === 'teacher') navigate('/dashboard/teacher');
-    else if (user.role === 'parent')  navigate('/dashboard/parent');
-    else navigate('/lms/dashboard');
-  }, [user, navigate]);
+    if (selectedPortalId === 'student')      navigate('/lms/dashboard');
+    else if (selectedPortalId === 'parent')  navigate('/dashboard/parent');
+    else if (selectedPortalId === 'teacher') navigate('/dashboard/teacher');
+    else if (selectedPortalId === 'admin')   navigate('/dashboard/admin');
+    else {
+      if (user.role === 'admin')        navigate('/dashboard/admin');
+      else if (user.role === 'teacher') navigate('/dashboard/teacher');
+      else if (user.role === 'parent')  navigate('/dashboard/parent');
+      else navigate('/lms/dashboard');
+    }
+  }, [user, navigate, selectedPortalId]);
 
   const handleSelectPortal = (portal) => {
     setSelectedPortalId(portal.id);
@@ -167,9 +173,10 @@ export default function Login() {
     const res = await login(portal.email, portal.password);
     if (res.success) {
       confetti({ particleCount: 140, spread: 90, origin: { y: 0.6 } });
-      if (res.user.role === 'admin')        navigate('/dashboard/admin');
-      else if (res.user.role === 'teacher') navigate('/dashboard/teacher');
-      else if (res.user.role === 'parent')  navigate('/dashboard/parent');
+      if (portal.id === 'student')          navigate('/lms/dashboard');
+      else if (portal.id === 'parent')     navigate('/dashboard/parent');
+      else if (portal.id === 'teacher')    navigate('/dashboard/teacher');
+      else if (portal.id === 'admin')      navigate('/dashboard/admin');
       else navigate('/lms/dashboard');
     } else {
       // Fallback for student demo account registration if not existing
@@ -190,10 +197,16 @@ export default function Login() {
     const res = await login(email, password);
     if (res.success) {
       confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
-      if (res.user.role === 'admin')        navigate('/dashboard/admin');
-      else if (res.user.role === 'teacher') navigate('/dashboard/teacher');
-      else if (res.user.role === 'parent')  navigate('/dashboard/parent');
-      else navigate('/lms/dashboard');
+      if (selectedPortalId === 'student')      navigate('/lms/dashboard');
+      else if (selectedPortalId === 'parent')  navigate('/dashboard/parent');
+      else if (selectedPortalId === 'teacher') navigate('/dashboard/teacher');
+      else if (selectedPortalId === 'admin')   navigate('/dashboard/admin');
+      else {
+        if (res.user.role === 'admin')        navigate('/dashboard/admin');
+        else if (res.user.role === 'teacher') navigate('/dashboard/teacher');
+        else if (res.user.role === 'parent')  navigate('/dashboard/parent');
+        else navigate('/lms/dashboard');
+      }
     } else {
       // Auto-register fallback for demo student account if not present
       if (selectedPortalId === 'student' || email.trim().toLowerCase() === 'student@pranidha.edu') {

@@ -347,12 +347,24 @@ router.put('/admissions/:id', async (req, res) => {
           activities: []
         });
 
-        // Link child to Parent
-        parentProfile.children.push(newStudent._id);
-        await mockStore.findByIdAndUpdate('parents', parentProfile._id, { children: parentProfile.children });
-
         // Automatically assign fee structure according to class
         await assignFeesForStudent(newStudent._id, newStudent.class, true);
+
+        // Auto-enroll in matching LMS course if applicable
+        const mockCourses = await mockStore.find('courses');
+        const courseMatch = mockCourses.find(c => c.title && c.title.toLowerCase() === (newStudent.class || '').toLowerCase());
+        if (courseMatch) {
+          const existingEnr = await mockStore.find('enrollments', { user: String(parentUser._id), course: String(courseMatch._id) });
+          if (!existingEnr || existingEnr.length === 0) {
+            await mockStore.create('enrollments', {
+              user: String(parentUser._id),
+              course: String(courseMatch._id),
+              paymentStatus: 'paid',
+              status: 'active',
+              enrolledAt: new Date()
+            });
+          }
+        }
       }
 
       return res.json({ success: true, message: `Admission application status updated to ${status}!`, data: admission });
@@ -418,6 +430,19 @@ router.put('/admissions/:id', async (req, res) => {
 
       // Automatically assign fee structure according to class
       await assignFeesForStudent(student._id, student.class, false);
+
+      // Auto-enroll in matching LMS course if applicable
+      const courseMatch = await Course.findOne({ title: { $regex: new RegExp(`^${student.class}$`, 'i') } });
+      if (courseMatch) {
+        const CourseEnrollment = (await import('../models/CourseEnrollment.js')).default;
+        await CourseEnrollment.findOneAndUpdate(
+          { user: user._id, course: courseMatch._id },
+          { paymentStatus: 'paid', status: 'active', enrolledAt: new Date() },
+          { upsert: true, new: true }
+        );
+        courseMatch.totalEnrollments = (courseMatch.totalEnrollments || 0) + 1;
+        await courseMatch.save();
+      }
     }
 
     res.json({ success: true, message: `Admission application status updated to ${status}!`, data: admission });
@@ -632,7 +657,16 @@ router.post('/admissions/create', uploadAdmissions.fields([
       let totalAmount = 15000;
       const mockCourses = await mockStore.find('courses');
       const courseMatch = mockCourses.find(c => c.title && c.title.toLowerCase() === (studentDetails.class || '').toLowerCase());
-      if (courseMatch && courseMatch.price) totalAmount = Number(courseMatch.price) || 15000;
+      if (courseMatch) {
+        if (courseMatch.price) totalAmount = Number(courseMatch.price) || 15000;
+        await mockStore.create('enrollments', {
+          user: String(parentUser._id),
+          course: String(courseMatch._id),
+          paymentStatus: 'paid',
+          status: 'active',
+          enrolledAt: new Date()
+        });
+      }
 
       if (paymentPlan === 'full') {
         await mockStore.create('fees', {
@@ -755,7 +789,17 @@ router.post('/admissions/create', uploadAdmissions.fields([
 
     let totalAmount = 15000;
     const courseMatch = await Course.findOne({ title: { $regex: new RegExp(`^${studentDetails.class}$`, 'i') } });
-    if (courseMatch && courseMatch.price) totalAmount = Number(courseMatch.price) || 15000;
+    if (courseMatch) {
+      if (courseMatch.price) totalAmount = Number(courseMatch.price) || 15000;
+      const CourseEnrollment = (await import('../models/CourseEnrollment.js')).default;
+      await CourseEnrollment.findOneAndUpdate(
+        { user: parentUser._id, course: courseMatch._id },
+        { paymentStatus: 'paid', status: 'active', enrolledAt: new Date() },
+        { upsert: true, new: true }
+      );
+      courseMatch.totalEnrollments = (courseMatch.totalEnrollments || 0) + 1;
+      await courseMatch.save();
+    }
 
     if (paymentPlan === 'full') {
       await Fee.create({
