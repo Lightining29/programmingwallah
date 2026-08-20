@@ -18,6 +18,8 @@ import LibraryNote from '../models/LibraryNote.js';
 import Course from '../models/Course.js';
 import Module from '../models/Module.js';
 import Lesson from '../models/Lesson.js';
+import Certificate from '../models/Certificate.js';
+import QRCode from 'qrcode';
 import { getCalculatedFees } from '../utils/feeCalculator.js';
 import { generateLibraryNotePdf } from '../utils/notePdf.js';
 import { protect, authorize } from '../middleware/auth.js';
@@ -2061,16 +2063,221 @@ router.put('/lessons/:id', uploadVideo.single('videoFile'), async (req, res) => 
 });
 
 // Delete a lesson
-router.delete('/lessons/:id', async (req, res) => {
+// ==========================================
+// CERTIFICATE MANAGEMENT ROUTES
+// ==========================================
+
+// Helper to generate unique certificate number
+const generateCertificateNumber = () => {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const rand = Math.floor(1000 + Math.random() * 9000);
+  return `ATI-${month}-${day}-ST${rand}`;
+};
+
+// 1. Get all certificates
+router.get('/certificates', async (req, res) => {
   try {
     if (mockStore.isMock) {
-      await mockStore.findByIdAndDelete('lessons', req.params.id);
-      return res.json({ success: true, message: 'Lesson deleted' });
+      const certificates = await mockStore.find('certificates');
+      return res.json({ success: true, data: certificates });
     }
-    await Lesson.findByIdAndDelete(req.params.id);
-    res.json({ success: true, message: 'Lesson deleted' });
+    const certificates = await Certificate.find().sort({ createdAt: -1 }).lean();
+    res.json({ success: true, data: certificates });
+  } catch (error) {
+    console.error('Error fetching certificates:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to fetch certificates' });
+  }
+});
+
+// 2. Get single certificate
+router.get('/certificates/:id', async (req, res) => {
+  try {
+    if (mockStore.isMock) {
+      const certificate = await mockStore.findById('certificates', req.params.id);
+      if (!certificate) return res.status(404).json({ success: false, message: 'Certificate not found' });
+      return res.json({ success: true, data: certificate });
+    }
+    const certificate = await Certificate.findById(req.params.id);
+    if (!certificate) return res.status(404).json({ success: false, message: 'Certificate not found' });
+    res.json({ success: true, data: certificate });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// 3. Create certificate
+router.post('/certificates', async (req, res) => {
+  try {
+    const {
+      certificateNumber,
+      studentName,
+      internshipName,
+      startDate,
+      endDate,
+      issueDate,
+      description,
+      companyName,
+      companyAddress,
+      companyPhone,
+      companyEmail,
+      companyWeb,
+      partnerUniversity,
+      signatoryTitle,
+      status,
+      studentId
+    } = req.body;
+
+    if (!studentName?.trim() || !internshipName?.trim() || !startDate?.trim() || !endDate?.trim() || !issueDate?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Student Name, Internship/Course Name, Start Date, End Date, and Issue Date are required.'
+      });
+    }
+
+    const certNum = (certificateNumber?.trim() || generateCertificateNumber()).toUpperCase();
+
+    // Check duplicate
+    if (mockStore.isMock) {
+      const existing = (await mockStore.find('certificates')).find(
+        c => c.certificateNumber?.trim().toLowerCase() === certNum.toLowerCase()
+      );
+      if (existing) {
+        return res.status(400).json({ success: false, message: `Certificate number "${certNum}" already exists.` });
+      }
+    } else {
+      const existing = await Certificate.findOne({ certificateNumber: certNum });
+      if (existing) {
+        return res.status(400).json({ success: false, message: `Certificate number "${certNum}" already exists.` });
+      }
+    }
+
+    // Generate QR Code data URL for the verification link
+    const host = req.get('host') || 'localhost:5000';
+    const protocol = req.protocol || 'http';
+    const verifyUrl = `${protocol}://${host}/verify-certificate/${encodeURIComponent(certNum)}`;
+    let qrCodeData = '';
+    try {
+      qrCodeData = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 140 });
+    } catch (e) {
+      console.warn('QR code generation warning:', e);
+    }
+
+    const certPayload = {
+      certificateNumber: certNum,
+      studentName: studentName.trim(),
+      internshipName: internshipName.trim(),
+      startDate: startDate.trim(),
+      endDate: endDate.trim(),
+      issueDate: issueDate.trim(),
+      description: description?.trim() || 'This certification is awarded in recognition of the successful completion of the curriculum and mastery of the course content.',
+      companyName: companyName?.trim() || 'APPLE TREE INFOTECH',
+      companyAddress: companyAddress?.trim() || 'C-60 3rd Floor R.K. Tower RDC, Raj Nagar, Ghaziabad, 201001',
+      companyPhone: companyPhone?.trim() || '7503962162, 9355343070',
+      companyEmail: companyEmail?.trim() || 'info@appletreeinfotech.in',
+      companyWeb: companyWeb?.trim() || 'appletreeinfotech.in',
+      partnerUniversity: partnerUniversity?.trim() || 'KALINGA UNIVERSITY',
+      signatoryTitle: signatoryTitle?.trim() || 'Partner',
+      status: status || 'valid',
+      qrCodeData,
+      studentId: studentId || null
+    };
+
+    let newCertificate = null;
+    if (mockStore.isMock) {
+      newCertificate = await mockStore.create('certificates', certPayload);
+    } else {
+      newCertificate = await Certificate.create(certPayload);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Internship Certificate generated successfully!',
+      data: newCertificate
+    });
+  } catch (error) {
+    console.error('Error creating certificate:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to create certificate' });
+  }
+});
+
+// 4. Update certificate
+router.put('/certificates/:id', async (req, res) => {
+  try {
+    const {
+      certificateNumber,
+      studentName,
+      internshipName,
+      startDate,
+      endDate,
+      issueDate,
+      description,
+      companyName,
+      companyAddress,
+      companyPhone,
+      companyEmail,
+      companyWeb,
+      partnerUniversity,
+      signatoryTitle,
+      status
+    } = req.body;
+
+    const updateData = {};
+    if (certificateNumber) updateData.certificateNumber = certificateNumber.trim().toUpperCase();
+    if (studentName) updateData.studentName = studentName.trim();
+    if (internshipName) updateData.internshipName = internshipName.trim();
+    if (startDate) updateData.startDate = startDate.trim();
+    if (endDate) updateData.endDate = endDate.trim();
+    if (issueDate) updateData.issueDate = issueDate.trim();
+    if (description !== undefined) updateData.description = description;
+    if (companyName) updateData.companyName = companyName.trim();
+    if (companyAddress) updateData.companyAddress = companyAddress.trim();
+    if (companyPhone) updateData.companyPhone = companyPhone.trim();
+    if (companyEmail) updateData.companyEmail = companyEmail.trim();
+    if (companyWeb) updateData.companyWeb = companyWeb.trim();
+    if (partnerUniversity) updateData.partnerUniversity = partnerUniversity.trim();
+    if (signatoryTitle) updateData.signatoryTitle = signatoryTitle.trim();
+    if (status) updateData.status = status;
+
+    if (updateData.certificateNumber) {
+      const host = req.get('host') || 'localhost:5000';
+      const protocol = req.protocol || 'http';
+      const verifyUrl = `${protocol}://${host}/verify-certificate/${encodeURIComponent(updateData.certificateNumber)}`;
+      try {
+        updateData.qrCodeData = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 140 });
+      } catch (e) {
+        console.warn('QR code update error:', e);
+      }
+    }
+
+    if (mockStore.isMock) {
+      const updated = await mockStore.findByIdAndUpdate('certificates', req.params.id, updateData);
+      if (!updated) return res.status(404).json({ success: false, message: 'Certificate not found' });
+      return res.json({ success: true, message: 'Certificate updated successfully', data: updated });
+    }
+
+    const updated = await Certificate.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    if (!updated) return res.status(404).json({ success: false, message: 'Certificate not found' });
+    res.json({ success: true, message: 'Certificate updated successfully', data: updated });
+  } catch (error) {
+    console.error('Error updating certificate:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to update certificate' });
+  }
+});
+
+// 5. Delete certificate
+router.delete('/certificates/:id', async (req, res) => {
+  try {
+    if (mockStore.isMock) {
+      await mockStore.findByIdAndDelete('certificates', req.params.id);
+      return res.json({ success: true, message: 'Certificate deleted successfully' });
+    }
+    await Certificate.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'Certificate deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting certificate:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to delete certificate' });
   }
 });
 

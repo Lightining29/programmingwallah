@@ -663,6 +663,27 @@ const mockStore = {
   enrollments: [],
   videoProgress: [],
   notes: [],
+  certificates: [
+    {
+      _id: 'cert_sample_1',
+      certificateNumber: 'ATI-06-02-ST1002',
+      studentName: 'Miss. Sonam Tiwari',
+      internshipName: '6-month Front-End Development Course (MERN Stack)',
+      startDate: 'June 2, 2025',
+      endDate: 'December 22, 2025',
+      issueDate: 'January 2, 2026',
+      description: 'This certification is awarded in recognition of the successful completion of the curriculum and mastery of the course content.',
+      companyName: 'APPLE TREE INFOTECH',
+      companyAddress: 'C-60 3rd Floor R.K. Tower RDC, Raj Nagar, Ghaziabad, 201001',
+      companyPhone: '7503962162, 9355343070',
+      companyEmail: 'info@appletreeinfotech.in',
+      companyWeb: 'appletreeinfotech.in',
+      partnerUniversity: 'KALINGA UNIVERSITY',
+      signatoryTitle: 'Partner',
+      status: 'valid',
+      createdAt: new Date('2026-01-02T10:00:00Z')
+    }
+  ],
 
   // In-memory helper methods
   async find(collectionName, filter = {}) {

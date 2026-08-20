@@ -20,6 +20,7 @@ import Contact from './pages/Contact.jsx';
 import Login from './pages/Login.jsx';
 import Practice from './pages/Practice.jsx';
 import RazorpayTestPage from './pages/RazorpayTestPage.jsx';
+import VerifyCertificate from './pages/VerifyCertificate.jsx';
 
 // LMS Pages
 import LMS from './pages/LMS.jsx';
@@ -115,6 +116,8 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
           <Route path="/login" element={<Login />} />
           <Route path="/practice" element={<Practice />} />
           <Route path="/payment-demo" element={<RazorpayTestPage />} />
+          <Route path="/verify-certificate" element={<VerifyCertificate />} />
+          <Route path="/verify-certificate/:certNumber" element={<VerifyCertificate />} />
 
           {/* LMS Routes */}
           <Route path="/lms" element={<LMS />} />

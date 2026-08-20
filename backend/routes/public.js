@@ -7,8 +7,10 @@ import Query from '../models/Query.js';
 import FeeStructure from '../models/FeeStructure.js';
 import LibraryNote from '../models/LibraryNote.js';
 import Course from '../models/Course.js';
+import Certificate from '../models/Certificate.js';
 import mockStore from '../config/mockStore.js';
 import { uploadAdmissions } from '../middleware/upload.js';
+import QRCode from 'qrcode';
 
 const router = express.Router();
 
@@ -513,6 +515,61 @@ router.post('/dsa-feedback', async (req, res) => {
   } catch (error) {
     console.error('DSA feedback error:', error);
     res.status(500).json({ success: false, message: error.message || 'Unable to generate DSA feedback.' });
+  }
+});
+
+// Public Certificate Verification
+router.get('/verify-certificate/:certificateNumber', async (req, res) => {
+  try {
+    const rawNumber = req.params.certificateNumber?.trim();
+    if (!rawNumber) {
+      return res.status(400).json({ success: false, message: 'Certificate number is required.' });
+    }
+
+    let certificate = null;
+    if (mockStore.isMock) {
+      const list = await mockStore.find('certificates');
+      certificate = list.find(
+        (c) =>
+          c.certificateNumber?.trim().toLowerCase() === rawNumber.toLowerCase() ||
+          c._id?.toLowerCase() === rawNumber.toLowerCase()
+      );
+    } else {
+      certificate = await Certificate.findOne({
+        certificateNumber: { $regex: new RegExp(`^${rawNumber}$`, 'i') }
+      }).lean();
+    }
+
+    if (!certificate) {
+      return res.status(404).json({
+        success: false,
+        verified: false,
+        message: 'No certificate found with this Certificate Number. Please verify the number and try again.'
+      });
+    }
+
+    // Generate or ensure QR code
+    let qrCode = certificate.qrCodeData;
+    if (!qrCode) {
+      try {
+        const verifyUrl = `${req.protocol}://${req.get('host')}/verify-certificate/${encodeURIComponent(certificate.certificateNumber)}`;
+        qrCode = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 140 });
+      } catch (qrErr) {
+        console.error('QR code generation error:', qrErr);
+      }
+    }
+
+    return res.json({
+      success: true,
+      verified: certificate.status === 'valid',
+      data: {
+        ...certificate,
+        qrCodeData: qrCode
+      }
+    });
+  } catch (error) {
+    console.error('Verify certificate error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Error verifying certificate.' });
   }
 });
 

@@ -622,4 +622,22 @@ html.dark .admin-dashboard-shell .border-slate-200\/50 {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+
+  /* Certificate Landscape Print Optimization */
+  @page {
+    size: landscape;
+    margin: 0.8cm;
+  }
+
+  .certificate-print-root {
+    position: relative !important;
+    margin: 0 auto !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    page-break-inside: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 }
