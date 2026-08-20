@@ -446,24 +446,53 @@ export default function Login() {
                   borderColor: `${selectedPortal.accentColor}40`
                 }}
               >
-                <div className="flex items-center gap-3">
-                  <div 
-                    className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0"
-                    style={{ background: `linear-gradient(135deg, ${selectedPortal.accentColor}, ${accentB})` }}
-                  >
-                    <selectedPortal.icon className="w-5 h-5"/>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-black" style={{ color: textClr }}>{selectedPortal.name}</span>
-                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full text-white"
-                            style={{ backgroundColor: selectedPortal.accentColor }}>
-                        {selectedPortal.badge}
-                      </span>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 w-full">
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0"
+                      style={{ background: `linear-gradient(135deg, ${selectedPortal.accentColor}, ${accentB})` }}
+                    >
+                      <selectedPortal.icon className="w-5 h-5"/>
                     </div>
-                    <p className="text-[11px] font-medium leading-tight mt-0.5" style={{ color: mutedClr }}>
-                      {selectedPortal.description}
-                    </p>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black" style={{ color: textClr }}>{selectedPortal.name}</span>
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full text-white"
+                              style={{ backgroundColor: selectedPortal.accentColor }}>
+                          {selectedPortal.badge}
+                        </span>
+                      </div>
+                      <p className="text-[11px] font-medium leading-tight mt-0.5" style={{ color: mutedClr }}>
+                        {selectedPortal.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmail(selectedPortal.email);
+                        setPassword(selectedPortal.password);
+                        setValErr('');
+                      }}
+                      className="px-2.5 py-1.5 rounded-lg text-[10px] font-extrabold border transition-all hover:scale-105"
+                      style={{
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#ffffff',
+                        borderColor: `${selectedPortal.accentColor}60`,
+                        color: selectedPortal.accentColor
+                      }}
+                    >
+                      Fill Demo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleQuickDemoLogin(selectedPortal)}
+                      className="px-3 py-1.5 rounded-lg text-[10px] font-black text-white transition-all shadow-sm hover:scale-105"
+                      style={{ background: `linear-gradient(135deg, ${selectedPortal.accentColor}, ${accentB})` }}
+                    >
+                      1-Click Login
+                    </button>
                   </div>
                 </div>
               </div>

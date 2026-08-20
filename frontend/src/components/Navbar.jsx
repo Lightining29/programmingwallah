@@ -39,7 +39,7 @@ export default function Navbar() {
     if (user.role === 'admin') return '/dashboard/admin';
     if (user.role === 'teacher') return '/dashboard/teacher';
     if (user.role === 'parent') return '/dashboard/parent';
-    return '/lms/dashboard'; // 'user' role → student learning dashboard
+    return '/dashboard/student'; // 'user' or 'student' role → student portal
   };
 
   return (
