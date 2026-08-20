@@ -166,38 +166,12 @@ export default function Login() {
     setValErr('');
   };
 
-  const handleQuickDemoLogin = async (portal) => {
-    setSelectedPortalId(portal.id);
-    setValErr('');
-    
-    const res = await login(portal.email, portal.password);
-    if (res.success) {
-      confetti({ particleCount: 140, spread: 90, origin: { y: 0.6 } });
-      if (portal.id === 'student')          navigate('/lms/dashboard');
-      else if (portal.id === 'parent')     navigate('/dashboard/parent');
-      else if (portal.id === 'teacher')    navigate('/dashboard/teacher');
-      else if (portal.id === 'admin')      navigate('/dashboard/admin');
-      else navigate('/lms/dashboard');
-    } else {
-      // Fallback for student demo account registration if not existing
-      if (portal.role === 'user') {
-        const regRes = await register('Demo Student', portal.email, portal.password, 'user');
-        if (regRes.success) {
-          confetti({ particleCount: 140, spread: 90, origin: { y: 0.6 } });
-          navigate('/lms/dashboard');
-          return;
-        }
-      }
-      setValErr(res.message || `Failed to log into ${portal.name}. Check your credentials.`);
-    }
-  };
-
   const handleLogin = async (e) => {
     e.preventDefault(); setValErr('');
     const res = await login(email, password);
     if (res.success) {
       confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
-      if (selectedPortalId === 'student')      navigate('/lms/dashboard');
+      if (selectedPortalId === 'student')      navigate('/dashboard/student');
       else if (selectedPortalId === 'parent')  navigate('/dashboard/parent');
       else if (selectedPortalId === 'teacher') navigate('/dashboard/teacher');
       else if (selectedPortalId === 'admin')   navigate('/dashboard/admin');
@@ -205,18 +179,9 @@ export default function Login() {
         if (res.user.role === 'admin')        navigate('/dashboard/admin');
         else if (res.user.role === 'teacher') navigate('/dashboard/teacher');
         else if (res.user.role === 'parent')  navigate('/dashboard/parent');
-        else navigate('/lms/dashboard');
+        else navigate('/dashboard/student');
       }
     } else {
-      // Auto-register fallback for demo student account if not present
-      if (selectedPortalId === 'student' || email.trim().toLowerCase() === 'student@pranidha.edu') {
-        const regRes = await register('Demo Student', email, password, 'user');
-        if (regRes.success) {
-          confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
-          navigate('/lms/dashboard');
-          return;
-        }
-      }
       setValErr(res.message || 'Login failed. Check your credentials.');
     }
   };
@@ -446,53 +411,24 @@ export default function Login() {
                   borderColor: `${selectedPortal.accentColor}40`
                 }}
               >
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 w-full">
-                  <div className="flex items-center gap-3">
-                    <div 
-                      className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0"
-                      style={{ background: `linear-gradient(135deg, ${selectedPortal.accentColor}, ${accentB})` }}
-                    >
-                      <selectedPortal.icon className="w-5 h-5"/>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-black" style={{ color: textClr }}>{selectedPortal.name}</span>
-                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full text-white"
-                              style={{ backgroundColor: selectedPortal.accentColor }}>
-                          {selectedPortal.badge}
-                        </span>
-                      </div>
-                      <p className="text-[11px] font-medium leading-tight mt-0.5" style={{ color: mutedClr }}>
-                        {selectedPortal.description}
-                      </p>
-                    </div>
+                <div className="flex items-center gap-3 w-full">
+                  <div 
+                    className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0"
+                    style={{ background: `linear-gradient(135deg, ${selectedPortal.accentColor}, ${accentB})` }}
+                  >
+                    <selectedPortal.icon className="w-5 h-5"/>
                   </div>
-
-                  <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEmail(selectedPortal.email);
-                        setPassword(selectedPortal.password);
-                        setValErr('');
-                      }}
-                      className="px-2.5 py-1.5 rounded-lg text-[10px] font-extrabold border transition-all hover:scale-105"
-                      style={{
-                        backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#ffffff',
-                        borderColor: `${selectedPortal.accentColor}60`,
-                        color: selectedPortal.accentColor
-                      }}
-                    >
-                      Fill Demo
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemoLogin(selectedPortal)}
-                      className="px-3 py-1.5 rounded-lg text-[10px] font-black text-white transition-all shadow-sm hover:scale-105"
-                      style={{ background: `linear-gradient(135deg, ${selectedPortal.accentColor}, ${accentB})` }}
-                    >
-                      1-Click Login
-                    </button>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black" style={{ color: textClr }}>{selectedPortal.name}</span>
+                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full text-white"
+                            style={{ backgroundColor: selectedPortal.accentColor }}>
+                        {selectedPortal.badge}
+                      </span>
+                    </div>
+                    <p className="text-[11px] font-medium leading-tight mt-0.5" style={{ color: mutedClr }}>
+                      {selectedPortal.description}
+                    </p>
                   </div>
                 </div>
               </div>
