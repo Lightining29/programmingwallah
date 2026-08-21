@@ -162,90 +162,136 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Mobile Drawer (Clean Dropdown Panel) */}
+      {/* Mobile Slide-Out Sidebar Drawer */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            className={`lg:hidden absolute top-full left-0 right-0 overflow-hidden z-40 ${
-              isDark
-                ? 'border-t border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.99),rgba(15,23,42,0.98))] shadow-[0_20px_40px_rgba(2,6,23,0.65)]'
-                : 'border-t border-orange-100 bg-white/95 shadow-[0_20px_40px_rgba(15,23,42,0.10)]'
-            }`}
-          >
-            <div className="flex flex-col p-4 space-y-2.5">
-              {/* Mobile theme toggle */}
-              <button
-                onClick={toggleTheme}
-                className={`flex items-center justify-between py-2 px-3 rounded-lg font-quicksand font-extrabold text-sm transition-all ${isDark ? 'bg-white/10 text-amber-200' : 'bg-brandCream text-slate-700'}`}
-              >
-                <span>{isDark ? 'LIGHT MODE' : 'DARK MODE'}</span>
-                {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </button>
+          <>
+            {/* Backdrop Blur Overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setIsOpen(false)}
+              className="fixed inset-0 z-50 bg-black/65 backdrop-blur-sm lg:hidden"
+            />
 
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  to={link.path}
-                  onClick={() => setIsOpen(false)}
-                  className={`font-quicksand font-extrabold text-sm py-2 px-3 rounded-lg transition-all ${
-                    location.pathname === link.path
-                      ? (isDark ? 'text-cyan-200 bg-cyan-400/10' : 'text-brandCoral-dark bg-brandCoral/10')
-                      : (isDark ? 'text-slate-200 hover:bg-white/10' : 'text-slate-600 hover:bg-slate-100')
-                  }`}
-                >
-                  {link.name}
-                </Link>
-              ))}
+            {/* Sidebar Container */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              className="fixed top-0 right-0 bottom-0 z-50 w-[310px] max-w-[88vw] bg-[#10141d]/98 border-l border-slate-850 shadow-[-15px_0_40px_rgba(0,0,0,0.5)] p-5 flex flex-col justify-between overflow-y-auto text-white lg:hidden"
+            >
+              <div className="space-y-5">
+                {/* Header with Logo & Close */}
+                <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-red-500 to-emerald-500 flex items-center justify-center text-white text-xs font-black">
+                      A
+                    </div>
+                    <div>
+                      <span className="text-xs font-black tracking-tight text-white block leading-none">
+                        <span className="text-[#ef4444]">Apple</span>
+                        <span className="text-[#22c55e]">Tree</span>
+                      </span>
+                      <span className="text-[9px] font-extrabold text-slate-400 tracking-wider block">INFOTECH</span>
+                    </div>
+                  </div>
 
-              <hr className={`my-1.5 ${isDark ? 'border-white/10' : 'border-orange-100'}`} />
-
-              {user ? (
-                <div className="flex flex-col space-y-2 pt-1.5">
-                  <Link
-                    to={getDashboardPath()}
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center justify-center space-x-2 font-quicksand font-bold text-sm rounded-xl bg-cyan-400/10 text-cyan-100 py-2.5 transition-all hover:bg-cyan-400/20"
-                  >
-                    <LayoutDashboard className="w-4 h-4" />
-                    <span>DASHBOARD</span>
-                  </Link>
                   <button
-                    onClick={() => {
-                      setIsOpen(false);
-                      setShowLogoutConfirm(true);
-                    }}
-                    className="flex items-center justify-center space-x-2 font-quicksand font-bold text-sm rounded-xl bg-rose-400/10 text-rose-100 py-2.5 transition-all hover:bg-rose-400/20"
+                    onClick={() => setIsOpen(false)}
+                    className="w-8 h-8 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer text-sm"
                   >
-                    <LogOut className="w-4 h-4" />
-                    <span>LOGOUT</span>
+                    ✕
                   </button>
                 </div>
-              ) : (
-                <div className="flex flex-col space-y-2 pt-1.5">
-                  <Link
-                    to="/login"
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center justify-center space-x-2 font-quicksand font-bold text-sm text-center w-full rounded-xl bg-indigo-400/10 text-indigo-100 py-2.5 transition-all hover:bg-indigo-400/20"
-                  >
-                    <LogIn className="w-4 h-4" />
-                    <span>LOGIN</span>
-                  </Link>
-                  <Link
-                    to="/login?register=true"
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center justify-center space-x-2 font-quicksand font-bold text-sm text-center w-full rounded-xl bg-brandCoral/10 text-brandCoral py-2.5 transition-all hover:bg-brandCoral/20"
-                  >
-                    <UserPlus className="w-4 h-4" />
-                    <span>SIGN UP FREE</span>
-                  </Link>
+
+                {/* Theme Mode Toggle Pill */}
+                <button
+                  onClick={toggleTheme}
+                  className="w-full flex items-center justify-between py-2 px-3.5 rounded-2xl bg-[#1a202c] border border-slate-700/60 text-xs font-bold text-slate-300 hover:text-white transition-all cursor-pointer"
+                >
+                  <span className="flex items-center gap-2">
+                    {isDark ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-sky-400" />}
+                    <span>{isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</span>
+                  </span>
+                  <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400">Theme</span>
+                </button>
+
+                {/* Navigation Links */}
+                <div className="space-y-1">
+                  <span className="text-[9px] font-extrabold tracking-widest text-slate-500 uppercase px-2 block mb-1">
+                    Navigation
+                  </span>
+                  {navLinks.map((link) => {
+                    const isActive = location.pathname === link.path;
+                    return (
+                      <Link
+                        key={link.name}
+                        to={link.path}
+                        onClick={() => setIsOpen(false)}
+                        className={`flex items-center justify-between font-quicksand font-bold text-xs py-2.5 px-3.5 rounded-2xl transition-all ${
+                          isActive
+                            ? 'bg-gradient-to-r from-red-500/20 to-pink-500/20 text-pink-300 border border-pink-500/30'
+                            : 'text-slate-300 hover:bg-slate-800/60 hover:text-white'
+                        }`}
+                      >
+                        <span>{link.name}</span>
+                        {isActive && <span className="w-1.5 h-1.5 rounded-full bg-pink-400 shadow-[0_0_8px_rgba(244,63,94,0.8)]" />}
+                      </Link>
+                    );
+                  })}
                 </div>
-              )}
-            </div>
-          </motion.div>
+              </div>
+
+              {/* Bottom Quick Access Actions */}
+              <div className="pt-4 mt-4 border-t border-slate-800 space-y-2">
+                {user ? (
+                  <>
+                    <Link
+                      to={getDashboardPath()}
+                      onClick={() => setIsOpen(false)}
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-bold text-xs hover:bg-cyan-500/25 transition-all shadow-sm"
+                    >
+                      <LayoutDashboard className="w-4 h-4" />
+                      <span>OPEN DASHBOARD</span>
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setIsOpen(false);
+                        setShowLogoutConfirm(true);
+                      }}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 font-bold text-xs hover:bg-rose-500/20 transition-all"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>SIGN OUT</span>
+                    </button>
+                  </>
+                ) : (
+                  <div className="space-y-2">
+                    <Link
+                      to="/login"
+                      onClick={() => setIsOpen(false)}
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-full bg-[#1e2330] hover:bg-[#252b3b] border border-slate-700 text-white font-bold text-xs transition-all shadow-sm"
+                    >
+                      <LogIn className="w-3.5 h-3.5" />
+                      <span>LOGIN TO LMS</span>
+                    </Link>
+                    <Link
+                      to="/login?register=true"
+                      onClick={() => setIsOpen(false)}
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-full bg-gradient-to-r from-red-500 to-pink-500 text-white font-bold text-xs shadow-md hover:opacity-95 transition-all"
+                    >
+                      <UserPlus className="w-3.5 h-3.5" />
+                      <span>GET STARTED FREE</span>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
       <ConfirmModal

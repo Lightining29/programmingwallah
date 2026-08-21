@@ -33,78 +33,98 @@ export default function Gallery() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-8 py-12 space-y-12">
+    <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 sm:py-12 space-y-8 select-none">
       
-      {/* Title */}
-      <div className="text-center space-y-4 max-w-2xl mx-auto">
-        <span className="text-brandCoral font-bold text-xs uppercase tracking-widest bg-brandCoral/10 px-3 py-1 rounded-full border border-brandCoral/20">MEMORIES BOARD</span>
-        <h1 className="text-4xl font-quicksand font-bold text-slate-800">Photo & Video Gallery</h1>
-        <p className="text-sm text-slate-500">
-          A glimpse into the daily life, creative sessions, celebrations, and achievements of our young scholars.
-        </p>
-      </div>
-
-      {/* Filter Menu */}
-      <div className="flex flex-wrap justify-center gap-3">
-        {categories.map((cat) => (
-          <button
-            key={cat.value}
-            onClick={() => setFilter(cat.value)}
-            className={`px-5 py-2.5 rounded-full font-quicksand font-bold text-xs transition-all border ${
-              filter === cat.value
-                ? 'bg-brandSky text-white border-brandSky shadow transform -translate-y-0.5'
-                : 'bg-white text-slate-600 border-orange-50 hover:bg-orange-50/20'
-            }`}
-          >
-            {cat.name}
-          </button>
-        ))}
-      </div>
-
-      {/* Gallery Grid */}
-      {loading ? (
-        <div className="text-center py-20">
-          <div className="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent text-brandSky rounded-full" />
-          <p className="mt-2 text-xs text-slate-500 font-quicksand">Loading albums...</p>
+      {/* ── MASTER CANVAS CONTAINER (Crextio Golden-Butter Theme) ── */}
+      <div className="bg-gradient-to-br from-[#faf8f2] via-[#fbf7eb] to-[#fdf2d2] rounded-[38px] border border-white/90 shadow-[0_25px_80px_rgba(0,0,0,0.08)] p-6 sm:p-10 space-y-8">
+        
+        {/* Title Header */}
+        <div className="text-center space-y-3 max-w-2xl mx-auto">
+          <div className="inline-flex items-center gap-1.5 bg-[#1c1d21] text-white text-[10px] font-extrabold uppercase tracking-widest px-3.5 py-1.5 rounded-full shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span>MEMORIES & MOMENTS</span>
+          </div>
+          
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight font-sans">
+            Photo & Video Gallery
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-600 font-medium">
+            A glimpse into the daily life, creative coding sessions, celebrations, and achievements of our young scholars and trainees.
+          </p>
         </div>
-      ) : items.length === 0 ? (
-        <div className="text-center py-20 bg-white border border-orange-50 rounded-2xl">
-          <ImageIcon className="w-12 h-12 text-slate-300 mx-auto" />
-          <p className="mt-2 text-sm text-slate-500 font-quicksand font-medium">No media items in this category yet.</p>
+
+        {/* Filter Segmented Pill Menu */}
+        <div className="flex justify-center">
+          <div className="bg-white/70 border border-slate-200/80 p-1.5 rounded-full flex flex-wrap items-center justify-center gap-1.5 shadow-sm backdrop-blur-md">
+            {categories.map((cat) => (
+              <button
+                key={cat.value}
+                onClick={() => setFilter(cat.value)}
+                className={`px-4 py-2 rounded-full font-sans font-bold text-xs transition-all cursor-pointer ${
+                  filter === cat.value
+                    ? 'bg-[#1c1d21] text-white shadow-sm scale-[1.02]'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+                }`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {items.map((item) => (
-            <motion.div
-              layout
-              key={item._id}
-              onClick={() => setSelectedItem(item)}
-              className="group relative bg-white border border-orange-50 rounded-2xl overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition-shadow"
-            >
-              <div className="overflow-hidden relative h-52">
-                <img
-                  src={item.url}
-                  alt={item.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-800 shadow">
-                    <Eye className="w-5 h-5" />
+
+        {/* Gallery Grid */}
+        {loading ? (
+          <div className="text-center py-20">
+            <div className="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent text-slate-900 rounded-full" />
+            <p className="mt-3 text-xs text-slate-500 font-bold">Loading albums...</p>
+          </div>
+        ) : items.length === 0 ? (
+          <div className="text-center py-20 bg-white/70 border border-white rounded-3xl p-8">
+            <ImageIcon className="w-12 h-12 text-slate-300 mx-auto" />
+            <p className="mt-3 text-sm text-slate-600 font-bold">No media items in this category yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            {items.map((item) => (
+              <motion.div
+                layout
+                key={item._id}
+                onClick={() => setSelectedItem(item)}
+                className="group relative bg-white/80 border border-white rounded-[28px] overflow-hidden shadow-sm hover:shadow-xl cursor-pointer transition-all duration-300 hover:-translate-y-1.5 flex flex-col justify-between"
+              >
+                <div className="overflow-hidden relative h-56 bg-slate-100">
+                  <img
+                    src={item.url}
+                    alt={item.title}
+                    className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
+                    <div className="w-11 h-11 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-900 shadow-lg scale-90 group-hover:scale-100 transition-transform">
+                      <Eye className="w-5 h-5 text-slate-900" />
+                    </div>
+                  </div>
+                  
+                  {/* Category Pill */}
+                  <span className="absolute top-3 left-3 bg-[#1c1d21]/90 text-white text-[9px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full backdrop-blur-md shadow-sm">
+                    {item.category}
+                  </span>
+                </div>
+
+                <div className="p-4 bg-white/90 flex flex-col justify-between">
+                  <h4 className="font-bold text-slate-900 text-sm leading-snug line-clamp-1 group-hover:text-amber-700 transition-colors">
+                    {item.title}
+                  </h4>
+                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-[10px] text-slate-400 font-bold">
+                    <span>{new Date(item.date).toLocaleDateString('en-GB')}</span>
+                    <span className="text-amber-600 group-hover:translate-x-0.5 transition-transform">View Media ↗</span>
                   </div>
                 </div>
-                {/* Category tag */}
-                <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm border border-orange-100 text-[9px] uppercase font-bold text-slate-700 px-2 py-0.5 rounded-full shadow-sm">
-                  {item.category}
-                </span>
-              </div>
-              <div className="p-4 bg-white border-t border-slate-50">
-                <h4 className="font-quicksand font-bold text-slate-800 text-sm leading-tight line-clamp-1">{item.title}</h4>
-                <p className="text-[10px] text-slate-400 mt-1 font-medium">{new Date(item.date).toLocaleDateString()}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      )}
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+      </div>
 
       {/* Lightbox Modal overlay */}
       <AnimatePresence>
@@ -113,25 +133,25 @@ export default function Gallery() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
             onClick={() => setSelectedItem(null)}
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.92, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-3xl overflow-hidden max-w-3xl w-full shadow-2xl relative"
+              exit={{ scale: 0.92, opacity: 0 }}
+              className="bg-[#161a23] text-white rounded-[32px] overflow-hidden max-w-3xl w-full shadow-2xl border border-slate-700 relative"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
               <button
                 onClick={() => setSelectedItem(null)}
-                className="absolute top-4 right-4 bg-black/50 text-white hover:bg-black p-2 rounded-full transition-colors z-10"
+                className="absolute top-4 right-4 bg-slate-800/80 hover:bg-slate-700 text-white p-2 rounded-full transition-colors z-10 cursor-pointer shadow-md"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="h-[300px] md:h-[450px] bg-slate-900">
+              <div className="h-[320px] md:h-[480px] bg-black/90 flex items-center justify-center">
                 <img
                   src={selectedItem.url}
                   alt={selectedItem.title}
@@ -139,18 +159,20 @@ export default function Gallery() {
                 />
               </div>
 
-              <div className="p-6 space-y-2">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-brandCoral">
-                  {selectedItem.category}
-                </span>
-                <h3 className="font-quicksand font-bold text-xl text-slate-800">
+              <div className="p-6 space-y-2 bg-[#161a23]">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400 bg-amber-950/60 border border-amber-800/60 px-2.5 py-0.5 rounded-full">
+                    {selectedItem.category}
+                  </span>
+                  <span className="text-xs text-slate-400 font-bold">
+                    {new Date(selectedItem.date).toLocaleDateString()}
+                  </span>
+                </div>
+                <h3 className="font-bold text-xl text-white">
                   {selectedItem.title}
                 </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  {selectedItem.description || 'No description provided.'}
-                </p>
-                <p className="text-[10px] text-slate-400 font-medium">
-                  Date: {new Date(selectedItem.date).toLocaleDateString()}
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  {selectedItem.description || 'Appletree Infotech Program & Creative Session Highlights.'}
                 </p>
               </div>
             </motion.div>

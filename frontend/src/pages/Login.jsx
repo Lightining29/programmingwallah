@@ -70,12 +70,6 @@ export default function Login() {
   const [showPw, setShowPw]     = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
 
-  // Google Account Chooser Modal State
-  const [showGoogleChooser, setShowGoogleChooser] = useState(false);
-  const [customGoogleEmail, setCustomGoogleEmail] = useState('');
-  const [customGoogleName, setCustomGoogleName] = useState('');
-  const [isAddingNewGoogle, setIsAddingNewGoogle] = useState(false);
-
   const selectedPortal = PORTALS.find(p => p.id === selectedPortalId) || PORTALS[0];
 
   useEffect(() => {
@@ -106,37 +100,6 @@ export default function Login() {
     } else {
       setValErr(res.message || `Login to ${portal.name} failed.`);
     }
-  };
-
-  const handleSelectGoogleAccount = async (acctEmail, acctName, acctRole) => {
-    setShowGoogleChooser(false);
-    setValErr('');
-
-    const targetEmail = String(acctEmail || '').trim().toLowerCase();
-    const targetName = acctName || targetEmail.split('@')[0];
-    const targetRole = acctRole || (targetEmail.includes('admin') ? 'admin' : (selectedPortal.role || 'user'));
-
-    const res = await loginWithGoogle({
-      email: targetEmail,
-      name: targetName,
-      avatar: 'https://lh3.googleusercontent.com/a/default-user=s96-c',
-      role: targetRole
-    });
-
-    if (res.success) {
-      confetti({ particleCount: 160, spread: 90, origin: { y: 0.6 } });
-      if (targetRole === 'admin') navigate('/dashboard/admin');
-      else if (targetRole === 'teacher') navigate('/dashboard/teacher');
-      else if (targetRole === 'parent') navigate('/dashboard/parent');
-      else navigate('/lms/dashboard');
-    } else {
-      setValErr(res.message || 'Google login failed.');
-    }
-  };
-
-  const handleGoogleSignIn = () => {
-    setValErr('');
-    setShowGoogleChooser(true);
   };
 
   const handleQuickStudentSignUp = async () => {
@@ -426,7 +389,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-full font-bold text-sm text-white tracking-wide transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 mt-2"
+              className="w-full py-3.5 rounded-full font-bold text-sm text-white tracking-wide transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 mt-3"
               style={{
                 background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)',
                 boxShadow: '0 4px 22px rgba(244, 63, 94, 0.45)'
@@ -440,35 +403,6 @@ export default function Login() {
               ) : (
                 <span>{isRegister ? 'Create Free Account' : 'Continue with Email'}</span>
               )}
-            </button>
-
-            {/* Secondary Action: Google One-Click Login */}
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-              className="w-full py-3.5 rounded-full font-bold text-sm text-white bg-[#141822] hover:bg-[#1a202c] border border-slate-800 hover:border-slate-700 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2.5 shadow-sm"
-            >
-              {/* Google colorful G logo icon */}
-              <svg className="w-4 h-4" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.26 21.36 7.36 24 12 24z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.98 0 12s.46 3.83 1.26 5.42l4.02-3.15z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
-                />
-              </svg>
-              <span>Continue with Google</span>
             </button>
           </form>
 
@@ -502,150 +436,6 @@ export default function Login() {
         </div>
 
       </div>
-
-      {/* ── GOOGLE AUTHENTIC ACCOUNT CHOOSER / CONSENT MODAL ── */}
-      {showGoogleChooser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-[#161a23] border border-slate-700/80 rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 text-white relative">
-            
-            {/* Close Button */}
-            <button
-              onClick={() => setShowGoogleChooser(false)}
-              className="absolute top-5 right-5 text-slate-400 hover:text-white text-lg font-bold w-8 h-8 rounded-full bg-slate-800/60 flex items-center justify-center transition-colors cursor-pointer"
-            >
-              ×
-            </button>
-
-            {/* Google Header */}
-            <div className="text-center space-y-2 pt-1">
-              <div className="w-11 h-11 mx-auto bg-white rounded-full flex items-center justify-center shadow-md">
-                <svg className="w-6 h-6" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
-                  <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.26 21.36 7.36 24 12 24z"/>
-                  <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.98 0 12s.46 3.83 1.26 5.42l4.02-3.15z"/>
-                  <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-white tracking-tight">Choose an account</h3>
-              <p className="text-xs text-slate-400">
-                to continue to <span className="font-bold text-slate-200">Programming Wallah</span>
-              </p>
-            </div>
-
-            {/* Account List */}
-            <div className="space-y-2.5 pt-2">
-              
-              {/* Account 1: Admin Account */}
-              <button
-                type="button"
-                onClick={() => handleSelectGoogleAccount('admin@programmingwallah.com', 'Super Admin', 'admin')}
-                className="w-full p-3.5 rounded-2xl bg-[#1e2330] hover:bg-[#252b3b] border border-slate-700/60 flex items-center justify-between text-left transition-all cursor-pointer group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-cyan-600 text-white font-bold flex items-center justify-center text-sm shadow-sm">
-                    A
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm text-white group-hover:text-cyan-300 transition-colors">Admin Workspace</p>
-                    <p className="text-xs text-slate-400">admin@programmingwallah.com</p>
-                  </div>
-                </div>
-                <span className="text-[10px] font-bold text-cyan-400 bg-cyan-950/60 border border-cyan-800/60 px-2 py-0.5 rounded-full">
-                  Admin Portal
-                </span>
-              </button>
-
-              {/* Account 2: Student Account */}
-              <button
-                type="button"
-                onClick={() => handleSelectGoogleAccount('student@programmingwallah.com', 'Student Learner', 'user')}
-                className="w-full p-3.5 rounded-2xl bg-[#1e2330] hover:bg-[#252b3b] border border-slate-700/60 flex items-center justify-between text-left transition-all cursor-pointer group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-pink-600 text-white font-bold flex items-center justify-center text-sm shadow-sm">
-                    S
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm text-white group-hover:text-pink-300 transition-colors">Student Learner</p>
-                    <p className="text-xs text-slate-400">student@programmingwallah.com</p>
-                  </div>
-                </div>
-                <span className="text-[10px] font-bold text-pink-400 bg-pink-950/60 border border-pink-800/60 px-2 py-0.5 rounded-full">
-                  Student LMS
-                </span>
-              </button>
-
-              {/* Account 3: Use Custom Google Account Form Toggle */}
-              {!isAddingNewGoogle ? (
-                <button
-                  type="button"
-                  onClick={() => setIsAddingNewGoogle(true)}
-                  className="w-full p-3.5 rounded-2xl bg-[#141822] hover:bg-[#1c2230] border border-dashed border-slate-700 flex items-center gap-3 text-left transition-all cursor-pointer text-slate-300 hover:text-white"
-                >
-                  <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 text-base font-bold">
-                    +
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm">Use another Google account</p>
-                    <p className="text-xs text-slate-500">Sign in with your personal Gmail address</p>
-                  </div>
-                </button>
-              ) : (
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (!customGoogleEmail.trim()) return;
-                    handleSelectGoogleAccount(customGoogleEmail, customGoogleName, 'user');
-                  }}
-                  className="p-4 rounded-2xl bg-[#1e2330] border border-slate-700 space-y-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-300">Enter Your Google Account</span>
-                    <button
-                      type="button"
-                      onClick={() => setIsAddingNewGoogle(false)}
-                      className="text-[11px] text-slate-500 hover:text-slate-300"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                  
-                  <input
-                    type="text"
-                    placeholder="Your Full Name (optional)"
-                    value={customGoogleName}
-                    onChange={(e) => setCustomGoogleName(e.target.value)}
-                    className="w-full bg-[#0c1017] border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400"
-                  />
-                  
-                  <input
-                    type="email"
-                    required
-                    placeholder="your.email@gmail.com"
-                    value={customGoogleEmail}
-                    onChange={(e) => setCustomGoogleEmail(e.target.value)}
-                    className="w-full bg-[#0c1017] border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400"
-                  />
-
-                  <button
-                    type="submit"
-                    className="w-full py-2.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-md cursor-pointer transition-all"
-                  >
-                    Confirm & Sign In with Google
-                  </button>
-                </form>
-              )}
-
-            </div>
-
-            {/* Privacy footer */}
-            <p className="text-[10px] text-center text-slate-500 pt-1">
-              To continue, Google will share your name, email address, and profile picture with Programming Wallah.
-            </p>
-
-          </div>
-        </div>
-      )}
 
     </div>
   );

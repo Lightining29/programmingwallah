@@ -114,134 +114,154 @@ export default function Programs() {
   };
 
   return (
-    <div className="px-4 py-12 mx-auto space-y-12 max-w-7xl md:px-8">
-      {/* Title */}
-      <div className="max-w-2xl mx-auto space-y-4 text-center">
-        <span className="px-3 py-1 text-xs font-bold tracking-widest uppercase rounded-full text-brandCoral bg-brandCoral/10 dark:bg-brandCoral/20">
-          EDUCATION PATHWAYS
-        </span>
-        <h1 className="text-4xl font-bold font-quicksand text-slate-800 dark:text-slate-100">
-          Our Syllabus & Courses
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Our specialized learning blocks are custom-tailored to cater to early developmental phases, blending cognitive studies with rich physical play.
-        </p>
-      </div>
-
-      {loading ? (
-        <div className="py-20 text-center">
-          <div className="inline-block w-8 h-8 border-4 rounded-full animate-spin border-brandCoral/30 border-t-brandCoral"></div>
-          <p className="mt-4 text-xs text-slate-500">Loading courses...</p>
-        </div>
-      ) : programsData.length === 0 ? (
-        <div className="py-20 text-center">
-          <BookOpen className="w-10 h-10 mx-auto text-slate-300" />
-          <p className="mt-4 text-sm text-slate-500">No courses available yet. Please check back soon!</p>
-        </div>
-      ) : (
-        <>
-          {/* Courses Cards Grid */}
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {programsData.map((course) => {
-              const theme = COLOR_THEMES[course.color] || COLOR_THEMES.brandMint;
-              return (
-                <div
-                  key={course._id}
-                  className="group relative flex flex-col justify-between overflow-hidden bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-xl"
-                >
-                  {/* Image/Gradient Cover */}
-                  <div className="relative h-48 overflow-hidden bg-slate-100 dark:bg-slate-850">
-                    {course.imageUrl ? (
-                      <img
-                        src={course.imageUrl}
-                        alt={course.title}
-                        className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className={`w-full h-full bg-gradient-to-tr ${theme.gradient} flex items-center justify-center`}>
-                        {getPlaceholderIcon(course.category)}
-                      </div>
-                    )}
-                    {/* Category Floating Badge */}
-                    <span className="absolute top-4 left-4 inline-flex items-center px-3 py-1 text-[9px] font-extrabold tracking-widest uppercase rounded-full bg-white/90 dark:bg-slate-900/90 text-slate-800 dark:text-slate-105 backdrop-blur-sm shadow-sm border border-slate-100 dark:border-slate-800">
-                      {course.category}
-                    </span>
-                    {/* Price Floating Badge */}
-                    <span className="absolute bottom-4 right-4 bg-gradient-to-r from-brandCoral to-orange-500 text-white font-extrabold px-4 py-1.5 rounded-2xl shadow-lg text-sm font-quicksand">
-                      {course.price > 0 ? `₹${course.price.toLocaleString('en-IN')}` : 'Free'}
-                    </span>
-                  </div>
-
-                  {/* Card Content */}
-                  <div className="flex flex-col justify-between flex-grow p-6 space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-bold font-quicksand leading-tight text-slate-855 dark:text-slate-105 group-hover:text-brandCoral transition-colors">
-                          {course.title}
-                        </h2>
-                      </div>
-                      {course.duration && (
-                        <div className="flex items-center space-x-1.5 text-xs text-slate-400 dark:text-slate-500">
-                          <Clock className="w-3.5 h-3.5" />
-                          <span>{course.duration}</span>
-                        </div>
-                      )}
-                      <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed">
-                        {course.description}
-                      </p>
-                    </div>
-
-                    {/* Stats Summary */}
-                    <div className="flex items-center space-x-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
-                      <span>{course.milestones?.length || 0} Milestones</span>
-                      <span>•</span>
-                      <span>{course.schedule?.length || 0} Slots</span>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex items-center gap-3 pt-2">
-                      <button
-                        onClick={() => setSelectedCourse(course)}
-                        className="flex-1 py-3 text-xs font-bold font-quicksand rounded-full text-slate-700 bg-slate-100 hover:bg-slate-200 dark:text-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 transition-all text-center"
-                      >
-                        VIEW DETAILS
-                      </button>
-                      <button
-                        onClick={() => handleEnroll(course)}
-                        className="flex-1 py-3 text-xs font-bold font-quicksand rounded-full text-white bg-brandCoral hover:bg-brandCoral-dark shadow-md hover:shadow-lg transition-all text-center"
-                      >
-                        ENROLL NOW
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+    <div className="px-4 py-8 sm:py-12 mx-auto space-y-10 max-w-7xl md:px-8 select-none">
+      
+      {/* ── MASTER CANVAS CONTAINER (Crextio Golden-Butter Theme) ── */}
+      <div className="bg-gradient-to-br from-[#faf8f2] via-[#fbf7eb] to-[#fdf2d2] rounded-[38px] border border-white/90 shadow-[0_25px_80px_rgba(0,0,0,0.08)] p-6 sm:p-10 space-y-8">
+        
+        {/* Title Header */}
+        <div className="max-w-2xl mx-auto space-y-3 text-center">
+          <div className="inline-flex items-center gap-1.5 bg-[#1c1d21] text-white text-[10px] font-extrabold uppercase tracking-widest px-3.5 py-1.5 rounded-full shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span>CAREER-READY CURRICULUM</span>
           </div>
 
-          {/* Curriculum Details Philosophy */}
-          <section className="grid grid-cols-1 gap-6 p-8 text-center border bg-brandCream-dark/30 border-orange-50/50 rounded-3xl md:grid-cols-3 dark:bg-slate-900/50 dark:border-slate-800">
-            <div className="space-y-2">
-              <h4 className="font-bold font-quicksand text-slate-800 dark:text-slate-105">Interactive Visuals</h4>
-              <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                All rooms are equipped with kids touch-tables and projection maps for physical-digital learning exploration.
-              </p>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight font-sans">
+            Our Syllabus & Certified Courses
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
+            Industry-aligned software engineering and design modules curated by Appletree Infotech for hands-on job readiness.
+          </p>
+        </div>
+
+        {loading ? (
+          <div className="py-20 text-center">
+            <div className="inline-block w-8 h-8 border-4 rounded-full animate-spin border-slate-900 border-t-transparent"></div>
+            <p className="mt-4 text-xs text-slate-500 font-bold">Loading curriculum...</p>
+          </div>
+        ) : programsData.length === 0 ? (
+          <div className="py-20 text-center bg-white/70 rounded-3xl border border-white p-8">
+            <BookOpen className="w-10 h-10 mx-auto text-slate-300" />
+            <p className="mt-4 text-sm text-slate-600 font-bold">No courses available yet. Please check back soon!</p>
+          </div>
+        ) : (
+          <>
+            {/* Courses Cards Grid (Luxury Bento Design) */}
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {programsData.map((course) => {
+                const theme = COLOR_THEMES[course.color] || COLOR_THEMES.brandMint;
+                return (
+                  <div
+                    key={course._id}
+                    className="group relative flex flex-col justify-between overflow-hidden bg-white/85 border border-white rounded-[32px] shadow-[0_15px_40px_rgba(0,0,0,0.06)] hover:shadow-2xl transition-all duration-300 hover:-translate-y-1.5"
+                  >
+                    {/* Image / Banner */}
+                    <div className="relative h-52 overflow-hidden bg-slate-100">
+                      {course.imageUrl ? (
+                        <img
+                          src={course.imageUrl}
+                          alt={course.title}
+                          className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className={`w-full h-full bg-gradient-to-tr ${theme.gradient} flex items-center justify-center`}>
+                          {getPlaceholderIcon(course.category)}
+                        </div>
+                      )}
+                      
+                      {/* Category Floating Pill */}
+                      <span className="absolute top-4 left-4 inline-flex items-center px-3 py-1 text-[9px] font-extrabold tracking-widest uppercase rounded-full bg-[#1c1d21]/90 text-white backdrop-blur-md shadow-sm">
+                        {course.category}
+                      </span>
+
+                      {/* Price Floating Pill */}
+                      <span className="absolute bottom-4 right-4 bg-[#facc15] text-amber-950 font-black px-3.5 py-1.5 rounded-full shadow-lg text-xs font-sans">
+                        {course.price > 0 ? `₹${course.price.toLocaleString('en-IN')}` : 'Free'}
+                      </span>
+                    </div>
+
+                    {/* Card Body */}
+                    <div className="flex flex-col justify-between flex-grow p-6 space-y-4">
+                      <div className="space-y-2">
+                        <h2 className="text-lg font-bold font-sans leading-tight text-slate-900 group-hover:text-amber-700 transition-colors line-clamp-1">
+                          {course.title}
+                        </h2>
+
+                        {course.duration && (
+                          <div className="inline-flex items-center space-x-1.5 text-[11px] font-semibold text-slate-500 bg-slate-100/80 px-2.5 py-1 rounded-full">
+                            <Clock className="w-3.5 h-3.5 text-slate-400" />
+                            <span>{course.duration}</span>
+                          </div>
+                        )}
+
+                        <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                          {course.description}
+                        </p>
+                      </div>
+
+                      {/* Stats Pills Bar */}
+                      <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                        <span>{course.milestones?.length || 4} Milestones</span>
+                        <span>•</span>
+                        <span>{course.schedule?.length || 2} Live Batches</span>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex items-center gap-2.5 pt-1">
+                        <button
+                          onClick={() => setSelectedCourse(course)}
+                          className="flex-1 py-2.5 text-xs font-bold rounded-full text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all text-center cursor-pointer"
+                        >
+                          Details ↗
+                        </button>
+                        <button
+                          onClick={() => handleEnroll(course)}
+                          className="flex-1 py-2.5 text-xs font-bold rounded-full text-white bg-[#1c1d21] hover:bg-black shadow-md hover:shadow-lg transition-all text-center cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                          <span>Enroll Now</span>
+                          <ArrowRight className="w-3.5 h-3.5 text-amber-400" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <div className="space-y-2">
-              <h4 className="font-bold font-quicksand text-slate-800 dark:text-slate-105">Monthly PTM Updates</h4>
-              <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                Detailed learning logs mapping vocabulary gains and social cooperation indices shared transparently each month.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-bold font-quicksand text-slate-800 dark:text-slate-105">Physical Fitness Blocks</h4>
-              <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                Dancing, playground obstacle courses, and basic gymnastics classes built directly into the weekly roster.
-              </p>
-            </div>
-          </section>
-        </>
-      )}
+
+            {/* Curriculum Highlights Row */}
+            <section className="grid grid-cols-1 gap-4 p-6 bg-white/70 border border-white rounded-3xl md:grid-cols-3 shadow-sm">
+              <div className="space-y-1 text-center sm:text-left p-2">
+                <h4 className="font-bold text-xs text-slate-900 flex items-center justify-center sm:justify-start gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span>Hands-on Project Portfolio</span>
+                </h4>
+                <p className="text-[11px] leading-relaxed text-slate-500">
+                  Build full-stack, enterprise-grade applications reviewed by senior developers.
+                </p>
+              </div>
+              <div className="space-y-1 text-center sm:text-left p-2">
+                <h4 className="font-bold text-xs text-slate-900 flex items-center justify-center sm:justify-start gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-cyan-500" />
+                  <span>ISO Verified Certification</span>
+                </h4>
+                <p className="text-[11px] leading-relaxed text-slate-500">
+                  Receive verifiable certificates with unique QR verification by Appletree Infotech.
+                </p>
+              </div>
+              <div className="space-y-1 text-center sm:text-left p-2">
+                <h4 className="font-bold text-xs text-slate-900 flex items-center justify-center sm:justify-start gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  <span>Interview & Placement Support</span>
+                </h4>
+                <p className="text-[11px] leading-relaxed text-slate-500">
+                  Mock technical interviews, resume refinement, and direct hiring partner referrals.
+                </p>
+              </div>
+            </section>
+          </>
+        )}
+
+      </div>
 
       {/* Course Details Modal */}
       {selectedCourse && (

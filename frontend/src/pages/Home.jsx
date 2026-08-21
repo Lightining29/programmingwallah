@@ -307,20 +307,23 @@ export default function Home() {
         </div>
       </motion.section>
 
-      {/* ═══════ SECTION 5: Courses Grid ═══════ */}
-      <motion.section {...fadeIn} className="px-4 py-12 sm:py-16 md:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="max-w-2xl mb-8 text-center sm:text-left">
-            <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-brandCoral dark:text-cyan-300">Our Courses</p>
-            <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 dark:text-white">
+      {/* ═══════ SECTION 5: Courses Bento Grid ═══════ */}
+      <motion.section {...fadeIn} className="px-4 py-8 sm:py-12 md:px-8">
+        <div className="mx-auto max-w-7xl bg-gradient-to-br from-[#faf8f2] via-[#fbf7eb] to-[#fdf2d2] rounded-[38px] border border-white/90 shadow-[0_25px_80px_rgba(0,0,0,0.06)] p-6 sm:p-10 space-y-8">
+          <div className="max-w-2xl text-center sm:text-left space-y-2">
+            <div className="inline-flex items-center gap-1.5 bg-[#1c1d21] text-white text-[10px] font-extrabold uppercase tracking-widest px-3.5 py-1.5 rounded-full shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span>CAREER PATHWAYS</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight">
               Choose a learning path that fits your career goals.
             </h2>
-            <p className="max-w-2xl mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300">
-              Each track combines deep concepts, real projects, and mentor guidance.
+            <p className="text-xs sm:text-sm text-slate-600 font-medium">
+              Each track combines deep concepts, real enterprise projects, and 1-on-1 mentor guidance.
             </p>
           </div>
 
-          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
             {courses.map((course, index) => {
               const Icon = course.icon;
               return (
@@ -330,23 +333,40 @@ export default function Home() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.15 }}
                   transition={{ duration: 0.4, delay: index * 0.06 }}
-                  className="rounded-2xl sm:rounded-3xl border border-orange-100 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow"
+                  className="rounded-[30px] border border-white bg-white/90 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between"
                 >
-                  <div className="inline-flex p-3 rounded-xl bg-brandCoral/10 text-brandCoral dark:bg-cyan-400/10 dark:text-cyan-200">
-                    <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <div className="inline-flex p-3 rounded-2xl bg-[#1c1d21] text-white shadow-sm">
+                        <Icon className="w-5 h-5 text-amber-400" />
+                      </div>
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-900 bg-amber-100/80 px-2.5 py-1 rounded-full">
+                        {course.badge}
+                      </span>
+                    </div>
+
+                    <h3 className="mt-4 text-lg font-bold text-slate-900 leading-snug">{course.name}</h3>
+                    <p className="mt-2 text-xs leading-relaxed text-slate-600 font-medium">{course.description}</p>
+                    
+                    <ul className="mt-4 space-y-2 text-xs text-slate-700 font-medium">
+                      {course.points.map((point) => (
+                        <li key={point} className="flex items-start gap-2">
+                          <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                          <span>{point}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <h3 className="mt-3 text-lg sm:text-xl font-bold text-slate-800 dark:text-white">{course.name}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{course.description}</p>
-                  <ul className="mt-3 space-y-1.5 text-sm text-slate-600 dark:text-slate-200">
-                    {course.points.map((point) => (
-                      <li key={point} className="flex items-start gap-2">
-                        <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-brandCoral dark:text-emerald-400" />
-                        <span>{point}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-4 inline-flex rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-300">
-                    {course.badge}
+
+                  <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-slate-400">Full Track</span>
+                    <Link
+                      to="/programs"
+                      className="text-xs font-bold text-amber-700 hover:text-amber-800 flex items-center gap-1 group"
+                    >
+                      <span>Explore</span>
+                      <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+                    </Link>
                   </div>
                 </motion.div>
               );
@@ -355,77 +375,92 @@ export default function Home() {
         </div>
       </motion.section>
 
-      {/* ═══════ SECTION 5b: Tech Gallery ═══════ */}
-      <motion.section {...fadeIn} className="px-4 pb-10 md:px-8">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-xs font-semibold uppercase tracking-widest text-brandCoral dark:text-cyan-300 mb-4 text-center sm:text-left">
-            Inside the Classroom
-          </p>
+      {/* ═══════ SECTION 5b: Tech Gallery Bento ═══════ */}
+      <motion.section {...fadeIn} className="px-4 pb-12 md:px-8">
+        <div className="mx-auto max-w-7xl bg-gradient-to-br from-[#faf8f2] via-[#fbf7eb] to-[#fdf2d2] rounded-[38px] border border-white/90 shadow-[0_25px_80px_rgba(0,0,0,0.06)] p-6 sm:p-10 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="inline-flex items-center gap-1.5 bg-[#1c1d21] text-white text-[10px] font-extrabold uppercase tracking-widest px-3.5 py-1.5 rounded-full shadow-sm mb-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                <span>MOMENTS & LABS</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                Inside Appletree Learning Labs
+              </h2>
+            </div>
+            <Link
+              to="/gallery"
+              className="inline-flex items-center gap-1.5 text-xs font-bold bg-white px-4 py-2.5 rounded-full border border-slate-200 text-slate-800 hover:bg-slate-50 transition-all shadow-sm self-start sm:self-auto"
+            >
+              <span>View Full Gallery</span>
+              <span>↗</span>
+            </Link>
+          </div>
 
-          {/* Top row — 2 wide + 1 tall mosaic */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {/* Mosaic Gallery Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
-            {/* Java — wide card spanning 2 cols on lg */}
-            <div className="lg:col-span-2 relative rounded-2xl sm:rounded-3xl overflow-hidden h-52 sm:h-64 group">
+            {/* Java — wide card */}
+            <div className="lg:col-span-2 relative rounded-[28px] overflow-hidden h-56 sm:h-64 group shadow-sm border border-white">
               <img
                 src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80"
                 alt="Java programming on laptop"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/30 to-transparent" />
-              <span className="absolute bottom-4 left-4 text-white font-bold text-sm sm:text-base font-quicksand drop-shadow">Java Development</span>
-              <span className="absolute top-3 right-3 text-[10px] font-bold bg-white/20 backdrop-blur-sm text-white px-2.5 py-1 rounded-full uppercase tracking-wider">Backend</span>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <span className="absolute bottom-4 left-4 text-white font-bold text-sm sm:text-base drop-shadow">Java Development</span>
+              <span className="absolute top-3 right-3 text-[10px] font-bold bg-[#1c1d21]/90 backdrop-blur-sm text-white px-3 py-1 rounded-full uppercase tracking-wider">Backend</span>
             </div>
 
             {/* C++ */}
-            <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden h-52 sm:h-64 group">
+            <div className="relative rounded-[28px] overflow-hidden h-56 sm:h-64 group shadow-sm border border-white">
               <img
                 src="https://images.unsplash.com/photo-1607799279861-4dd421887fb3?auto=format&fit=crop&w=500&q=80"
                 alt="C++ competitive programming"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/20 to-transparent" />
-              <span className="absolute bottom-4 left-4 text-white font-bold text-sm font-quicksand drop-shadow">C++ Programming</span>
-              <span className="absolute top-3 right-3 text-[10px] font-bold bg-cyan-400/30 backdrop-blur-sm text-cyan-100 px-2.5 py-1 rounded-full uppercase tracking-wider">DSA</span>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <span className="absolute bottom-4 left-4 text-white font-bold text-sm drop-shadow">C++ Programming</span>
+              <span className="absolute top-3 right-3 text-[10px] font-bold bg-[#1c1d21]/90 backdrop-blur-sm text-cyan-300 px-3 py-1 rounded-full uppercase tracking-wider">DSA</span>
             </div>
 
             {/* MERN Stack */}
-            <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden h-52 sm:h-64 group">
+            <div className="relative rounded-[28px] overflow-hidden h-56 sm:h-64 group shadow-sm border border-white">
               <img
                 src="https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&w=500&q=80"
                 alt="MERN full stack development"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/20 to-transparent" />
-              <span className="absolute bottom-4 left-4 text-white font-bold text-sm font-quicksand drop-shadow">MERN Stack</span>
-              <span className="absolute top-3 right-3 text-[10px] font-bold bg-indigo-400/30 backdrop-blur-sm text-indigo-100 px-2.5 py-1 rounded-full uppercase tracking-wider">Full Stack</span>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <span className="absolute bottom-4 left-4 text-white font-bold text-sm drop-shadow">MERN Stack</span>
+              <span className="absolute top-3 right-3 text-[10px] font-bold bg-[#1c1d21]/90 backdrop-blur-sm text-amber-300 px-3 py-1 rounded-full uppercase tracking-wider">Full Stack</span>
             </div>
 
             {/* Frontend / React */}
-            <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden h-48 sm:h-56 group">
+            <div className="relative rounded-[28px] overflow-hidden h-48 sm:h-56 group shadow-sm border border-white">
               <img
                 src="https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=500&q=80"
                 alt="React frontend development"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/20 to-transparent" />
-              <span className="absolute bottom-4 left-4 text-white font-bold text-sm font-quicksand drop-shadow">Frontend / React</span>
-              <span className="absolute top-3 right-3 text-[10px] font-bold bg-pink-400/30 backdrop-blur-sm text-pink-100 px-2.5 py-1 rounded-full uppercase tracking-wider">UI / UX</span>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <span className="absolute bottom-4 left-4 text-white font-bold text-sm drop-shadow">Frontend / React</span>
+              <span className="absolute top-3 right-3 text-[10px] font-bold bg-[#1c1d21]/90 backdrop-blur-sm text-pink-300 px-3 py-1 rounded-full uppercase tracking-wider">UI / UX</span>
             </div>
 
             {/* Code review / mentor session */}
-            <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden h-48 sm:h-56 group">
+            <div className="relative rounded-[28px] overflow-hidden h-48 sm:h-56 group shadow-sm border border-white">
               <img
                 src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=500&q=80"
                 alt="Code on monitor during class"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/20 to-transparent" />
-              <span className="absolute bottom-4 left-4 text-white font-bold text-sm font-quicksand drop-shadow">Live Coding Lab</span>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <span className="absolute bottom-4 left-4 text-white font-bold text-sm drop-shadow">Live Coding Lab</span>
             </div>
 
             {/* Team collaboration — wide */}
-            <div className="lg:col-span-2 relative rounded-2xl sm:rounded-3xl overflow-hidden h-48 sm:h-56 group">
+            <div className="lg:col-span-2 relative rounded-[28px] overflow-hidden h-48 sm:h-56 group shadow-sm border border-white">
               <img
                 src="https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80"
                 alt="Students collaborating on tech project"
