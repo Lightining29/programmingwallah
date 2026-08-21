@@ -312,314 +312,314 @@ export default function Practice() {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 text-slate-100 md:px-8">
-      <section className="rounded-[32px] border border-cyan-400/10 bg-[linear-gradient(135deg,#020617_0%,#111827_45%,#172554_100%)] p-6 shadow-[0_30px_70px_rgba(15,23,42,0.55)] md:p-8">
-        <p className="text-[10px] uppercase tracking-[0.35em] text-cyan-200">Developer Practice Hub</p>
-        <div className="mt-3 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl space-y-3">
-            <h1 className="text-4xl font-black tracking-tight text-white md:text-5xl">Quiz • Leaderboards • Java DSA Practice • Resume Builder</h1>
-            <p className="max-w-2xl text-sm text-slate-300 md:text-base">Train on Java and DSA, solve quizzes, compare yourself on the leaderboard, compile code directly in the browser, and build your developer profile.</p>
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 sm:py-12 md:px-8 select-none">
+      
+      {/* ── MASTER CANVAS CONTAINER (Crextio Golden-Butter Theme) ── */}
+      <div className="bg-gradient-to-br from-[#faf8f2] via-[#fbf7eb] to-[#fdf2d2] rounded-[38px] border border-white/90 shadow-[0_25px_80px_rgba(0,0,0,0.08)] p-6 sm:p-10 space-y-8">
+        
+        {/* Header Banner */}
+        <section className="rounded-[32px] bg-[#1c1d21] text-white p-6 sm:p-8 shadow-xl relative overflow-hidden flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 border border-white/10">
+          <div className="space-y-2 max-w-2xl">
+            <div className="inline-flex items-center gap-1.5 bg-white/10 text-amber-300 text-[10px] font-extrabold uppercase tracking-widest px-3.5 py-1 rounded-full backdrop-blur-md">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span>DEVELOPER PRACTICE & DSA LAB</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
+              Interactive Quiz • DSA Challenge Bank • AI Resume Builder
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
+              Sharpen your core coding problem-solving skills, test algorithms directly in the live browser compiler, and get AI-assisted feedback.
+            </p>
           </div>
-          <div className="rounded-3xl border border-cyan-400/20 bg-cyan-400/10 p-4 text-sm text-cyan-100 shadow-[0_18px_30px_rgba(56,189,248,0.12)]">
-            <p className="text-[10px] uppercase tracking-[0.35em] text-cyan-200">Current Rank</p>
+
+          <div className="rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 p-5 text-center min-w-[200px] shadow-lg">
+            <p className="text-[10px] uppercase tracking-widest font-extrabold text-amber-300">YOUR PRACTICE RANK</p>
             <p className="mt-1 text-2xl font-black text-white">{rankLabel}</p>
-            <p className="text-xs text-cyan-50">Quiz score: {score} / {quizQuestions.length}</p>
+            <span className="inline-block mt-2 text-[11px] font-bold text-slate-200 bg-white/10 px-3 py-1 rounded-full">
+              Score: {score} / {quizQuestions.length}
+            </span>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <article className="rounded-[30px] border border-white/10 bg-slate-900/90 p-6 shadow-[0_20px_50px_rgba(15,23,42,0.4)]">
-          <div className="mb-4 flex items-center gap-3">
-            <BrainCircuit className="h-5 w-5 text-cyan-200" />
-            <div>
-              <h2 className="text-xl font-black text-white">Java & DSA Mini Quiz</h2>
-              <p className="text-xs text-slate-300">Answer the questions and watch your rank update in real time.</p>
-            </div>
-          </div>
-          <div className="space-y-4">
-            {quizQuestions.map((item) => (
-              <div key={item.id} className="rounded-3xl border border-white/10 bg-white/5 p-4">
-                <p className="text-sm font-semibold text-white">{item.id}. {item.prompt}</p>
-                <div className="mt-3 grid gap-2 md:grid-cols-2">
-                  {item.options.map((option) => (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => setAnswers((prev) => ({ ...prev, [item.id]: option }))}
-                      className={`rounded-2xl border px-3 py-2 text-left text-sm transition-all ${answers[item.id] === option ? 'border-cyan-400 bg-cyan-400/12 text-cyan-100' : 'border-white/10 bg-slate-950/70 text-slate-200 hover:border-cyan-400/40 hover:bg-cyan-400/8'}`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
+        {/* ── 2-COLUMN SECTION: QUIZ & LEADERBOARD ── */}
+        <section className="grid gap-6 lg:grid-cols-12">
+          
+          {/* Left: Java & DSA Mini Quiz */}
+          <article className="lg:col-span-7 rounded-[32px] border border-white bg-white/90 p-6 sm:p-7 shadow-[0_10px_30px_rgba(0,0,0,0.04)] flex flex-col justify-between space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+              <div className="w-10 h-10 rounded-2xl bg-cyan-100 text-cyan-800 flex items-center justify-center font-bold">
+                <BrainCircuit className="h-5 w-5" />
               </div>
-            ))}
-          </div>
-        </article>
-
-        <article className="rounded-[30px] border border-white/10 bg-slate-900/90 p-6 shadow-[0_20px_50px_rgba(15,23,42,0.4)]">
-          <div className="mb-4 flex items-center gap-3">
-            <Trophy className="h-5 w-5 text-amber-300" />
-            <div>
-              <h2 className="text-xl font-black text-white">Weekly Leaderboard</h2>
-              <p className="text-xs text-slate-300">Top developer ranks for practice streaks and quiz performance.</p>
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Java & DSA Assessment Quiz</h2>
+                <p className="text-xs text-slate-500 font-medium">Select the best answer to update your developer rank in real-time.</p>
+              </div>
             </div>
-          </div>
-          <div className="space-y-3">
-            {leaderboard.map((entry, index) => (
-              <div key={entry.name} className="rounded-3xl border border-white/10 bg-white/5 p-4">
-                <div className="flex items-center justify-between gap-3">
+
+            <div className="space-y-4">
+              {quizQuestions.map((item) => (
+                <div key={item.id} className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4 space-y-3">
+                  <p className="text-xs sm:text-sm font-bold text-slate-900">{item.id}. {item.prompt}</p>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {item.options.map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => setAnswers((prev) => ({ ...prev, [item.id]: option }))}
+                        className={`rounded-xl border px-3.5 py-2.5 text-left text-xs font-bold transition-all cursor-pointer ${
+                          answers[item.id] === option 
+                            ? 'border-[#1c1d21] bg-[#1c1d21] text-white shadow-sm' 
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-100'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </article>
+
+          {/* Right: Leaderboard */}
+          <article className="lg:col-span-5 rounded-[32px] border border-white bg-white/90 p-6 sm:p-7 shadow-[0_10px_30px_rgba(0,0,0,0.04)] flex flex-col justify-between space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+              <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+                <Trophy className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Weekly Top Developers</h2>
+                <p className="text-xs text-slate-500 font-medium">Leaderboard rankings for solved problems and streaks.</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {leaderboard.map((entry, index) => (
+                <div key={entry.name} className="p-3.5 rounded-2xl bg-slate-50/90 border border-slate-200/80 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${entry.glow} text-sm font-black text-slate-950`}>
+                    <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${entry.glow} flex items-center justify-center text-xs font-black text-slate-900 shadow-sm`}>
                       #{index + 1}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-white">{entry.name}</p>
-                      <p className="text-[11px] uppercase tracking-[0.25em] text-cyan-100">{entry.rank}</p>
+                      <p className="text-xs font-bold text-slate-900">{entry.name}</p>
+                      <p className="text-[10px] text-slate-500 font-semibold">{entry.rank}</p>
                     </div>
                   </div>
-                  <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-200">{entry.score} pts</span>
+                  <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold">
+                    {entry.score} pts
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200/80 text-center">
+              <span className="text-xs font-bold text-amber-900">Top 3 candidates get direct interviews with Appletree Infotech 🚀</span>
+            </div>
+          </article>
+        </section>
+
+        {/* ── 2-COLUMN SECTION: DSA COMPILER & RESUME BUILDER ── */}
+        <section className="grid gap-6 lg:grid-cols-12">
+          
+          {/* Left: 1000 DSA Challenges & Compiler */}
+          <article className="lg:col-span-6 rounded-[32px] border border-white bg-white/90 p-6 sm:p-7 shadow-[0_10px_30px_rgba(0,0,0,0.04)] space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                <Code2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">1000 DSA Challenge Bank</h2>
+                <p className="text-xs text-slate-500 font-medium">Solve interactive algorithm problems in the browser.</p>
+              </div>
+            </div>
+
+            {/* Current Challenge Card */}
+            <div className="p-4 rounded-2xl bg-[#1c1d21] text-white space-y-2 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase font-bold tracking-widest text-amber-400 bg-amber-950/60 px-2.5 py-0.5 rounded-full">
+                  Challenge #{selectedQuestion + 1} of {dsaQuestionBank.length}
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedQuestion((prev) => (prev === 0 ? dsaQuestionBank.length - 1 : prev - 1))}
+                    className="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition-colors cursor-pointer"
+                  >
+                    ← Prev
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedQuestion((prev) => (prev + 1) % dsaQuestionBank.length)}
+                    className="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition-colors cursor-pointer"
+                  >
+                    Next →
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
-        </article>
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
-        <article className="rounded-[30px] border border-white/10 bg-slate-900/90 p-6 shadow-[0_20px_50px_rgba(15,23,42,0.4)]">
-          <div className="mb-4 flex items-center gap-3">
-            <Code2 className="h-5 w-5 text-emerald-300" />
-            <div>
-              <h2 className="text-xl font-black text-white">1000 DSA Challenge Bank</h2>
-              <p className="text-xs text-slate-300">Solve a generated DSA question in the compiler, then ask the AI mentor for suggestions if your logic is off.</p>
+              <h3 className="text-base font-bold text-white leading-snug">{dsaQuestionBank[selectedQuestion]?.title}</h3>
+              <p className="text-xs text-slate-300 leading-relaxed">{dsaQuestionBank[selectedQuestion]?.prompt}</p>
             </div>
-          </div>
 
-          <div className="mb-4 rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-4 text-xs text-emerald-50">
-            <p className="text-[10px] uppercase tracking-[0.35em] text-emerald-200">Question bank</p>
-            <p className="mt-1 font-semibold">{dsaQuestionBank.length} curated DSA problems are ready. Pick any challenge and use the compiler below to test your solution.</p>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-2">
-            <button
-              type="button"
-              onClick={() => setSelectedQuestion((prev) => (prev === 0 ? dsaQuestionBank.length - 1 : prev - 1))}
-              className="rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-left text-sm text-slate-100 hover:border-cyan-400/40"
-            >
-              ← Previous challenge
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedQuestion((prev) => (prev + 1) % dsaQuestionBank.length)}
-              className="rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-left text-sm text-slate-100 hover:border-cyan-400/40"
-            >
-              Next challenge →
-            </button>
-          </div>
-
-          <div className="mt-4 rounded-3xl border border-cyan-400/20 bg-slate-950/80 p-4 text-sm text-slate-100">
-            <p className="text-[10px] uppercase tracking-[0.35em] text-cyan-200">Current challenge</p>
-            <h3 className="mt-2 text-lg font-black text-white">{dsaQuestionBank[selectedQuestion]?.title}</h3>
-            <p className="mt-2 text-sm text-slate-300">{dsaQuestionBank[selectedQuestion]?.prompt}</p>
-            <p className="mt-3 text-xs text-cyan-100">Challenge #{selectedQuestion + 1} of {dsaQuestionBank.length}</p>
-          </div>
-
-          <div className="mt-4 overflow-hidden rounded-3xl border border-cyan-400/20 bg-black/70">
-            <iframe
-              title="Online Java Compiler"
-              src="https://www.jdoodle.com/iembed/v0/"
-              className="h-[420px] w-full border-0"
-              allow="clipboard-write"
-              loading="lazy"
-            />
-          </div>
-
-          <div className="mt-4 rounded-3xl border border-violet-400/20 bg-violet-400/10 p-4 text-sm text-violet-50">
-            <p className="text-[10px] uppercase tracking-[0.35em] text-violet-200">AI DSA mentor</p>
-            <textarea
-              value={solutionDraft}
-              onChange={(e) => setSolutionDraft(e.target.value)}
-              rows={8}
-              className="mt-3 w-full rounded-2xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white outline-none ring-0"
-              placeholder="Paste your Java code here and ask for feedback."
-            />
-            <div className="mt-3 flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={handleAiFeedback}
-                disabled={isChecking}
-                className="inline-flex items-center rounded-full bg-gradient-to-r from-cyan-400 via-violet-400 to-fuchsia-400 px-4 py-2 text-xs font-black uppercase tracking-[0.25em] text-slate-950 shadow-[0_18px_30px_rgba(56,189,248,0.18)] transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isChecking ? 'Analyzing...' : 'Get AI Suggestions'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setSolutionDraft(`public class Solution {
-  public static int solve(int[] nums, int target) {
-    // Write your Java solution here
-    return 0;
-  }
-}`)}
-                className="rounded-full border border-white/10 bg-slate-950/70 px-4 py-2 text-xs font-black uppercase tracking-[0.25em] text-slate-100"
-              >
-                Reset template
-              </button>
+            {/* Compiler Iframe */}
+            <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm bg-black">
+              <iframe
+                title="Online Java Compiler"
+                src="https://www.jdoodle.com/iembed/v0/"
+                className="h-[360px] w-full border-0"
+                allow="clipboard-write"
+                loading="lazy"
+              />
             </div>
-            <p className="mt-3 text-xs text-cyan-100">{feedbackMessage}</p>
-            {feedback && (
-              <div className="mt-4 rounded-3xl border border-cyan-400/20 bg-slate-950/80 p-4 text-xs text-slate-100">
-                <p className="text-[10px] uppercase tracking-[0.35em] text-cyan-200">Feedback report</p>
-                <p className="mt-2 font-black text-white">Verdict: {feedback.verdict}</p>
-                <p className="text-cyan-100">Confidence: {feedback.confidence}</p>
-                <ul className="mt-3 list-disc space-y-1 pl-4 text-slate-200">
-                  {feedback.suggestions.map((item) => <li key={item}>{item}</li>)}
-                </ul>
-                <p className="mt-3 text-[10px] uppercase tracking-[0.35em] text-violet-200">Next steps</p>
-                <ul className="mt-2 list-disc space-y-1 pl-4 text-slate-200">
-                  {feedback.nextSteps.map((item) => <li key={item}>{item}</li>)}
-                </ul>
+
+            {/* AI Code Reviewer Box */}
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-900">AI Code Suggestions</span>
+                <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">Gemini AI</span>
               </div>
-            )}
-          </div>
-        </article>
-
-        <article className="rounded-[30px] border border-white/10 bg-slate-900/90 p-6 shadow-[0_20px_50px_rgba(15,23,42,0.4)]">
-          <div className="mb-4 flex items-center gap-3">
-            <FileText className="h-5 w-5 text-violet-300" />
-            <div>
-              <h2 className="text-xl font-black text-white">Resume Builder</h2>
-              <p className="text-xs text-slate-300">Generate a crisp developer resume preview in one place.</p>
-            </div>
-          </div>
-          <form onSubmit={handleResumeSubmit} className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-2">
-              <input value={developerName} onChange={(e) => setDeveloperName(e.target.value)} className="rounded-2xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white outline-none ring-0" placeholder="Your name" />
-              <input value={role} onChange={(e) => setRole(e.target.value)} className="rounded-2xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white outline-none ring-0" placeholder="Role / Goal" />
-            </div>
-            <div className="grid gap-3 md:grid-cols-2">
-              <input value={phone} onChange={(e) => setPhone(e.target.value)} className="rounded-2xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white outline-none ring-0" placeholder="Phone number" />
-              <input value={address} onChange={(e) => setAddress(e.target.value)} className="rounded-2xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white outline-none ring-0" placeholder="Address" />
-            </div>
-            <div className="grid gap-3 md:grid-cols-2">
-              <textarea value={skills} onChange={(e) => setSkills(e.target.value)} rows={2} className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white outline-none ring-0" placeholder="Skills (comma separated)" />
-              <textarea value={tools} onChange={(e) => setTools(e.target.value)} rows={2} className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white outline-none ring-0" placeholder="Tools (GitHub, Figma, Postman)" />
-            </div>
-            <div className="grid gap-3 md:grid-cols-2">
-              <textarea value={frameworks} onChange={(e) => setFrameworks(e.target.value)} rows={2} className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white outline-none ring-0" placeholder="Frameworks (React, Tailwind, Node.js)" />
-              <textarea value={projects} onChange={(e) => setProjects(e.target.value)} rows={3} className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white outline-none ring-0" placeholder="Projects (optional)" />
-            </div>
-            <textarea value={focus} onChange={(e) => setFocus(e.target.value)} rows={4} className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white outline-none ring-0" placeholder="Write your developer summary" />
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={handleAiPolish}
-                disabled={isPolishing}
-                className="inline-flex items-center gap-2 rounded-full border border-cyan-400/40 bg-cyan-400/10 px-4 py-2 text-xs font-black uppercase tracking-[0.25em] text-cyan-100 shadow-[0_16px_30px_rgba(56,189,248,0.12)] transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isPolishing ? 'Polishing...' : 'AI Polish Resume'}
-              </button>
-              <button
-                type="submit"
-                disabled={isGeneratingPdf}
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-400 via-fuchsia-400 to-cyan-400 px-4 py-2 text-xs font-black uppercase tracking-[0.25em] text-slate-950 shadow-[0_16px_30px_rgba(192,132,252,0.25)] transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <Download className="h-3.5 w-3.5" />
-                {isGeneratingPdf ? 'Preparing PDF...' : 'Generate Resume PDF'}
-              </button>
-            </div>
-            <p className="text-xs text-cyan-100">{aiMessage}</p>
-            {resumeReady && <p className="text-xs text-emerald-200">Resume PDF generated successfully. It opens for viewing and downloads automatically.</p>}
-            <div className="rounded-3xl border border-violet-400/20 bg-violet-400/10 p-4 text-sm text-violet-100">
-              <p className="text-[10px] uppercase tracking-[0.35em] text-violet-200">AI Professional Resume Preview</p>
-              <h3 className="mt-2 text-xl font-black text-white">{developerName || 'Your Name'}</h3>
-              <p className="text-xs text-violet-100">{aiResume?.headline || role || 'Java + DSA Developer'}</p>
-              <p className="mt-1 text-xs text-violet-100">Phone: {phone || 'Not provided'} · Address: {address || 'Not provided'}</p>
-              <p className="mt-3 text-sm text-violet-50">{aiResume?.summary || focus}</p>
-              <p className="mt-3 text-sm text-violet-50 font-semibold">Skills: {mergeResumeSkills(aiResume?.skills || skills, aiResume?.tools || tools, aiResume?.frameworks || frameworks).join(', ') || 'No skills listed.'}</p>
-              <p className="mt-2 text-sm text-violet-50 font-semibold">Tools: {normalizeList(aiResume?.tools || tools).join(', ') || 'No tools listed.'}</p>
-              <p className="mt-2 text-sm text-violet-50 font-semibold">Frameworks: {normalizeList(aiResume?.frameworks || frameworks).join(', ') || 'No frameworks listed.'}</p>
-              <p className="mt-2 text-sm text-violet-50 font-semibold">Projects: {normalizeList(aiResume?.projects || projects).join(' • ') || 'No project details provided.'}</p>
-              <ul className="mt-3 list-disc space-y-1 pl-4 text-sm text-violet-50">
-                {(aiResume?.highlights || ['Strong problem-solving mindset', 'Modern frontend/backend development experience', 'Ready for internships and interviews']).map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          </form>
-        </article>
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[1fr_0.9fr]">
-        <article className="rounded-[30px] border border-white/10 bg-slate-900/90 p-6 shadow-[0_20px_50px_rgba(15,23,42,0.4)]">
-          <div className="mb-4 flex items-center gap-3">
-            <UserCircle className="h-5 w-5 text-amber-300" />
-            <div>
-              <h2 className="text-xl font-black text-white">Developer Avatar & Custom Profile</h2>
-              <p className="text-xs text-slate-300">Pick your vibe, update your profile card, and show your rank.</p>
-            </div>
-          </div>
-          <div className="grid gap-4 md:grid-cols-[0.9fr_1.1fr]">
-            <div className="rounded-3xl border border-white/10 bg-slate-950/80 p-4">
-              <div className={`flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br ${avatarStyles[avatarTone]} text-3xl font-black shadow-[0_18px_30px_rgba(56,189,248,0.12)]`}>
-                {developerName.slice(0, 2).toUpperCase() || 'DV'}
+              <textarea
+                value={solutionDraft}
+                onChange={(e) => setSolutionDraft(e.target.value)}
+                rows={5}
+                className="w-full rounded-xl border border-slate-300 bg-white p-3 text-xs text-slate-900 font-mono outline-none focus:border-slate-800"
+                placeholder="Paste your solution for AI guidance..."
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleAiFeedback}
+                  disabled={isChecking}
+                  className="flex-1 py-2.5 rounded-xl font-bold text-xs text-white bg-[#1c1d21] hover:bg-black shadow-sm transition-all cursor-pointer"
+                >
+                  {isChecking ? 'Analyzing...' : 'Get AI Code Review'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSolutionDraft(`public class Solution {\n  public static int solve(int[] nums, int target) {\n    return 0;\n  }\n}`)}
+                  className="py-2.5 px-3 rounded-xl font-bold text-xs text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 transition-all cursor-pointer"
+                >
+                  Reset
+                </button>
               </div>
-              <div className="mt-4 space-y-2 text-sm text-slate-200">
-                <p className="font-semibold text-white">{developerName || 'Developer'}</p>
-                <p className="text-xs uppercase tracking-[0.35em] text-cyan-100">{rankLabel}</p>
-                <p className="text-xs text-slate-300">Focus: {focus || 'Keep iterating and learning.'}</p>
+              {feedback && (
+                <div className="p-3 bg-white rounded-xl border border-purple-200 text-xs space-y-1.5 text-slate-800">
+                  <p className="font-bold text-purple-900">Verdict: {feedback.verdict}</p>
+                  <p className="text-[11px] text-slate-600">{feedback.suggestions?.[0]}</p>
+                </div>
+              )}
+            </div>
+          </article>
+
+          {/* Right: Professional Resume Builder */}
+          <article className="lg:col-span-6 rounded-[32px] border border-white bg-white/90 p-6 sm:p-7 shadow-[0_10px_30px_rgba(0,0,0,0.04)] space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+              <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold">
+                <FileText className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Developer Resume Builder</h2>
+                <p className="text-xs text-slate-500 font-medium">Generate a verified ATS-friendly developer resume PDF.</p>
               </div>
             </div>
-            <div className="space-y-3 text-sm">
-              <label className="block text-xs uppercase tracking-[0.25em] text-slate-300">Avatar tone</label>
-              <div className="grid gap-2 md:grid-cols-3">
-                {Object.keys(avatarStyles).map((tone) => (
-                  <button
-                    key={tone}
-                    type="button"
-                    onClick={() => setAvatarTone(tone)}
-                    className={`rounded-2xl border px-3 py-2 text-left text-xs font-semibold capitalize transition-all ${avatarTone === tone ? 'border-cyan-400 bg-cyan-400/10 text-cyan-100' : 'border-white/10 bg-slate-950/70 text-slate-200 hover:border-cyan-400/40'}`}
-                  >
-                    {tone}
-                  </button>
-                ))}
-              </div>
-              <div className="rounded-3xl border border-amber-400/20 bg-amber-400/10 p-4 text-xs text-amber-100">
-                <p className="font-black text-white">Profile tips</p>
-                <ul className="mt-2 space-y-1 list-disc pl-4 text-amber-50">
-                  <li>Use your rank badge in interviews and project presentations.</li>
-                  <li>Keep your notes, profile, and resume in one place.</li>
-                  <li>Update your avatar tone whenever you refresh your developer identity.</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </article>
 
-        <article className="rounded-[30px] border border-white/10 bg-slate-900/90 p-6 shadow-[0_20px_50px_rgba(15,23,42,0.4)]">
-          <div className="mb-4 flex items-center gap-3">
-            <Sparkles className="h-5 w-5 text-cyan-200" />
-            <div>
-              <h2 className="text-xl font-black text-white">Practice Highlights</h2>
-              <p className="text-xs text-slate-300">A small growth dashboard for your coding and learning streak.</p>
-            </div>
-          </div>
-          <div className="grid gap-3">
-            {[
-              ['Quiz Accuracy', `${score}/${quizQuestions.length}`],
-              ['Current Rank', rankLabel],
-              ['Resume Ready', 'Yes'],
-              ['Compiler Access', 'Live'],
-            ].map(([name, value]) => (
-              <div key={name} className="flex items-center justify-between rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-100">
-                <span>{name}</span>
-                <span className="font-black text-white">{value}</span>
+            <form onSubmit={handleResumeSubmit} className="space-y-3">
+              <div className="grid gap-2.5 sm:grid-cols-2">
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Full Name</label>
+                  <input 
+                    value={developerName} 
+                    onChange={(e) => setDeveloperName(e.target.value)} 
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 font-semibold outline-none focus:border-slate-800" 
+                    placeholder="Your name" 
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Target Role</label>
+                  <input 
+                    value={role} 
+                    onChange={(e) => setRole(e.target.value)} 
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 font-semibold outline-none focus:border-slate-800" 
+                    placeholder="e.g. Java Full Stack Developer" 
+                  />
+                </div>
               </div>
-            ))}
-          </div>
-        </article>
-      </section>
+
+              <div className="grid gap-2.5 sm:grid-cols-2">
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Phone Number</label>
+                  <input 
+                    value={phone} 
+                    onChange={(e) => setPhone(e.target.value)} 
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 font-semibold outline-none focus:border-slate-800" 
+                    placeholder="+91 98765 43210" 
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Location / City</label>
+                  <input 
+                    value={address} 
+                    onChange={(e) => setAddress(e.target.value)} 
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 font-semibold outline-none focus:border-slate-800" 
+                    placeholder="Jaipur, India" 
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Technical Skills (Comma separated)</label>
+                <input 
+                  value={skills} 
+                  onChange={(e) => setSkills(e.target.value)} 
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 font-semibold outline-none focus:border-slate-800" 
+                  placeholder="Java, Spring Boot, React, SQL, DSA" 
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Professional Focus / Summary</label>
+                <textarea 
+                  value={focus} 
+                  onChange={(e) => setFocus(e.target.value)} 
+                  rows={2} 
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 font-medium outline-none focus:border-slate-800" 
+                  placeholder="Passionate engineer building enterprise web apps..." 
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={handleAiPolish}
+                  disabled={isPolishing}
+                  className="flex-1 py-2.5 rounded-xl font-bold text-xs text-purple-900 bg-purple-100 hover:bg-purple-200 border border-purple-200 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>{isPolishing ? 'Polishing...' : 'AI Polish Resume'}</span>
+                </button>
+                <button
+                  type="submit"
+                  disabled={isGeneratingPdf}
+                  className="flex-1 py-2.5 rounded-xl font-bold text-xs text-white bg-[#1c1d21] hover:bg-black shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Download className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{isGeneratingPdf ? 'Exporting...' : 'Download Resume PDF'}</span>
+                </button>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5 text-xs text-slate-700">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-900 text-sm">{developerName || 'Your Name'}</span>
+                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">Ready to Export</span>
+                </div>
+                <p className="text-[11px] text-slate-500">{role} • {address}</p>
+                <p className="text-[11px] text-slate-600 line-clamp-2">{focus}</p>
+              </div>
+            </form>
+          </article>
+        </section>
+
+      </div>
     </div>
   );
 }

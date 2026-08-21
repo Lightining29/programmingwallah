@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, ClipboardList, Users, User, CreditCard, Bell, Image as ImageIcon, MessageCircle, CheckCircle, XCircle, Trash2, Plus, Clock, Search, FileText, Printer, Edit, Download, Contact, X, Sparkles, BookOpen, Video, Wallet, Eye, EyeOff, Upload, AlertCircle, ChevronDown, ChevronUp, Play, Award, ShieldCheck, Share2, Check, ExternalLink } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, Users, User, CreditCard, Bell, Image as ImageIcon, MessageCircle, CheckCircle, XCircle, Trash2, Plus, Clock, Search, FileText, Printer, Edit, Download, Contact, X, Sparkles, BookOpen, Video, Wallet, Eye, EyeOff, Upload, AlertCircle, ChevronDown, ChevronUp, Play, Pause, RotateCcw, Award, ShieldCheck, Share2, Check, ExternalLink, Sun, CloudSun, Wind, Radio, Volume2, Send } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import ConfirmModal from '../components/ConfirmModal.jsx';
 import FeeStructureMaster from '../components/FeeStructureMaster.jsx';
@@ -91,6 +91,55 @@ export default function AdminDashboard() {
   const [fees, setFees] = useState([]);
   const [queries, setQueries] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // Interactive Live Dashboard States (Working Timer, Radio, Tasks, Dues, Weather)
+  const [timerSeconds, setTimerSeconds] = useState(155); // 02:35
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [isPlayingRadio, setIsPlayingRadio] = useState(false);
+  const [radioVolume, setRadioVolume] = useState(80);
+  const [selectedScheduleDay, setSelectedScheduleDay] = useState('Wed 24');
+
+  const [dashboardTasks, setDashboardTasks] = useState([
+    { id: 1, name: 'Student Code Review (Java Full Stack)', time: 'Sep 13, 08:30', done: true },
+    { id: 2, name: 'Admissions & Faculty Sync', time: 'Sep 13, 10:30', done: true },
+    { id: 3, name: 'Publish New React & Node.js Lesson', time: 'Sep 13, 13:00', done: false },
+    { id: 4, name: 'Follow up on Student Fee Installments', time: 'Sep 13, 14:45', done: false }
+  ]);
+
+  const [pendingStudentFees, setPendingStudentFees] = useState([
+    { id: 1, name: 'Rahul Sharma', course: 'Java Full Stack', dueAmount: 4500, dueDate: '3 days overdue', phone: '+919876543210', status: 'overdue' },
+    { id: 2, name: 'Pooja Verma', course: 'MERN Stack Web Dev', dueAmount: 3000, dueDate: 'Due in 2 days', phone: '+919876543211', status: 'pending' },
+    { id: 3, name: 'Aman Gupta', course: 'Python Data Science', dueAmount: 5000, dueDate: 'Due today', phone: '+919876543212', status: 'due_today' },
+    { id: 4, name: 'Simran Kaur', course: 'UI/UX Design Masterclass', dueAmount: 2500, dueDate: 'Due in 5 days', phone: '+919876543213', status: 'pending' }
+  ]);
+
+  useEffect(() => {
+    let interval;
+    if (isTimerRunning) {
+      interval = setInterval(() => setTimerSeconds(s => s + 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isTimerRunning]);
+
+  const formatTimer = (totalSeconds) => {
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
+
+  const toggleDashboardTask = (id) => {
+    setDashboardTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
+  };
+
+  const handleSendWhatsAppReminder = (student) => {
+    const msg = `Hello ${student.name}, this is a gentle fee reminder from AppleTree Infotech for your ${student.course} course. Pending amount: ₹${student.dueAmount}. Please settle soon.`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+  const handleMarkFeeCollected = (id) => {
+    confetti({ particleCount: 80, spread: 60 });
+    setPendingStudentFees(prev => prev.filter(f => f.id !== id));
+  };
 
   // Remarks for approval reviews
   const [remarks, setRemarks] = useState('');
@@ -2267,23 +2316,27 @@ export default function AdminDashboard() {
             {/* ── 3. BENTO GRID (TOP ROW) ── */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               
-              {/* Card 1: Featured Student Spotlight */}
+              {/* Card 1: Featured Student Spotlight with User's Uploaded Girl Avatar */}
               <div className="rounded-3xl bg-white/75 border border-white p-4 shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[260px] group">
                 <div className="relative w-full h-44 rounded-2xl overflow-hidden bg-slate-100 shadow-inner">
                   <img
-                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80"
-                    alt="Lora Piterson"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    src="/girl_avatar.jpg"
+                    alt="Student Spotlight"
+                    className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80';
+                    }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
                   
                   <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between text-white">
                     <div>
-                      <h4 className="font-bold text-sm leading-tight text-white drop-shadow">Lora Piterson</h4>
-                      <p className="text-[10px] text-white/80 font-medium">UX/UI & Full Stack</p>
+                      <h4 className="font-bold text-sm leading-tight text-white drop-shadow">Ananya Verma</h4>
+                      <p className="text-[10px] text-amber-300 font-medium">Java & React Full Stack</p>
                     </div>
                     <span className="px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-[11px] font-black text-white">
-                      $1,200
+                      ₹12,000
                     </span>
                   </div>
                 </div>
@@ -2340,21 +2393,21 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Card 3: Time Tracker Radial Ring */}
+              {/* Card 3: Working Time Tracker Radial Ring */}
               <div className="rounded-3xl bg-white/75 border border-white p-5 shadow-sm flex flex-col justify-between">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-extrabold text-slate-800">Time tracker</span>
-                  <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-xs">
-                    ↗
-                  </div>
+                  <span className="text-sm font-extrabold text-slate-800">Time Tracker</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isTimerRunning ? 'bg-emerald-100 text-emerald-800 animate-pulse' : 'bg-slate-100 text-slate-600'}`}>
+                    {isTimerRunning ? 'Active' : 'Paused'}
+                  </span>
                 </div>
 
                 {/* Circular Dial Gauge */}
                 <div className="flex items-center justify-center my-2">
                   <div className="relative w-28 h-28 rounded-full border-4 border-dashed border-amber-200 flex items-center justify-center">
-                    <div className="absolute inset-0 rounded-full border-4 border-[#facc15] border-l-transparent rotate-45" />
+                    <div className={`absolute inset-0 rounded-full border-4 border-[#facc15] border-l-transparent transition-transform duration-700 ${isTimerRunning ? 'rotate-180 animate-spin' : 'rotate-45'}`} />
                     <div className="text-center">
-                      <span className="text-lg font-black text-slate-900 block leading-tight">02:35</span>
+                      <span className="text-lg font-black text-slate-900 block leading-tight">{formatTimer(timerSeconds)}</span>
                       <span className="text-[9px] font-bold text-slate-400 block uppercase">Work Time</span>
                     </div>
                   </div>
@@ -2362,57 +2415,71 @@ export default function AdminDashboard() {
 
                 {/* Media Control Buttons */}
                 <div className="flex items-center justify-center gap-2 pt-1">
-                  <button className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-xs transition-all cursor-pointer">
-                    ▶
+                  <button 
+                    onClick={() => setIsTimerRunning(!isTimerRunning)}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs transition-all cursor-pointer shadow-sm ${
+                      isTimerRunning ? 'bg-[#1c1d21] text-white hover:bg-black' : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                    }`}
+                  >
+                    {isTimerRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
                   </button>
-                  <button className="w-8 h-8 rounded-full bg-[#1c1d21] hover:bg-black text-white flex items-center justify-center text-xs transition-all cursor-pointer shadow-sm">
-                    ⏸
-                  </button>
-                  <button className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-xs transition-all cursor-pointer">
-                    🔔
+                  <button 
+                    onClick={() => { setIsTimerRunning(false); setTimerSeconds(0); }}
+                    className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-xs transition-all cursor-pointer"
+                    title="Reset Timer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
 
-              {/* Card 4: Onboarding & Dark Task Card */}
+              {/* Card 4: Onboarding & Interactive Dark Task Card */}
               <div className="space-y-3 flex flex-col justify-between">
                 
                 {/* Upper Onboarding Ratio */}
                 <div className="rounded-3xl bg-white/75 border border-white p-4 shadow-sm">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-extrabold text-slate-800">Onboarding</span>
-                    <span className="text-sm font-black text-slate-900">18%</span>
+                    <span className="text-xs font-extrabold text-slate-800">Curriculum Tasks</span>
+                    <span className="text-sm font-black text-slate-900">
+                      {Math.round((dashboardTasks.filter(t => t.done).length / dashboardTasks.length) * 100)}%
+                    </span>
                   </div>
                   <div className="flex h-6 rounded-full overflow-hidden p-0.5 bg-slate-100 gap-1 text-[9px] font-bold text-center leading-5">
-                    <div className="bg-[#facc15] text-amber-900 rounded-full flex-1">Task 30%</div>
-                    <div className="bg-[#1c1d21] text-white rounded-full flex-1">25%</div>
-                    <div className="bg-slate-300 text-slate-600 rounded-full w-6">0%</div>
+                    <div className="bg-[#facc15] text-amber-900 rounded-full flex-1">
+                      Done {dashboardTasks.filter(t => t.done).length}
+                    </div>
+                    <div className="bg-[#1c1d21] text-white rounded-full flex-1">
+                      Left {dashboardTasks.filter(t => !t.done).length}
+                    </div>
                   </div>
                 </div>
 
                 {/* Lower Dark Task Card */}
-                <div className="rounded-3xl bg-[#1c1d21] text-white p-4 shadow-md flex-1 flex flex-col justify-between space-y-2.5">
+                <div className="rounded-3xl bg-[#1c1d21] text-white p-4 shadow-md flex-1 flex flex-col justify-between space-y-2">
                   <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                    <span className="text-xs font-bold text-white">Onboarding Task</span>
-                    <span className="text-xs font-black text-amber-400">2/8</span>
+                    <span className="text-xs font-bold text-white">Daily Agenda</span>
+                    <span className="text-xs font-black text-amber-400">
+                      {dashboardTasks.filter(t => t.done).length}/{dashboardTasks.length}
+                    </span>
                   </div>
 
-                  <div className="space-y-2 text-[11px]">
-                    {[
-                      { name: 'Interview', time: 'Sep 13, 08:30', done: true },
-                      { name: 'Team Meeting', time: 'Sep 13, 10:30', done: true },
-                      { name: 'Project Update', time: 'Sep 13, 13:00', done: false },
-                      { name: 'Discuss Q3 Goals', time: 'Sep 13, 14:45', done: false }
-                    ].map((task, i) => (
-                      <div key={i} className="flex items-center justify-between text-white/90">
+                  <div className="space-y-1.5 text-[11px]">
+                    {dashboardTasks.map((task) => (
+                      <div 
+                        key={task.id} 
+                        onClick={() => toggleDashboardTask(task.id)}
+                        className="flex items-center justify-between text-white/90 hover:bg-white/5 p-1 rounded-xl transition-colors cursor-pointer"
+                      >
                         <div className="flex items-center gap-2">
-                          <span className="text-slate-400">●</span>
+                          <span className={`text-[8px] ${task.done ? 'text-amber-400' : 'text-slate-500'}`}>●</span>
                           <div>
-                            <p className="font-semibold leading-tight">{task.name}</p>
+                            <p className={`font-semibold leading-tight ${task.done ? 'line-through text-slate-400' : 'text-white'}`}>
+                              {task.name}
+                            </p>
                             <p className="text-[9px] text-slate-400">{task.time}</p>
                           </div>
                         </div>
-                        <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${
+                        <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] transition-all ${
                           task.done ? 'bg-amber-400 text-black font-bold' : 'border border-slate-600 text-transparent'
                         }`}>
                           ✓
@@ -2426,85 +2493,197 @@ export default function AdminDashboard() {
 
             </div>
 
-            {/* ── 4. BENTO GRID (BOTTOM ROW) ── */}
+            {/* ── 4. BENTO GRID (BOTTOM ROW: Weather, AQI, Radio, Fees & Schedule) ── */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
               
-              {/* Bottom Left: Accordions */}
-              <div className="lg:col-span-4 rounded-3xl bg-white/75 border border-white p-5 shadow-sm space-y-3">
-                {[
-                  { title: 'Pension & Fee Contributions', open: false },
-                  { title: 'Devices & Lab Workstations', open: true, detail: 'MacBook Air Version M1 • 16GB' },
-                  { title: 'Compensation Summary', open: false },
-                  { title: 'Employee & Student Benefits', open: false }
-                ].map((item, idx) => (
-                  <div key={idx} className="border-b border-slate-200/80 pb-2.5 last:border-none">
-                    <div className="flex items-center justify-between cursor-pointer">
-                      <span className="text-xs font-bold text-slate-800">{item.title}</span>
-                      <span className="text-xs text-slate-400">⌄</span>
+              {/* Bottom Left Column: Weather & AQI + Radio + Pending Fees Accordion */}
+              <div className="lg:col-span-5 space-y-4">
+                
+                {/* 1. Live Weather & AQI Widget */}
+                <div className="rounded-3xl bg-gradient-to-r from-amber-500 to-orange-500 text-white p-5 shadow-sm flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider bg-black/20 px-2.5 py-0.5 rounded-full w-fit">
+                      <Sun className="w-3 h-3 text-yellow-200" />
+                      <span>Jaipur Campus Hub</span>
                     </div>
-                    {item.detail && (
-                      <div className="mt-2 flex items-center gap-2.5 p-2 bg-slate-50 rounded-xl">
-                        <div className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center text-xs">
-                          💻
-                        </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-black">28°C</span>
+                      <span className="text-xs font-bold text-amber-100">Sunny & Clear</span>
+                    </div>
+                    <p className="text-[10px] text-amber-100">Humidity 42% • Wind 12 km/h</p>
+                  </div>
+
+                  <div className="bg-black/25 backdrop-blur-md border border-white/20 p-3 rounded-2xl text-center space-y-1">
+                    <div className="flex items-center justify-center gap-1 text-[9px] font-bold uppercase text-emerald-300">
+                      <Wind className="w-3 h-3" />
+                      <span>AQI 42</span>
+                    </div>
+                    <span className="text-xs font-black text-emerald-300 block">GOOD</span>
+                    <span className="text-[8px] text-white/80 block">Clean Air Zone</span>
+                  </div>
+                </div>
+
+                {/* 2. Interactive Lo-Fi Radio Player Widget */}
+                <div className="rounded-3xl bg-[#1c1d21] text-white p-5 shadow-md space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Radio className="w-4 h-4 text-amber-400" />
+                      <span className="text-xs font-extrabold text-white">AppleTree Lo-Fi FM 94.2</span>
+                    </div>
+                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                      isPlayingRadio ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30' : 'bg-white/10 text-slate-400'
+                    }`}>
+                      {isPlayingRadio ? 'LIVE STREAM' : 'STANDBY'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between bg-black/40 p-3 rounded-2xl border border-white/10">
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={() => setIsPlayingRadio(!isPlayingRadio)}
+                        className="w-9 h-9 rounded-full bg-amber-400 hover:bg-amber-300 text-black flex items-center justify-center shadow-md cursor-pointer transition-transform hover:scale-105"
+                      >
+                        {isPlayingRadio ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
+                      </button>
+                      <div>
+                        <p className="text-xs font-bold text-white">Coding Chill Beats</p>
+                        <p className="text-[10px] text-slate-400">Focus & Development Stream</p>
+                      </div>
+                    </div>
+
+                    {/* Equalizer Visualizer Waves */}
+                    <div className="flex items-end gap-1 h-5 px-2">
+                      {[6, 12, 18, 10, 15, 8].map((h, i) => (
+                        <div
+                          key={i}
+                          className={`w-1 rounded-full bg-amber-400 transition-all ${
+                            isPlayingRadio ? 'animate-pulse' : 'h-1.5 opacity-40'
+                          }`}
+                          style={{ height: isPlayingRadio ? `${h}px` : '4px' }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Pending Student Fees & Dues Alert Panel */}
+                <div className="rounded-3xl bg-white/75 border border-white p-5 shadow-sm space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200/80">
+                    <div className="flex items-center gap-2">
+                      <Wallet className="w-4 h-4 text-rose-500" />
+                      <span className="text-xs font-extrabold text-slate-800">Pending Student Dues</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full">
+                      {pendingStudentFees.length} Pending
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {pendingStudentFees.map((student) => (
+                      <div key={student.id} className="p-3 bg-slate-50/90 hover:bg-slate-100/90 rounded-2xl border border-slate-100 flex items-center justify-between transition-colors">
                         <div>
-                          <p className="text-[11px] font-bold text-slate-800 leading-tight">MacBook Air</p>
-                          <p className="text-[9px] text-slate-500 font-medium">Version M1</p>
+                          <p className="text-xs font-bold text-slate-800 leading-tight">{student.name}</p>
+                          <p className="text-[10px] text-slate-500">{student.course}</p>
+                          <span className="text-[9px] font-bold text-rose-600">₹{student.dueAmount.toLocaleString('en-IN')} • {student.dueDate}</span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => handleSendWhatsAppReminder(student)}
+                            title="Send WhatsApp Reminder"
+                            className="p-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[10px] font-bold transition-all cursor-pointer"
+                          >
+                            <Send className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleMarkFeeCollected(student.id)}
+                            title="Mark as Paid"
+                            className="px-2 py-1 rounded-xl bg-[#1c1d21] hover:bg-black text-white text-[10px] font-bold transition-all cursor-pointer"
+                          >
+                            Collect
+                          </button>
                         </div>
                       </div>
-                    )}
+                    ))}
                   </div>
-                ))}
+                </div>
+
               </div>
 
-              {/* Bottom Right: Interactive Schedule Calendar & Timeline */}
-              <div className="lg:col-span-8 rounded-3xl bg-white/75 border border-white p-6 shadow-sm space-y-4">
+              {/* Bottom Right Column: Interactive Schedule Calendar & Timeline */}
+              <div className="lg:col-span-7 rounded-3xl bg-white/75 border border-white p-6 shadow-sm space-y-4 flex flex-col justify-between">
                 
-                {/* Month Navigator */}
-                <div className="flex items-center justify-between text-xs font-extrabold text-slate-800 border-b border-slate-200/80 pb-3">
-                  <button className="text-slate-400 hover:text-slate-700">August</button>
-                  <span className="text-sm font-black text-slate-900">September 2024</span>
-                  <button className="text-slate-400 hover:text-slate-700">October</button>
-                </div>
+                <div>
+                  {/* Month Navigator */}
+                  <div className="flex items-center justify-between text-xs font-extrabold text-slate-800 border-b border-slate-200/80 pb-3">
+                    <button className="text-slate-400 hover:text-slate-700 cursor-pointer">August</button>
+                    <span className="text-sm font-black text-slate-900">September 2024</span>
+                    <button className="text-slate-400 hover:text-slate-700 cursor-pointer">October</button>
+                  </div>
 
-                {/* Days Columns */}
-                <div className="grid grid-cols-6 gap-2 text-center text-xs font-bold text-slate-600">
-                  {['Mon 22', 'Tue 23', 'Wed 24', 'Thu 25', 'Fri 26', 'Sat 27'].map((d, i) => (
-                    <div key={i} className={`py-1.5 rounded-xl ${i === 2 ? 'bg-[#1c1d21] text-white' : 'hover:bg-slate-100'}`}>
-                      {d}
-                    </div>
-                  ))}
-                </div>
+                  {/* Days Columns */}
+                  <div className="grid grid-cols-6 gap-2 text-center text-xs font-bold text-slate-600 mt-3">
+                    {['Mon 22', 'Tue 23', 'Wed 24', 'Thu 25', 'Fri 26', 'Sat 27'].map((d) => (
+                      <button
+                        key={d}
+                        onClick={() => setSelectedScheduleDay(d)}
+                        className={`py-2 rounded-2xl transition-all cursor-pointer ${
+                          selectedScheduleDay === d ? 'bg-[#1c1d21] text-white shadow-sm' : 'hover:bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        {d}
+                      </button>
+                    ))}
+                  </div>
 
-                {/* Timeline Events */}
-                <div className="space-y-3 pt-2 text-xs">
-                  <div className="flex items-center gap-4">
-                    <span className="text-slate-400 text-[11px] font-bold w-16">8:00 am</span>
-                    <div className="flex-1 p-3 rounded-2xl bg-[#1c1d21] text-white flex items-center justify-between shadow-sm">
-                      <div>
-                        <p className="font-bold text-xs">Weekly Team Sync</p>
-                        <p className="text-[10px] text-slate-300">Discuss progress on projects</p>
+                  {/* Timeline Events */}
+                  <div className="space-y-3 pt-4 text-xs">
+                    <div className="flex items-center gap-4">
+                      <span className="text-slate-400 text-[11px] font-bold w-16">8:00 am</span>
+                      <div className="flex-1 p-3.5 rounded-2xl bg-[#1c1d21] text-white flex items-center justify-between shadow-sm">
+                        <div>
+                          <p className="font-bold text-xs">Java Enterprise Batch Sync</p>
+                          <p className="text-[10px] text-slate-300">Live code review and milestone walkthrough</p>
+                        </div>
+                        <div className="flex -space-x-1.5">
+                          <div className="w-6 h-6 rounded-full bg-amber-400 border border-white text-[9px] font-bold text-black flex items-center justify-center">A</div>
+                          <div className="w-6 h-6 rounded-full bg-rose-400 border border-white text-[9px] font-bold text-white flex items-center justify-center">B</div>
+                        </div>
                       </div>
-                      <div className="flex -space-x-1.5">
-                        <div className="w-6 h-6 rounded-full bg-amber-400 border border-white text-[9px] font-bold text-black flex items-center justify-center">A</div>
-                        <div className="w-6 h-6 rounded-full bg-rose-400 border border-white text-[9px] font-bold text-white flex items-center justify-center">B</div>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <span className="text-slate-400 text-[11px] font-bold w-16">10:00 am</span>
+                      <div className="flex-1 p-3.5 rounded-2xl bg-white border border-slate-200 text-slate-800 flex items-center justify-between shadow-sm">
+                        <div>
+                          <p className="font-bold text-xs text-slate-900">New Batch Admissions Onboarding</p>
+                          <p className="text-[10px] text-slate-500">LMS access setup & course handbook distribution</p>
+                        </div>
+                        <div className="flex -space-x-1.5">
+                          <div className="w-6 h-6 rounded-full bg-indigo-400 border border-white text-[9px] font-bold text-white flex items-center justify-center">C</div>
+                          <div className="w-6 h-6 rounded-full bg-emerald-400 border border-white text-[9px] font-bold text-white flex items-center justify-center">D</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <span className="text-slate-400 text-[11px] font-bold w-16">02:30 pm</span>
+                      <div className="flex-1 p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-slate-800 flex items-center justify-between shadow-sm">
+                        <div>
+                          <p className="font-bold text-xs text-amber-950">MERN Stack Mock Interview</p>
+                          <p className="text-[10px] text-amber-800">Technical assessment with hiring partner</p>
+                        </div>
+                        <span className="text-[10px] font-bold text-amber-900 bg-amber-200/80 px-2 py-0.5 rounded-full">
+                          Live
+                        </span>
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  <div className="flex items-center gap-4">
-                    <span className="text-slate-400 text-[11px] font-bold w-16">10:00 am</span>
-                    <div className="flex-1 p-3 rounded-2xl bg-white border border-slate-200 text-slate-800 flex items-center justify-between shadow-sm">
-                      <div>
-                        <p className="font-bold text-xs text-slate-900">Onboarding Session</p>
-                        <p className="text-[10px] text-slate-500">Introduction for new students & hires</p>
-                      </div>
-                      <div className="flex -space-x-1.5">
-                        <div className="w-6 h-6 rounded-full bg-indigo-400 border border-white text-[9px] font-bold text-white flex items-center justify-center">C</div>
-                        <div className="w-6 h-6 rounded-full bg-emerald-400 border border-white text-[9px] font-bold text-white flex items-center justify-center">D</div>
-                      </div>
-                    </div>
-                  </div>
+                <div className="pt-3 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-500">
+                  <span className="font-bold">Active Timezone: IST (UTC+05:30)</span>
+                  <span className="text-amber-700 font-bold">3 Events Scheduled Today ↗</span>
                 </div>
 
               </div>
