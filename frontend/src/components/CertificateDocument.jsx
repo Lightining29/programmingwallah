@@ -1,31 +1,76 @@
 import React from 'react';
 
-// Apple Tree Infotech Logo Component using the official logo
+// Apple Tree Infotech Logo Component (Crisp Scalable Vector & Typography matching official brandmark)
 export const AppleTreeLogo = ({ className = '' }) => (
   <div className={`flex flex-col items-start select-none ${className}`}>
-    <div className="flex items-center gap-2.5">
-      <img
-        src="/appletree_logo.png"
-        alt="Apple Tree Infotech Logo"
-        className="h-16 sm:h-20 w-auto object-contain drop-shadow-sm"
-        onError={(e) => {
-          e.target.onerror = null;
-          e.target.src = '/logo.png';
-        }}
-      />
-      <div className="flex flex-col">
-        <span className="text-sm font-black tracking-tight text-[#d32f2f] uppercase leading-none font-serif">
-          APPLETREE
+    <div className="flex flex-col items-center">
+      {/* 1. Apple Top Arches + Stalk & Green Leaf SVG */}
+      <svg
+        viewBox="0 0 160 40"
+        className="w-36 h-9 -mb-1"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {/* Apple Stalk / Stem */}
+        <path
+          d="M 76 20 Q 79 5 87 2"
+          stroke="#18181b"
+          strokeWidth="3.2"
+          strokeLinecap="round"
+          fill="none"
+        />
+        {/* Green Leaf pointing to top-right */}
+        <path
+          d="M 86 4 Q 104 2 108 14 Q 96 22 84 14 Q 85 8 86 4 Z"
+          fill="#48a23f"
+        />
+        {/* Apple Left Shoulder Curved Arch */}
+        <path
+          d="M 12 28 C 32 16 64 14 77 24"
+          stroke="#18181b"
+          strokeWidth="3.6"
+          strokeLinecap="round"
+          fill="none"
+        />
+        {/* Apple Right Shoulder Curved Arch */}
+        <path
+          d="M 83 24 C 96 14 128 16 148 28"
+          stroke="#18181b"
+          strokeWidth="3.6"
+          strokeLinecap="round"
+          fill="none"
+        />
+      </svg>
+
+      {/* 2. Main Brand Typography: "apple" (Crimson Red) + "tree" (Leaf Green) */}
+      <div className="flex items-baseline leading-none tracking-tight -mt-0.5">
+        <span
+          className="text-[30px] font-black text-[#c5221f] lowercase"
+          style={{ fontFamily: 'Georgia, serif', letterSpacing: '-0.03em' }}
+        >
+          apple
         </span>
-        <span className="text-xs font-black tracking-wider text-[#162d59] uppercase leading-tight font-serif">
+        <span
+          className="text-[30px] font-black text-[#48a23f] lowercase"
+          style={{ fontFamily: 'Georgia, serif', letterSpacing: '-0.03em' }}
+        >
+          tree
+        </span>
+      </div>
+
+      {/* 3. Sub-wordmark: "INFOTECH" in bold italic black */}
+      <div className="w-full flex justify-end -mt-0.5 pr-0.5">
+        <span
+          className="text-[10px] font-black tracking-[0.24em] text-[#18181b] italic uppercase"
+          style={{ fontFamily: 'system-ui, sans-serif' }}
+        >
           INFOTECH
-        </span>
-        <span className="text-[7.5px] font-bold text-slate-500 tracking-tight">
-          Software & IT Training
         </span>
       </div>
     </div>
-    <span className="text-[9.5px] font-bold tracking-wider text-[#1e88e5] mt-1 pl-1">
+
+    {/* 4. ISO Certification */}
+    <span className="text-[8.5px] font-bold tracking-wider text-[#1e88e5] mt-1 pl-1">
       ISO 9001:2015 CERTIFIED
     </span>
   </div>
