@@ -1,8 +1,8 @@
 # Dependencies
 node_modules/
 
-# Build output
-dist/
+# Build output (do not ignore frontend/dist so Hostinger receives the compiled frontend)
+# dist/
 
 # Environment variables
 .env

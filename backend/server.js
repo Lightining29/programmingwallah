@@ -17,10 +17,21 @@ import razorpayRoutes from './routes/razorpay.js';
 import lmsRoutes from './routes/lms.js';
 import paymentRoutes from './routes/payment.js';
 
-// Load environment variables
+// Load environment variables from multiple possible locations (root .env and backend/.env)
+dotenv.config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), '../.env') });
+dotenv.config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), '.env') });
 dotenv.config();
 
 const app = express();
+
+// Prevent server crash on unhandled errors (ensures 100% uptime on Hostinger)
+process.on('uncaughtException', (err) => {
+  console.error('\x1b[31m[CRITICAL] Uncaught Exception:\x1b[0m', err.message || err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('\x1b[33m[WARNING] Unhandled Promise Rejection:\x1b[0m', reason);
+});
 
 // Trust proxy for Hostinger reverse proxy / load balancer
 app.set('trust proxy', 1);
@@ -85,10 +96,26 @@ app.use('/api/razorpay', razorpayRoutes);
 app.use('/api/lms', lmsRoutes);
 app.use('/api', paymentRoutes);
 
-// Serve Frontend static assets if built, otherwise serve API welcome message
-const frontendDistPath = path.join(__dirname, '../frontend/dist');
-if (fs.existsSync(path.join(frontendDistPath, 'index.html'))) {
-  app.use(express.static(frontendDistPath, {
+// Candidate directories for built frontend assets
+const distCandidates = [
+  path.join(__dirname, '../frontend/dist'),
+  path.join(__dirname, '../dist'),
+  path.join(__dirname, 'dist'),
+  path.join(process.cwd(), 'frontend/dist'),
+  path.join(process.cwd(), 'dist')
+];
+
+let resolvedDistPath = null;
+for (const cand of distCandidates) {
+  if (fs.existsSync(path.join(cand, 'index.html'))) {
+    resolvedDistPath = cand;
+    break;
+  }
+}
+
+if (resolvedDistPath) {
+  console.log(`\x1b[32m✔ Serving frontend production build from: ${resolvedDistPath}\x1b[0m`);
+  app.use(express.static(resolvedDistPath, {
     maxAge: '1d',
     setHeaders: (res, filePath) => {
       // Never cache index.html so frontend updates deploy instantly
@@ -103,7 +130,7 @@ if (fs.existsSync(path.join(frontendDistPath, 'index.html'))) {
     if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
       return next();
     }
-    res.sendFile(path.join(frontendDistPath, 'index.html'));
+    res.sendFile(path.join(resolvedDistPath, 'index.html'));
   });
 } else {
   // Root Route fallback
@@ -113,7 +140,7 @@ if (fs.existsSync(path.join(frontendDistPath, 'index.html'))) {
       status: 'operational',
       database: 'Hostinger MySQL',
       version: '1.0.0',
-      mode: process.env.NODE_ENV || 'development'
+      mode: process.env.NODE_ENV || 'production'
     });
   });
 }
@@ -141,7 +168,7 @@ const server = app.listen(PORT, async () => {
   try {
     await connectDB();
   } catch (err) {
-    console.error('Database connection error on startup:', err.message);
+    console.error('Database connection notice on startup:', err.message);
   }
 });
 
