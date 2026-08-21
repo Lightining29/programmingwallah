@@ -118,15 +118,16 @@ export default function AdminDashboard() {
   const [admPaymentPlan, setAdmPaymentPlan] = useState('1month');
 
   const handleToggleCourse = (courseName) => {
+    const current = Array.isArray(admSelectedCourses) ? admSelectedCourses : ['Java Development'];
     let updated;
-    if (admSelectedCourses.includes(courseName)) {
-      if (admSelectedCourses.length === 1) {
+    if (current.includes(courseName)) {
+      if (current.length === 1) {
         updated = [courseName];
       } else {
-        updated = admSelectedCourses.filter(c => c !== courseName);
+        updated = current.filter(c => c !== courseName);
       }
     } else {
-      updated = [...admSelectedCourses, courseName];
+      updated = [...current, courseName];
     }
     setAdmSelectedCourses(updated);
     const combinedName = updated.join(' + ');
@@ -2542,14 +2543,14 @@ export default function AdminDashboard() {
                               Select Course(s) <span className="text-[11px] text-brandCoral font-normal">(Click multiple to combine, e.g. Java + MERN)</span>
                             </label>
                             <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-100">
-                              {admSelectedCourses.length} Selected: {admStdClass}
+                              {(admSelectedCourses || []).length} Selected: {admStdClass || 'Java Development'}
                             </span>
                           </div>
 
                           {/* Multi-Select Course Pills */}
                           <div className="flex flex-wrap gap-1.5 p-2 bg-slate-50 border border-slate-200 rounded-xl mt-1">
-                            {courseOptions.map((course) => {
-                              const isSelected = admSelectedCourses.includes(course);
+                            {(courseOptions || []).map((course) => {
+                              const isSelected = (admSelectedCourses || []).includes(course);
                               return (
                                 <button
                                   key={course}
@@ -2572,7 +2573,7 @@ export default function AdminDashboard() {
                           <input
                             type="text"
                             placeholder="Selected Course combination..."
-                            value={admStdClass}
+                            value={admStdClass || ''}
                             onChange={(e) => setAdmStdClass(e.target.value)}
                             className="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-700 text-xs mt-1"
                           />

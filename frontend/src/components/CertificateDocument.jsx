@@ -3,11 +3,28 @@ import React from 'react';
 // Apple Tree Infotech Logo Component using the official logo
 export const AppleTreeLogo = ({ className = '' }) => (
   <div className={`flex flex-col items-start select-none ${className}`}>
-    <img
-      src="/appletree_logo.png"
-      alt="Apple Tree Infotech Logo"
-      className="h-16 sm:h-20 w-auto object-contain drop-shadow-sm"
-    />
+    <div className="flex items-center gap-2.5">
+      <img
+        src="/appletree_logo.png"
+        alt="Apple Tree Infotech Logo"
+        className="h-16 sm:h-20 w-auto object-contain drop-shadow-sm"
+        onError={(e) => {
+          e.target.onerror = null;
+          e.target.src = '/logo.png';
+        }}
+      />
+      <div className="flex flex-col">
+        <span className="text-sm font-black tracking-tight text-[#d32f2f] uppercase leading-none font-serif">
+          APPLETREE
+        </span>
+        <span className="text-xs font-black tracking-wider text-[#162d59] uppercase leading-tight font-serif">
+          INFOTECH
+        </span>
+        <span className="text-[7.5px] font-bold text-slate-500 tracking-tight">
+          Software & IT Training
+        </span>
+      </div>
+    </div>
     <span className="text-[9.5px] font-bold tracking-wider text-[#1e88e5] mt-1 pl-1">
       ISO 9001:2015 CERTIFIED
     </span>
