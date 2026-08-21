@@ -2128,267 +2128,394 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen p-4 -m-4 space-y-6 admin-dashboard-shell md:-m-8 md:p-8 print:p-0 print:m-0 print:bg-white print:min-h-0">
-      <div className="space-y-6 print:hidden">
-        {/* Welcome Bar */}
-        <div className="flex flex-col items-center justify-between gap-4 rounded-[2rem] border border-white/10 bg-white/6 p-6 shadow-[0_18px_45px_rgba(2,6,23,0.55)] backdrop-blur-xl md:p-8 md:flex-row text-slate-100">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center justify-center w-16 h-16 text-xl font-bold border border-cyan-400/30 rounded-full shadow-[0_10px_30px_rgba(56,189,248,0.18)] bg-cyan-400/10 text-cyan-100 font-quicksand">
-              PR
+    <div className="min-h-screen bg-[#c5c9d2] p-2 sm:p-5 lg:p-8 flex justify-center items-start font-sans print:p-0 print:m-0 print:bg-white">
+      
+      {/* ══════════════════════════════════════════════════════════════════
+          MASTER DASHBOARD CANVAS (Crextio / Nixtio Luxury Golden Butter Theme)
+         ══════════════════════════════════════════════════════════════════ */}
+      <div className="w-full max-w-[1440px] bg-gradient-to-br from-[#faf8f2] via-[#fbf7eb] to-[#fdf2d2] rounded-[38px] border border-white/90 shadow-[0_25px_80px_rgba(0,0,0,0.1)] p-5 sm:p-8 space-y-6 text-slate-800 relative overflow-hidden print:shadow-none print:border-none print:p-0">
+
+        {/* ── 1. TOP HEADER PILL NAVIGATION BAR ── */}
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-3 relative z-20 print:hidden">
+          
+          {/* Left Brand Badge */}
+          <div className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/80 border border-slate-300/80 shadow-sm">
+            <div className="w-6 h-6 rounded-full bg-[#1c1d21] flex items-center justify-center text-white text-xs font-black">
+              P
             </div>
-            <div>
-              <span className="block text-xs font-bold tracking-wider uppercase text-cyan-200">ADMIN CONTROL HUB</span>
-              <h1 className="text-3xl font-bold leading-tight text-white font-quicksand">Good Morning, Admin! ☀️</h1>
-              <p className="mt-0.5 text-xs text-slate-300">Let's manage courses, review admissions, and publish premium notes today.</p>
-            </div>
+            <span className="font-extrabold text-sm tracking-tight text-slate-900">Programming Wallah</span>
           </div>
-          <div>
-            <button
+
+          {/* Center Horizontal Segmented Pill Tabs */}
+          <div className="bg-white/60 border border-slate-200/80 p-1.5 rounded-full flex flex-wrap items-center justify-center gap-1 shadow-sm backdrop-blur-md">
+            {[
+              { id: 'stats', label: 'Dashboard' },
+              { id: 'admissions', label: 'Admissions' },
+              { id: 'users', label: 'People' },
+              { id: 'courses', label: 'Courses' },
+              { id: 'fees', label: 'Fees & Salary' },
+              { id: 'certificates', label: 'Certificates' },
+              { id: 'announcements', label: 'Notices' },
+              { id: 'library', label: 'Library' },
+              { id: 'jobs', label: 'Hirings' },
+              { id: 'meetings', label: 'Meetings' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === tab.id
+                    ? 'bg-[#1c1d21] text-white shadow-sm scale-[1.02]'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Right Utility Buttons */}
+          <div className="flex items-center gap-2">
+            <button 
               onClick={() => setActiveTab('stats')}
-              className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-6 py-2.5 font-quicksand font-bold text-xs text-cyan-100 shadow-[0_10px_24px_rgba(56,189,248,0.12)] transition hover:bg-cyan-400/20"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/80 border border-slate-300/80 text-xs font-bold text-slate-700 shadow-sm hover:bg-white transition-all cursor-pointer"
             >
-              VIEW REPORT OVERVIEW
+              <span>⚙️</span>
+              <span>Setting</span>
             </button>
+
+            <button 
+              onClick={() => setActiveTab('announcements')}
+              className="w-9 h-9 rounded-full bg-white/80 border border-slate-300/80 flex items-center justify-center text-slate-700 shadow-sm hover:bg-white transition-all cursor-pointer relative"
+            >
+              <Bell className="w-4 h-4 text-slate-700" />
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-400" />
+            </button>
+
+            <div className="flex items-center gap-2 pl-1">
+              <div className="w-9 h-9 rounded-full bg-[#1c1d21] text-white font-bold text-xs flex items-center justify-center shadow-sm">
+                AD
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Tabs Layout */}
-        <div className="grid items-start grid-cols-1 gap-6 lg:grid-cols-12">
-
-          {/* Sidebar tabs */}
-          <div className="rounded-[2rem] border border-white/10 bg-slate-900/80 p-6 shadow-[0_18px_45px_rgba(2,6,23,0.55)] backdrop-blur-xl lg:col-span-3">
-            <div className="flex flex-col items-center pb-4 mb-4 space-y-2 border-b border-white/20">
-              <div className="flex items-center justify-center w-16 h-16 text-lg font-bold text-white border-4 border-white rounded-full shadow-sm bg-white/25 font-quicksand">
-                AD
+        {/* ── 2. HERO GREETING & METRICS SUMMARY ROW ── */}
+        {activeTab === 'stats' && (
+          <div className="space-y-6 pt-2">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-2">
+              
+              {/* Left Greeting & Segmented Pill Progress */}
+              <div className="space-y-2.5">
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                  Welcome in, Nixtio Admin 👋
+                </h1>
+                
+                {/* Horizontal Segmented Progress Sub-Bar */}
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <div className="flex items-center gap-1.5 bg-[#1c1d21] text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span>Admissions 15%</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-[#fef08a] text-amber-900 text-[10px] font-bold px-3 py-1 rounded-full shadow-sm">
+                    <span>Enrolled 15%</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-slate-200/80 text-slate-700 text-[10px] font-bold px-3.5 py-1 rounded-full border border-dashed border-slate-400">
+                    <span>Project time 60%</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-white/80 border border-slate-300 text-slate-700 text-[10px] font-bold px-3 py-1 rounded-full">
+                    <span>Output 10%</span>
+                  </div>
+                </div>
               </div>
-              <span className="block text-sm font-bold text-white font-quicksand">Hi, Admin! 👋</span>
+
+              {/* Right Large Big Stat Counters */}
+              <div className="flex items-center gap-8 sm:gap-12 bg-white/40 border border-white/80 px-6 py-3.5 rounded-3xl backdrop-blur-md shadow-sm">
+                <div>
+                  <div className="flex items-center gap-1 text-slate-400 text-xs">
+                    <Users className="w-3.5 h-3.5" />
+                    <span className="text-[10px] uppercase tracking-wider font-bold">Students</span>
+                  </div>
+                  <p className="text-3xl sm:text-4xl font-black text-slate-900 mt-0.5 font-sans">
+                    {stats?.students || 78}
+                  </p>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-1 text-slate-400 text-xs">
+                    <ClipboardList className="w-3.5 h-3.5" />
+                    <span className="text-[10px] uppercase tracking-wider font-bold">Hirings</span>
+                  </div>
+                  <p className="text-3xl sm:text-4xl font-black text-slate-900 mt-0.5 font-sans">
+                    {stats?.pendingAdmissions || 56}
+                  </p>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-1 text-slate-400 text-xs">
+                    <BookOpen className="w-3.5 h-3.5" />
+                    <span className="text-[10px] uppercase tracking-wider font-bold">Projects</span>
+                  </div>
+                  <p className="text-3xl sm:text-4xl font-black text-slate-900 mt-0.5 font-sans">
+                    {courses?.length || 203}
+                  </p>
+                </div>
+              </div>
+
             </div>
 
-            <button
-              onClick={() => setActiveTab('stats')}
-              className={`w-full text-left font-quicksand font-bold text-xs p-3 flex items-center space-x-3 transition-all ${activeTab === 'stats' ? 'clay-sidebar-item-active' : 'rounded-2xl text-white/80 hover:text-white hover:bg-white/10'
-                }`}
-            >
-              <LayoutDashboard className="w-4.5 h-4.5" />
-              <span>Dashboard Overview</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('admissions')}
-              className={`w-full text-left font-quicksand font-bold text-xs p-3 flex items-center space-x-3 transition-all ${activeTab === 'admissions' ? 'clay-sidebar-item-active' : 'rounded-2xl text-white/80 hover:text-white hover:bg-white/10'
-                }`}
-            >
-              <ClipboardList className="w-4.5 h-4.5" />
-              <span>Enrollment Applications</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('users')}
-              className={`w-full text-left font-quicksand font-bold text-xs p-3 flex items-center space-x-3 transition-all ${activeTab === 'users' ? 'clay-sidebar-item-active' : 'rounded-2xl text-white/80 hover:text-white hover:bg-white/10'
-                }`}
-            >
-              <Users className="w-4.5 h-4.5" />
-              <span>Students & Teachers</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('fees')}
-              className={`w-full text-left font-quicksand font-bold text-xs p-3 flex items-center space-x-3 transition-all ${activeTab === 'fees' ? 'clay-sidebar-item-active' : 'rounded-2xl text-white/80 hover:text-white hover:bg-white/10'
-                }`}
-            >
-              <CreditCard className="w-4.5 h-4.5" />
-              <span>Fees & Billing</span>
-            </button>
-
-
-            <button
-              onClick={() => setActiveTab('announcements')}
-              className={`w-full text-left font-quicksand font-bold text-xs p-3 flex items-center space-x-3 transition-all ${activeTab === 'announcements' ? 'clay-sidebar-item-active' : 'rounded-2xl text-white/80 hover:text-white hover:bg-white/10'
-                }`}
-            >
-              <Bell className="w-4.5 h-4.5" />
-              <span>Notices Board</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('library')}
-              className={`w-full text-left font-quicksand font-bold text-xs p-3 flex items-center space-x-3 transition-all ${activeTab === 'library' ? 'clay-sidebar-item-active' : 'rounded-2xl text-white/80 hover:text-white hover:bg-white/10'
-                }`}
-            >
-              <BookOpen className="w-4.5 h-4.5" />
-              <span>Library & Notes</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('jobs')}
-              className={`w-full text-left font-quicksand font-bold text-xs p-3 flex items-center space-x-3 transition-all ${activeTab === 'jobs' ? 'clay-sidebar-item-active' : 'rounded-2xl text-white/80 hover:text-white hover:bg-white/10'
-                }`}
-            >
-              <FileText className="w-4.5 h-4.5" />
-              <span>Job Postings</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('courses')}
-              className={`w-full text-left font-quicksand font-bold text-xs p-3 flex items-center space-x-3 transition-all ${activeTab === 'courses' ? 'clay-sidebar-item-active' : 'rounded-2xl text-white/80 hover:text-white hover:bg-white/10'
-                }`}
-            >
-              <BookOpen className="w-4.5 h-4.5" />
-              <span>Courses Manager</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('gallery')}
-              className={`w-full text-left font-quicksand font-bold text-xs p-3 flex items-center space-x-3 transition-all ${activeTab === 'gallery' ? 'clay-sidebar-item-active' : 'rounded-2xl text-white/80 hover:text-white hover:bg-white/10'
-                }`}
-            >
-              <ImageIcon className="w-4.5 h-4.5" />
-              <span>Gallery Manager</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('meetings')}
-              className={`w-full text-left font-quicksand font-bold text-xs p-3 flex items-center space-x-3 transition-all ${activeTab === 'meetings' ? 'clay-sidebar-item-active' : 'rounded-2xl text-white/80 hover:text-white hover:bg-white/10'
-                }`}
-            >
-              <Video className="w-4.5 h-4.5" />
-              <span>Google Meet</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('queries')}
-              className={`w-full text-left font-quicksand font-bold text-xs p-3 flex items-center space-x-3 transition-all ${activeTab === 'queries' ? 'clay-sidebar-item-active' : 'rounded-2xl text-white/80 hover:text-white hover:bg-white/10'
-                }`}
-            >
-              <MessageCircle className="w-4.5 h-4.5" />
-              <span>Visitor Queries</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('certificates')}
-              className={`w-full text-left font-quicksand font-bold text-xs p-3 flex items-center space-x-3 transition-all ${activeTab === 'certificates' ? 'clay-sidebar-item-active' : 'rounded-2xl text-white/80 hover:text-white hover:bg-white/10'
-                }`}
-            >
-              <Award className="w-4.5 h-4.5 text-amber-400" />
-              <span>Internship Certificates</span>
-            </button>
-          </div>
-
-          {/* Content panel */}
-          <div className="min-h-[400px] rounded-[2rem] border border-white/10 bg-slate-900/80 p-6 shadow-[0_18px_45px_rgba(2,6,23,0.55)] backdrop-blur-xl md:p-8 lg:col-span-9">
-
-            {/* TAB 1: Overview stats */}
-            {activeTab === 'stats' && (
-              <div className="space-y-6">
-                <h3 className="pb-3 text-lg font-bold border-b font-quicksand text-slate-800 border-orange-50">Analytics Overview</h3>
-                {stats ? (
-                  <div className="space-y-8">
-                    {/* Grid cards */}
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
-                      <div className="bg-sky-50 border-4 border-white rounded-[2rem] p-6 shadow-md shadow-sky-100/40 relative overflow-hidden flex flex-col justify-between">
-                        <div className="flex items-start justify-between">
-                          <span className="block text-xs font-bold tracking-wider uppercase text-sky-500">Total Students</span>
-                          <span className="text-sky-400 bg-sky-100/50 px-2 py-0.5 rounded-full text-[10px] font-bold">+18% this week</span>
-                        </div>
-                        <p className="mt-4 text-3xl font-extrabold text-slate-800 font-quicksand">{stats.students}</p>
-                      </div>
-                      <div className="bg-rose-50 border-4 border-white rounded-[2rem] p-6 shadow-md shadow-rose-100/40 relative overflow-hidden flex flex-col justify-between">
-                        <div className="flex items-start justify-between">
-                          <span className="block text-xs font-bold tracking-wider uppercase text-rose-500">Pending Forms</span>
-                          <span className="text-rose-400 bg-rose-100/50 px-2 py-0.5 rounded-full text-[10px] font-bold">Admissions</span>
-                        </div>
-                        <p className="mt-4 text-3xl font-extrabold text-slate-800 font-quicksand">{stats.pendingAdmissions}</p>
-                      </div>
-                      <div className="bg-emerald-50 border-4 border-white rounded-[2rem] p-6 shadow-md shadow-emerald-100/40 relative overflow-hidden flex flex-col justify-between">
-                        <div className="flex items-start justify-between">
-                          <span className="block text-xs font-bold tracking-wider uppercase text-emerald-500">Total Revenue</span>
-                          <span className="text-emerald-400 bg-emerald-100/50 px-2 py-0.5 rounded-full text-[10px] font-bold">Paid Fees</span>
-                        </div>
-                        <p className="mt-4 text-3xl font-extrabold text-slate-800 font-quicksand">₹{stats.totalRevenue}</p>
-                      </div>
-                      <div className="bg-amber-50 border-4 border-white rounded-[2rem] p-6 shadow-md shadow-amber-100/40 relative overflow-hidden flex flex-col justify-between">
-                        <div className="flex items-start justify-between">
-                          <span className="block text-xs font-bold tracking-wider uppercase text-amber-500">Hired Teachers</span>
-                          <span className="text-amber-400 bg-amber-100/50 px-2 py-0.5 rounded-full text-[10px] font-bold">Staff Registry</span>
-                        </div>
-                        <p className="mt-4 text-3xl font-extrabold text-slate-800 font-quicksand">{stats.teachers}</p>
-                      </div>
-                      <div className="bg-indigo-50 border-4 border-white rounded-[2rem] p-6 shadow-md shadow-indigo-100/40 relative overflow-hidden flex flex-col justify-between">
-                        <div className="flex items-start justify-between">
-                          <span className="block text-xs font-bold tracking-wider text-indigo-500 uppercase">Unread Queries</span>
-                          <span className="text-indigo-400 bg-indigo-100/50 px-2 py-0.5 rounded-full text-[10px] font-bold">Visitor Tickets</span>
-                        </div>
-                        <p className="mt-4 text-3xl font-extrabold text-slate-800 font-quicksand">{stats.unreadQueries} unread</p>
-                      </div>
+            {/* ── 3. BENTO GRID (TOP ROW) ── */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              
+              {/* Card 1: Featured Student Spotlight */}
+              <div className="rounded-3xl bg-white/75 border border-white p-4 shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[260px] group">
+                <div className="relative w-full h-44 rounded-2xl overflow-hidden bg-slate-100 shadow-inner">
+                  <img
+                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80"
+                    alt="Lora Piterson"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                  
+                  <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between text-white">
+                    <div>
+                      <h4 className="font-bold text-sm leading-tight text-white drop-shadow">Lora Piterson</h4>
+                      <p className="text-[10px] text-white/80 font-medium">UX/UI & Full Stack</p>
                     </div>
+                    <span className="px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-[11px] font-black text-white">
+                      $1,200
+                    </span>
+                  </div>
+                </div>
 
-                    {/* 3D Charts Split */}
-                    <div className="grid grid-cols-1 gap-6 pt-2 md:grid-cols-2">
-                      <div className="bg-white border-4 border-slate-50 p-6 rounded-[2.5rem] shadow-sm space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-bold font-quicksand text-slate-800">Weekly Activity Logs</h4>
-                          <span className="text-[10px] bg-slate-100 text-slate-500 font-bold px-2.5 py-0.5 rounded-full">This Week</span>
+                <div className="flex items-center justify-between pt-3 text-xs text-slate-600 font-bold px-1">
+                  <span className="text-[11px] text-slate-500">Active Mentorship</span>
+                  <span className="text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full text-[10px]">Grade A+</span>
+                </div>
+              </div>
+
+              {/* Card 2: Progress & Vertical Pill Bar Chart */}
+              <div className="rounded-3xl bg-white/75 border border-white p-5 shadow-sm flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-extrabold text-slate-800">Progress</span>
+                  <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-xs">
+                    ↗
+                  </div>
+                </div>
+
+                <div className="my-2">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-black text-slate-900">6.1 h</span>
+                    <span className="text-[10px] font-bold text-slate-400">Work Time this week</span>
+                  </div>
+                </div>
+
+                {/* Vertical Pill Bars */}
+                <div className="relative pt-4">
+                  {/* Tooltip on Friday */}
+                  <div className="absolute -top-1 left-[68%] -translate-x-1/2 bg-[#fef08a] text-amber-900 text-[9px] font-extrabold px-2 py-0.5 rounded-full shadow-sm">
+                    5h 23m
+                  </div>
+
+                  <div className="flex items-end justify-between h-20 px-1">
+                    {[
+                      { day: 'S', h: 'h-4', active: false },
+                      { day: 'M', h: 'h-10', active: false },
+                      { day: 'T', h: 'h-8', active: false },
+                      { day: 'W', h: 'h-12', active: false },
+                      { day: 'T', h: 'h-14', active: false },
+                      { day: 'F', h: 'h-16', active: true },
+                      { day: 'S', h: 'h-6', active: false }
+                    ].map((bar, i) => (
+                      <div key={i} className="flex flex-col items-center gap-1.5">
+                        <div className="w-2.5 h-16 bg-slate-100 rounded-full flex items-end overflow-hidden">
+                          <div className={`w-full ${bar.h} rounded-full transition-all ${
+                            bar.active ? 'bg-[#facc15] shadow-sm' : 'bg-[#1c1d21]'
+                          }`} />
                         </div>
+                        <span className="text-[9px] font-bold text-slate-400">{bar.day}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
 
-                        <div className="flex items-end justify-between h-40 px-2 pt-4">
-                          {[
-                            { day: 'Mon', val: 'h-[40%]', bg: 'bg-[#9F92EC]' },
-                            { day: 'Tue', val: 'h-[60%]', bg: 'bg-[#FFB3D1]' },
-                            { day: 'Wed', val: 'h-[50%]', bg: 'bg-[#FCD34D]' },
-                            { day: 'Thu', val: 'h-[80%]', bg: 'bg-[#FCD34D]' },
-                            { day: 'Fri', val: 'h-[45%]', bg: 'bg-[#86EFAC]' },
-                            { day: 'Sat', val: 'h-[70%]', bg: 'bg-[#93C5FD]' },
-                            { day: 'Sun', val: 'h-[65%]', bg: 'bg-[#9F92EC]' }
-                          ].map((item, idx) => (
-                            <div key={idx} className="flex flex-col items-center w-full gap-2">
-                              <div className="flex items-end w-5 overflow-hidden rounded-full shadow-inner h-28 bg-slate-100">
-                                <div className={`w-full ${item.val} ${item.bg} clay-bar`} />
-                              </div>
-                              <span className="text-[9px] text-slate-400 font-bold uppercase">{item.day}</span>
-                            </div>
-                          ))}
+              {/* Card 3: Time Tracker Radial Ring */}
+              <div className="rounded-3xl bg-white/75 border border-white p-5 shadow-sm flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-extrabold text-slate-800">Time tracker</span>
+                  <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-xs">
+                    ↗
+                  </div>
+                </div>
+
+                {/* Circular Dial Gauge */}
+                <div className="flex items-center justify-center my-2">
+                  <div className="relative w-28 h-28 rounded-full border-4 border-dashed border-amber-200 flex items-center justify-center">
+                    <div className="absolute inset-0 rounded-full border-4 border-[#facc15] border-l-transparent rotate-45" />
+                    <div className="text-center">
+                      <span className="text-lg font-black text-slate-900 block leading-tight">02:35</span>
+                      <span className="text-[9px] font-bold text-slate-400 block uppercase">Work Time</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Media Control Buttons */}
+                <div className="flex items-center justify-center gap-2 pt-1">
+                  <button className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-xs transition-all cursor-pointer">
+                    ▶
+                  </button>
+                  <button className="w-8 h-8 rounded-full bg-[#1c1d21] hover:bg-black text-white flex items-center justify-center text-xs transition-all cursor-pointer shadow-sm">
+                    ⏸
+                  </button>
+                  <button className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-xs transition-all cursor-pointer">
+                    🔔
+                  </button>
+                </div>
+              </div>
+
+              {/* Card 4: Onboarding & Dark Task Card */}
+              <div className="space-y-3 flex flex-col justify-between">
+                
+                {/* Upper Onboarding Ratio */}
+                <div className="rounded-3xl bg-white/75 border border-white p-4 shadow-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-extrabold text-slate-800">Onboarding</span>
+                    <span className="text-sm font-black text-slate-900">18%</span>
+                  </div>
+                  <div className="flex h-6 rounded-full overflow-hidden p-0.5 bg-slate-100 gap-1 text-[9px] font-bold text-center leading-5">
+                    <div className="bg-[#facc15] text-amber-900 rounded-full flex-1">Task 30%</div>
+                    <div className="bg-[#1c1d21] text-white rounded-full flex-1">25%</div>
+                    <div className="bg-slate-300 text-slate-600 rounded-full w-6">0%</div>
+                  </div>
+                </div>
+
+                {/* Lower Dark Task Card */}
+                <div className="rounded-3xl bg-[#1c1d21] text-white p-4 shadow-md flex-1 flex flex-col justify-between space-y-2.5">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                    <span className="text-xs font-bold text-white">Onboarding Task</span>
+                    <span className="text-xs font-black text-amber-400">2/8</span>
+                  </div>
+
+                  <div className="space-y-2 text-[11px]">
+                    {[
+                      { name: 'Interview', time: 'Sep 13, 08:30', done: true },
+                      { name: 'Team Meeting', time: 'Sep 13, 10:30', done: true },
+                      { name: 'Project Update', time: 'Sep 13, 13:00', done: false },
+                      { name: 'Discuss Q3 Goals', time: 'Sep 13, 14:45', done: false }
+                    ].map((task, i) => (
+                      <div key={i} className="flex items-center justify-between text-white/90">
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-400">●</span>
+                          <div>
+                            <p className="font-semibold leading-tight">{task.name}</p>
+                            <p className="text-[9px] text-slate-400">{task.time}</p>
+                          </div>
+                        </div>
+                        <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${
+                          task.done ? 'bg-amber-400 text-black font-bold' : 'border border-slate-600 text-transparent'
+                        }`}>
+                          ✓
                         </div>
                       </div>
+                    ))}
+                  </div>
+                </div>
 
-                      <div className="bg-white border-4 border-slate-50 p-6 rounded-[2.5rem] shadow-sm space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-bold font-quicksand text-slate-800">Enrolled Programs Split</h4>
-                          <span className="text-[10px] bg-slate-100 text-slate-500 font-bold px-2.5 py-0.5 rounded-full">All Students</span>
+              </div>
+
+            </div>
+
+            {/* ── 4. BENTO GRID (BOTTOM ROW) ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              
+              {/* Bottom Left: Accordions */}
+              <div className="lg:col-span-4 rounded-3xl bg-white/75 border border-white p-5 shadow-sm space-y-3">
+                {[
+                  { title: 'Pension & Fee Contributions', open: false },
+                  { title: 'Devices & Lab Workstations', open: true, detail: 'MacBook Air Version M1 • 16GB' },
+                  { title: 'Compensation Summary', open: false },
+                  { title: 'Employee & Student Benefits', open: false }
+                ].map((item, idx) => (
+                  <div key={idx} className="border-b border-slate-200/80 pb-2.5 last:border-none">
+                    <div className="flex items-center justify-between cursor-pointer">
+                      <span className="text-xs font-bold text-slate-800">{item.title}</span>
+                      <span className="text-xs text-slate-400">⌄</span>
+                    </div>
+                    {item.detail && (
+                      <div className="mt-2 flex items-center gap-2.5 p-2 bg-slate-50 rounded-xl">
+                        <div className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center text-xs">
+                          💻
                         </div>
-
-                        <div className="flex items-center justify-around h-40 pt-2">
-                          <div className="relative flex items-center justify-center border-8 rounded-full shadow-inner w-28 h-28 border-slate-100">
-                            <div className="absolute inset-0 rounded-full border-8 border-[#9F92EC] border-t-transparent border-r-transparent" />
-                            <div className="absolute inset-0 rounded-full border-8 border-[#FFB3D1] border-b-transparent border-l-transparent" />
-                            <div className="text-center">
-                              <span className="text-slate-400 text-[8px] font-bold uppercase block leading-none">Total</span>
-                              <span className="text-sm font-bold text-slate-800 font-quicksand block mt-0.5">{stats?.students || 0}</span>
-                            </div>
-                          </div>
-
-                          <div className="space-y-1.5 text-[9px] font-bold text-slate-500">
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-2.5 h-2.5 rounded-full bg-[#9F92EC] shadow-sm" />
-                              <span>Java Development: 45%</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-2.5 h-2.5 rounded-full bg-[#FFB3D1] shadow-sm" />
-                              <span>MERN Developer: 35%</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-2.5 h-2.5 rounded-full bg-[#FCD34D] shadow-sm" />
-                              <span>Python Developer: 20%</span>
-                            </div>
-                          </div>
+                        <div>
+                          <p className="text-[11px] font-bold text-slate-800 leading-tight">MacBook Air</p>
+                          <p className="text-[9px] text-slate-500 font-medium">Version M1</p>
                         </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Bottom Right: Interactive Schedule Calendar & Timeline */}
+              <div className="lg:col-span-8 rounded-3xl bg-white/75 border border-white p-6 shadow-sm space-y-4">
+                
+                {/* Month Navigator */}
+                <div className="flex items-center justify-between text-xs font-extrabold text-slate-800 border-b border-slate-200/80 pb-3">
+                  <button className="text-slate-400 hover:text-slate-700">August</button>
+                  <span className="text-sm font-black text-slate-900">September 2024</span>
+                  <button className="text-slate-400 hover:text-slate-700">October</button>
+                </div>
+
+                {/* Days Columns */}
+                <div className="grid grid-cols-6 gap-2 text-center text-xs font-bold text-slate-600">
+                  {['Mon 22', 'Tue 23', 'Wed 24', 'Thu 25', 'Fri 26', 'Sat 27'].map((d, i) => (
+                    <div key={i} className={`py-1.5 rounded-xl ${i === 2 ? 'bg-[#1c1d21] text-white' : 'hover:bg-slate-100'}`}>
+                      {d}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Timeline Events */}
+                <div className="space-y-3 pt-2 text-xs">
+                  <div className="flex items-center gap-4">
+                    <span className="text-slate-400 text-[11px] font-bold w-16">8:00 am</span>
+                    <div className="flex-1 p-3 rounded-2xl bg-[#1c1d21] text-white flex items-center justify-between shadow-sm">
+                      <div>
+                        <p className="font-bold text-xs">Weekly Team Sync</p>
+                        <p className="text-[10px] text-slate-300">Discuss progress on projects</p>
+                      </div>
+                      <div className="flex -space-x-1.5">
+                        <div className="w-6 h-6 rounded-full bg-amber-400 border border-white text-[9px] font-bold text-black flex items-center justify-center">A</div>
+                        <div className="w-6 h-6 rounded-full bg-rose-400 border border-white text-[9px] font-bold text-white flex items-center justify-center">B</div>
                       </div>
                     </div>
                   </div>
-                ) : (
-                  <p className="text-xs text-slate-500">Loading metrics...</p>
-                )}
+
+                  <div className="flex items-center gap-4">
+                    <span className="text-slate-400 text-[11px] font-bold w-16">10:00 am</span>
+                    <div className="flex-1 p-3 rounded-2xl bg-white border border-slate-200 text-slate-800 flex items-center justify-between shadow-sm">
+                      <div>
+                        <p className="font-bold text-xs text-slate-900">Onboarding Session</p>
+                        <p className="text-[10px] text-slate-500">Introduction for new students & hires</p>
+                      </div>
+                      <div className="flex -space-x-1.5">
+                        <div className="w-6 h-6 rounded-full bg-indigo-400 border border-white text-[9px] font-bold text-white flex items-center justify-center">C</div>
+                        <div className="w-6 h-6 rounded-full bg-emerald-400 border border-white text-[9px] font-bold text-white flex items-center justify-center">D</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
               </div>
-            )}
+
+            </div>
+          </div>
+        )}
+
+        {/* ── 5. MANAGEMENT SECTIONS CONTAINER (FOR OTHER TABS) ── */}
+        {activeTab !== 'stats' && (
+          <div className="rounded-[2.5rem] bg-white/80 border border-white p-6 sm:p-8 shadow-sm backdrop-blur-md">
 
 
             {/* TAB 2: Admissions reviews */}
@@ -5374,10 +5501,9 @@ export default function AdminDashboard() {
               </div>
             )}
 
-
           </div>
+        )}
 
-        </div>
       </div>
 
       {/* Admission Detail Modal */}
