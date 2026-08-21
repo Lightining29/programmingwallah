@@ -1,67 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
-import { useTheme } from '../context/ThemeContext.jsx';
 import { 
-  User, Lock, Eye, EyeOff, Mail, ArrowRight, Code2, Home,
-  GraduationCap, Users, UserCheck, ShieldCheck, Sparkles, CheckCircle2, Zap
+  User, Lock, Eye, EyeOff, Mail, ArrowRight, Home,
+  GraduationCap, Users, UserCheck, ShieldCheck, Flame, Zap, CheckCircle2
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
-
-/* ── Hanging Lamp SVG with pull-string theme toggle ── */
-function HangingLamp({ isDark, onToggle }) {
-  const [swing, setSwing] = useState(0);
-  const [pulled, setPulled] = useState(false);
-
-  const pull = () => {
-    setPulled(true);
-    setSwing(16);
-    onToggle();
-    setTimeout(() => setSwing(-9),  200);
-    setTimeout(() => setSwing(4),   370);
-    setTimeout(() => setSwing(-2),  500);
-    setTimeout(() => { setSwing(0); setPulled(false); }, 620);
-  };
-
-  const wire   = isDark ? '#78716c' : '#d97706';
-  const cap    = isDark ? '#292524' : '#b45309';
-  const shade  = isDark ? '#44403c' : '#fef3c7';
-  const bulb   = isDark ? '#57534e' : '#fde68a';
-  const str    = isDark ? '#a8a29e' : '#92400e';
-  const glow   = isDark ? 'none'    : 'drop-shadow(0 0 10px #fbbf24)';
-
-  return (
-    <div className="flex flex-col items-center cursor-pointer select-none group" onClick={pull}
-         title={isDark ? 'Turn on light' : 'Turn off light'}>
-      <motion.div animate={{ rotate: swing }} transition={{ type:'spring', stiffness:280, damping:14 }}
-                  style={{ transformOrigin:'top center' }} className="flex flex-col items-center">
-        {/* Wire */}
-        <svg width="3" height="32"><line x1="1.5" y1="0" x2="1.5" y2="32" stroke={wire} strokeWidth="2" strokeLinecap="round"/></svg>
-        {/* Lamp */}
-        <svg width="68" height="56" viewBox="0 0 68 56">
-          {!isDark && <ellipse cx="34" cy="50" rx="28" ry="10" fill="rgba(251,191,36,0.4)" filter="url(#gblur)"/>}
-          <defs><filter id="gblur"><feGaussianBlur stdDeviation="4"/></filter></defs>
-          <rect x="22" y="6" width="24" height="7" rx="3" fill={cap}/>
-          <polygon points="8,46 24,10 44,10 60,46" fill={shade} stroke={cap} strokeWidth="1.5" strokeLinejoin="round"/>
-          <polygon points="20,42 28,14 40,14 50,42" fill="rgba(255,255,255,0.1)"/>
-          <ellipse cx="34" cy="48" rx="6.5" ry="7" fill={bulb} style={{ filter: glow }}/>
-          {!isDark && <ellipse cx="31" cy="44" rx="2.5" ry="3" fill="rgba(255,255,255,0.6)"/>}
-        </svg>
-      </motion.div>
-      {/* String */}
-      <motion.div animate={{ scaleY: pulled ? 0.82 : 1, y: pulled ? -3 : 0 }} transition={{ duration:0.14 }}
-                  className="flex flex-col items-center">
-        <svg width="2" height="26"><line x1="1" y1="0" x2="1" y2="20" stroke={str} strokeWidth="1.5" strokeDasharray="3 2"/></svg>
-        <svg width="13" height="13"><circle cx="6.5" cy="6.5" r="5" fill="none" stroke={str} strokeWidth="2"/></svg>
-      </motion.div>
-      <span className="text-[9px] font-bold uppercase tracking-widest mt-0.5 opacity-60 group-hover:opacity-90 transition-opacity"
-            style={{ color: str }}>
-        {isDark ? 'Light on' : 'Light off'}
-      </span>
-    </div>
-  );
-}
 
 /* ── Available Portals Configuration ── */
 const PORTALS = [
@@ -72,10 +16,8 @@ const PORTALS = [
     role: 'user',
     email: 'student@pranidha.edu',
     password: 'student123',
-    accentColor: '#f59e0b',
-    gradient: 'from-amber-500 to-orange-600',
-    description: 'Access coding courses, interactive practice & student dashboard',
-    redirect: '/lms/dashboard',
+    accentColor: '#f43f5e',
+    description: 'Access coding courses, live practice & student portal',
     badge: 'Student LMS'
   },
   {
@@ -86,9 +28,7 @@ const PORTALS = [
     email: 'parent@pranidha.edu',
     password: 'parent123',
     accentColor: '#10b981',
-    gradient: 'from-emerald-500 to-teal-600',
-    description: 'Track child progress, attendance, fee receipts & school notices',
-    redirect: '/dashboard/parent',
+    description: 'Track child progress, attendance & fee records',
     badge: 'Parent Portal'
   },
   {
@@ -99,9 +39,7 @@ const PORTALS = [
     email: 'teacher@pranidha.edu',
     password: 'teacher123',
     accentColor: '#8b5cf6',
-    gradient: 'from-purple-500 to-indigo-600',
-    description: 'Manage class schedules, student grading & parent communication',
-    redirect: '/dashboard/teacher',
+    description: 'Manage class schedules, student grading & notices',
     badge: 'Teacher Portal'
   },
   {
@@ -111,53 +49,36 @@ const PORTALS = [
     role: 'admin',
     email: 'admin@pranidha.edu',
     password: 'admin123',
-    accentColor: '#f43f5e',
-    gradient: 'from-rose-500 to-red-600',
-    description: 'Full institute management, user administration, fees & reports',
-    redirect: '/dashboard/admin',
+    accentColor: '#06b6d4',
+    description: 'Full institute management, admissions & reports',
     badge: 'Admin Portal'
   }
 ];
 
-/* ── Course tech badges ── */
-const TECH_BADGES = [
-  { label: 'Java',  bg: '#fff7ed', text: '#ea580c', border: '#fed7aa' },
-  { label: 'C++',   bg: '#eff6ff', text: '#2563eb', border: '#bfdbfe' },
-  { label: 'MERN',  bg: '#f0fdf4', text: '#16a34a', border: '#bbf7d0' },
-  { label: 'React', bg: '#f0f9ff', text: '#0284c7', border: '#bae6fd' },
-];
-
-/* ── Main component ── */
 export default function Login() {
   const { login, register, user, error, loading } = useAuth();
-  const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   const [isRegister, setIsRegister] = useState(searchParams.get('register') === 'true');
   const [selectedPortalId, setSelectedPortalId] = useState('student');
-  const [name, setName]             = useState('');
-  const [email, setEmail]           = useState('');
-  const [password, setPassword]     = useState('');
-  const [confirm, setConfirm]       = useState('');
-  const [valErr, setValErr]         = useState('');
-  const [showPw, setShowPw]         = useState(false);
+  const [name, setName]         = useState('');
+  const [email, setEmail]       = useState('student@pranidha.edu');
+  const [password, setPassword] = useState('student123');
+  const [confirm, setConfirm]   = useState('');
+  const [valErr, setValErr]     = useState('');
+  const [showPw, setShowPw]     = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
 
   const selectedPortal = PORTALS.find(p => p.id === selectedPortalId) || PORTALS[0];
 
   useEffect(() => {
     if (!user) return;
-    if (selectedPortalId === 'student')      navigate('/lms/dashboard');
-    else if (selectedPortalId === 'parent')  navigate('/dashboard/parent');
-    else if (selectedPortalId === 'teacher') navigate('/dashboard/teacher');
-    else if (selectedPortalId === 'admin')   navigate('/dashboard/admin');
-    else {
-      if (user.role === 'admin')        navigate('/dashboard/admin');
-      else if (user.role === 'teacher') navigate('/dashboard/teacher');
-      else if (user.role === 'parent')  navigate('/dashboard/parent');
-      else navigate('/lms/dashboard');
-    }
-  }, [user, navigate, selectedPortalId]);
+    if (user.role === 'admin')        navigate('/dashboard/admin');
+    else if (user.role === 'teacher') navigate('/dashboard/teacher');
+    else if (user.role === 'parent')  navigate('/dashboard/parent');
+    else navigate('/lms/dashboard');
+  }, [user, navigate]);
 
   const handleSelectPortal = (portal) => {
     setSelectedPortalId(portal.id);
@@ -168,9 +89,6 @@ export default function Login() {
 
   const handleQuickLogin = async (portal) => {
     setValErr('');
-    setSelectedPortalId(portal.id);
-    setEmail(portal.email);
-    setPassword(portal.password);
     const res = await login(portal.email, portal.password);
     if (res.success) {
       confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
@@ -180,7 +98,7 @@ export default function Login() {
       else if (portal.id === 'admin')   navigate('/dashboard/admin');
       else navigate('/lms/dashboard');
     } else {
-      setValErr(res.message || `Quick login to ${portal.name} failed.`);
+      setValErr(res.message || `Login to ${portal.name} failed.`);
     }
   };
 
@@ -201,29 +119,17 @@ export default function Login() {
       confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
       navigate('/lms/dashboard');
     } else {
-      setValErr(res.message || '1-Click Sign up failed.');
+      setValErr(res.message || 'Sign up failed.');
     }
   };
 
   const handleLogin = async (e) => {
     e.preventDefault(); setValErr('');
-    const loginEmail = email.trim() || selectedPortal.email;
-    const loginPass = password || selectedPortal.password;
-    const res = await login(loginEmail, loginPass);
+    const res = await login(email, password);
     if (res.success) {
       confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
-      if (selectedPortalId === 'student')      navigate('/lms/dashboard');
-      else if (selectedPortalId === 'parent')  navigate('/dashboard/parent');
-      else if (selectedPortalId === 'teacher') navigate('/dashboard/teacher');
-      else if (selectedPortalId === 'admin')   navigate('/dashboard/admin');
-      else {
-        if (res.user.role === 'admin')        navigate('/dashboard/admin');
-        else if (res.user.role === 'teacher') navigate('/dashboard/teacher');
-        else if (res.user.role === 'parent')  navigate('/dashboard/parent');
-        else navigate('/lms/dashboard');
-      }
     } else {
-      setValErr(res.message || 'Login failed. Check your credentials.');
+      setValErr(res.message || 'Login failed.');
     }
   };
 
@@ -239,208 +145,110 @@ export default function Login() {
     } else setValErr(res.message || 'Registration failed.');
   };
 
-  /* ── Wooden Shiny Luxury Theme Colors ── */
-  const pageBg   = isDark 
-    ? 'radial-gradient(ellipse at 50% 20%, #2e170e 0%, #150a05 55%, #080302 100%)'
-    : 'radial-gradient(ellipse at 50% 20%, #452215 0%, #231008 55%, #0f0502 100%)';
-
-  const cardBg   = 'linear-gradient(145deg, #2a130a 0%, #3d1c0f 30%, #4d2313 60%, #240f07 100%)';
-  const cardBdr  = 'rgba(217, 119, 6, 0.45)';
-  const labelClr = '#fed7aa';
-  const inputBg  = 'rgba(18, 8, 4, 0.82)';
-  const inputClr = '#fff7ed';
-  const inputBdr = 'rgba(217, 119, 6, 0.35)';
-  const textClr  = '#ffedd5';
-  const mutedClr = '#fdba74';
-  const accentA  = '#ea580c';
-  const accentB  = '#c2410c';
-
-  const inp = {
-    backgroundColor: inputBg,
-    color: inputClr,
-    border: `1.5px solid ${inputBdr}`,
-    caretColor: '#f59e0b',
-    transition: 'all .25s ease',
-    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.6)'
-  };
-
   return (
-    <div className="min-h-screen w-full flex items-center justify-center py-10 px-4 transition-colors duration-500 font-quicksand relative"
-         style={{ background: pageBg }}>
+    <div className="min-h-screen w-full flex bg-[#07080c] font-sans antialiased text-white relative overflow-hidden">
 
-      {/* ── Home button ── */}
-      <Link to="/"
-        className="absolute top-5 left-5 flex items-center gap-2 px-4 py-2 rounded-full font-bold text-xs shadow-lg transition-all hover:scale-105 active:scale-95 z-20 border border-amber-400/40 text-white"
-        style={{
-          background: 'linear-gradient(135deg, #ea580c, #9a3412)',
-          boxShadow: '0 4px 14px rgba(234, 88, 12, 0.5), inset 0 1px 1px rgba(255,255,255,0.4)'
-        }}>
-        <Home className="w-3.5 h-3.5"/> Back to Home
+      {/* ── Top Left Floating Home Button ── */}
+      <Link 
+        to="/"
+        className="absolute top-6 left-6 z-30 flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold text-white/90 bg-black/40 hover:bg-black/60 border border-white/10 backdrop-blur-md transition-all shadow-lg hover:scale-105"
+      >
+        <Home className="w-3.5 h-3.5 text-pink-400" /> Back to Home
       </Link>
 
-      {/* ── Main Container Card: Wooden Shiny Finish ── */}
-      <div className="w-full max-w-5xl rounded-3xl overflow-hidden flex flex-col md:flex-row relative z-10"
-           style={{
-             border: `2px solid ${cardBdr}`,
-             background: cardBg,
-             boxShadow: '0 25px 60px -15px rgba(0,0,0,0.9), 0 0 45px rgba(217, 119, 6, 0.2), inset 0 1px 2px rgba(255,255,255,0.25)'
-           }}>
+      {/* ══════════════════════════════════════════════════════════════════
+          LEFT HERO PANEL: Cinematic Moonlit Landscape & AI Branding
+         ══════════════════════════════════════════════════════════════════ */}
+      <div className="hidden lg:flex lg:w-[48%] relative flex-col justify-between p-12 overflow-hidden select-none">
+        
+        {/* Background Image with Ambient Night Artwork */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 scale-105"
+          style={{ 
+            backgroundImage: `url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1600&q=85')`,
+            backgroundPosition: 'center 40%'
+          }}
+        />
 
-        {/* Shiny Gloss Luster Overlay */}
-        <div className="absolute inset-0 pointer-events-none z-0"
-             style={{
-               background: 'linear-gradient(115deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.02) 30%, transparent 60%, rgba(245, 158, 11, 0.08) 100%)'
-             }} />
+        {/* Cinematic Vignette & Lighting Overlays */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#07080c] via-black/40 to-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-[#07080c]" />
+        
+        {/* Full Moon Glow Flare Simulation */}
+        <div 
+          className="absolute top-10 left-36 w-64 h-64 rounded-full pointer-events-none"
+          style={{
+            background: 'radial-gradient(circle, rgba(255,255,255,0.25) 0%, rgba(200,230,255,0.08) 45%, transparent 70%)',
+            filter: 'blur(20px)'
+          }}
+        />
 
-        {/* ════ LEFT PANEL: Polished Shiny Cherry & Mahogany ════ */}
-        <div className="relative hidden md:flex flex-col items-center justify-between py-10 px-8 md:w-[38%] overflow-hidden z-10 border-r border-amber-500/20"
-             style={{
-               background: 'linear-gradient(160deg, #7c2d12 0%, #9a3412 35%, #5c1e0b 70%, #361005 100%)',
-               boxShadow: 'inset -2px 0 10px rgba(0,0,0,0.5)'
-             }}>
-
-          {/* Shiny reflection highlights */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full"
-                 style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 70%)' }}/>
-            <div className="absolute -bottom-24 -right-12 w-80 h-80 rounded-full"
-                 style={{ background: 'radial-gradient(circle, rgba(251,191,36,0.18) 0%, transparent 70%)' }}/>
-            <svg viewBox="0 0 200 450" className="absolute inset-0 w-full h-full opacity-20">
-              <polygon points="-40,450 130,0 170,0 30,450" fill="white"/>
-              <polygon points="50,450 220,0 260,0 90,450" fill="#fde047"/>
-            </svg>
+        {/* ── Top Brand Badge ── */}
+        <div className="relative z-10 flex items-center gap-3 pt-4">
+          <div className="w-11 h-11 rounded-2xl flex items-center justify-center bg-gradient-to-br from-pink-500/30 to-rose-600/30 border border-pink-500/40 backdrop-blur-md shadow-[0_0_20px_rgba(244,63,94,0.35)]">
+            <Flame className="w-6 h-6 text-pink-400 fill-pink-400/30" />
           </div>
-
-          {/* Logo */}
-          <Link to="/" className="relative z-10 flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center border border-amber-300/40 shadow-inner"
-                 style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(0,0,0,0.2))' }}>
-              <Code2 className="w-5 h-5 text-amber-100"/>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-lg tracking-tight text-white">Job Workplace</span>
+              <span className="bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-full border border-white/20">AI</span>
             </div>
-            <span className="text-amber-100 font-black text-lg tracking-widest drop-shadow-md">APPLETREE</span>
-          </Link>
-
-          {/* Mode Switcher (Login / Register) */}
-          <div className="relative z-10 flex flex-col items-center gap-4 w-full my-6">
-            <div className="flex rounded-2xl overflow-hidden p-1 border border-amber-300/30 shadow-inner"
-                 style={{ background: 'rgba(0,0,0,0.35)' }}>
-              {['LOGIN','SIGN UP'].map((t,i) => (
-                <button key={t} onClick={() => { setIsRegister(i===1); setValErr(''); }}
-                  className="px-6 py-2.5 text-sm font-black tracking-wider rounded-xl transition-all cursor-pointer"
-                  style={(!isRegister && i===0)||(isRegister && i===1)
-                    ? {
-                        background: 'linear-gradient(135deg, #fff7ed, #ffedd5)',
-                        color: '#7c2d12',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.8)'
-                      }
-                    : { background: 'transparent', color: 'rgba(255,247,237,0.8)' }}>
-                  {t}
-                </button>
-              ))}
-            </div>
-
-            <p className="text-amber-100 text-xs font-bold text-center max-w-[220px] leading-relaxed drop-shadow-sm">
-              {isRegister ? 'Join thousands of students learning to code' : 'Access your specialized school & learning portals'}
+            <p className="text-[11px] font-extrabold tracking-widest text-[#f43f5e] uppercase">
+              NEXT-GEN CAREERS
             </p>
-
-            {/* Quick Demo Access Summary */}
-            <div className="w-full rounded-2xl p-3.5 border border-amber-400/30 text-white space-y-2 mt-2 shadow-lg"
-                 style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)' }}>
-              <p className="text-[10px] uppercase tracking-wider font-extrabold text-amber-200 flex items-center gap-1.5">
-                <Zap className="w-3.5 h-3.5 text-amber-400 animate-pulse"/> Available Portals
-              </p>
-              <div className="grid grid-cols-2 gap-1.5 text-[11px] font-bold">
-                <div className="bg-white/10 border border-amber-300/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
-                  <GraduationCap className="w-3.5 h-3.5 text-amber-400"/> LMS Portal
-                </div>
-                <div className="bg-white/10 border border-amber-300/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-emerald-400"/> Parent
-                </div>
-                <div className="bg-white/10 border border-amber-300/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
-                  <UserCheck className="w-3.5 h-3.5 text-indigo-400"/> Teacher
-                </div>
-                <div className="bg-white/10 border border-amber-300/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-rose-400"/> Admin
-                </div>
-              </div>
-            </div>
-
-            {/* Tech badges */}
-            <div className="flex flex-wrap gap-1.5 justify-center">
-              {TECH_BADGES.map(({ label }) => (
-                <span key={label}
-                  className="text-[10px] font-bold px-2.5 py-1 rounded-full border shadow-sm"
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(255,247,237,0.95), rgba(254,215,170,0.9))',
-                    color: '#7c2d12',
-                    border: '1.5px solid rgba(251,191,36,0.6)'
-                  }}>
-                  {label}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="relative z-10 grid grid-cols-2 gap-2 w-full">
-            {[['500+','Students'],['95%','Placement'],['4.9★','Rating'],['4 Portals','Active']].map(([v,l]) => (
-              <div key={l} className="rounded-xl p-2.5 text-center border border-amber-400/20"
-                   style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)' }}>
-                <p className="text-amber-100 font-black text-sm leading-none drop-shadow">{v}</p>
-                <p className="text-amber-300/80 text-[9px] font-bold uppercase tracking-wider mt-0.5">{l}</p>
-              </div>
-            ))}
           </div>
         </div>
 
-        {/* ════ RIGHT PANEL: Warm Shiny Timber Inlay ════ */}
-        <div className="flex-1 flex flex-col relative py-8 px-6 md:px-10 overflow-hidden z-10"
-             style={{ background: 'transparent' }}>
-
-          {/* Lamp — top right */}
-          <div className="absolute top-0 right-5 z-20">
-            <HangingLamp isDark={isDark} onToggle={toggleTheme}/>
+        {/* ── Bottom Content: Status Badge & Hero Typography ── */}
+        <div className="relative z-10 space-y-4 pb-4 max-w-lg">
+          
+          {/* Active Opportunities Status Badge */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/60 border border-white/15 backdrop-blur-md text-xs font-semibold text-white/90 shadow-md">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]" />
+            <span>10,480+ Live Opportunities Active</span>
           </div>
 
-          {/* Mobile logo + home */}
-          <div className="flex md:hidden items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-                   style={{ background:`linear-gradient(135deg,${accentA},${accentB})` }}>
-                <Code2 className="w-4 h-4 text-white"/>
-              </div>
-              <span className="font-black text-base tracking-wider" style={{ color: accentA }}>APPLETREE</span>
-            </div>
-            <Link to="/" className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full"
-                  style={{ background:`linear-gradient(135deg,${accentA},${accentB})`, color:'#fff' }}>
-              <Home className="w-3 h-3"/> Home
-            </Link>
+          {/* Hero Headline */}
+          <h1 className="text-4xl xl:text-5xl font-black text-white leading-tight tracking-tight">
+            Find Your Dream Job <br />
+            <span className="bg-gradient-to-r from-pink-400 via-rose-500 to-pink-500 bg-clip-text text-transparent drop-shadow-sm">
+              Powered by AI.
+            </span>
+          </h1>
+
+          {/* Subtitle */}
+          <p className="text-sm text-slate-300 font-medium leading-relaxed max-w-md">
+            Automate your applications, match with verified tech employers, and unlock compensation parity.
+          </p>
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════════════
+          RIGHT FORM PANEL: Sleek Dark Modern Interface
+         ══════════════════════════════════════════════════════════════════ */}
+      <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 lg:px-16 z-20 relative">
+
+        <div className="w-full max-w-[440px] space-y-6">
+
+          {/* Header Title */}
+          <div className="space-y-1">
+            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+              {isRegister ? 'Create an account' : 'Welcome back'}
+            </h2>
+            <p className="text-xs text-slate-400 font-medium">
+              {isRegister 
+                ? 'Start learning and building your career with Appletree AI' 
+                : 'Select your portal or enter your credentials to continue'}
+            </p>
           </div>
 
-          {/* Header */}
-          <div className="mb-4 pr-14">
-            <AnimatePresence mode="wait">
-              <motion.div key={isRegister?'r':'l'}
-                initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }}
-                exit={{ opacity:0, y:-8 }} transition={{ duration:0.22 }}>
-                <h2 className="text-2xl md:text-3xl font-black" style={{ color: textClr }}>
-                  {isRegister ? 'Create Account' : 'Welcome Back!'}
-                </h2>
-                <p className="mt-1 text-xs font-semibold" style={{ color: mutedClr }}>
-                  {isRegister ? 'Sign up for a Student LMS account to start learning' : 'Select your portal or log in below to access your dashboard'}
-                </p>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {/* ════ PORTAL SELECTOR TABS ════ */}
+          {/* Portal Selector Tabs (Student LMS, Parent, Teacher, Admin) */}
           {!isRegister && (
-            <div className="mb-5">
-              <label className="block text-[11px] font-extrabold uppercase tracking-wider mb-2" style={{ color: labelClr }}>
-                Select Portal to Access
+            <div className="space-y-2">
+              <label className="text-[11px] uppercase tracking-wider font-extrabold text-slate-400">
+                Select Portal Access
               </label>
-              
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                 {PORTALS.map((portal) => {
                   const Icon = portal.icon;
                   const isSelected = selectedPortalId === portal.id;
@@ -449,257 +257,207 @@ export default function Login() {
                       key={portal.id}
                       type="button"
                       onClick={() => handleSelectPortal(portal)}
-                      className={`relative flex flex-col items-center justify-center p-2.5 rounded-2xl border transition-all cursor-pointer ${
+                      className={`p-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center gap-1 ${
                         isSelected 
-                          ? 'scale-[1.03] shadow-lg' 
-                          : 'opacity-75 hover:opacity-100 hover:scale-[1.01]'
+                          ? 'bg-[#121722] border-cyan-500 shadow-[0_0_12px_rgba(6,182,212,0.35)] scale-[1.02]' 
+                          : 'bg-[#0b0e14] border-slate-800 hover:border-slate-700 opacity-75 hover:opacity-100'
                       }`}
-                      style={{
-                        background: isSelected 
-                          ? 'linear-gradient(145deg, #3d1c0f, #220e06)' 
-                          : 'linear-gradient(145deg, rgba(30,14,7,0.7), rgba(15,7,3,0.85))',
-                        borderColor: isSelected ? '#f59e0b' : 'rgba(217, 119, 6, 0.3)',
-                        boxShadow: isSelected 
-                          ? '0 6px 18px rgba(245, 158, 11, 0.35), inset 0 1px 1px rgba(255,255,255,0.3)' 
-                          : 'inset 0 1px 2px rgba(0,0,0,0.5)'
-                      }}
                     >
-                      <div 
-                        className="w-8 h-8 rounded-xl flex items-center justify-center text-white mb-1.5 transition-transform border border-amber-300/30"
-                        style={{
-                          background: isSelected 
-                            ? `linear-gradient(135deg, ${portal.accentColor}, #d97706)` 
-                            : 'rgba(255,255,255,0.1)',
-                          boxShadow: isSelected ? '0 2px 8px rgba(0,0,0,0.3)' : 'none'
-                        }}
-                      >
-                        <Icon className="w-4 h-4 text-amber-100"/>
-                      </div>
-                      <span className="text-xs font-bold text-center text-amber-100 drop-shadow-sm">
+                      <Icon className={`w-4 h-4 ${isSelected ? 'text-cyan-400' : 'text-slate-400'}`} />
+                      <span className={`text-[11px] font-bold truncate w-full ${isSelected ? 'text-white' : 'text-slate-400'}`}>
                         {portal.name}
                       </span>
-                      {isSelected && (
-                        <div className="absolute top-1.5 right-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-amber-400"/>
-                        </div>
-                      )}
                     </button>
                   );
                 })}
               </div>
-
-              {/* Selected Portal Highlight Banner */}
-              <div 
-                className="mt-3 p-3.5 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-3 transition-all shadow-md"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(40,18,10,0.85) 0%, rgba(25,11,6,0.95) 100%)',
-                  borderColor: 'rgba(245, 158, 11, 0.4)',
-                  boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.15)'
-                }}
-              >
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                  <div 
-                    className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0 border border-amber-400/40 shadow"
-                    style={{ background: `linear-gradient(135deg, ${selectedPortal.accentColor}, #b45309)` }}
-                  >
-                    <selectedPortal.icon className="w-5 h-5 text-amber-100"/>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-black text-amber-100">{selectedPortal.name}</span>
-                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full text-white border border-amber-300/30"
-                            style={{ backgroundColor: selectedPortal.accentColor }}>
-                        {selectedPortal.badge}
-                      </span>
-                    </div>
-                    <p className="text-[11px] font-medium leading-tight mt-0.5 text-amber-200/80">
-                      {selectedPortal.description}
-                    </p>
-                  </div>
-                </div>
-
-                {/* 1-Click Instant Login Button */}
-                <button
-                  type="button"
-                  onClick={() => handleQuickLogin(selectedPortal)}
-                  disabled={loading}
-                  className="w-full sm:w-auto px-4 py-2 rounded-xl text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-lg hover:scale-105 active:scale-95 transition-all shrink-0 cursor-pointer border border-amber-300/50"
-                  style={{
-                    background: 'linear-gradient(135deg, #f59e0b, #d97706, #b45309)',
-                    boxShadow: '0 4px 14px rgba(217, 119, 6, 0.5), inset 0 1px 1px rgba(255,255,255,0.5)'
-                  }}
-                >
-                  <Zap className="w-3.5 h-3.5 text-amber-100 fill-amber-100 animate-pulse"/>
-                  <span>1-Click Login</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* 1-Click Student Sign Up Banner on Register Tab */}
-          {isRegister && (
-            <div className="mb-4 p-3 rounded-2xl border flex items-center justify-between gap-3 shadow-md"
-                 style={{
-                   background: 'linear-gradient(135deg, rgba(40,18,10,0.85), rgba(25,11,6,0.95))',
-                   borderColor: 'rgba(245, 158, 11, 0.4)'
-                 }}>
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-amber-600 text-white flex items-center justify-center shrink-0 shadow-sm border border-amber-300/30">
-                  <Sparkles className="w-4 h-4 text-amber-200"/>
-                </div>
-                <div>
-                  <p className="text-xs font-black text-amber-100">Need Instant Access?</p>
-                  <p className="text-[11px] text-amber-200/80 leading-tight">Create & launch your student account with 1 click</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={handleQuickStudentSignUp}
-                disabled={loading}
-                className="px-3.5 py-1.5 rounded-xl text-white font-extrabold text-xs shadow-md flex items-center gap-1 shrink-0 cursor-pointer transition-all border border-amber-300/40"
-                style={{
-                  background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                  boxShadow: '0 4px 12px rgba(217, 119, 6, 0.4), inset 0 1px 1px rgba(255,255,255,0.4)'
-                }}
-              >
-                <Zap className="w-3.5 h-3.5 text-white fill-white"/>
-                <span>1-Click Signup</span>
-              </button>
             </div>
           )}
 
           {/* Error Banner */}
           {(valErr || error) && (
-            <div className="mb-4 p-3.5 rounded-2xl text-xs font-bold flex items-start gap-2 shadow-inner"
-                 style={{ background:'rgba(225,29,72,0.18)', border:'1.5px solid rgba(244,63,94,0.4)', color:'#fda4af' }}>
-              <span>⚠️</span><span>{valErr || error}</span>
+            <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-2">
+              <span>⚠️</span>
+              <span>{valErr || error}</span>
             </div>
           )}
 
           {/* Form */}
-          <AnimatePresence mode="wait">
-            <motion.form key={isRegister?'rf':'lf'}
-              initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0 }}
-              exit={{ opacity:0, x:-20 }} transition={{ duration:0.25 }}
-              onSubmit={isRegister ? handleRegister : handleLogin}
-              autoComplete="off"
-              className="space-y-3.5 text-xs font-bold">
+          <form onSubmit={isRegister ? handleRegister : handleLogin} className="space-y-4">
 
-              {isRegister && (
-                <div>
-                  <label className="block mb-1.5 uppercase tracking-wider" style={{ color:labelClr }}>Full Name</label>
-                  <div className="relative">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color:mutedClr }}/>
-                    <input type="text" required value={name} onChange={e=>setName(e.target.value)}
-                      placeholder="Your full name"
-                      autoComplete="off"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl outline-none text-sm font-semibold"
-                      style={inp}
-                      onFocus={e=>e.target.style.borderColor='#f59e0b'}
-                      onBlur={e=>e.target.style.borderColor=inputBdr}/>
-                  </div>
+            {/* Name Input (Register mode only) */}
+            {isRegister && (
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                  <User className="w-4 h-4 text-cyan-400/80" />
                 </div>
-              )}
-
-              <div>
-                <label className="block mb-1.5 uppercase tracking-wider" style={{ color:labelClr }}>
-                  Email Address {!isRegister && `(${selectedPortal.name})`}
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color:mutedClr }}/>
-                  <input type="email" required value={email} onChange={e=>setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    autoComplete="off"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl outline-none text-sm font-semibold"
-                    style={inp}
-                    onFocus={e=>e.target.style.borderColor='#f59e0b'}
-                    onBlur={e=>e.target.style.borderColor=inputBdr}/>
-                </div>
+                <input
+                  type="text"
+                  required
+                  placeholder="Full Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full bg-[#0c1017] border border-slate-700 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-slate-400 outline-none transition-all"
+                />
               </div>
+            )}
 
-              <div>
-                <label className="block mb-1.5 uppercase tracking-wider" style={{ color:labelClr }}>Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color:mutedClr }}/>
-                  <input type={showPw?'text':'password'} required value={password} onChange={e=>setPassword(e.target.value)}
-                    placeholder={isRegister ? 'At least 6 characters' : '••••••••'}
-                    autoComplete="new-password"
-                    className="w-full pl-10 pr-10 py-2.5 rounded-xl outline-none text-sm font-semibold"
-                    style={inp}
-                    onFocus={e=>e.target.style.borderColor='#f59e0b'}
-                    onBlur={e=>e.target.style.borderColor=inputBdr}/>
-                  <button type="button" onClick={()=>setShowPw(!showPw)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 cursor-pointer" style={{ color:mutedClr }}>
-                    {showPw ? <EyeOff className="w-4 h-4"/> : <Eye className="w-4 h-4"/>}
-                  </button>
-                </div>
+            {/* Email Address Input */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                <Mail className="w-4 h-4 text-cyan-400/80" />
               </div>
+              <input
+                type="email"
+                required
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-[#0c1017] border border-cyan-500/50 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-slate-400 outline-none transition-all shadow-[0_0_10px_rgba(6,182,212,0.15)]"
+              />
+            </div>
 
-              {isRegister && (
-                <div>
-                  <label className="block mb-1.5 uppercase tracking-wider" style={{ color:labelClr }}>Confirm Password</label>
-                  <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color:mutedClr }}/>
-                    <input type={showPw?'text':'password'} required value={confirm} onChange={e=>setConfirm(e.target.value)}
-                      placeholder="Repeat password"
-                      autoComplete="new-password"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl outline-none text-sm font-semibold"
-                      style={inp}
-                      onFocus={e=>e.target.style.borderColor='#f59e0b'}
-                      onBlur={e=>e.target.style.borderColor=inputBdr}/>
-                  </div>
-                </div>
-              )}
-
-              {!isRegister && (
-                <div className="flex items-center justify-between pt-0.5">
-                  <label className="flex items-center gap-1.5 cursor-pointer" style={{ color:mutedClr }}>
-                    <input type="checkbox" className="accent-amber-500 w-3.5 h-3.5"/> Remember me
-                  </label>
-                  <button type="button" className="hover:underline font-bold text-amber-400">
-                    Forgot Password?
-                  </button>
-                </div>
-              )}
-
-              {/* Submit button: Shiny Polished Lacquer CTA */}
-              <button type="submit" disabled={loading}
-                className="w-full py-3 font-extrabold tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 text-white mt-1 cursor-pointer border border-amber-300/40"
-                style={{
-                  background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 50%, #9a3412 100%)',
-                  boxShadow: '0 8px 24px rgba(234, 88, 12, 0.45), inset 0 1px 2px rgba(255,255,255,0.4)',
-                  opacity: loading ? 0.75 : 1
-                }}>
-                {loading
-                  ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>
-                      <span>{isRegister ? 'CREATING ACCOUNT...' : `LOGGING INTO ${selectedPortal.name.toUpperCase()}...`}</span></>
-                  : <><span>{isRegister ? 'CREATE ACCOUNT' : `LOGIN TO ${selectedPortal.name.toUpperCase()}`}</span><ArrowRight className="w-4 h-4"/></>
-                }
+            {/* Password Input */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                <Lock className="w-4 h-4 text-slate-400" />
+              </div>
+              <input
+                type={showPw ? 'text' : 'password'}
+                required
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-[#0c1017] border border-slate-800 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-2xl py-3.5 pl-11 pr-11 text-sm text-white placeholder-slate-400 outline-none transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPw(!showPw)}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-200 cursor-pointer"
+              >
+                {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
-            </motion.form>
-          </AnimatePresence>
+            </div>
 
-          {/* Switch login/register */}
-          <p className="mt-4 text-center text-xs font-semibold" style={{ color:mutedClr }}>
-            {isRegister ? 'Already have an account? ' : 'New to Appletree? '}
-            <button onClick={()=>{ setIsRegister(!isRegister); setValErr(''); }}
-              className="font-black hover:underline" style={{ color:accentA }}>
-              {isRegister ? 'Log In to Portals' : 'Sign Up Free (Student)'}
+            {/* Confirm Password (Register mode only) */}
+            {isRegister && (
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                  <Lock className="w-4 h-4 text-slate-400" />
+                </div>
+                <input
+                  type={showPw ? 'text' : 'password'}
+                  required
+                  placeholder="Confirm Password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  className="w-full bg-[#0c1017] border border-slate-800 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-slate-400 outline-none transition-all"
+                />
+              </div>
+            )}
+
+            {/* Options Row: Remember Me & Forgot Password */}
+            {!isRegister && (
+              <div className="flex items-center justify-between text-xs pt-1">
+                <label className="flex items-center gap-2 text-slate-400 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-4 h-4 rounded bg-[#0c1017] border-slate-700 text-pink-500 focus:ring-0 accent-pink-500"
+                  />
+                  <span>Remember Me</span>
+                </label>
+                <button
+                  type="button"
+                  className="text-[#f43f5e] hover:text-pink-400 font-semibold transition-colors cursor-pointer"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            )}
+
+            {/* Primary Action Button: Pink Pill CTA */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3.5 rounded-full font-bold text-sm text-white tracking-wide transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 mt-2"
+              style={{
+                background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)',
+                boxShadow: '0 4px 22px rgba(244, 63, 94, 0.45)'
+              }}
+            >
+              {loading ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Processing...</span>
+                </>
+              ) : (
+                <span>{isRegister ? 'Create Free Account' : 'Continue with Email'}</span>
+              )}
             </button>
-          </p>
 
-          {/* Mobile — tech badges */}
-          <div className="flex md:hidden flex-wrap gap-2 justify-center mt-4">
-            {TECH_BADGES.map(({ label, bg, text, border }) => (
-              <span key={label} className="text-[11px] font-bold px-3 py-1 rounded-full"
-                style={{ background:bg, color:text, border:`1.5px solid ${border}` }}>
-                {label}
-              </span>
-            ))}
+            {/* Secondary Action: 1-Click / Google Access Pill Button */}
+            <button
+              type="button"
+              onClick={() => isRegister ? handleQuickStudentSignUp() : handleQuickLogin(selectedPortal)}
+              disabled={loading}
+              className="w-full py-3.5 rounded-full font-bold text-sm text-white bg-[#141822] hover:bg-[#1a202c] border border-slate-800 hover:border-slate-700 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2.5 shadow-sm"
+            >
+              {/* Google colorful G logo icon */}
+              <svg className="w-4 h-4" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.26 21.36 7.36 24 12 24z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.98 0 12s.46 3.83 1.26 5.42l4.02-3.15z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+                />
+              </svg>
+              <span>{isRegister ? '⚡ 1-Click Instant Signup' : 'Continue with Google'}</span>
+            </button>
+          </form>
+
+          {/* Toggle Login / Sign Up */}
+          <div className="text-center pt-2 text-xs text-slate-400">
+            <span>{isRegister ? 'Already have an account? ' : "Don't have an account? "}</span>
+            <button
+              type="button"
+              onClick={() => { setIsRegister(!isRegister); setValErr(''); }}
+              className="text-[#f43f5e] hover:text-pink-400 font-bold ml-1 transition-colors cursor-pointer"
+            >
+              {isRegister ? 'Sign In' : 'Sign Up'}
+            </button>
           </div>
 
-        </div>{/* end right panel */}
-      </div>{/* end card */}
+        </div>
+
+        {/* ── Floating Mascot Badge in Bottom Right Corner ── */}
+        <div className="absolute bottom-6 right-6 hidden sm:flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-[#141824] border border-slate-700/80 shadow-[0_0_15px_rgba(244,63,94,0.25)] flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
+            <img 
+              src="/clay_mascot.png" 
+              alt="Mascot" 
+              className="w-8 h-8 rounded-full object-cover"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = '/logo.png';
+              }}
+            />
+          </div>
+        </div>
+
+      </div>
+
     </div>
   );
 }
