@@ -744,6 +744,7 @@ router.post('/admissions/create', uploadAdmissions.fields([
         });
       }
 
+      const remainingTuition = Math.max(0, totalAmount - admissionFeeVal);
       const count = (paymentPlan === '1month' || paymentPlan === '1months' || paymentPlan === '1' || paymentPlan === 'full')
         ? 1
         : (paymentPlan === '2months' || paymentPlan === '2')
@@ -760,35 +761,37 @@ router.post('/admissions/create', uploadAdmissions.fields([
         ? 10
         : 12;
 
-      if (count === 1) {
-        await mockStore.create('fees', {
-          studentId: newStudent._id,
-          amount: totalAmount,
-          term: 'Course Tuition Fee (1 Month / Full)',
-          dueDate: new Date(),
-          status: 'paid',
-          paymentDate: new Date(),
-          transactionId: `TXN-INIT-${Math.floor(100000 + Math.random() * 900000)}`,
-          paymentMethod: 'Admission Desk Cash'
-        });
-      } else {
-        const installmentAmount = Math.round(totalAmount / count);
-        const lastInstallmentAmount = totalAmount - (installmentAmount * (count - 1));
-
-        for (let i = 1; i <= count; i++) {
-          const dueDate = new Date();
-          dueDate.setMonth(dueDate.getMonth() + (i - 1));
-          const amt = i === count ? lastInstallmentAmount : installmentAmount;
+      if (remainingTuition > 0) {
+        if (count === 1) {
           await mockStore.create('fees', {
             studentId: newStudent._id,
-            amount: amt,
-            term: `Month ${i} Tuition Fee`,
-            dueDate,
-            status: i === 1 ? 'paid' : 'pending',
-            paymentDate: i === 1 ? new Date() : null,
-            transactionId: i === 1 ? `TXN-INIT-${Math.floor(100000 + Math.random() * 900000)}` : '',
-            paymentMethod: i === 1 ? 'Admission Desk Cash' : ''
+            amount: remainingTuition,
+            term: 'Remaining Course Fee (1 Month / Full)',
+            dueDate: new Date(),
+            status: 'paid',
+            paymentDate: new Date(),
+            transactionId: `TXN-INIT-${Math.floor(100000 + Math.random() * 900000)}`,
+            paymentMethod: 'Admission Desk Cash'
           });
+        } else {
+          const installmentAmount = Math.round(remainingTuition / count);
+          const lastInstallmentAmount = remainingTuition - (installmentAmount * (count - 1));
+
+          for (let i = 1; i <= count; i++) {
+            const dueDate = new Date();
+            dueDate.setMonth(dueDate.getMonth() + (i - 1));
+            const amt = i === count ? lastInstallmentAmount : installmentAmount;
+            await mockStore.create('fees', {
+              studentId: newStudent._id,
+              amount: amt,
+              term: `Month ${i} Tuition Fee`,
+              dueDate,
+              status: i === 1 ? 'paid' : 'pending',
+              paymentDate: i === 1 ? new Date() : null,
+              transactionId: i === 1 ? `TXN-INIT-${Math.floor(100000 + Math.random() * 900000)}` : '',
+              paymentMethod: i === 1 ? 'Admission Desk Cash' : ''
+            });
+          }
         }
       }
 

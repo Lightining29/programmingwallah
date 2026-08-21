@@ -2549,25 +2549,25 @@ export default function AdminDashboard() {
 
                     {/* Course Fees & Installments Plan Section */}
                     <div className="space-y-4">
-                      <h5 className="pb-1 font-bold border-b text-slate-800 font-quicksand">3. Course Fees & Installment Plan (Decided by Admin)</h5>
+                      <h5 className="pb-1 font-bold border-b text-slate-800 font-quicksand">3. Total Course Fees & Installment Plan (Decided by Admin)</h5>
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                         <div className="space-y-1">
-                          <label className="font-bold text-slate-600">Admission Fee (₹)</label>
-                          <input
-                            type="number"
-                            placeholder="e.g. 5000"
-                            value={admissionFee}
-                            onChange={e => setAdmissionFee(e.target.value)}
-                            className="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-700 text-xs"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="font-bold text-slate-600">Total Tuition / Course Fee (₹)</label>
+                          <label className="font-bold text-slate-600">Total Student / Course Fee (₹)</label>
                           <input
                             type="number"
                             placeholder="e.g. 24000"
                             value={admTuitionFee}
                             onChange={e => setAdmTuitionFee(e.target.value)}
+                            className="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-700 text-xs"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="font-bold text-slate-600">Admission Fee (₹) <span className="text-[10px] text-emerald-600 font-bold">(Included in Total)</span></label>
+                          <input
+                            type="number"
+                            placeholder="e.g. 5000"
+                            value={admissionFee}
+                            onChange={e => setAdmissionFee(e.target.value)}
                             className="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-700 text-xs"
                           />
                         </div>
@@ -2578,7 +2578,7 @@ export default function AdminDashboard() {
                             onChange={e => setAdmPaymentPlan(e.target.value)}
                             className="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-600 text-xs font-quicksand"
                           >
-                            <option value="1month">1 Month (Full Course Fee / 1 Installment)</option>
+                            <option value="1month">1 Month (1 Installment / Full Remaining)</option>
                             <option value="2months">2 Months Installments</option>
                             <option value="3months">3 Months Installments</option>
                             <option value="4months">4 Months Installments</option>
@@ -2594,18 +2594,18 @@ export default function AdminDashboard() {
                       <div className="p-3.5 rounded-2xl border border-orange-200 bg-orange-50/70 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs">
                         <div className="space-y-1">
                           <div className="flex flex-wrap items-center gap-2 font-bold text-slate-700">
-                            <span>Admission Fee: <strong className="text-emerald-700">₹{Number(admissionFee || 0).toLocaleString()}</strong></span>
-                            <span>+</span>
-                            <span>Course Tuition Fee: <strong className="text-indigo-700">₹{Number(admTuitionFee || 0).toLocaleString()}</strong></span>
+                            <span>Admission Fee: <strong className="text-emerald-700">₹{Number(admissionFee || 0).toLocaleString()}</strong> <span className="text-[10px] text-slate-500 font-normal">(Paid at Admission)</span></span>
+                            <span>|</span>
+                            <span>Remaining Installment Balance: <strong className="text-indigo-700">₹{Math.max(0, Number(admTuitionFee || 0) - Number(admissionFee || 0)).toLocaleString()}</strong></span>
                           </div>
                           <p className="text-[11px] text-slate-500 font-semibold">
-                            Installments: <strong>{getPlanCount(admPaymentPlan)} Month(s)</strong> (~<strong className="text-slate-800">₹{Math.round((Number(admTuitionFee || 0)) / getPlanCount(admPaymentPlan)).toLocaleString()}</strong> per installment)
+                            Installments: <strong>{getPlanCount(admPaymentPlan)} Month(s)</strong> (~<strong className="text-slate-800">₹{Math.round(Math.max(0, Number(admTuitionFee || 0) - Number(admissionFee || 0)) / getPlanCount(admPaymentPlan)).toLocaleString()}</strong> per installment)
                           </p>
                         </div>
                         <div className="bg-white px-3.5 py-2 rounded-xl border border-orange-200 text-right shrink-0 shadow-sm">
-                          <span className="text-[9px] uppercase font-extrabold text-slate-400 block">Total Student Fees</span>
+                          <span className="text-[9px] uppercase font-extrabold text-slate-400 block">Total Fees Payable</span>
                           <span className="text-base font-black text-[#E53935]">
-                            ₹{(Number(admissionFee || 0) + Number(admTuitionFee || 0)).toLocaleString()}
+                            ₹{Number(admTuitionFee || 0).toLocaleString()}
                           </span>
                         </div>
                       </div>
