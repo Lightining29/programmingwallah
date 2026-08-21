@@ -192,6 +192,8 @@ router.post('/login', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
+});
+
 // @desc    Google OAuth / 1-Click Google Sign-In
 // @route   POST /api/auth/google-login
 // @access  Public
