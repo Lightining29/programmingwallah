@@ -103,6 +103,8 @@ export default function AdminDashboard() {
   const [admStdName, setAdmStdName] = useState('');
   const [admStdDob, setAdmStdDob] = useState('');
   const [admStdGender, setAdmStdGender] = useState('Male');
+  const [admPhoto, setAdmPhoto] = useState(null);
+  const [admPhotoPreview, setAdmPhotoPreview] = useState(null);
   const [admSelectedCourses, setAdmSelectedCourses] = useState(['Java Development']);
   const [admStdClass, setAdmStdClass] = useState('Java Development');
   const [admParentFather, setAdmParentFather] = useState('');
@@ -2503,7 +2505,38 @@ export default function AdminDashboard() {
                             <option value="Other">Other</option>
                           </select>
                         </div>
-                        <div className="space-y-1 sm:col-span-3">
+
+                        {/* Profile Picture Upload & Preview */}
+                        <div className="space-y-1">
+                          <label className="font-bold text-slate-600">Profile Picture (Optional)</label>
+                          <div className="flex items-center gap-2">
+                            {admPhotoPreview ? (
+                              <img
+                                src={admPhotoPreview}
+                                alt="Student Preview"
+                                className="w-9 h-9 rounded-xl object-cover border border-slate-300 shrink-0 shadow-sm"
+                              />
+                            ) : (
+                              <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
+                                <User className="w-4 h-4" />
+                              </div>
+                            )}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                  setAdmPhoto(file);
+                                  setAdmPhotoPreview(URL.createObjectURL(file));
+                                }
+                              }}
+                              className="w-full bg-white border border-slate-200 rounded-xl p-1.5 outline-none text-[10px] font-semibold text-slate-600"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1 sm:col-span-4">
                           <div className="flex items-center justify-between">
                             <label className="font-bold text-slate-700 text-xs">
                               Select Course(s) <span className="text-[11px] text-brandCoral font-normal">(Click multiple to combine, e.g. Java + MERN)</span>
@@ -6171,7 +6204,8 @@ export default function AdminDashboard() {
             parentDetails: { fatherName: admParentFather, motherName: admParentMother, email: admParentEmail, phone: admParentPhone, address: admParentAddress },
             amount: admissionFee,
             tuitionFee: admTuitionFee,
-            paymentPlan: admPaymentPlan
+            paymentPlan: admPaymentPlan,
+            photo: admPhoto
           }}
           onClose={() => setAdmissionPaymentOpen(false)}
           onSuccess={handleAdmissionPaymentSuccess}

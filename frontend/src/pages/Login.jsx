@@ -239,22 +239,29 @@ export default function Login() {
     } else setValErr(res.message || 'Registration failed.');
   };
 
-  /* ── Colors ── */
-  const pageBg   = isDark ? '#0f172a'              : '#f1f5f9';
-  const cardBg   = isDark ? 'rgba(15,23,42,0.97)'  : '#ffffff';
-  const cardBdr  = isDark ? 'rgba(255,255,255,0.07)': 'rgba(0,0,0,0.08)';
-  const labelClr = isDark ? '#94a3b8'              : '#475569';
-  const inputBg  = isDark ? 'rgba(2,6,23,0.55)'   : '#f8fafc';
-  const inputClr = isDark ? '#f1f5f9'              : '#0f172a';
-  const inputBdr = isDark ? 'rgba(255,255,255,0.1)': '#e2e8f0';
-  const textClr  = isDark ? '#f1f5f9'              : '#0f172a';
-  const mutedClr = isDark ? '#64748b'              : '#94a3b8';
-  const accentA  = '#FF7043';
-  const accentB  = '#f43f5e';
+  /* ── Wooden Shiny Luxury Theme Colors ── */
+  const pageBg   = isDark 
+    ? 'radial-gradient(ellipse at 50% 20%, #2e170e 0%, #150a05 55%, #080302 100%)'
+    : 'radial-gradient(ellipse at 50% 20%, #452215 0%, #231008 55%, #0f0502 100%)';
+
+  const cardBg   = 'linear-gradient(145deg, #2a130a 0%, #3d1c0f 30%, #4d2313 60%, #240f07 100%)';
+  const cardBdr  = 'rgba(217, 119, 6, 0.45)';
+  const labelClr = '#fed7aa';
+  const inputBg  = 'rgba(18, 8, 4, 0.82)';
+  const inputClr = '#fff7ed';
+  const inputBdr = 'rgba(217, 119, 6, 0.35)';
+  const textClr  = '#ffedd5';
+  const mutedClr = '#fdba74';
+  const accentA  = '#ea580c';
+  const accentB  = '#c2410c';
 
   const inp = {
-    backgroundColor: inputBg, color: inputClr,
-    border: `1.5px solid ${inputBdr}`, caretColor: accentA, transition: 'border-color .2s',
+    backgroundColor: inputBg,
+    color: inputClr,
+    border: `1.5px solid ${inputBdr}`,
+    caretColor: '#f59e0b',
+    transition: 'all .25s ease',
+    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.6)'
   };
 
   return (
@@ -263,72 +270,97 @@ export default function Login() {
 
       {/* ── Home button ── */}
       <Link to="/"
-        className="absolute top-5 left-5 flex items-center gap-2 px-4 py-2 rounded-full font-bold text-xs shadow-md transition-all hover:scale-105 active:scale-95 z-20"
-        style={{ background: `linear-gradient(135deg,${accentA},${accentB})`, color:'#fff', boxShadow:`0 4px 14px rgba(255,112,67,0.4)` }}>
+        className="absolute top-5 left-5 flex items-center gap-2 px-4 py-2 rounded-full font-bold text-xs shadow-lg transition-all hover:scale-105 active:scale-95 z-20 border border-amber-400/40 text-white"
+        style={{
+          background: 'linear-gradient(135deg, #ea580c, #9a3412)',
+          boxShadow: '0 4px 14px rgba(234, 88, 12, 0.5), inset 0 1px 1px rgba(255,255,255,0.4)'
+        }}>
         <Home className="w-3.5 h-3.5"/> Back to Home
       </Link>
 
-      {/* ── Main Container Card ── */}
-      <div className="w-full max-w-5xl rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row"
-           style={{ border:`1px solid ${cardBdr}`, background: cardBg }}>
+      {/* ── Main Container Card: Wooden Shiny Finish ── */}
+      <div className="w-full max-w-5xl rounded-3xl overflow-hidden flex flex-col md:flex-row relative z-10"
+           style={{
+             border: `2px solid ${cardBdr}`,
+             background: cardBg,
+             boxShadow: '0 25px 60px -15px rgba(0,0,0,0.9), 0 0 45px rgba(217, 119, 6, 0.2), inset 0 1px 2px rgba(255,255,255,0.25)'
+           }}>
 
-        {/* ════ LEFT PANEL ════ */}
-        <div className="relative hidden md:flex flex-col items-center justify-between py-10 px-8 md:w-[38%] overflow-hidden"
-             style={{ background:`linear-gradient(150deg,${accentA} 0%,${accentB} 100%)` }}>
+        {/* Shiny Gloss Luster Overlay */}
+        <div className="absolute inset-0 pointer-events-none z-0"
+             style={{
+               background: 'linear-gradient(115deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.02) 30%, transparent 60%, rgba(245, 158, 11, 0.08) 100%)'
+             }} />
 
-          {/* Geometric decorations */}
+        {/* ════ LEFT PANEL: Polished Shiny Cherry & Mahogany ════ */}
+        <div className="relative hidden md:flex flex-col items-center justify-between py-10 px-8 md:w-[38%] overflow-hidden z-10 border-r border-amber-500/20"
+             style={{
+               background: 'linear-gradient(160deg, #7c2d12 0%, #9a3412 35%, #5c1e0b 70%, #361005 100%)',
+               boxShadow: 'inset -2px 0 10px rgba(0,0,0,0.5)'
+             }}>
+
+          {/* Shiny reflection highlights */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full" style={{ background:'rgba(255,255,255,0.15)' }}/>
-            <div className="absolute -bottom-24 -right-12 w-80 h-80 rounded-full" style={{ background:'rgba(255,255,255,0.10)' }}/>
-            <svg viewBox="0 0 200 450" className="absolute inset-0 w-full h-full opacity-15">
+            <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full"
+                 style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 70%)' }}/>
+            <div className="absolute -bottom-24 -right-12 w-80 h-80 rounded-full"
+                 style={{ background: 'radial-gradient(circle, rgba(251,191,36,0.18) 0%, transparent 70%)' }}/>
+            <svg viewBox="0 0 200 450" className="absolute inset-0 w-full h-full opacity-20">
               <polygon points="-40,450 130,0 170,0 30,450" fill="white"/>
-              <polygon points="50,450 220,0 260,0 90,450" fill="white"/>
+              <polygon points="50,450 220,0 260,0 90,450" fill="#fde047"/>
             </svg>
           </div>
 
           {/* Logo */}
           <Link to="/" className="relative z-10 flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background:'rgba(255,255,255,0.25)' }}>
-              <Code2 className="w-5 h-5 text-white"/>
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center border border-amber-300/40 shadow-inner"
+                 style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(0,0,0,0.2))' }}>
+              <Code2 className="w-5 h-5 text-amber-100"/>
             </div>
-            <span className="text-white font-black text-lg tracking-widest">APPLETREE</span>
+            <span className="text-amber-100 font-black text-lg tracking-widest drop-shadow-md">APPLETREE</span>
           </Link>
 
           {/* Mode Switcher (Login / Register) */}
           <div className="relative z-10 flex flex-col items-center gap-4 w-full my-6">
-            <div className="flex rounded-2xl overflow-hidden p-1" style={{ background:'rgba(255,255,255,0.2)' }}>
+            <div className="flex rounded-2xl overflow-hidden p-1 border border-amber-300/30 shadow-inner"
+                 style={{ background: 'rgba(0,0,0,0.35)' }}>
               {['LOGIN','SIGN UP'].map((t,i) => (
                 <button key={t} onClick={() => { setIsRegister(i===1); setValErr(''); }}
-                  className="px-6 py-2.5 text-sm font-black tracking-wider rounded-xl transition-all"
+                  className="px-6 py-2.5 text-sm font-black tracking-wider rounded-xl transition-all cursor-pointer"
                   style={(!isRegister && i===0)||(isRegister && i===1)
-                    ? { background:'#fff', color:'#111827', boxShadow:'0 2px 8px rgba(0,0,0,0.15)' }
-                    : { background:'transparent', color:'rgba(255,255,255,0.85)' }}>
+                    ? {
+                        background: 'linear-gradient(135deg, #fff7ed, #ffedd5)',
+                        color: '#7c2d12',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.8)'
+                      }
+                    : { background: 'transparent', color: 'rgba(255,247,237,0.8)' }}>
                   {t}
                 </button>
               ))}
             </div>
 
-            <p className="text-white/85 text-xs font-bold text-center max-w-[220px] leading-relaxed">
+            <p className="text-amber-100 text-xs font-bold text-center max-w-[220px] leading-relaxed drop-shadow-sm">
               {isRegister ? 'Join thousands of students learning to code' : 'Access your specialized school & learning portals'}
             </p>
 
             {/* Quick Demo Access Summary */}
-            <div className="w-full bg-white/10 backdrop-blur-md rounded-2xl p-3.5 border border-white/20 text-white space-y-2 mt-2">
-              <p className="text-[10px] uppercase tracking-wider font-extrabold text-white/80 flex items-center gap-1.5">
-                <Zap className="w-3.5 h-3.5 text-amber-300 animate-pulse"/> Available Portals
+            <div className="w-full rounded-2xl p-3.5 border border-amber-400/30 text-white space-y-2 mt-2 shadow-lg"
+                 style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)' }}>
+              <p className="text-[10px] uppercase tracking-wider font-extrabold text-amber-200 flex items-center gap-1.5">
+                <Zap className="w-3.5 h-3.5 text-amber-400 animate-pulse"/> Available Portals
               </p>
               <div className="grid grid-cols-2 gap-1.5 text-[11px] font-bold">
-                <div className="bg-white/15 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
-                  <GraduationCap className="w-3.5 h-3.5 text-amber-300"/> LMS Portal
+                <div className="bg-white/10 border border-amber-300/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
+                  <GraduationCap className="w-3.5 h-3.5 text-amber-400"/> LMS Portal
                 </div>
-                <div className="bg-white/15 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-emerald-300"/> Parent
+                <div className="bg-white/10 border border-amber-300/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-emerald-400"/> Parent
                 </div>
-                <div className="bg-white/15 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
-                  <UserCheck className="w-3.5 h-3.5 text-indigo-300"/> Teacher
+                <div className="bg-white/10 border border-amber-300/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
+                  <UserCheck className="w-3.5 h-3.5 text-indigo-400"/> Teacher
                 </div>
-                <div className="bg-white/15 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-rose-300"/> Admin
+                <div className="bg-white/10 border border-amber-300/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-rose-400"/> Admin
                 </div>
               </div>
             </div>
@@ -337,8 +369,12 @@ export default function Login() {
             <div className="flex flex-wrap gap-1.5 justify-center">
               {TECH_BADGES.map(({ label }) => (
                 <span key={label}
-                  className="text-[10px] font-bold px-2.5 py-1 rounded-full border"
-                  style={{ background:'rgba(255,255,255,0.92)', color:'#1e293b', border:'1.5px solid rgba(255,255,255,0.6)' }}>
+                  className="text-[10px] font-bold px-2.5 py-1 rounded-full border shadow-sm"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255,247,237,0.95), rgba(254,215,170,0.9))',
+                    color: '#7c2d12',
+                    border: '1.5px solid rgba(251,191,36,0.6)'
+                  }}>
                   {label}
                 </span>
               ))}
@@ -348,17 +384,18 @@ export default function Login() {
           {/* Stats */}
           <div className="relative z-10 grid grid-cols-2 gap-2 w-full">
             {[['500+','Students'],['95%','Placement'],['4.9★','Rating'],['4 Portals','Active']].map(([v,l]) => (
-              <div key={l} className="rounded-xl p-2.5 text-center" style={{ background:'rgba(255,255,255,0.18)' }}>
-                <p className="text-white font-black text-sm leading-none">{v}</p>
-                <p className="text-white/70 text-[9px] font-semibold uppercase tracking-wider mt-0.5">{l}</p>
+              <div key={l} className="rounded-xl p-2.5 text-center border border-amber-400/20"
+                   style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)' }}>
+                <p className="text-amber-100 font-black text-sm leading-none drop-shadow">{v}</p>
+                <p className="text-amber-300/80 text-[9px] font-bold uppercase tracking-wider mt-0.5">{l}</p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* ════ RIGHT PANEL ════ */}
-        <div className="flex-1 flex flex-col relative py-8 px-6 md:px-10 overflow-hidden"
-             style={{ background: cardBg }}>
+        {/* ════ RIGHT PANEL: Warm Shiny Timber Inlay ════ */}
+        <div className="flex-1 flex flex-col relative py-8 px-6 md:px-10 overflow-hidden z-10"
+             style={{ background: 'transparent' }}>
 
           {/* Lamp — top right */}
           <div className="absolute top-0 right-5 z-20">
@@ -414,29 +451,36 @@ export default function Login() {
                       onClick={() => handleSelectPortal(portal)}
                       className={`relative flex flex-col items-center justify-center p-2.5 rounded-2xl border transition-all cursor-pointer ${
                         isSelected 
-                          ? 'shadow-md scale-[1.02]' 
-                          : 'opacity-70 hover:opacity-100 hover:scale-[1.01]'
+                          ? 'scale-[1.03] shadow-lg' 
+                          : 'opacity-75 hover:opacity-100 hover:scale-[1.01]'
                       }`}
                       style={{
-                        backgroundColor: isSelected 
-                          ? (isDark ? 'rgba(30,41,59,0.9)' : '#ffffff') 
-                          : (isDark ? 'rgba(15,23,42,0.4)' : '#f8fafc'),
-                        borderColor: isSelected ? portal.accentColor : inputBdr,
-                        boxShadow: isSelected ? `0 4px 14px ${portal.accentColor}33` : 'none'
+                        background: isSelected 
+                          ? 'linear-gradient(145deg, #3d1c0f, #220e06)' 
+                          : 'linear-gradient(145deg, rgba(30,14,7,0.7), rgba(15,7,3,0.85))',
+                        borderColor: isSelected ? '#f59e0b' : 'rgba(217, 119, 6, 0.3)',
+                        boxShadow: isSelected 
+                          ? '0 6px 18px rgba(245, 158, 11, 0.35), inset 0 1px 1px rgba(255,255,255,0.3)' 
+                          : 'inset 0 1px 2px rgba(0,0,0,0.5)'
                       }}
                     >
                       <div 
-                        className="w-8 h-8 rounded-xl flex items-center justify-center text-white mb-1.5 transition-transform"
-                        style={{ background: `linear-gradient(135deg, ${portal.accentColor}, ${portal.accentColor}cc)` }}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-white mb-1.5 transition-transform border border-amber-300/30"
+                        style={{
+                          background: isSelected 
+                            ? `linear-gradient(135deg, ${portal.accentColor}, #d97706)` 
+                            : 'rgba(255,255,255,0.1)',
+                          boxShadow: isSelected ? '0 2px 8px rgba(0,0,0,0.3)' : 'none'
+                        }}
                       >
-                        <Icon className="w-4 h-4"/>
+                        <Icon className="w-4 h-4 text-amber-100"/>
                       </div>
-                      <span className="text-xs font-bold text-center" style={{ color: textClr }}>
+                      <span className="text-xs font-bold text-center text-amber-100 drop-shadow-sm">
                         {portal.name}
                       </span>
                       {isSelected && (
                         <div className="absolute top-1.5 right-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5" style={{ color: portal.accentColor }}/>
+                          <CheckCircle2 className="w-3.5 h-3.5 text-amber-400"/>
                         </div>
                       )}
                     </button>
@@ -446,28 +490,29 @@ export default function Login() {
 
               {/* Selected Portal Highlight Banner */}
               <div 
-                className="mt-3 p-3.5 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-3 transition-all"
+                className="mt-3 p-3.5 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-3 transition-all shadow-md"
                 style={{
-                  backgroundColor: isDark ? 'rgba(30,41,59,0.5)' : 'rgba(248,250,252,0.9)',
-                  borderColor: `${selectedPortal.accentColor}40`
+                  background: 'linear-gradient(135deg, rgba(40,18,10,0.85) 0%, rgba(25,11,6,0.95) 100%)',
+                  borderColor: 'rgba(245, 158, 11, 0.4)',
+                  boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.15)'
                 }}
               >
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                   <div 
-                    className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0"
-                    style={{ background: `linear-gradient(135deg, ${selectedPortal.accentColor}, ${accentB})` }}
+                    className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0 border border-amber-400/40 shadow"
+                    style={{ background: `linear-gradient(135deg, ${selectedPortal.accentColor}, #b45309)` }}
                   >
-                    <selectedPortal.icon className="w-5 h-5"/>
+                    <selectedPortal.icon className="w-5 h-5 text-amber-100"/>
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-black" style={{ color: textClr }}>{selectedPortal.name}</span>
-                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full text-white"
+                      <span className="text-xs font-black text-amber-100">{selectedPortal.name}</span>
+                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full text-white border border-amber-300/30"
                             style={{ backgroundColor: selectedPortal.accentColor }}>
                         {selectedPortal.badge}
                       </span>
                     </div>
-                    <p className="text-[11px] font-medium leading-tight mt-0.5" style={{ color: mutedClr }}>
+                    <p className="text-[11px] font-medium leading-tight mt-0.5 text-amber-200/80">
                       {selectedPortal.description}
                     </p>
                   </div>
@@ -478,13 +523,13 @@ export default function Login() {
                   type="button"
                   onClick={() => handleQuickLogin(selectedPortal)}
                   disabled={loading}
-                  className="w-full sm:w-auto px-4 py-2 rounded-xl text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-md hover:scale-105 active:scale-95 transition-all shrink-0 cursor-pointer"
+                  className="w-full sm:w-auto px-4 py-2 rounded-xl text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-lg hover:scale-105 active:scale-95 transition-all shrink-0 cursor-pointer border border-amber-300/50"
                   style={{
-                    background: `linear-gradient(135deg, ${selectedPortal.accentColor}, ${accentB})`,
-                    boxShadow: `0 4px 12px ${selectedPortal.accentColor}40`
+                    background: 'linear-gradient(135deg, #f59e0b, #d97706, #b45309)',
+                    boxShadow: '0 4px 14px rgba(217, 119, 6, 0.5), inset 0 1px 1px rgba(255,255,255,0.5)'
                   }}
                 >
-                  <Zap className="w-3.5 h-3.5 text-amber-200 fill-amber-200 animate-pulse"/>
+                  <Zap className="w-3.5 h-3.5 text-amber-100 fill-amber-100 animate-pulse"/>
                   <span>1-Click Login</span>
                 </button>
               </div>
@@ -493,21 +538,29 @@ export default function Login() {
 
           {/* 1-Click Student Sign Up Banner on Register Tab */}
           {isRegister && (
-            <div className="mb-4 p-3 rounded-2xl border flex items-center justify-between gap-3 bg-amber-500/10 border-amber-500/30">
+            <div className="mb-4 p-3 rounded-2xl border flex items-center justify-between gap-3 shadow-md"
+                 style={{
+                   background: 'linear-gradient(135deg, rgba(40,18,10,0.85), rgba(25,11,6,0.95))',
+                   borderColor: 'rgba(245, 158, 11, 0.4)'
+                 }}>
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm">
-                  <Sparkles className="w-4 h-4"/>
+                <div className="w-8 h-8 rounded-xl bg-amber-600 text-white flex items-center justify-center shrink-0 shadow-sm border border-amber-300/30">
+                  <Sparkles className="w-4 h-4 text-amber-200"/>
                 </div>
                 <div>
-                  <p className="text-xs font-black" style={{ color: textClr }}>Need Instant Access?</p>
-                  <p className="text-[11px] text-slate-500 leading-tight">Create & launch your student account with 1 click</p>
+                  <p className="text-xs font-black text-amber-100">Need Instant Access?</p>
+                  <p className="text-[11px] text-amber-200/80 leading-tight">Create & launch your student account with 1 click</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={handleQuickStudentSignUp}
                 disabled={loading}
-                className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-extrabold text-xs shadow-md flex items-center gap-1 shrink-0 cursor-pointer transition-all"
+                className="px-3.5 py-1.5 rounded-xl text-white font-extrabold text-xs shadow-md flex items-center gap-1 shrink-0 cursor-pointer transition-all border border-amber-300/40"
+                style={{
+                  background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                  boxShadow: '0 4px 12px rgba(217, 119, 6, 0.4), inset 0 1px 1px rgba(255,255,255,0.4)'
+                }}
               >
                 <Zap className="w-3.5 h-3.5 text-white fill-white"/>
                 <span>1-Click Signup</span>
@@ -517,8 +570,8 @@ export default function Login() {
 
           {/* Error Banner */}
           {(valErr || error) && (
-            <div className="mb-4 p-3.5 rounded-2xl text-xs font-bold flex items-start gap-2"
-                 style={{ background:'rgba(244,63,94,0.1)', border:'1px solid rgba(244,63,94,0.25)', color:'#fb7185' }}>
+            <div className="mb-4 p-3.5 rounded-2xl text-xs font-bold flex items-start gap-2 shadow-inner"
+                 style={{ background:'rgba(225,29,72,0.18)', border:'1.5px solid rgba(244,63,94,0.4)', color:'#fda4af' }}>
               <span>⚠️</span><span>{valErr || error}</span>
             </div>
           )}
@@ -542,7 +595,7 @@ export default function Login() {
                       autoComplete="off"
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl outline-none text-sm font-semibold"
                       style={inp}
-                      onFocus={e=>e.target.style.borderColor=accentA}
+                      onFocus={e=>e.target.style.borderColor='#f59e0b'}
                       onBlur={e=>e.target.style.borderColor=inputBdr}/>
                   </div>
                 </div>
@@ -559,7 +612,7 @@ export default function Login() {
                     autoComplete="off"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl outline-none text-sm font-semibold"
                     style={inp}
-                    onFocus={e=>e.target.style.borderColor=accentA}
+                    onFocus={e=>e.target.style.borderColor='#f59e0b'}
                     onBlur={e=>e.target.style.borderColor=inputBdr}/>
                 </div>
               </div>
@@ -573,10 +626,10 @@ export default function Login() {
                     autoComplete="new-password"
                     className="w-full pl-10 pr-10 py-2.5 rounded-xl outline-none text-sm font-semibold"
                     style={inp}
-                    onFocus={e=>e.target.style.borderColor=accentA}
+                    onFocus={e=>e.target.style.borderColor='#f59e0b'}
                     onBlur={e=>e.target.style.borderColor=inputBdr}/>
                   <button type="button" onClick={()=>setShowPw(!showPw)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2" style={{ color:mutedClr }}>
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 cursor-pointer" style={{ color:mutedClr }}>
                     {showPw ? <EyeOff className="w-4 h-4"/> : <Eye className="w-4 h-4"/>}
                   </button>
                 </div>
@@ -592,7 +645,7 @@ export default function Login() {
                       autoComplete="new-password"
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl outline-none text-sm font-semibold"
                       style={inp}
-                      onFocus={e=>e.target.style.borderColor=accentA}
+                      onFocus={e=>e.target.style.borderColor='#f59e0b'}
                       onBlur={e=>e.target.style.borderColor=inputBdr}/>
                   </div>
                 </div>
@@ -601,24 +654,26 @@ export default function Login() {
               {!isRegister && (
                 <div className="flex items-center justify-between pt-0.5">
                   <label className="flex items-center gap-1.5 cursor-pointer" style={{ color:mutedClr }}>
-                    <input type="checkbox" className="accent-orange-500 w-3.5 h-3.5"/> Remember me
+                    <input type="checkbox" className="accent-amber-500 w-3.5 h-3.5"/> Remember me
                   </label>
-                  <button type="button" className="hover:underline font-bold" style={{ color:accentA }}>
+                  <button type="button" className="hover:underline font-bold text-amber-400">
                     Forgot Password?
                   </button>
                 </div>
               )}
 
-              {/* Submit button */}
+              {/* Submit button: Shiny Polished Lacquer CTA */}
               <button type="submit" disabled={loading}
-                className="w-full py-3 font-extrabold tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 text-white mt-1"
-                style={{ background:`linear-gradient(135deg,${selectedPortal.accentColor || accentA},${accentB})`,
-                         boxShadow:`0 8px 24px rgba(255,112,67,0.35)`,
-                         opacity: loading ? 0.75 : 1 }}>
+                className="w-full py-3 font-extrabold tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 text-white mt-1 cursor-pointer border border-amber-300/40"
+                style={{
+                  background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 50%, #9a3412 100%)',
+                  boxShadow: '0 8px 24px rgba(234, 88, 12, 0.45), inset 0 1px 2px rgba(255,255,255,0.4)',
+                  opacity: loading ? 0.75 : 1
+                }}>
                 {loading
                   ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>
-                      <span>{isRegister?'CREATING ACCOUNT...':`LOGGING INTO ${selectedPortal.name.toUpperCase()}...`}</span></>
-                  : <><span>{isRegister?'CREATE ACCOUNT':`LOGIN TO ${selectedPortal.name.toUpperCase()}`}</span><ArrowRight className="w-4 h-4"/></>
+                      <span>{isRegister ? 'CREATING ACCOUNT...' : `LOGGING INTO ${selectedPortal.name.toUpperCase()}...`}</span></>
+                  : <><span>{isRegister ? 'CREATE ACCOUNT' : `LOGIN TO ${selectedPortal.name.toUpperCase()}`}</span><ArrowRight className="w-4 h-4"/></>
                 }
               </button>
             </motion.form>
