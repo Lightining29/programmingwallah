@@ -20,6 +20,7 @@ import Contact from './pages/Contact.jsx';
 import Login from './pages/Login.jsx';
 import Practice from './pages/Practice.jsx';
 import Tutorials from './pages/Tutorials.jsx';
+import Music from './pages/Music.jsx';
 import RazorpayTestPage from './pages/RazorpayTestPage.jsx';
 import VerifyCertificate from './pages/VerifyCertificate.jsx';
 
@@ -119,6 +120,7 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
           <Route path="/login" element={<Login />} />
           <Route path="/practice" element={<Practice />} />
           <Route path="/tutorials" element={<Tutorials />} />
+          <Route path="/music" element={<Music />} />
           <Route path="/payment-demo" element={<RazorpayTestPage />} />
           <Route path="/verify-certificate" element={<VerifyCertificate />} />
           <Route path="/verify-certificate/:certNumber" element={<VerifyCertificate />} />

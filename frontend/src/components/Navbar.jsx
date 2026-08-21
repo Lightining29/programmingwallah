@@ -27,8 +27,9 @@ export default function Navbar() {
     { name: 'ABOUT', path: '/about' },
     { name: 'COURSES', path: '/programs' },
     { name: 'TUTORIALS', path: '/tutorials' },
-    { name: 'LEARNING', path: '/lms' },
     { name: 'PRACTICE', path: '/practice' },
+    { name: 'MUSIC', path: '/music' },
+    { name: 'LEARNING', path: '/lms' },
     { name: 'MEETINGS', path: '/meetings' },
     { name: 'GALLERY', path: '/gallery' },
     { name: 'CONTACT', path: '/contact' }
