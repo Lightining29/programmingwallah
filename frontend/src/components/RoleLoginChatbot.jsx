@@ -294,7 +294,7 @@ export default function RoleLoginChatbot() {
         id: 'welcome-student',
         sender: 'bot',
         role: 'student',
-        text: `👋 **Welcome back, ${user.name}!**\n\nYou are logged in with **Student privileges** (${user.email}).\n\nI can help you:\n• **Download Official Fee Receipts (Month 1, 2, or 3)**\n• **Check Remaining & Submitted Fees**\n• **Explore Geeks & DSA Algorithm Tutorials**\n• **View Official Admin Dispatched Documents**\n\nSelect an action below:`,
+        text: `👋 **Welcome back, ${user.name}!**\n\nYou are logged in with **Student privileges** (${user.email}).\n\nI can help you:\n• **Download Official Fee Receipts (Month 1, 2, or 3)**\n• **Check Remaining & Submitted Fees**\n• **Explore Tech & 1000 DSA Algorithm Tutorials**\n• **View Official Admin Dispatched Documents**\n\nSelect an action below:`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         userDetected: true,
         showStudentActions: true
@@ -793,7 +793,7 @@ export default function RoleLoginChatbot() {
     const userMsg = {
       id: `user-${Date.now()}`,
       sender: 'user',
-      text: '🧠 Geeks & DSA Knowledge Hub: Explore Algorithms',
+      text: '🧠 Tech & 1000 DSA Knowledge Hub: Explore Algorithms',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
     setMessages(prev => [...prev, userMsg]);
@@ -803,7 +803,7 @@ export default function RoleLoginChatbot() {
       const botMsg = {
         id: `bot-${Date.now()}`,
         sender: 'bot',
-        text: `**Geeks Knowledge Hub — Select a Topic:**\n\nChoose an algorithm or system design pattern to inspect diagrams, complexity, and code:`,
+        text: `**Tech & DSA Knowledge Hub — Select a Topic:**\n\nChoose an algorithm, system design, or programming concept to inspect diagrams, complexity, and code:`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         isDSAPrompt: true
       };
@@ -826,7 +826,7 @@ export default function RoleLoginChatbot() {
       const botMsg = {
         id: `bot-${Date.now()}`,
         sender: 'bot',
-        text: `**${topicName} Overview:**\n\n• **Complexity**: \`${complexity}\`\n• **Architecture & Concept**: ${summary}\n\nFull multi-language code (Java, C++, Python, JS), interactive diagrams, and runtime visualizers are ready on the Geeks Tutorial Hub:`,
+        text: `**${topicName} Overview:**\n\n• **Complexity**: \`${complexity}\`\n• **Architecture & Concept**: ${summary}\n\nFull multi-language code (Java, C++, Python, JS), interactive diagrams, and runtime visualizers are ready on the AppleTree Tutorials Hub:`,
         actionText: `Open ${topicName} in Tutorials Hub`,
         actionLink: link,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
