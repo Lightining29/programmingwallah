@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, ClipboardList, Users, CreditCard, Bell, Image as ImageIcon, MessageCircle, CheckCircle, XCircle, Trash2, Plus, Clock, Search, FileText, Printer, Edit, Download, Contact, X, Sparkles, BookOpen, Video, Wallet, Eye, EyeOff, Upload, AlertCircle, ChevronDown, ChevronUp, Play, Award, ShieldCheck, Share2, Check, ExternalLink } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, Users, User, CreditCard, Bell, Image as ImageIcon, MessageCircle, CheckCircle, XCircle, Trash2, Plus, Clock, Search, FileText, Printer, Edit, Download, Contact, X, Sparkles, BookOpen, Video, Wallet, Eye, EyeOff, Upload, AlertCircle, ChevronDown, ChevronUp, Play, Award, ShieldCheck, Share2, Check, ExternalLink } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import ConfirmModal from '../components/ConfirmModal.jsx';
 import FeeStructureMaster from '../components/FeeStructureMaster.jsx';
