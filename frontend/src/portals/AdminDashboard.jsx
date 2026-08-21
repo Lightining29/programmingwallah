@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, ClipboardList, Users, User, CreditCard, Bell, Image as ImageIcon, MessageCircle, CheckCircle, XCircle, Trash2, Plus, Clock, Search, FileText, Printer, Edit, Download, Contact, X, Sparkles, BookOpen, Video, Wallet, Eye, EyeOff, Upload, AlertCircle, ChevronDown, ChevronUp, Play, Pause, RotateCcw, Award, ShieldCheck, Share2, Check, ExternalLink, Sun, CloudSun, Wind, Radio, Volume2, Send } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, Users, User, CreditCard, Bell, Image as ImageIcon, MessageCircle, CheckCircle, XCircle, Trash2, Plus, Clock, Search, FileText, Printer, Edit, Download, Contact, X, Sparkles, BookOpen, Video, Wallet, Eye, EyeOff, Upload, AlertCircle, ChevronDown, ChevronUp, Play, Pause, RotateCcw, Award, ShieldCheck, Share2, Check, ExternalLink, Sun, CloudSun, Wind, Radio, Volume2, VolumeX, Send, Globe, SkipBack, SkipForward } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import ConfirmModal from '../components/ConfirmModal.jsx';
 import FeeStructureMaster from '../components/FeeStructureMaster.jsx';
@@ -8,6 +8,17 @@ import CollectPaymentModal from '../components/CollectPaymentModal.jsx';
 import CertificateModal from '../components/CertificateModal.jsx';
 
 const COURSE_OPTIONS = ['Java Development', 'MERN Developer', 'Python Developer', 'Frontend Developer'];
+
+const WORLDWIDE_RADIO_STATIONS = [
+  { id: 'lofi', name: 'Lofi Coding Cafe', genre: 'Chillhop & Beats', country: '🌐 Global', url: 'https://ice2.somafm.com/groovesalad-128-mp3' },
+  { id: 'defcon', name: 'DEF CON Cyberpunk', genre: 'Synthwave & Hack Beats', country: '🇺🇸 USA', url: 'https://ice1.somafm.com/defcon-128-mp3' },
+  { id: 'paris', name: 'Paris Secret Lounge', genre: 'Jazz & Downtempo', country: '🇫🇷 France', url: 'https://ice4.somafm.com/secretagent-128-mp3' },
+  { id: 'ambient', name: 'Deep Space Drone', genre: 'Ambient Focus & Calm', country: '🌌 Global', url: 'https://ice6.somafm.com/chillout-128-mp3' },
+  { id: 'indie', name: 'Indie Pop Rocks', genre: 'Indie & Alternative', country: '🇬🇧 UK', url: 'https://ice2.somafm.com/indiepop-128-mp3' },
+  { id: 'retro', name: 'Underground 80s', genre: '80s Synth & Retro Wave', country: '🌐 Global Hits', url: 'https://ice4.somafm.com/u80s-128-mp3' },
+  { id: 'lush', name: 'Tokyo Melodic Lounge', genre: 'Electronic & Vocal Chill', country: '🇯🇵 Japan', url: 'https://ice1.somafm.com/lush-128-mp3' },
+  { id: 'beat', name: 'Deep House Beats', genre: 'Club & Deep Electronic', country: '🌴 Miami', url: 'https://ice1.somafm.com/beatblender-128-mp3' }
+];
 
 function AttachmentManager({ attachments = [], onAdd, onDelete }) {
   const [uploading, setUploading] = useState(false);
@@ -92,11 +103,15 @@ export default function AdminDashboard() {
   const [queries, setQueries] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Interactive Live Dashboard States (Working Timer, Radio, Tasks, Dues, Weather)
-  const [timerSeconds, setTimerSeconds] = useState(155); // 02:35
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  // Interactive Live Dashboard States (Working Timer, Real Worldwide Radio, Tasks, Dues, Weather)
+  const audioRef = useRef(null);
+  const [currentStationIndex, setCurrentStationIndex] = useState(0);
   const [isPlayingRadio, setIsPlayingRadio] = useState(false);
   const [radioVolume, setRadioVolume] = useState(80);
+  const [isRadioBuffering, setIsRadioBuffering] = useState(false);
+
+  const [timerSeconds, setTimerSeconds] = useState(155); // 02:35
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [selectedScheduleDay, setSelectedScheduleDay] = useState('Wed 24');
 
   const [dashboardTasks, setDashboardTasks] = useState([
@@ -106,12 +121,82 @@ export default function AdminDashboard() {
     { id: 4, name: 'Follow up on Student Fee Installments', time: 'Sep 13, 14:45', done: false }
   ]);
 
-  const [pendingStudentFees, setPendingStudentFees] = useState([
-    { id: 1, name: 'Rahul Sharma', course: 'Java Full Stack', dueAmount: 4500, dueDate: '3 days overdue', phone: '+919876543210', status: 'overdue' },
-    { id: 2, name: 'Pooja Verma', course: 'MERN Stack Web Dev', dueAmount: 3000, dueDate: 'Due in 2 days', phone: '+919876543211', status: 'pending' },
-    { id: 3, name: 'Aman Gupta', course: 'Python Data Science', dueAmount: 5000, dueDate: 'Due today', phone: '+919876543212', status: 'due_today' },
-    { id: 4, name: 'Simran Kaur', course: 'UI/UX Design Masterclass', dueAmount: 2500, dueDate: 'Due in 5 days', phone: '+919876543213', status: 'pending' }
-  ]);
+  const currentRadioStation = WORLDWIDE_RADIO_STATIONS[currentStationIndex] || WORLDWIDE_RADIO_STATIONS[0];
+
+  const toggleRadioPlay = () => {
+    if (!audioRef.current) return;
+    if (isPlayingRadio) {
+      audioRef.current.pause();
+      setIsPlayingRadio(false);
+    } else {
+      setIsRadioBuffering(true);
+      if (audioRef.current.src !== currentRadioStation.url) {
+        audioRef.current.src = currentRadioStation.url;
+      }
+      audioRef.current.volume = radioVolume / 100;
+      audioRef.current.play()
+        .then(() => {
+          setIsPlayingRadio(true);
+          setIsRadioBuffering(false);
+        })
+        .catch((err) => {
+          console.error('Radio play error:', err);
+          setIsRadioBuffering(false);
+          setIsPlayingRadio(false);
+        });
+    }
+  };
+
+  const handleNextStation = () => {
+    const nextIdx = (currentStationIndex + 1) % WORLDWIDE_RADIO_STATIONS.length;
+    setCurrentStationIndex(nextIdx);
+    if (audioRef.current) {
+      audioRef.current.src = WORLDWIDE_RADIO_STATIONS[nextIdx].url;
+      audioRef.current.load();
+      if (isPlayingRadio) {
+        setIsRadioBuffering(true);
+        audioRef.current.play()
+          .then(() => setIsRadioBuffering(false))
+          .catch(() => setIsRadioBuffering(false));
+      }
+    }
+  };
+
+  const handlePrevStation = () => {
+    const prevIdx = (currentStationIndex - 1 + WORLDWIDE_RADIO_STATIONS.length) % WORLDWIDE_RADIO_STATIONS.length;
+    setCurrentStationIndex(prevIdx);
+    if (audioRef.current) {
+      audioRef.current.src = WORLDWIDE_RADIO_STATIONS[prevIdx].url;
+      audioRef.current.load();
+      if (isPlayingRadio) {
+        setIsRadioBuffering(true);
+        audioRef.current.play()
+          .then(() => setIsRadioBuffering(false))
+          .catch(() => setIsRadioBuffering(false));
+      }
+    }
+  };
+
+  const handleSelectStation = (index) => {
+    setCurrentStationIndex(index);
+    if (audioRef.current) {
+      audioRef.current.src = WORLDWIDE_RADIO_STATIONS[index].url;
+      audioRef.current.load();
+      if (isPlayingRadio) {
+        setIsRadioBuffering(true);
+        audioRef.current.play()
+          .then(() => setIsRadioBuffering(false))
+          .catch(() => setIsRadioBuffering(false));
+      }
+    }
+  };
+
+  const handleVolumeChange = (newVol) => {
+    setRadioVolume(newVol);
+    if (audioRef.current) {
+      audioRef.current.volume = newVol / 100;
+    }
+  };
 
   useEffect(() => {
     let interval;
@@ -131,14 +216,16 @@ export default function AdminDashboard() {
     setDashboardTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
   };
 
-  const handleSendWhatsAppReminder = (student) => {
-    const msg = `Hello ${student.name}, this is a gentle fee reminder from AppleTree Infotech for your ${student.course} course. Pending amount: ₹${student.dueAmount}. Please settle soon.`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-  };
-
-  const handleMarkFeeCollected = (id) => {
-    confetti({ particleCount: 80, spread: 60 });
-    setPendingStudentFees(prev => prev.filter(f => f.id !== id));
+  // Real WhatsApp reminder for real student fee invoice
+  const handleSendRealWhatsAppReminder = (feeItem) => {
+    const studentName = feeItem.student?.name || feeItem.studentName || 'Student';
+    const courseName = feeItem.student?.class || feeItem.courseName || 'Course';
+    const phone = feeItem.student?.parentPhone || feeItem.student?.phone || '';
+    const dueText = feeItem.dueDate ? new Date(feeItem.dueDate).toLocaleDateString() : feeItem.term || 'Due Soon';
+    const msg = `Hello ${studentName}, this is a gentle fee reminder from AppleTree Infotech for your ${courseName} course. Outstanding amount: ₹${feeItem.amount.toLocaleString('en-IN')}. Due date: ${dueText}. Please settle soon.`;
+    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    const url = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
   };
 
   // Remarks for approval reviews
@@ -2316,12 +2403,12 @@ export default function AdminDashboard() {
             {/* ── 3. BENTO GRID (TOP ROW) ── */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               
-              {/* Card 1: Featured Student Spotlight with User's Uploaded Girl Avatar */}
+              {/* Card 1: Featured Student Spotlight with Ishika Rani */}
               <div className="rounded-3xl bg-white/75 border border-white p-4 shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[260px] group">
                 <div className="relative w-full h-44 rounded-2xl overflow-hidden bg-slate-100 shadow-inner">
                   <img
                     src="/girl_avatar.jpg"
-                    alt="Student Spotlight"
+                    alt="Ishika Rani"
                     className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
                     onError={(e) => {
                       e.target.onerror = null;
@@ -2332,7 +2419,7 @@ export default function AdminDashboard() {
                   
                   <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between text-white">
                     <div>
-                      <h4 className="font-bold text-sm leading-tight text-white drop-shadow">Ananya Verma</h4>
+                      <h4 className="font-bold text-sm leading-tight text-white drop-shadow">Ishika Rani</h4>
                       <p className="text-[10px] text-amber-300 font-medium">Java & React Full Stack</p>
                     </div>
                     <span className="px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-[11px] font-black text-white">
@@ -2493,10 +2580,10 @@ export default function AdminDashboard() {
 
             </div>
 
-            {/* ── 4. BENTO GRID (BOTTOM ROW: Weather, AQI, Radio, Fees & Schedule) ── */}
+            {/* ── 4. BENTO GRID (BOTTOM ROW: Weather, AQI, Real Worldwide Radio, Real Fees & Schedule) ── */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
               
-              {/* Bottom Left Column: Weather & AQI + Radio + Pending Fees Accordion */}
+              {/* Bottom Left Column: Weather & AQI + Worldwide Radio + Real Pending Fees */}
               <div className="lg:col-span-5 space-y-4">
                 
                 {/* 1. Live Weather & AQI Widget */}
@@ -2523,50 +2610,128 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* 2. Interactive Lo-Fi Radio Player Widget */}
+                {/* 2. REAL WORKING WORLDWIDE LIVE INTERNET RADIO PLAYER */}
                 <div className="rounded-3xl bg-[#1c1d21] text-white p-5 shadow-md space-y-3">
+                  
+                  {/* HTML5 Real Audio Element */}
+                  <audio
+                    ref={audioRef}
+                    src={currentRadioStation.url}
+                    preload="none"
+                    onEnded={() => setIsPlayingRadio(false)}
+                    onError={() => {
+                      setIsPlayingRadio(false);
+                      setIsRadioBuffering(false);
+                    }}
+                  />
+
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Radio className="w-4 h-4 text-amber-400" />
-                      <span className="text-xs font-extrabold text-white">AppleTree Lo-Fi FM 94.2</span>
+                      <Radio className="w-4 h-4 text-amber-400 animate-pulse" />
+                      <span className="text-xs font-extrabold text-white">Live Worldwide Radio</span>
                     </div>
-                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                      isPlayingRadio ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30' : 'bg-white/10 text-slate-400'
+                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full transition-colors ${
+                      isPlayingRadio 
+                        ? 'bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 animate-pulse' 
+                        : 'bg-white/10 text-slate-400'
                     }`}>
-                      {isPlayingRadio ? 'LIVE STREAM' : 'STANDBY'}
+                      {isRadioBuffering ? 'CONNECTING...' : isPlayingRadio ? '● LIVE AUDIO' : 'PAUSED'}
                     </span>
                   </div>
 
+                  {/* Worldwide Station Dropdown Selector */}
+                  <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-xl border border-white/10">
+                    <Globe className="w-3.5 h-3.5 text-amber-400 ml-1 shrink-0" />
+                    <select
+                      value={currentStationIndex}
+                      onChange={(e) => handleSelectStation(Number(e.target.value))}
+                      className="bg-transparent text-xs text-white font-bold outline-none w-full cursor-pointer"
+                    >
+                      {WORLDWIDE_RADIO_STATIONS.map((station, idx) => (
+                        <option key={station.id} value={idx} className="bg-[#1c1d21] text-white">
+                          {station.country} • {station.name} ({station.genre})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Channel Player Bar */}
                   <div className="flex items-center justify-between bg-black/40 p-3 rounded-2xl border border-white/10">
-                    <div className="flex items-center gap-3">
-                      <button 
-                        onClick={() => setIsPlayingRadio(!isPlayingRadio)}
-                        className="w-9 h-9 rounded-full bg-amber-400 hover:bg-amber-300 text-black flex items-center justify-center shadow-md cursor-pointer transition-transform hover:scale-105"
+                    <div className="flex items-center gap-2.5">
+                      {/* Prev Channel */}
+                      <button
+                        onClick={handlePrevStation}
+                        title="Previous Channel"
+                        className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 flex items-center justify-center cursor-pointer transition-colors"
                       >
-                        {isPlayingRadio ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
+                        <SkipBack className="w-3.5 h-3.5" />
                       </button>
-                      <div>
-                        <p className="text-xs font-bold text-white">Coding Chill Beats</p>
-                        <p className="text-[10px] text-slate-400">Focus & Development Stream</p>
+
+                      {/* Play / Pause Toggle */}
+                      <button 
+                        onClick={toggleRadioPlay}
+                        title={isPlayingRadio ? 'Pause Radio' : 'Play Live Radio'}
+                        className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-300 hover:from-amber-300 hover:to-yellow-200 text-black flex items-center justify-center shadow-lg cursor-pointer transition-transform hover:scale-105"
+                      >
+                        {isPlayingRadio ? (
+                          <Pause className="w-4 h-4 fill-current" />
+                        ) : (
+                          <Play className="w-4 h-4 fill-current ml-0.5" />
+                        )}
+                      </button>
+
+                      {/* Next Channel */}
+                      <button
+                        onClick={handleNextStation}
+                        title="Next Channel"
+                        className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 flex items-center justify-center cursor-pointer transition-colors"
+                      >
+                        <SkipForward className="w-3.5 h-3.5" />
+                      </button>
+
+                      <div className="pl-1">
+                        <p className="text-xs font-bold text-white leading-tight truncate max-w-[140px] sm:max-w-[170px]">
+                          {currentRadioStation.name}
+                        </p>
+                        <p className="text-[10px] text-amber-300/90 font-medium truncate max-w-[140px] sm:max-w-[170px]">
+                          {currentRadioStation.country} • {currentRadioStation.genre}
+                        </p>
                       </div>
                     </div>
 
                     {/* Equalizer Visualizer Waves */}
-                    <div className="flex items-end gap-1 h-5 px-2">
-                      {[6, 12, 18, 10, 15, 8].map((h, i) => (
+                    <div className="flex items-end gap-1 h-5 px-1">
+                      {[18, 8, 22, 12, 16, 10].map((h, i) => (
                         <div
                           key={i}
                           className={`w-1 rounded-full bg-amber-400 transition-all ${
-                            isPlayingRadio ? 'animate-pulse' : 'h-1.5 opacity-40'
+                            isPlayingRadio ? 'animate-pulse' : 'h-1.5 opacity-30'
                           }`}
-                          style={{ height: isPlayingRadio ? `${h}px` : '4px' }}
+                          style={{ 
+                            height: isPlayingRadio ? `${h}px` : '4px',
+                            animationDuration: `${0.4 + i * 0.15}s`
+                          }}
                         />
                       ))}
                     </div>
                   </div>
+
+                  {/* Volume Slider */}
+                  <div className="flex items-center gap-2 px-1 text-slate-400 text-xs">
+                    {radioVolume === 0 ? <VolumeX className="w-3.5 h-3.5 text-slate-500" /> : <Volume2 className="w-3.5 h-3.5 text-slate-400" />}
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={radioVolume}
+                      onChange={(e) => handleVolumeChange(Number(e.target.value))}
+                      className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-amber-400"
+                    />
+                    <span className="text-[10px] font-bold text-slate-400 w-7 text-right">{radioVolume}%</span>
+                  </div>
                 </div>
 
-                {/* 3. Pending Student Fees & Dues Alert Panel */}
+                {/* 3. REAL PENDING STUDENT FEES & DUES PANEL (NO FAKE DATA) */}
                 <div className="rounded-3xl bg-white/75 border border-white p-5 shadow-sm space-y-3">
                   <div className="flex items-center justify-between pb-2 border-b border-slate-200/80">
                     <div className="flex items-center gap-2">
@@ -2574,37 +2739,63 @@ export default function AdminDashboard() {
                       <span className="text-xs font-extrabold text-slate-800">Pending Student Dues</span>
                     </div>
                     <span className="text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full">
-                      {pendingStudentFees.length} Pending
+                      {fees.filter(f => f.status !== 'paid').length} Invoices Due
                     </span>
                   </div>
 
-                  <div className="space-y-2">
-                    {pendingStudentFees.map((student) => (
-                      <div key={student.id} className="p-3 bg-slate-50/90 hover:bg-slate-100/90 rounded-2xl border border-slate-100 flex items-center justify-between transition-colors">
-                        <div>
-                          <p className="text-xs font-bold text-slate-800 leading-tight">{student.name}</p>
-                          <p className="text-[10px] text-slate-500">{student.course}</p>
-                          <span className="text-[9px] font-bold text-rose-600">₹{student.dueAmount.toLocaleString('en-IN')} • {student.dueDate}</span>
-                        </div>
+                  <div className="space-y-2 max-h-[220px] overflow-y-auto pr-0.5">
+                    {fees.filter(f => f.status !== 'paid').length > 0 ? (
+                      fees.filter(f => f.status !== 'paid').slice(0, 6).map((fee) => {
+                        const studentName = fee.student?.name || fee.studentName || 'Enrolled Student';
+                        const courseName = fee.student?.class || fee.courseName || 'Course Program';
+                        const dueText = fee.dueDate ? new Date(fee.dueDate).toLocaleDateString() : fee.term || 'Due';
+                        
+                        return (
+                          <div key={fee._id} className="p-3 bg-slate-50/90 hover:bg-slate-100/90 rounded-2xl border border-slate-100 flex items-center justify-between transition-colors">
+                            <div className="overflow-hidden pr-2">
+                              <p className="text-xs font-bold text-slate-800 leading-tight truncate">{studentName}</p>
+                              <p className="text-[10px] text-slate-500 truncate">{courseName}</p>
+                              <span className="text-[9px] font-bold text-rose-600">₹{fee.amount?.toLocaleString('en-IN')} • {dueText}</span>
+                            </div>
 
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => handleSendWhatsAppReminder(student)}
-                            title="Send WhatsApp Reminder"
-                            className="p-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[10px] font-bold transition-all cursor-pointer"
-                          >
-                            <Send className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleMarkFeeCollected(student.id)}
-                            title="Mark as Paid"
-                            className="px-2 py-1 rounded-xl bg-[#1c1d21] hover:bg-black text-white text-[10px] font-bold transition-all cursor-pointer"
-                          >
-                            Collect
-                          </button>
-                        </div>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <button
+                                onClick={() => handleSendRealWhatsAppReminder(fee)}
+                                title="Send WhatsApp Reminder"
+                                className="p-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1"
+                              >
+                                <Send className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSelectedFeeForPayment(fee);
+                                  setShowCollectPaymentModal(true);
+                                }}
+                                title="Collect Fee"
+                                className="px-2.5 py-1 rounded-xl bg-[#1c1d21] hover:bg-black text-white text-[10px] font-bold transition-all cursor-pointer"
+                              >
+                                Collect
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-center space-y-1.5">
+                        <CheckCircle className="w-5 h-5 text-emerald-600 mx-auto" />
+                        <p className="text-xs font-bold text-emerald-950">All Student Fees Settled</p>
+                        <p className="text-[10px] text-emerald-700">There are zero outstanding fee dues in the database.</p>
+                        <button
+                          onClick={() => {
+                            setActiveTab('fees');
+                            setFeesSubTab('billing');
+                          }}
+                          className="mt-1 inline-block px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-bold transition-colors cursor-pointer"
+                        >
+                          + Issue New Fee Invoice
+                        </button>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
 
