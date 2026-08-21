@@ -45,6 +45,10 @@ if (CLOUDINARY_ENABLED) {
   });
 }
 
+function escapeRegExp(string) {
+  return String(string || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 async function assignFeesForStudent(studentId, className, isMock) {
   let course = null;
   if (isMock) {
@@ -56,7 +60,7 @@ async function assignFeesForStudent(studentId, className, isMock) {
       course = allCourses.find(c => String(c.title).toLowerCase() === String(className).toLowerCase());
     }
   } else {
-    course = await Course.findOne({ title: { $regex: new RegExp(`^${className}$`, 'i') } });
+    course = await Course.findOne({ title: { $regex: new RegExp(`^${escapeRegExp(className)}$`, 'i') } });
   }
 
   let totalAmount = 15000; // default fallback course price
@@ -298,7 +302,7 @@ router.put('/admissions/:id', async (req, res) => {
       // If approved, provision a Parent User account and Student record
       if (status === 'approved') {
         // Check if Parent User already exists
-        let parentUser = await mockStore.findOne('users', { email: admission.parentDetails.email });
+        let parentUser = await mockStore.findOne('users', { email: admission.parentDetails?.email });
         let parentProfile;
 
         if (!parentUser) {
@@ -306,8 +310,8 @@ router.put('/admissions/:id', async (req, res) => {
           const defaultPasswordHash = bcrypt.hashSync(password || 'parent123', salt);
           
           parentUser = await mockStore.create('users', {
-            name: admission.parentDetails.fatherName || admission.parentDetails.motherName,
-            email: admission.parentDetails.email,
+            name: admission.parentDetails?.fatherName || admission.parentDetails?.motherName || 'Parent',
+            email: admission.parentDetails?.email,
             password: defaultPasswordHash,
             role: 'parent',
             profileImage: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150'
@@ -317,16 +321,30 @@ router.put('/admissions/:id', async (req, res) => {
             userId: parentUser._id,
             name: parentUser.name,
             email: parentUser.email,
-            phone: admission.parentDetails.phone,
-            address: admission.parentDetails.address,
+            phone: admission.parentDetails?.phone || '',
+            address: admission.parentDetails?.address || '',
             children: []
           });
         } else {
           parentProfile = await mockStore.findOne('parents', { userId: parentUser._id });
+          if (!parentProfile) {
+            parentProfile = await mockStore.create('parents', {
+              userId: parentUser._id,
+              name: parentUser.name,
+              email: parentUser.email,
+              phone: admission.parentDetails?.phone || '',
+              address: admission.parentDetails?.address || '',
+              children: []
+            });
+          }
+        }
+
+        if (!Array.isArray(parentProfile.children)) {
+          parentProfile.children = [];
         }
 
         // Get an available teacher
-        const teachers = await mockStore.find('teachers');
+        const teachers = await mockStore.find('teachers') || [];
         const teacherId = teachers[0]?._id || null;
 
         // Create the Student
@@ -335,11 +353,11 @@ router.put('/admissions/:id', async (req, res) => {
         const hasPhoto = admission.documentData?.photo?.data;
         const newStudent = await mockStore.create('students', {
           _id: studentDbId,
-          name: admission.studentDetails.name,
+          name: admission.studentDetails?.name || 'Student',
           studentId: generatedStudentId,
-          dateOfBirth: admission.studentDetails.dateOfBirth,
-          gender: admission.studentDetails.gender,
-          class: admission.studentDetails.class,
+          dateOfBirth: admission.studentDetails?.dateOfBirth,
+          gender: admission.studentDetails?.gender || 'Male',
+          class: admission.studentDetails?.class || 'Nursery',
           parentId: parentProfile._id,
           teacherId,
           photo: hasPhoto ? `/api/admin/students/photo/${studentDbId}` : (admission.documents?.photo || ''),
@@ -349,11 +367,14 @@ router.put('/admissions/:id', async (req, res) => {
           activities: []
         });
 
+        parentProfile.children.push(newStudent._id);
+        await mockStore.findByIdAndUpdate('parents', parentProfile._id, { children: parentProfile.children });
+
         // Automatically assign fee structure according to class
         await assignFeesForStudent(newStudent._id, newStudent.class, true);
 
         // Auto-enroll in matching LMS course if applicable
-        const mockCourses = await mockStore.find('courses');
+        const mockCourses = await mockStore.find('courses') || [];
         const courseMatch = mockCourses.find(c => c.title && c.title.toLowerCase() === (newStudent.class || '').toLowerCase());
         if (courseMatch) {
           const existingEnr = await mockStore.find('enrollments', { user: String(parentUser._id), course: String(courseMatch._id) });
@@ -382,14 +403,14 @@ router.put('/admissions/:id', async (req, res) => {
 
     if (status === 'approved') {
       // 1. Check if user already exists
-      let user = await User.findOne({ email: admission.parentDetails.email });
+      let user = await User.findOne({ email: admission.parentDetails?.email });
       let parent;
 
       if (!user) {
         // Create user credentials
         user = await User.create({
-          name: admission.parentDetails.fatherName || admission.parentDetails.motherName,
-          email: admission.parentDetails.email,
+          name: admission.parentDetails?.fatherName || admission.parentDetails?.motherName || 'Parent',
+          email: admission.parentDetails?.email,
           password: password || 'parent123', // Admin-provided password
           role: 'parent'
         });
@@ -398,12 +419,26 @@ router.put('/admissions/:id', async (req, res) => {
           userId: user._id,
           name: user.name,
           email: user.email,
-          phone: admission.parentDetails.phone,
-          address: admission.parentDetails.address,
+          phone: admission.parentDetails?.phone || '',
+          address: admission.parentDetails?.address || '',
           children: []
         });
       } else {
         parent = await Parent.findOne({ userId: user._id });
+        if (!parent) {
+          parent = await Parent.create({
+            userId: user._id,
+            name: user.name,
+            email: user.email,
+            phone: admission.parentDetails?.phone || '',
+            address: admission.parentDetails?.address || '',
+            children: []
+          });
+        }
+      }
+
+      if (!Array.isArray(parent.children)) {
+        parent.children = [];
       }
 
       // Assign first available teacher if any
@@ -415,11 +450,11 @@ router.put('/admissions/:id', async (req, res) => {
       const hasPhoto = admission.documentData?.photo?.data;
       const student = await Student.create({
         _id: studentDbId,
-        name: admission.studentDetails.name,
+        name: admission.studentDetails?.name || 'Student',
         studentId: generatedStudentId,
-        dateOfBirth: admission.studentDetails.dateOfBirth,
-        gender: admission.studentDetails.gender,
-        class: admission.studentDetails.class,
+        dateOfBirth: admission.studentDetails?.dateOfBirth,
+        gender: admission.studentDetails?.gender || 'Male',
+        class: admission.studentDetails?.class || 'Nursery',
         parentId: parent._id,
         teacherId: firstTeacher ? firstTeacher._id : null,
         photo: hasPhoto ? `/api/admin/students/photo/${studentDbId}` : (admission.documents?.photo || ''),
@@ -434,7 +469,7 @@ router.put('/admissions/:id', async (req, res) => {
       await assignFeesForStudent(student._id, student.class, false);
 
       // Auto-enroll in matching LMS course if applicable
-      const courseMatch = await Course.findOne({ title: { $regex: new RegExp(`^${student.class}$`, 'i') } });
+      const courseMatch = await Course.findOne({ title: { $regex: new RegExp(`^${escapeRegExp(student.class)}$`, 'i') } });
       if (courseMatch) {
         const CourseEnrollment = (await import('../models/CourseEnrollment.js')).default;
         await CourseEnrollment.findOneAndUpdate(
@@ -514,9 +549,46 @@ router.post('/admissions/create', uploadAdmissions.fields([
   let { studentDetails, parentDetails, password, admissionFee, addressProofType, paymentPlan = 'installments' } = req.body;
   
   try {
-    if (typeof studentDetails === 'string') studentDetails = JSON.parse(studentDetails);
-    if (typeof parentDetails === 'string') parentDetails = JSON.parse(parentDetails);
-    if (parentDetails && parentDetails.email) parentDetails.email = String(parentDetails.email).trim().toLowerCase();
+    if (typeof studentDetails === 'string') {
+      try { studentDetails = JSON.parse(studentDetails); } catch (e) { studentDetails = {}; }
+    }
+    if (typeof parentDetails === 'string') {
+      try { parentDetails = JSON.parse(parentDetails); } catch (e) { parentDetails = {}; }
+    }
+    studentDetails = studentDetails || {};
+    parentDetails = parentDetails || {};
+
+    const studentName = String(studentDetails.name || '').trim() || 'Student';
+    const studentClass = String(studentDetails.class || '').trim() || 'Nursery';
+    const rawGender = String(studentDetails.gender || '').trim().toLowerCase();
+    const studentGender = rawGender === 'female' ? 'Female' : rawGender === 'other' ? 'Other' : 'Male';
+    let studentDob = studentDetails.dateOfBirth ? new Date(studentDetails.dateOfBirth) : new Date('2020-01-01');
+    if (isNaN(studentDob.getTime())) studentDob = new Date('2020-01-01');
+
+    const parentEmail = String(parentDetails.email || '').trim().toLowerCase();
+    if (!parentEmail) {
+      return res.status(400).json({ success: false, message: 'Parent email address is required.' });
+    }
+
+    const parentFatherName = String(parentDetails.fatherName || parentDetails.motherName || 'Parent').trim();
+    const parentMotherName = String(parentDetails.motherName || parentDetails.fatherName || 'Parent').trim();
+    const parentPhone = String(parentDetails.phone || '').trim();
+    const parentAddress = String(parentDetails.address || '').trim();
+
+    const normalizedStudent = {
+      name: studentName,
+      dateOfBirth: studentDob,
+      gender: studentGender,
+      class: studentClass
+    };
+
+    const normalizedParent = {
+      fatherName: parentFatherName,
+      motherName: parentMotherName,
+      email: parentEmail,
+      phone: parentPhone,
+      address: parentAddress
+    };
 
     const appNo = `PRN-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
     const generatedStudentId = `STD-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -573,13 +645,13 @@ router.post('/admissions/create', uploadAdmissions.fields([
     };
 
     if (isMock) {
-      let parentUser = await mockStore.findOne('users', { email: parentDetails.email });
+      let parentUser = await mockStore.findOne('users', { email: normalizedParent.email });
       let parentProfile;
       if (!parentUser) {
         const salt = bcrypt.genSaltSync(10);
         parentUser = await mockStore.create('users', {
-          name: parentDetails.fatherName || parentDetails.motherName,
-          email: parentDetails.email,
+          name: normalizedParent.fatherName || normalizedParent.motherName,
+          email: normalizedParent.email,
           password: bcrypt.hashSync(password || 'parent123', salt),
           role: 'parent'
         });
@@ -587,24 +659,38 @@ router.post('/admissions/create', uploadAdmissions.fields([
           userId: parentUser._id,
           name: parentUser.name,
           email: parentUser.email,
-          phone: parentDetails.phone,
-          address: parentDetails.address,
+          phone: normalizedParent.phone,
+          address: normalizedParent.address,
           children: []
         });
       } else {
         parentProfile = await mockStore.findOne('parents', { userId: parentUser._id });
+        if (!parentProfile) {
+          parentProfile = await mockStore.create('parents', {
+            userId: parentUser._id,
+            name: parentUser.name,
+            email: parentUser.email,
+            phone: normalizedParent.phone,
+            address: normalizedParent.address,
+            children: []
+          });
+        }
       }
 
-      const teachers = await mockStore.find('teachers');
+      if (!Array.isArray(parentProfile.children)) {
+        parentProfile.children = [];
+      }
+
+      const teachers = await mockStore.find('teachers') || [];
       const teacherId = teachers[0]?._id || null;
 
       const newStudent = await mockStore.create('students', {
         _id: studentDbId,
-        name: studentDetails.name,
+        name: normalizedStudent.name,
         studentId: generatedStudentId,
-        dateOfBirth: studentDetails.dateOfBirth,
-        gender: studentDetails.gender,
-        class: studentDetails.class,
+        dateOfBirth: normalizedStudent.dateOfBirth,
+        gender: normalizedStudent.gender,
+        class: normalizedStudent.class,
         parentId: parentProfile._id,
         teacherId,
         photo: photoFile ? `/api/admin/students/photo/${studentDbId}` : '',
@@ -620,8 +706,8 @@ router.post('/admissions/create', uploadAdmissions.fields([
       const admission = await mockStore.create('admissions', {
         _id: admissionId,
         applicationNumber: appNo,
-        studentDetails,
-        parentDetails,
+        studentDetails: normalizedStudent,
+        parentDetails: normalizedParent,
         documents,
         documentData,
         status: 'approved',
@@ -657,8 +743,8 @@ router.post('/admissions/create', uploadAdmissions.fields([
       }
 
       let totalAmount = 15000;
-      const mockCourses = await mockStore.find('courses');
-      const courseMatch = mockCourses.find(c => c.title && c.title.toLowerCase() === (studentDetails.class || '').toLowerCase());
+      const mockCourses = await mockStore.find('courses') || [];
+      const courseMatch = mockCourses.find(c => c.title && c.title.toLowerCase() === (normalizedStudent.class || '').toLowerCase());
       if (courseMatch) {
         if (courseMatch.price) totalAmount = Number(courseMatch.price) || 15000;
         await mockStore.create('enrollments', {
@@ -712,12 +798,12 @@ router.post('/admissions/create', uploadAdmissions.fields([
     }
 
     // MongoDB
-    let parentUser = await User.findOne({ email: parentDetails.email });
+    let parentUser = await User.findOne({ email: normalizedParent.email });
     let parent;
     if (!parentUser) {
       parentUser = await User.create({
-        name: parentDetails.fatherName || parentDetails.motherName,
-        email: parentDetails.email,
+        name: normalizedParent.fatherName || normalizedParent.motherName,
+        email: normalizedParent.email,
         password: password || 'parent123',
         role: 'parent'
       });
@@ -725,23 +811,37 @@ router.post('/admissions/create', uploadAdmissions.fields([
         userId: parentUser._id,
         name: parentUser.name,
         email: parentUser.email,
-        phone: parentDetails.phone,
-        address: parentDetails.address,
+        phone: normalizedParent.phone || '0000000000',
+        address: normalizedParent.address || 'Address',
         children: []
       });
     } else {
       parent = await Parent.findOne({ userId: parentUser._id });
+      if (!parent) {
+        parent = await Parent.create({
+          userId: parentUser._id,
+          name: parentUser.name,
+          email: parentUser.email,
+          phone: normalizedParent.phone || '0000000000',
+          address: normalizedParent.address || 'Address',
+          children: []
+        });
+      }
+    }
+
+    if (!Array.isArray(parent.children)) {
+      parent.children = [];
     }
 
     const firstTeacher = await Teacher.findOne();
 
     const student = await Student.create({
       _id: studentDbId,
-      name: studentDetails.name,
+      name: normalizedStudent.name,
       studentId: generatedStudentId,
-      dateOfBirth: studentDetails.dateOfBirth,
-      gender: studentDetails.gender,
-      class: studentDetails.class,
+      dateOfBirth: normalizedStudent.dateOfBirth,
+      gender: normalizedStudent.gender,
+      class: normalizedStudent.class,
       parentId: parent._id,
       teacherId: firstTeacher ? firstTeacher._id : null,
       photo: photoFile ? `/api/admin/students/photo/${studentDbId}` : '',
@@ -754,8 +854,8 @@ router.post('/admissions/create', uploadAdmissions.fields([
     const admission = await Admission.create({
       _id: admissionId,
       applicationNumber: appNo,
-      studentDetails,
-      parentDetails,
+      studentDetails: normalizedStudent,
+      parentDetails: normalizedParent,
       documents,
       documentData,
       status: 'approved',
@@ -790,7 +890,7 @@ router.post('/admissions/create', uploadAdmissions.fields([
     }
 
     let totalAmount = 15000;
-    const courseMatch = await Course.findOne({ title: { $regex: new RegExp(`^${studentDetails.class}$`, 'i') } });
+    const courseMatch = await Course.findOne({ title: { $regex: new RegExp(`^${escapeRegExp(normalizedStudent.class)}$`, 'i') } });
     if (courseMatch) {
       if (courseMatch.price) totalAmount = Number(courseMatch.price) || 15000;
       const CourseEnrollment = (await import('../models/CourseEnrollment.js')).default;
@@ -843,6 +943,7 @@ router.post('/admissions/create', uploadAdmissions.fields([
       receipt: createdReceipt
     });
   } catch (error) {
+    console.error('Error creating admission:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -852,16 +953,25 @@ router.post('/students/register', async (req, res) => {
   const { name, dateOfBirth, gender, studentClass, parentName, parentEmail, parentPhone, parentAddress, password } = req.body;
   
   try {
+    const pEmail = String(parentEmail || '').trim().toLowerCase();
+    if (!pEmail) {
+      return res.status(400).json({ success: false, message: 'Parent email address is required.' });
+    }
+
     const generatedStudentId = `STD-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const rawGender = String(gender || '').trim().toLowerCase();
+    const normalizedGender = rawGender === 'female' ? 'Female' : rawGender === 'other' ? 'Other' : 'Male';
+    let stdDob = dateOfBirth ? new Date(dateOfBirth) : new Date('2020-01-01');
+    if (isNaN(stdDob.getTime())) stdDob = new Date('2020-01-01');
 
     if (mockStore.isMock) {
-      let parentUser = await mockStore.findOne('users', { email: parentEmail });
+      let parentUser = await mockStore.findOne('users', { email: pEmail });
       let parentProfile;
       if (!parentUser) {
         const salt = bcrypt.genSaltSync(10);
         parentUser = await mockStore.create('users', {
-          name: parentName,
-          email: parentEmail,
+          name: parentName || 'Parent',
+          email: pEmail,
           password: bcrypt.hashSync(password || 'parent123', salt),
           role: 'parent'
         });
@@ -869,23 +979,37 @@ router.post('/students/register', async (req, res) => {
           userId: parentUser._id,
           name: parentUser.name,
           email: parentUser.email,
-          phone: parentPhone,
-          address: parentAddress,
+          phone: parentPhone || '',
+          address: parentAddress || '',
           children: []
         });
       } else {
         parentProfile = await mockStore.findOne('parents', { userId: parentUser._id });
+        if (!parentProfile) {
+          parentProfile = await mockStore.create('parents', {
+            userId: parentUser._id,
+            name: parentUser.name,
+            email: parentUser.email,
+            phone: parentPhone || '',
+            address: parentAddress || '',
+            children: []
+          });
+        }
       }
 
-      const teachers = await mockStore.find('teachers');
+      if (!Array.isArray(parentProfile.children)) {
+        parentProfile.children = [];
+      }
+
+      const teachers = await mockStore.find('teachers') || [];
       const teacherId = teachers[0]?._id || null;
 
       const student = await mockStore.create('students', {
-        name,
+        name: name || 'Student',
         studentId: generatedStudentId,
-        dateOfBirth,
-        gender,
-        class: studentClass,
+        dateOfBirth: stdDob,
+        gender: normalizedGender,
+        class: studentClass || 'Nursery',
         parentId: parentProfile._id,
         teacherId,
         attendance: [],
@@ -897,18 +1021,18 @@ router.post('/students/register', async (req, res) => {
       await mockStore.findByIdAndUpdate('parents', parentProfile._id, { children: parentProfile.children });
 
       // Automatically assign fee structure according to class
-      await assignFeesForStudent(student._id, studentClass, true);
+      await assignFeesForStudent(student._id, student.class, true);
 
       return res.status(201).json({ success: true, message: 'Student registered directly successfully!', data: student });
     }
 
     // MongoDB
-    let parentUser = await User.findOne({ email: parentEmail });
+    let parentUser = await User.findOne({ email: pEmail });
     let parent;
     if (!parentUser) {
       parentUser = await User.create({
-        name: parentName,
-        email: parentEmail,
+        name: parentName || 'Parent',
+        email: pEmail,
         password: password || 'parent123',
         role: 'parent'
       });
@@ -916,22 +1040,36 @@ router.post('/students/register', async (req, res) => {
         userId: parentUser._id,
         name: parentUser.name,
         email: parentUser.email,
-        phone: parentPhone,
-        address: parentAddress,
+        phone: parentPhone || '0000000000',
+        address: parentAddress || 'Address',
         children: []
       });
     } else {
       parent = await Parent.findOne({ userId: parentUser._id });
+      if (!parent) {
+        parent = await Parent.create({
+          userId: parentUser._id,
+          name: parentUser.name,
+          email: parentUser.email,
+          phone: parentPhone || '0000000000',
+          address: parentAddress || 'Address',
+          children: []
+        });
+      }
+    }
+
+    if (!Array.isArray(parent.children)) {
+      parent.children = [];
     }
 
     const firstTeacher = await Teacher.findOne();
 
     const student = await Student.create({
-      name,
+      name: name || 'Student',
       studentId: generatedStudentId,
-      dateOfBirth,
-      gender,
-      class: studentClass,
+      dateOfBirth: stdDob,
+      gender: normalizedGender,
+      class: studentClass || 'Nursery',
       parentId: parent._id,
       teacherId: firstTeacher ? firstTeacher._id : null
     });
@@ -944,6 +1082,7 @@ router.post('/students/register', async (req, res) => {
 
     res.status(201).json({ success: true, message: 'Student registered directly successfully!', data: student });
   } catch (error) {
+    console.error('Error registering student:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });

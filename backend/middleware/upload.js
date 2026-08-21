@@ -46,11 +46,11 @@ const galleryFilter = (req, file, cb) => {
 
 const admissionsFilter = (req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase();
-  const allowedExts = ['.pdf', '.png', '.jpg', '.jpeg'];
-  if (allowedExts.includes(ext)) {
+  const allowedExts = ['.pdf', '.png', '.jpg', '.jpeg', '.webp', '.jfif', '.svg', '.bmp', '.doc', '.docx'];
+  if (allowedExts.includes(ext) || file.mimetype?.startsWith('image/') || file.mimetype === 'application/pdf') {
     cb(null, true);
   } else {
-    cb(new Error(`Invalid file type for ${file.fieldname}. Only PDF, JPG, JPEG, and PNG files are allowed.`), false);
+    cb(new Error(`Invalid file type for ${file.fieldname}. Only PDF, JPG, PNG, WEBP, and document files are allowed.`), false);
   }
 };
 

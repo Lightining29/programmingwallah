@@ -28,7 +28,7 @@ const AdmissionPaymentSchema = new mongoose.Schema({
   },
   method: {
     type: String,
-    enum: ['cash', 'razorpay'],
+    enum: ['cash', 'razorpay', 'upi'],
     required: true
   },
   // Razorpay order/payment IDs.

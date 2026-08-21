@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 
 import { connectDB } from './config/db.js';
-import { seedDatabase } from './config/seed.js';
+import { getMySQLStatus } from './config/mysql.js';
 import authRoutes from './routes/auth.js';
 import publicRoutes from './routes/public.js';
 import portalRoutes from './routes/portal.js';
@@ -22,18 +22,57 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// Trust proxy for Hostinger reverse proxy / load balancer
+app.set('trust proxy', 1);
+
+// Security & Cross-Origin Configuration
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+}));
+
+// Body parsing middleware with expanded limits for document & photo uploads
 app.use(express.json({
+  limit: '50mb',
   verify: (req, res, buf) => {
     req.rawBody = buf;
   }
 }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Resolve static paths
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Ensure uploads directory exists
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Serve uploaded files with cache control
+app.use('/uploads', express.static(uploadDir, {
+  maxAge: '7d',
+  etag: true
+}));
+
+// API Health Check & Database Status
+app.get('/api/health', (req, res) => {
+  const mysqlInfo = getMySQLStatus();
+  res.json({
+    success: true,
+    status: 'online',
+    timestamp: new Date().toISOString(),
+    uptime: Math.floor(process.uptime()),
+    environment: process.env.NODE_ENV || 'production',
+    database: {
+      driver: 'MySQL (Hostinger)',
+      ...mysqlInfo
+    }
+  });
+});
 
 // Register API Routes
 app.use('/api/auth', authRoutes);
@@ -49,7 +88,15 @@ app.use('/api', paymentRoutes);
 // Serve Frontend static assets if built, otherwise serve API welcome message
 const frontendDistPath = path.join(__dirname, '../frontend/dist');
 if (fs.existsSync(path.join(frontendDistPath, 'index.html'))) {
-  app.use(express.static(frontendDistPath));
+  app.use(express.static(frontendDistPath, {
+    maxAge: '1d',
+    setHeaders: (res, filePath) => {
+      // Never cache index.html so frontend updates deploy instantly
+      if (filePath.endsWith('index.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      }
+    }
+  }));
   
   app.get('*', (req, res, next) => {
     // Avoid intercepting API routes or uploads
@@ -63,45 +110,54 @@ if (fs.existsSync(path.join(frontendDistPath, 'index.html'))) {
   app.get('/', (req, res) => {
     res.json({
       message: 'Welcome to Pranidha International School Kindergarten API Server!',
+      status: 'operational',
+      database: 'Hostinger MySQL',
       version: '1.0.0',
       mode: process.env.NODE_ENV || 'development'
     });
   });
 }
 
-// Fallback Route Handler (404)
-app.use((req, res, next) => {
-  res.status(404).json({ success: false, message: 'Resource API endpoint not found' });
+// Fallback 404 Route Handler for undefined API endpoints
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ success: false, message: `API endpoint '${req.originalUrl}' not found.` });
 });
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
+  console.error('Server Unhandled Error:', err.stack || err.message);
+  res.status(err.status || 500).json({
     success: false,
-    message: 'Internal Server Error',
+    message: err.message || 'Internal Server Error',
     error: process.env.NODE_ENV === 'development' ? err.message : {}
   });
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, async () => {
-  console.log(`Pranidha School backend running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+const server = app.listen(PORT, async () => {
+  console.log(`\x1b[32m✔ Pranidha School Backend running in ${process.env.NODE_ENV || 'production'} mode on port ${PORT}\x1b[0m`);
   
-  // Connect to Database & Seed asynchronously
+  // Connect to Hostinger MySQL Database
   try {
     await connectDB();
-    await seedDatabase();
-
-    // Auto-publish existing modules and lessons in the database to fix student visibility
-    const Module = (await import('./models/Module.js')).default;
-    const Lesson = (await import('./models/Lesson.js')).default;
-    const modulesUpdated = await Module.updateMany({ isPublished: { $ne: true } }, { $set: { isPublished: true } });
-    const lessonsUpdated = await Lesson.updateMany({ isPublished: { $ne: true } }, { $set: { isPublished: true } });
-    if (modulesUpdated.modifiedCount > 0 || lessonsUpdated.modifiedCount > 0) {
-      console.log(`Auto-published ${modulesUpdated.modifiedCount} modules and ${lessonsUpdated.modifiedCount} lessons to fix visibility.`);
-    }
   } catch (err) {
-    console.error('Error during database initialization:', err);
+    console.error('Database connection error on startup:', err.message);
   }
 });
+
+// Graceful shutdown handling
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+  });
+});
+
+export default app;

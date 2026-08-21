@@ -4,7 +4,7 @@
 //
 // Mirrors the behavior of the existing /api/admin/admissions/create handler:
 // creates (or reuses) a parent User + Parent profile, the Student record, an
-// approved Admission record, the admission-fee Fee + Receipt, and 12 monthly
+// approved Admission record, the admission-fee Fee + Receipt, and monthly
 // tuition invoices (month 1 marked paid).
 
 import mongoose from 'mongoose';
@@ -34,40 +34,53 @@ function genStudentId() {
 function genTxn(prefix) {
   return `${prefix}-${Math.floor(100000 + Math.random() * 900000)}`;
 }
+function escapeRegExp(string) {
+  return String(string || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 // Resolve the selected course/class into a valid Student.class enum value.
-// IMPORTANT: the admin form offers coaching courses (e.g. "Java Development"),
-// so a real selection must be preserved as-is. Only fall back when blank.
 function normalizeClass(value) {
   const v = String(value || '').trim();
   if (!v) return 'Nursery';
   if (VALID_CLASSES.includes(v)) return v;
-  // Allow raw grade numbers like "5" → "5th" when applicable.
   if (/^\d+$/.test(v) && VALID_CLASSES.includes(`${v}th`)) return `${v}th`;
-  // Unknown but non-empty selection: keep it verbatim so the chosen course is
-  // registered (the model enum is the single source of truth on validation).
   return v;
+}
+
+function normalizeGender(value) {
+  const g = String(value || '').trim().toLowerCase();
+  if (g === 'female') return 'Female';
+  if (g === 'other') return 'Other';
+  return 'Male';
+}
+
+function normalizeDob(value) {
+  if (!value) return new Date('2020-01-01');
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? new Date('2020-01-01') : d;
+}
+
+function getInstallmentCount(paymentPlan) {
+  if (paymentPlan === 'full') return 1;
+  if (paymentPlan === '4months') return 4;
+  if (paymentPlan === '5months') return 5;
+  if (paymentPlan === '6months') return 6;
+  if (paymentPlan === '3months') return 3;
+  if (paymentPlan === 'monthly' || paymentPlan === '12months' || paymentPlan === 'installments') return 12;
+  const parsed = parseInt(paymentPlan, 10);
+  if (!isNaN(parsed) && parsed > 0) return parsed;
+  return 4;
 }
 
 /**
  * Create a full admission (parent + student + admission record + fees) from a
  * verified payment. Works in both mock and MongoDB modes.
- *
- * @param {Object} args
- * @param {Object} args.studentDetails { name, dateOfBirth, gender, class }
- * @param {Object} args.parentDetails { fatherName, motherName, email, phone, address }
- * @param {String} args.paymentMethod  e.g. 'Cash' | 'UPI' | 'Admission Desk Cash'
- * @param {Number} args.admissionFee   amount collected for the admission fee
- * @param {String} [args.password]     optional parent password (defaults to parent123)
- * @param {Object} [args.photo]        optional multer file ({ buffer, mimetype, originalname }) for the student photo
- * @returns {Promise<{applicationNumber, studentId, studentDbId, receipt}>}
  */
-export async function createAdmissionFromPayment({ studentDetails, parentDetails, paymentMethod = 'Cash', admissionFee = 0, password, photo, paymentPlan = 'installments' }) {
+export async function createAdmissionFromPayment({ studentDetails = {}, parentDetails = {}, paymentMethod = 'Cash', admissionFee = 0, password, photo, paymentPlan = 'installments' }) {
   const isMock = mockStore.isMock;
   const appNo = genAppNo();
   const studentPublicId = genStudentId();
 
-  // Build the student photo payload + a URL pointing at the photo endpoint.
   const buildPhotoData = (studentId, file) => {
     if (!file) return { photoData: undefined, photoPath: `/api/admin/students/photo/${studentId}` };
     return {
@@ -80,18 +93,24 @@ export async function createAdmissionFromPayment({ studentDetails, parentDetails
     };
   };
 
+  const fatherName = parentDetails.fatherName || parentDetails.motherName || 'Parent';
+  const motherName = parentDetails.motherName || parentDetails.fatherName || 'Parent';
+  const parentEmail = String(parentDetails.email || '').trim().toLowerCase();
+  const parentPhone = parentDetails.phone || '';
+  const parentAddress = parentDetails.address || '';
+
   const normalizedStudent = {
-    name: studentDetails.name,
-    dateOfBirth: studentDetails.dateOfBirth,
-    gender: studentDetails.gender || 'Male',
+    name: studentDetails.name || 'Student',
+    dateOfBirth: normalizeDob(studentDetails.dateOfBirth),
+    gender: normalizeGender(studentDetails.gender),
     class: normalizeClass(studentDetails.class)
   };
   const normalizedParent = {
-    fatherName: parentDetails.fatherName || parentDetails.motherName || '',
-    motherName: parentDetails.motherName || '',
-    email: String(parentDetails.email || '').trim().toLowerCase(),
-    phone: parentDetails.phone || '',
-    address: parentDetails.address || ''
+    fatherName,
+    motherName,
+    email: parentEmail,
+    phone: parentPhone,
+    address: parentAddress
   };
 
   let receipt = null;
@@ -102,8 +121,6 @@ export async function createAdmissionFromPayment({ studentDetails, parentDetails
     let parentProfile;
     if (!parentUser) {
       const salt = bcrypt.genSaltSync(10);
-      
-      // Determine if this is an online course or school class
       const allCourses = await mockStore.find('courses') || [];
       const isCourseStudent = allCourses.some(c => String(c.title).toLowerCase() === String(normalizedStudent.class).toLowerCase());
       const resolvedRole = isCourseStudent ? 'user' : 'parent';
@@ -124,9 +141,23 @@ export async function createAdmissionFromPayment({ studentDetails, parentDetails
       });
     } else {
       parentProfile = await mockStore.findOne('parents', { userId: parentUser._id });
+      if (!parentProfile) {
+        parentProfile = await mockStore.create('parents', {
+          userId: parentUser._id,
+          name: parentUser.name,
+          email: parentUser.email,
+          phone: normalizedParent.phone,
+          address: normalizedParent.address,
+          children: []
+        });
+      }
     }
 
-    const teachers = await mockStore.find('teachers');
+    if (!Array.isArray(parentProfile.children)) {
+      parentProfile.children = [];
+    }
+
+    const teachers = await mockStore.find('teachers') || [];
     const teacherId = teachers[0]?._id || null;
     const studentDbId = 'std_' + Math.random().toString(36).substr(2, 9);
     const studentPhoto = buildPhotoData(studentDbId, photo);
@@ -146,6 +177,7 @@ export async function createAdmissionFromPayment({ studentDetails, parentDetails
       progressReports: [],
       activities: []
     });
+
     parentProfile.children.push(newStudent._id);
     await mockStore.findByIdAndUpdate('parents', parentProfile._id, { children: parentProfile.children });
 
@@ -189,16 +221,13 @@ export async function createAdmissionFromPayment({ studentDetails, parentDetails
     if (courses && courses.length > 0) {
       course = courses[0];
     } else {
-      const allCourses = await mockStore.find('courses');
+      const allCourses = await mockStore.find('courses') || [];
       course = allCourses.find(c => String(c.title).toLowerCase() === String(normalizedStudent.class).toLowerCase());
     }
 
     let totalAmount = 15000;
-
     if (course) {
       totalAmount = Number(course.price) || 0;
-      
-      // Auto-enroll the user in mock mode
       await mockStore.create('enrollments', {
         user: String(parentUser._id),
         course: String(course._id),
@@ -207,18 +236,6 @@ export async function createAdmissionFromPayment({ studentDetails, parentDetails
         enrolledAt: new Date()
       });
     }
-
-function getInstallmentCount(paymentPlan) {
-  if (paymentPlan === 'full') return 1;
-  if (paymentPlan === '4months') return 4;
-  if (paymentPlan === '5months') return 5;
-  if (paymentPlan === '6months') return 6;
-  if (paymentPlan === '3months') return 3;
-  if (paymentPlan === 'monthly' || paymentPlan === '12months' || paymentPlan === 'installments') return 12;
-  const parsed = parseInt(paymentPlan, 10);
-  if (!isNaN(parsed) && parsed > 0) return parsed;
-  return 4;
-}
 
     if (paymentPlan === 'full') {
       await mockStore.create('fees', {
@@ -260,8 +277,7 @@ function getInstallmentCount(paymentPlan) {
   let parentUser = await User.findOne({ email: normalizedParent.email });
   let parent;
   if (!parentUser) {
-    // Check if class matches an online course in database
-    const isCourseStudent = await Course.findOne({ title: { $regex: new RegExp(`^${normalizedStudent.class}$`, 'i') } });
+    const isCourseStudent = await Course.findOne({ title: { $regex: new RegExp(`^${escapeRegExp(normalizedStudent.class)}$`, 'i') } });
     const resolvedRole = isCourseStudent ? 'user' : 'parent';
 
     parentUser = await User.create({
@@ -280,6 +296,20 @@ function getInstallmentCount(paymentPlan) {
     });
   } else {
     parent = await Parent.findOne({ userId: parentUser._id });
+    if (!parent) {
+      parent = await Parent.create({
+        userId: parentUser._id,
+        name: parentUser.name,
+        email: parentUser.email,
+        phone: normalizedParent.phone || '0000000000',
+        address: normalizedParent.address || 'Address',
+        children: []
+      });
+    }
+  }
+
+  if (!Array.isArray(parent.children)) {
+    parent.children = [];
   }
 
   const firstTeacher = await Teacher.findOne();
@@ -293,7 +323,6 @@ function getInstallmentCount(paymentPlan) {
     teacherId: firstTeacher ? firstTeacher._id : null
   });
 
-  // Attach the uploaded photo (if any) now that the student id is known.
   const mongoPhoto = buildPhotoData(student._id, photo);
   if (mongoPhoto.photoData) {
     student.photoData = mongoPhoto.photoData;
@@ -341,13 +370,11 @@ function getInstallmentCount(paymentPlan) {
     });
   }
 
-  let course = await Course.findOne({ title: { $regex: new RegExp(`^${normalizedStudent.class}$`, 'i') } });
+  let course = await Course.findOne({ title: { $regex: new RegExp(`^${escapeRegExp(normalizedStudent.class)}$`, 'i') } });
   let totalAmount = 15000;
 
   if (course) {
     totalAmount = Number(course.price) || 0;
-
-    // Auto-enroll the user in MongoDB mode
     const CourseEnrollment = (await import('../models/CourseEnrollment.js')).default;
     await CourseEnrollment.findOneAndUpdate(
       { user: parentUser._id, course: course._id },

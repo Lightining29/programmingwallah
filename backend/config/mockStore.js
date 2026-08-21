@@ -9,14 +9,54 @@ const parentHash = bcrypt.hashSync('parent123', salt);
 const teacherHash = bcrypt.hashSync('teacher123', salt);
 const studentHash = bcrypt.hashSync('student123', salt);
 
+import { getMySQLPool } from './mysql.js';
+
 const DATA_FILE = path.join(process.cwd(), 'mockData.json');
 
-function saveToDisk(store) {
+async function saveToMySQL(collectionName, data) {
+  try {
+    const pool = getMySQLPool();
+    if (!pool) return;
+    await pool.query(
+      'INSERT INTO system_store (collection_name, data_json) VALUES (?, ?) ON DUPLICATE KEY UPDATE data_json = VALUES(data_json)',
+      [collectionName, JSON.stringify(data)]
+    );
+  } catch (err) {
+    // MySQL not reachable or table not yet initialized, fallback safely
+  }
+}
+
+async function loadFromMySQL(store) {
+  try {
+    const pool = getMySQLPool();
+    if (!pool) return false;
+    const [rows] = await pool.query('SELECT collection_name, data_json FROM system_store');
+    if (Array.isArray(rows) && rows.length > 0) {
+      for (const row of rows) {
+        try {
+          const parsed = JSON.parse(row.data_json);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            store[row.collection_name] = parsed;
+          }
+        } catch (e) {}
+      }
+      return true;
+    }
+  } catch (err) {
+    // Fallback to disk if MySQL table not available
+  }
+  return false;
+}
+
+function saveToDisk(store, targetCollection = null) {
   try {
     const dataToSave = {};
     for (let key in store) {
       if (Array.isArray(store[key])) {
         dataToSave[key] = store[key];
+        if (!targetCollection || targetCollection === key) {
+          saveToMySQL(key, store[key]).catch(() => {});
+        }
       }
     }
     fs.writeFileSync(DATA_FILE, JSON.stringify(dataToSave, null, 2), 'utf8');
@@ -36,13 +76,15 @@ function loadFromDisk(store) {
         }
       }
     }
+    // Attempt loading from MySQL asynchronously
+    loadFromMySQL(store).catch(() => {});
   } catch (err) {
     // Ignore error
   }
 }
 
 const mockStore = {
-  isMock: false, // Will be set to true by db.js if MongoDB is offline
+  isMock: true, // Default to true: uses Hostinger MySQL / unified store without MongoDB Atlas
 
   users: [
     {

@@ -1,0 +1,146 @@
+# ==============================================================================
+# Pranidha International Kindergarten - Hostinger Production .htaccess
+# Optimized for Apache / LiteSpeed Web Server on Hostinger hPanel & cPanel
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Security & Directory Browsing Protections
+# ------------------------------------------------------------------------------
+Options -Indexes -MultiViews
+ServerSignature Off
+
+# Block sensitive files from being accessed directly via browser
+<FilesMatch "(^\.env|\.git|\.sql$|\.jsonl$|package\.json|package-lock\.json|mockData\.json)">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# ------------------------------------------------------------------------------
+# 2. HTTP Security Headers
+# ------------------------------------------------------------------------------
+<IfModule mod_headers.c>
+    # Prevent clickjacking attacks
+    Header always set X-Frame-Options "SAMEORIGIN"
+    
+    # Prevent MIME type sniffing
+    Header always set X-Content-Type-Options "nosniff"
+    
+    # Enable Cross-Site Scripting (XSS) filter
+    Header always set X-XSS-Protection "1; mode=block"
+    
+    # Control referrer information sent in requests
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # Enable HTTP Strict Transport Security (HSTS)
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
+</IfModule>
+
+# ------------------------------------------------------------------------------
+# 3. GZIP / Deflate Output Compression (Speed Optimization)
+# ------------------------------------------------------------------------------
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# ------------------------------------------------------------------------------
+# 4. Accurate MIME Types for Modern Web & Vite ES Modules
+# ------------------------------------------------------------------------------
+<IfModule mod_mime.c>
+    AddType application/javascript .js .mjs
+    AddType text/css .css
+    AddType application/json .json
+    AddType image/svg+xml .svg .svgz
+    AddType image/webp .webp
+    AddType font/woff2 .woff2
+    AddType font/woff .woff
+    AddType application/pdf .pdf
+</IfModule>
+
+# ------------------------------------------------------------------------------
+# 5. Browser Caching & Cache-Control
+# ------------------------------------------------------------------------------
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresDefault "access plus 1 month"
+
+    # HTML - Never cache index.html so updates load immediately
+    ExpiresByType text/html "access plus 0 seconds"
+
+    # CSS & JavaScript - 1 Year Cache (Vite hashes bundle names)
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType text/javascript "access plus 1 year"
+
+    # Images & Media
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+
+    # Fonts
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType application/font-woff "access plus 1 year"
+
+    # Documents
+    ExpiresByType application/pdf "access plus 1 month"
+</IfModule>
+
+<IfModule mod_headers.c>
+    # Prevent caching of HTML documents
+    <FilesMatch "\.(html|htm)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires 0
+    </FilesMatch>
+
+    # Cache immutable static assets aggressively
+    <FilesMatch "\.(js|css|webp|png|jpg|jpeg|gif|svg|woff|woff2)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+</IfModule>
+
+# ------------------------------------------------------------------------------
+# 6. URL Rewriting, HTTPS Enforcement, and Single Page App (SPA) Routing
+# ------------------------------------------------------------------------------
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # 6.1 Force HTTPS Redirection on Hostinger
+    RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # 6.2 Pass-through /api and /uploads to Node.js Backend
+    RewriteRule ^api(/.*)?$ - [L]
+    RewriteRule ^uploads(/.*)?$ - [L]
+
+    # 6.3 If requested resource is an existing file, directory, or link, serve it directly
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d [OR]
+    RewriteCond %{REQUEST_FILENAME} -l
+    RewriteRule ^ - [L]
+
+    # 6.4 SPA Fallback: Route all client-side navigation (e.g. /admin, /parent, /courses) to index.html
+    RewriteRule ^ index.html [L]
+</IfModule>

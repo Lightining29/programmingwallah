@@ -55,8 +55,8 @@ router.post('/create', uploadAdmissions.single('photo'), async (req, res) => {
   if (!studentDetails.name || !parentDetails.email) {
     return res.status(400).json({ success: false, message: 'Student name and parent email are required.' });
   }
-  if (!['cash', 'razorpay'].includes(method)) {
-    return res.status(400).json({ success: false, message: "Payment method must be 'cash' or 'razorpay'." });
+  if (!['cash', 'razorpay', 'upi'].includes(method)) {
+    return res.status(400).json({ success: false, message: "Payment method must be 'cash', 'upi', or 'razorpay'." });
   }
 
   const paymentRef = genPaymentRef();

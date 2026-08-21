@@ -16,11 +16,11 @@ const AdmissionSchema = new mongoose.Schema({
     }
   },
   parentDetails: {
-    fatherName: { type: String, required: true },
-    motherName: { type: String, required: true },
+    fatherName: { type: String, default: '' },
+    motherName: { type: String, default: '' },
     email: { type: String, required: true },
-    phone: { type: String, required: true },
-    address: { type: String, required: true }
+    phone: { type: String, default: '' },
+    address: { type: String, default: '' }
   },
   documents: {
     birthCertificate: { type: String },
