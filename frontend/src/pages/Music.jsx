@@ -295,7 +295,6 @@ export default function Music() {
   const [selectedPlaylistId, setSelectedPlaylistId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState('All');
-  const [selectedMood, setSelectedMood] = useState('All');
 
   // ── Ambience Layer Mixer State ──
   const [ambientVolumes, setAmbientVolumes] = useState({ rain: 0, cafe: 0, fire: 0 });
@@ -447,7 +446,7 @@ export default function Music() {
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (['input', 'textarea', 'select'].includes(document.activeElement.tagName.toLowerCase())) {
+      if (['input', 'textarea', 'select'].includes(document.activeElement?.tagName?.toLowerCase())) {
         return;
       }
       if (e.code === 'Space') {
@@ -679,10 +678,6 @@ export default function Music() {
       list = list.filter(t => t.genre.toLowerCase() === selectedGenre.toLowerCase());
     }
 
-    if (selectedMood !== 'All') {
-      list = list.filter(t => t.vibe?.toLowerCase().includes(selectedMood.toLowerCase()));
-    }
-
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(t => 
@@ -695,7 +690,7 @@ export default function Music() {
     }
 
     return list;
-  }, [tracks, activeView, selectedPlaylistId, selectedGenre, selectedMood, searchQuery, favoriteTrackIds, playlists]);
+  }, [tracks, activeView, selectedPlaylistId, selectedGenre, searchQuery, favoriteTrackIds, playlists]);
 
   const selectedPlaylist = playlists.find(p => p.id === selectedPlaylistId);
 
@@ -814,7 +809,7 @@ export default function Music() {
               onClick={() => { setActiveView('all'); setSelectedPlaylistId(null); }}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                 activeView === 'all' 
-                  ? 'bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 shadow-lg font-black scale-102' 
+                  ? 'bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 shadow-lg font-black' 
                   : 'text-slate-300 hover:bg-white/5 hover:text-white'
               }`}
             >
@@ -827,7 +822,7 @@ export default function Music() {
               onClick={() => { setActiveView('favorites'); setSelectedPlaylistId(null); }}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                 activeView === 'favorites' 
-                  ? 'bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-lg font-black scale-102' 
+                  ? 'bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-lg font-black' 
                   : 'text-slate-300 hover:bg-white/5 hover:text-white'
               }`}
             >
@@ -840,7 +835,7 @@ export default function Music() {
               onClick={() => { setActiveView('drive'); setSelectedPlaylistId(null); }}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                 activeView === 'drive' 
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg font-black scale-102' 
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg font-black' 
                   : 'text-slate-300 hover:bg-white/5 hover:text-white'
               }`}
             >
@@ -855,7 +850,7 @@ export default function Music() {
               onClick={() => { setActiveView('ambience'); setSelectedPlaylistId(null); }}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                 activeView === 'ambience' 
-                  ? 'bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950 shadow-lg font-black scale-102' 
+                  ? 'bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950 shadow-lg font-black' 
                   : 'text-slate-300 hover:bg-white/5 hover:text-white'
               }`}
             >
@@ -1120,7 +1115,7 @@ export default function Music() {
                 onClick={() => setSelectedGenre(genre)}
                 className={`px-4 py-2 rounded-2xl transition-all whitespace-nowrap cursor-pointer ${
                   selectedGenre === genre
-                    ? 'bg-amber-400 text-slate-950 font-black shadow-lg shadow-amber-400/20 scale-105'
+                    ? 'bg-amber-400 text-slate-950 font-black shadow-lg shadow-amber-400/20'
                     : 'bg-[#10141d] hover:bg-white/10 text-slate-300 border border-white/10'
                 }`}
               >
@@ -1351,30 +1346,28 @@ export default function Music() {
 
       </div>
 
-      {/* ── 8. PERSISTENT MODERN GLASS PLAYER BAR ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0d1017]/95 backdrop-blur-2xl border-t border-white/15 px-4 sm:px-8 py-3.5 shadow-[0_-20px_50px_rgba(0,0,0,0.8)]">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      {/* ── 8. PERSISTENT SLEEK BOTTOM PLAYER BAR ── */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0d1017]/95 backdrop-blur-2xl border-t border-white/15 px-4 sm:px-8 py-3 shadow-[0_-20px_50px_rgba(0,0,0,0.8)]">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
           
-          {/* Track Info (Left) */}
-          <div className="flex items-center gap-3.5 w-full md:w-1/4">
-            <div className="relative group shrink-0">
+          {/* Track Info (Left) - STRICT SIZE TO PREVENT IMAGE OVERFLOW */}
+          <div className="flex items-center gap-3 w-full md:w-1/4 shrink-0">
+            <div className="relative group shrink-0 w-12 h-12">
               <img
                 src={currentTrack?.coverArt}
                 alt="Track Thumbnail"
-                className={`w-13 h-13 rounded-2xl object-cover shadow-lg border border-white/20 ${
-                  isPlaying ? 'rotate-1' : ''
-                }`}
+                className="w-12 h-12 max-w-[48px] max-h-[48px] rounded-xl object-cover shadow-lg border border-white/20 shrink-0"
               />
               {isPlaying && (
-                <div className="absolute inset-0 rounded-2xl bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Activity className="w-5 h-5 text-amber-300 animate-pulse" />
+                <div className="absolute inset-0 rounded-xl bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Activity className="w-4 h-4 text-amber-300 animate-pulse" />
                 </div>
               )}
             </div>
 
             <div className="truncate min-w-0 flex-1">
-              <h4 className="text-xs font-bold text-white truncate flex items-center gap-1.5">
-                <span>{currentTrack?.title}</span>
+              <h4 className="text-xs font-bold text-white truncate">
+                {currentTrack?.title}
               </h4>
               <p className="text-[10px] text-slate-400 truncate mt-0.5">
                 {currentTrack?.artist}
@@ -1383,7 +1376,7 @@ export default function Music() {
 
             <button
               onClick={(e) => toggleFavorite(currentTrack?.id, e)}
-              className={`p-2 rounded-xl hover:bg-white/10 transition-colors cursor-pointer ${
+              className={`p-2 rounded-xl hover:bg-white/10 transition-colors cursor-pointer shrink-0 ${
                 favoriteTrackIds.includes(currentTrack?.id) ? 'text-rose-500' : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -1392,13 +1385,13 @@ export default function Music() {
           </div>
 
           {/* Playback Controls & Scrubber Slider (Center) */}
-          <div className="flex flex-col items-center gap-2 w-full md:w-2/4">
-            <div className="flex items-center gap-5">
+          <div className="flex flex-col items-center gap-1.5 w-full md:w-2/4">
+            <div className="flex items-center gap-4">
               
               {/* Shuffle */}
               <button
                 onClick={() => setIsShuffle(!isShuffle)}
-                className={`p-2 rounded-xl transition-colors cursor-pointer ${
+                className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                   isShuffle ? 'text-amber-400 font-bold bg-amber-400/10' : 'text-slate-400 hover:text-white'
                 }`}
                 title="Shuffle Mode"
@@ -1409,7 +1402,7 @@ export default function Music() {
               {/* Prev */}
               <button
                 onClick={handlePrevTrack}
-                className="p-2 rounded-2xl hover:bg-white/10 text-slate-200 hover:text-white transition-colors cursor-pointer"
+                className="p-1.5 rounded-xl hover:bg-white/10 text-slate-200 hover:text-white transition-colors cursor-pointer"
                 title="Previous Track"
               >
                 <SkipBack className="w-4 h-4 fill-current" />
@@ -1419,7 +1412,7 @@ export default function Music() {
               <button
                 onClick={togglePlay}
                 disabled={isBuffering}
-                className="w-11 h-11 rounded-full bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300 hover:to-orange-300 text-slate-950 flex items-center justify-center shadow-xl shadow-amber-500/30 transition-transform hover:scale-110 active:scale-95 cursor-pointer disabled:opacity-75"
+                className="w-10 h-10 rounded-full bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300 hover:to-orange-300 text-slate-950 flex items-center justify-center shadow-xl shadow-amber-500/30 transition-transform hover:scale-110 active:scale-95 cursor-pointer disabled:opacity-75"
               >
                 {isBuffering ? (
                   <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
@@ -1433,7 +1426,7 @@ export default function Music() {
               {/* Next */}
               <button
                 onClick={handleNextTrack}
-                className="p-2 rounded-2xl hover:bg-white/10 text-slate-200 hover:text-white transition-colors cursor-pointer"
+                className="p-1.5 rounded-xl hover:bg-white/10 text-slate-200 hover:text-white transition-colors cursor-pointer"
                 title="Next Track"
               >
                 <SkipForward className="w-4 h-4 fill-current" />
@@ -1446,7 +1439,7 @@ export default function Music() {
                   else if (repeatMode === 'all') setRepeatMode('one');
                   else setRepeatMode('off');
                 }}
-                className={`p-2 rounded-xl transition-colors cursor-pointer ${
+                className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                   repeatMode !== 'off' ? 'text-amber-400 font-bold bg-amber-400/10' : 'text-slate-400 hover:text-white'
                 }`}
                 title={`Repeat: ${repeatMode}`}
@@ -1456,8 +1449,8 @@ export default function Music() {
             </div>
 
             {/* Scrubber Progress Slider */}
-            <div className="w-full flex items-center gap-2.5 text-[10px] font-mono text-slate-400">
-              <span className="w-9 text-right font-medium">{formatTime(currentTime)}</span>
+            <div className="w-full flex items-center gap-2 text-[10px] font-mono text-slate-400">
+              <span className="w-8 text-right font-medium">{formatTime(currentTime)}</span>
               <input
                 type="range"
                 min={0}
@@ -1466,12 +1459,12 @@ export default function Music() {
                 onChange={handleSeek}
                 className="flex-1 h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-amber-400 focus:outline-none"
               />
-              <span className="w-9 font-medium">{formatTime(duration)}</span>
+              <span className="w-8 font-medium">{formatTime(duration)}</span>
             </div>
           </div>
 
           {/* Volume Control & Visualizer Toggle (Right) */}
-          <div className="flex items-center justify-end gap-3.5 w-full md:w-1/4">
+          <div className="flex items-center justify-end gap-3 w-full md:w-1/4 shrink-0">
             
             {/* Volume Control */}
             <div className="flex items-center gap-2">
@@ -1496,14 +1489,14 @@ export default function Music() {
                   setVolume(parseInt(e.target.value));
                   setIsMuted(false);
                 }}
-                className="w-24 h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-amber-400"
+                className="w-20 h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-amber-400"
               />
             </div>
 
             {/* Expand Visualizer Modal */}
             <button
               onClick={() => setIsFullscreenVisualizer(true)}
-              className="p-2.5 rounded-2xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white border border-white/10 transition-all cursor-pointer hover:scale-105"
+              className="p-2 rounded-xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white border border-white/10 transition-all cursor-pointer hover:scale-105"
               title="Expand Visualizer"
             >
               <Maximize2 className="w-4 h-4" />
@@ -1770,7 +1763,7 @@ export default function Music() {
 
           {/* Center Graphic */}
           <div className="text-center space-y-6 max-w-md my-auto">
-            <div className="relative mx-auto w-64 h-64 sm:w-84 sm:h-84">
+            <div className="relative mx-auto w-64 h-64 sm:w-80 sm:h-80">
               <div className={`absolute inset-0 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-indigo-600 blur-3xl opacity-60 ${
                 isPlaying ? 'animate-pulse' : 'opacity-20'
               }`} />
