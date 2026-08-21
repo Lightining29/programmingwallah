@@ -7,7 +7,7 @@ export const AppleTreeLogo = ({ className = '' }) => (
       {/* 1. Apple Top Arches + Stalk & Green Leaf SVG */}
       <svg
         viewBox="0 0 160 40"
-        className="w-36 h-9 -mb-1"
+        className="w-28 h-7 -mb-0.5"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
@@ -45,13 +45,13 @@ export const AppleTreeLogo = ({ className = '' }) => (
       {/* 2. Main Brand Typography: "apple" (Crimson Red) + "tree" (Leaf Green) */}
       <div className="flex items-baseline leading-none tracking-tight -mt-0.5">
         <span
-          className="text-[30px] font-black text-[#c5221f] lowercase"
+          className="text-[22px] font-black text-[#c5221f] lowercase"
           style={{ fontFamily: 'Georgia, serif', letterSpacing: '-0.03em' }}
         >
           apple
         </span>
         <span
-          className="text-[30px] font-black text-[#48a23f] lowercase"
+          className="text-[22px] font-black text-[#48a23f] lowercase"
           style={{ fontFamily: 'Georgia, serif', letterSpacing: '-0.03em' }}
         >
           tree
@@ -61,7 +61,7 @@ export const AppleTreeLogo = ({ className = '' }) => (
       {/* 3. Sub-wordmark: "INFOTECH" in bold italic black */}
       <div className="w-full flex justify-end -mt-0.5 pr-0.5">
         <span
-          className="text-[10px] font-black tracking-[0.24em] text-[#18181b] italic uppercase"
+          className="text-[8px] font-black tracking-[0.24em] text-[#18181b] italic uppercase"
           style={{ fontFamily: 'system-ui, sans-serif' }}
         >
           INFOTECH
@@ -70,7 +70,7 @@ export const AppleTreeLogo = ({ className = '' }) => (
     </div>
 
     {/* 4. ISO Certification */}
-    <span className="text-[8.5px] font-bold tracking-wider text-[#1e88e5] mt-1 pl-1">
+    <span className="text-[7.5px] font-bold tracking-wider text-[#1e88e5] mt-0.5 pl-0.5">
       ISO 9001:2015 CERTIFIED
     </span>
   </div>
