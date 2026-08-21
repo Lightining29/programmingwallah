@@ -44,7 +44,6 @@ export default function Admissions() {
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
 
-  const [birthCertFile, setBirthCertFile] = useState(null);
   const [photoFile, setPhotoFile] = useState(null);
 
   const [submitting, setSubmitting] = useState(false);
@@ -59,17 +58,14 @@ export default function Admissions() {
 
   const handleApply = async (e) => {
     e.preventDefault();
-    if (!birthCertFile || !photoFile) {
-      alert('Please upload both the Birth Certificate and passport photo.');
-      return;
-    }
     setSubmitting(true);
 
     const formData = new FormData();
     formData.append('studentDetails', JSON.stringify({ name: studentName, dateOfBirth: dob, gender, class: selectedClass }));
     formData.append('parentDetails', JSON.stringify({ fatherName, motherName, email, phone, address }));
-    formData.append('birthCertificate', birthCertFile);
-    formData.append('photo', photoFile);
+    if (photoFile) {
+      formData.append('photo', photoFile);
+    }
 
     try {
       const res = await fetch('/api/public/admissions/apply', {
@@ -400,21 +396,10 @@ export default function Admissions() {
                   </p>
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-600">Child's Birth Certificate (PDF only)</label>
+                    <div className="space-y-2 sm:col-span-2">
+                      <label className="text-xs font-bold text-slate-600">Child's Passport Size Photo (JPG/JPEG/PNG) (Optional)</label>
                       <input
                         type="file"
-                       
-                        accept=".pdf"
-                        onChange={(e) => setBirthCertFile(e.target.files[0])}
-                        className="w-full p-3 text-xs border border-orange-100 outline-none bg-slate-50 focus:border-brandCoral rounded-xl"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-600">Child's Passport Size Photo (JPG/JPEG/PNG)</label>
-                      <input
-                        type="file"
-                        required
                         accept=".jpg,.jpeg,.png"
                         onChange={(e) => setPhotoFile(e.target.files[0])}
                         className="w-full p-3 text-xs border border-orange-100 outline-none bg-slate-50 focus:border-brandCoral rounded-xl"

@@ -259,8 +259,7 @@ router.get('/admissions', async (req, res) => {
       if (!obj.documents) return obj;
       const mappedDocs = { ...obj.documents };
       const documentFields = [
-        'birthCertificate', 'photo', 'reportCard', 'transferCertificate',
-        'aadhaarCard', 'fatherAadhaarCard', 'motherAadhaarCard', 'addressProof'
+        'photo', 'reportCard', 'addressProof'
       ];
       documentFields.forEach(field => {
         const doc = obj.documentData?.[field];
@@ -537,13 +536,8 @@ router.delete('/students/:id', async (req, res) => {
 
 // Create Admission & Student directly (Admin-only)
 router.post('/admissions/create', uploadAdmissions.fields([
-  { name: 'birthCertificate', maxCount: 1 },
   { name: 'photo', maxCount: 1 },
   { name: 'reportCard', maxCount: 1 },
-  { name: 'transferCertificate', maxCount: 1 },
-  { name: 'aadhaarCard', maxCount: 1 },
-  { name: 'fatherAadhaarCard', maxCount: 1 },
-  { name: 'motherAadhaarCard', maxCount: 1 },
   { name: 'addressProof', maxCount: 1 }
 ]), async (req, res) => {
   let { studentDetails, parentDetails, password, admissionFee, addressProofType, paymentPlan = 'installments' } = req.body;
@@ -593,13 +587,8 @@ router.post('/admissions/create', uploadAdmissions.fields([
     const appNo = `PRN-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
     const generatedStudentId = `STD-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-    const birthCertificateFile = req.files?.['birthCertificate']?.[0];
     const photoFile = req.files?.['photo']?.[0];
     const reportCardFile = req.files?.['reportCard']?.[0];
-    const transferCertificateFile = req.files?.['transferCertificate']?.[0];
-    const aadhaarCardFile = req.files?.['aadhaarCard']?.[0];
-    const fatherAadhaarCardFile = req.files?.['fatherAadhaarCard']?.[0];
-    const motherAadhaarCardFile = req.files?.['motherAadhaarCard']?.[0];
     const addressProofFile = req.files?.['addressProof']?.[0];
 
     const isMock = mockStore.isMock;
@@ -620,27 +609,17 @@ router.post('/admissions/create', uploadAdmissions.fields([
     };
 
     const documents = {
-      birthCertificate: birthCertificateFile ? `/api/admin/admissions/document/${admissionId}/birthCertificate` : '',
       photo: photoFile ? `/api/admin/admissions/document/${admissionId}/photo` : '',
       parentIdProof: 'id_proof_uploaded.pdf',
       reportCard: reportCardFile ? `/api/admin/admissions/document/${admissionId}/reportCard` : '',
-      transferCertificate: transferCertificateFile ? `/api/admin/admissions/document/${admissionId}/transferCertificate` : '',
-      aadhaarCard: aadhaarCardFile ? `/api/admin/admissions/document/${admissionId}/aadhaarCard` : '',
-      fatherAadhaarCard: fatherAadhaarCardFile ? `/api/admin/admissions/document/${admissionId}/fatherAadhaarCard` : '',
-      motherAadhaarCard: motherAadhaarCardFile ? `/api/admin/admissions/document/${admissionId}/motherAadhaarCard` : '',
       addressProofType: addressProofType || '',
       addressProof: addressProofFile ? `/api/admin/admissions/document/${admissionId}/addressProof` : ''
     };
 
     const documentData = {
-      birthCertificate: makeDocData(birthCertificateFile),
       photo: makeDocData(photoFile),
       parentIdProof: undefined,
       reportCard: makeDocData(reportCardFile),
-      transferCertificate: makeDocData(transferCertificateFile),
-      aadhaarCard: makeDocData(aadhaarCardFile),
-      fatherAadhaarCard: makeDocData(fatherAadhaarCardFile),
-      motherAadhaarCard: makeDocData(motherAadhaarCardFile),
       addressProof: makeDocData(addressProofFile)
     };
 

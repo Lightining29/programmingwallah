@@ -161,17 +161,58 @@ export default function Login() {
 
   const handleSelectPortal = (portal) => {
     setSelectedPortalId(portal.id);
-    setEmail('');
-    setPassword('');
+    setEmail(portal.email);
+    setPassword(portal.password);
     setValErr('');
+  };
+
+  const handleQuickLogin = async (portal) => {
+    setValErr('');
+    setSelectedPortalId(portal.id);
+    setEmail(portal.email);
+    setPassword(portal.password);
+    const res = await login(portal.email, portal.password);
+    if (res.success) {
+      confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+      if (portal.id === 'student')      navigate('/lms/dashboard');
+      else if (portal.id === 'parent')  navigate('/dashboard/parent');
+      else if (portal.id === 'teacher') navigate('/dashboard/teacher');
+      else if (portal.id === 'admin')   navigate('/dashboard/admin');
+      else navigate('/lms/dashboard');
+    } else {
+      setValErr(res.message || `Quick login to ${portal.name} failed.`);
+    }
+  };
+
+  const handleQuickStudentSignUp = async () => {
+    setValErr('');
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    const quickName = `Student ${randomSuffix}`;
+    const quickEmail = `student_${Date.now().toString().slice(-6)}@pranidha.edu`;
+    const quickPass = 'student123';
+
+    setName(quickName);
+    setEmail(quickEmail);
+    setPassword(quickPass);
+    setConfirm(quickPass);
+
+    const res = await register(quickName, quickEmail, quickPass, 'user');
+    if (res.success) {
+      confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+      navigate('/lms/dashboard');
+    } else {
+      setValErr(res.message || '1-Click Sign up failed.');
+    }
   };
 
   const handleLogin = async (e) => {
     e.preventDefault(); setValErr('');
-    const res = await login(email, password);
+    const loginEmail = email.trim() || selectedPortal.email;
+    const loginPass = password || selectedPortal.password;
+    const res = await login(loginEmail, loginPass);
     if (res.success) {
       confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
-      if (selectedPortalId === 'student')      navigate('/dashboard/student');
+      if (selectedPortalId === 'student')      navigate('/lms/dashboard');
       else if (selectedPortalId === 'parent')  navigate('/dashboard/parent');
       else if (selectedPortalId === 'teacher') navigate('/dashboard/teacher');
       else if (selectedPortalId === 'admin')   navigate('/dashboard/admin');
@@ -179,7 +220,7 @@ export default function Login() {
         if (res.user.role === 'admin')        navigate('/dashboard/admin');
         else if (res.user.role === 'teacher') navigate('/dashboard/teacher');
         else if (res.user.role === 'parent')  navigate('/dashboard/parent');
-        else navigate('/dashboard/student');
+        else navigate('/lms/dashboard');
       }
     } else {
       setValErr(res.message || 'Login failed. Check your credentials.');
@@ -405,13 +446,13 @@ export default function Login() {
 
               {/* Selected Portal Highlight Banner */}
               <div 
-                className="mt-3 p-3.5 rounded-2xl border flex items-center justify-between gap-3 transition-all"
+                className="mt-3 p-3.5 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-3 transition-all"
                 style={{
                   backgroundColor: isDark ? 'rgba(30,41,59,0.5)' : 'rgba(248,250,252,0.9)',
                   borderColor: `${selectedPortal.accentColor}40`
                 }}
               >
-                <div className="flex items-center gap-3 w-full">
+                <div className="flex items-center gap-3 w-full sm:w-auto">
                   <div 
                     className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0"
                     style={{ background: `linear-gradient(135deg, ${selectedPortal.accentColor}, ${accentB})` }}
@@ -431,7 +472,46 @@ export default function Login() {
                     </p>
                   </div>
                 </div>
+
+                {/* 1-Click Instant Login Button */}
+                <button
+                  type="button"
+                  onClick={() => handleQuickLogin(selectedPortal)}
+                  disabled={loading}
+                  className="w-full sm:w-auto px-4 py-2 rounded-xl text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-md hover:scale-105 active:scale-95 transition-all shrink-0 cursor-pointer"
+                  style={{
+                    background: `linear-gradient(135deg, ${selectedPortal.accentColor}, ${accentB})`,
+                    boxShadow: `0 4px 12px ${selectedPortal.accentColor}40`
+                  }}
+                >
+                  <Zap className="w-3.5 h-3.5 text-amber-200 fill-amber-200 animate-pulse"/>
+                  <span>1-Click Login</span>
+                </button>
               </div>
+            </div>
+          )}
+
+          {/* 1-Click Student Sign Up Banner on Register Tab */}
+          {isRegister && (
+            <div className="mb-4 p-3 rounded-2xl border flex items-center justify-between gap-3 bg-amber-500/10 border-amber-500/30">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <Sparkles className="w-4 h-4"/>
+                </div>
+                <div>
+                  <p className="text-xs font-black" style={{ color: textClr }}>Need Instant Access?</p>
+                  <p className="text-[11px] text-slate-500 leading-tight">Create & launch your student account with 1 click</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleQuickStudentSignUp}
+                disabled={loading}
+                className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-extrabold text-xs shadow-md flex items-center gap-1 shrink-0 cursor-pointer transition-all"
+              >
+                <Zap className="w-3.5 h-3.5 text-white fill-white"/>
+                <span>1-Click Signup</span>
+              </button>
             </div>
           )}
 
