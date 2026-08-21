@@ -1,29 +1,15 @@
 import React from 'react';
 
-// Apple Tree Infotech Logo Component
+// Apple Tree Infotech Logo Component using the official logo
 export const AppleTreeLogo = ({ className = '' }) => (
   <div className={`flex flex-col items-start select-none ${className}`}>
-    <div className="flex items-baseline relative">
-      {/* Little green leaf above the t */}
-      <svg
-        className="absolute -top-3 left-[78px] w-6 h-6 text-[#43a047]"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-      >
-        <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z" />
-      </svg>
-      <span className="text-3xl font-extrabold tracking-tight text-[#d32f2f] font-sans" style={{ fontFamily: 'system-ui, sans-serif' }}>
-        apple
-      </span>
-      <span className="text-3xl font-bold tracking-tight text-[#2e7d32] font-sans ml-0.5" style={{ fontFamily: 'system-ui, sans-serif' }}>
-        tree
-      </span>
-    </div>
-    <span className="text-xs font-black tracking-[0.28em] text-slate-800 uppercase mt-0.5" style={{ fontFamily: 'system-ui, sans-serif' }}>
-      INFOTECH
-    </span>
-    <span className="text-[10px] font-bold tracking-wider text-[#1e88e5] mt-0.5">
-      ISO 9001:2015
+    <img
+      src="/appletree_logo.png"
+      alt="Apple Tree Infotech Logo"
+      className="h-16 sm:h-20 w-auto object-contain drop-shadow-sm"
+    />
+    <span className="text-[9.5px] font-bold tracking-wider text-[#1e88e5] mt-1 pl-1">
+      ISO 9001:2015 CERTIFIED
     </span>
   </div>
 );
