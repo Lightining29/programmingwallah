@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, ClipboardList, Users, User, CreditCard, Bell, Image as ImageIcon, MessageCircle, CheckCircle, XCircle, Trash2, Plus, Clock, Search, FileText, Printer, Edit, Download, Contact, X, Sparkles, BookOpen, Video, Wallet, Eye, EyeOff, Upload, AlertCircle, ChevronDown, ChevronUp, Play, Pause, RotateCcw, Award, ShieldCheck, Share2, Check, ExternalLink, Sun, CloudSun, Wind, Radio, Volume2, VolumeX, Send, Globe, SkipBack, SkipForward } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, Users, User, CreditCard, Bell, Image as ImageIcon, MessageCircle, CheckCircle, XCircle, Trash2, Plus, Clock, Search, FileText, Printer, Edit, Download, Contact, X, Sparkles, BookOpen, Video, Wallet, Eye, EyeOff, Upload, AlertCircle, ChevronDown, ChevronUp, Play, Pause, RotateCcw, Award, ShieldCheck, Share2, Check, ExternalLink, Sun, CloudSun, Wind, Radio, Volume2, VolumeX, Send, Globe, SkipBack, SkipForward, CloudRain, Droplets, MapPin, AlertTriangle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import ConfirmModal from '../components/ConfirmModal.jsx';
 import FeeStructureMaster from '../components/FeeStructureMaster.jsx';
@@ -197,6 +197,80 @@ export default function AdminDashboard() {
       audioRef.current.volume = newVol / 100;
     }
   };
+
+  // Live Ghaziabad, Vijaynagar Weather & Real-time Rain Alert State
+  const [liveWeather, setLiveWeather] = useState({
+    temp: 31,
+    condition: 'Partly Cloudy',
+    humidity: 55,
+    windSpeed: 12,
+    rain: 0,
+    rainAlert: '☀️ No Rain Alert • Clear Skies',
+    isRaining: false,
+    aqi: 115,
+    aqiLabel: 'MODERATE',
+    aqiColor: 'text-amber-300'
+  });
+
+  useEffect(() => {
+    const fetchLiveGhaziabadWeather = async () => {
+      try {
+        // Ghaziabad Vijaynagar coordinates: lat=28.6415, lon=77.4420
+        const [weatherRes, aqiRes] = await Promise.all([
+          fetch('https://api.open-meteo.com/v1/forecast?latitude=28.6415&longitude=77.4420&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,weather_code,wind_speed_10m&timezone=Asia%2FKolkata'),
+          fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=28.6415&longitude=77.4420&current=us_aqi,pm2_5,pm10')
+        ]);
+
+        const weatherData = await weatherRes.json();
+        const aqiData = await aqiRes.json();
+
+        if (weatherData?.current) {
+          const cur = weatherData.current;
+          const code = cur.weather_code || 0;
+          let cond = 'Clear Sky';
+          if (code === 1 || code === 2 || code === 3) cond = 'Partly Cloudy';
+          else if (code >= 45 && code <= 48) cond = 'Foggy / Haze';
+          else if (code >= 51 && code <= 55) cond = 'Light Drizzle';
+          else if (code >= 61 && code <= 65) cond = 'Rain Showers';
+          else if (code >= 80 && code <= 82) cond = 'Heavy Rain';
+          else if (code >= 95) cond = 'Thunderstorm';
+
+          const rainAmt = cur.rain || cur.precipitation || cur.showers || 0;
+          const isRain = rainAmt > 0 || code >= 51;
+          const rainMsg = isRain
+            ? `🌧️ LIVE RAIN ALERT: ${rainAmt > 0 ? rainAmt + ' mm/h' : 'Active Precipitation'}`
+            : '☀️ Clear Skies • Zero Rain Detected';
+
+          let aqiVal = aqiData?.current?.us_aqi ? Math.round(aqiData.current.us_aqi) : 115;
+          let aqiLbl = 'MODERATE';
+          let aqiClr = 'text-amber-300';
+          if (aqiVal <= 50) { aqiLbl = 'GOOD'; aqiClr = 'text-emerald-300'; }
+          else if (aqiVal <= 100) { aqiLbl = 'MODERATE'; aqiClr = 'text-yellow-300'; }
+          else if (aqiVal <= 150) { aqiLbl = 'UNHEALTHY (SENSITIVE)'; aqiClr = 'text-orange-300'; }
+          else { aqiLbl = 'POOR / UNHEALTHY'; aqiClr = 'text-rose-300'; }
+
+          setLiveWeather({
+            temp: Math.round(cur.temperature_2m),
+            condition: cond,
+            humidity: cur.relative_humidity_2m,
+            windSpeed: Math.round(cur.wind_speed_10m),
+            rain: rainAmt,
+            rainAlert: rainMsg,
+            isRaining: isRain,
+            aqi: aqiVal,
+            aqiLabel: aqiLbl,
+            aqiColor: aqiClr
+          });
+        }
+      } catch (err) {
+        console.log('Live weather fetch error:', err);
+      }
+    };
+
+    fetchLiveGhaziabadWeather();
+    const interval = setInterval(fetchLiveGhaziabadWeather, 120000); // refresh every 2 mins
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     let interval;
@@ -2586,27 +2660,62 @@ export default function AdminDashboard() {
               {/* Bottom Left Column: Weather & AQI + Worldwide Radio + Real Pending Fees */}
               <div className="lg:col-span-5 space-y-4">
                 
-                {/* 1. Live Weather & AQI Widget */}
-                <div className="rounded-3xl bg-gradient-to-r from-amber-500 to-orange-500 text-white p-5 shadow-sm flex items-center justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider bg-black/20 px-2.5 py-0.5 rounded-full w-fit">
-                      <Sun className="w-3 h-3 text-yellow-200" />
-                      <span>Jaipur Campus Hub</span>
+                {/* 1. Live Weather & Rain Alert Widget (Ghaziabad Vijaynagar) */}
+                <div className={`rounded-3xl p-5 shadow-sm text-white flex flex-col justify-between space-y-3 transition-all ${
+                  liveWeather.isRaining 
+                    ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-slate-800 border border-blue-400/40' 
+                    : 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600'
+                }`}>
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider bg-black/25 px-2.5 py-1 rounded-full w-fit backdrop-blur-md">
+                        <MapPin className="w-3 h-3 text-yellow-300 animate-bounce" />
+                        <span>Ghaziabad, Vijaynagar</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
+                      </div>
+                      
+                      <div className="flex items-baseline gap-2 pt-1">
+                        <span className="text-3xl sm:text-4xl font-black">{liveWeather.temp}°C</span>
+                        <span className="text-xs font-bold text-amber-100 flex items-center gap-1">
+                          {liveWeather.isRaining ? <CloudRain className="w-3.5 h-3.5 text-blue-200" /> : <Sun className="w-3.5 h-3.5 text-yellow-200" />}
+                          {liveWeather.condition}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-white/90">
+                        Humidity {liveWeather.humidity}% • Wind {liveWeather.windSpeed} km/h
+                      </p>
                     </div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-black">28°C</span>
-                      <span className="text-xs font-bold text-amber-100">Sunny & Clear</span>
+
+                    {/* Live AQI Badge */}
+                    <div className="bg-black/30 backdrop-blur-md border border-white/20 p-2.5 rounded-2xl text-center space-y-0.5 min-w-[84px]">
+                      <div className="flex items-center justify-center gap-1 text-[9px] font-bold uppercase text-white/80">
+                        <Wind className="w-3 h-3 text-cyan-300" />
+                        <span>AQI {liveWeather.aqi}</span>
+                      </div>
+                      <span className={`text-[10px] font-black block leading-tight ${liveWeather.aqiColor}`}>
+                        {liveWeather.aqiLabel}
+                      </span>
+                      <span className="text-[8px] text-white/70 block">Vijaynagar</span>
                     </div>
-                    <p className="text-[10px] text-amber-100">Humidity 42% • Wind 12 km/h</p>
                   </div>
 
-                  <div className="bg-black/25 backdrop-blur-md border border-white/20 p-3 rounded-2xl text-center space-y-1">
-                    <div className="flex items-center justify-center gap-1 text-[9px] font-bold uppercase text-emerald-300">
-                      <Wind className="w-3 h-3" />
-                      <span>AQI 42</span>
+                  {/* Real-time Rain Alert Strip */}
+                  <div className={`p-2 rounded-xl flex items-center justify-between text-[10px] font-extrabold backdrop-blur-md border ${
+                    liveWeather.isRaining
+                      ? 'bg-rose-500/30 text-rose-100 border-rose-400/40 animate-pulse'
+                      : 'bg-black/20 text-white/95 border-white/10'
+                  }`}>
+                    <div className="flex items-center gap-1.5">
+                      {liveWeather.isRaining ? (
+                        <AlertTriangle className="w-3.5 h-3.5 text-rose-300 animate-spin" />
+                      ) : (
+                        <Droplets className="w-3.5 h-3.5 text-cyan-200" />
+                      )}
+                      <span>{liveWeather.rainAlert}</span>
                     </div>
-                    <span className="text-xs font-black text-emerald-300 block">GOOD</span>
-                    <span className="text-[8px] text-white/80 block">Clean Air Zone</span>
+                    <span className="text-[9px] bg-white/20 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider">
+                      LIVE
+                    </span>
                   </div>
                 </div>
 

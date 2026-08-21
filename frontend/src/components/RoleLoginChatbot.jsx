@@ -25,270 +25,87 @@ import {
   Calendar,
   Layers,
   LogOut,
-  CornerDownRight
+  CornerDownRight,
+  Printer,
+  CreditCard,
+  ShoppingBag,
+  Percent,
+  Check,
+  Search,
+  FileText
 } from 'lucide-react';
 
-const ROLE_KNOWLEDGE_BASE = [
+// Standard course catalogue
+const AVAILABLE_COURSES = [
   {
-    id: 'student',
-    icon: GraduationCap,
-    category: 'Student Portal',
-    badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-    question: '🎓 How do I log in as a Student / Learner?',
-    shortLabel: 'Student Portal',
-    answer: `**Student / Learner Login & LMS Guide:**
-1. Navigate to the **Login Page** (/login).
-2. Enter your registered **Email Address** and **Password** set during admission.
-3. You will be automatically routed to the **Student LMS Dashboard** (/dashboard/student).
-4. From here you can access full video lectures, test algorithms in the in-browser compiler, take quizzes, and track course completion.`,
-    actionText: 'Go to Student Login',
-    actionLink: '/login',
-    portalLink: '/dashboard/student',
-    portalText: 'Open Student LMS',
-    subQuestions: [
-      {
-        id: 'student-courses',
-        label: '📚 How to access enrolled courses in LMS?',
-        icon: BookOpen,
-        answer: `**Accessing Enrolled LMS Courses:**
-- Once logged in, open your **Student Dashboard** (/dashboard/student).
-- Go to the **"My Enrolled Courses"** tab to view your active tracks (Java Full Stack, MERN, Python).
-- Click on any course to resume video lessons, view course roadmaps, and download lecture notes.`,
-        actionText: 'Open LMS Dashboard',
-        actionLink: '/dashboard/student'
-      },
-      {
-        id: 'student-compiler',
-        label: '💻 How to practice Java & DSA in the Compiler?',
-        icon: Code2,
-        answer: `**DSA Practice & In-Browser Compiler:**
-- Head over to the **Practice Hub** (/practice).
-- Select from the **1000 DSA Challenge Bank** across arrays, trees, dynamic programming, and OOP.
-- Write your code directly inside the JDoodle online compiler and click **"Get AI Suggestions"** for automated feedback.`,
-        actionText: 'Open Practice Hub',
-        actionLink: '/practice'
-      },
-      {
-        id: 'student-cert',
-        label: '📜 How to download & verify my Certificate?',
-        icon: Award,
-        answer: `**Certificate Generation & Verification:**
-- Upon completing 100% of your course assignments, your completion certificate is issued by AppleTree Infotech.
-- You can download your official PDF directly from the Student Dashboard.
-- Anyone can verify its authenticity on the **Verification Page** (/verify-certificate) by entering the certificate number.`,
-        actionText: 'Verify a Certificate',
-        actionLink: '/verify-certificate'
-      },
-      {
-        id: 'student-rank',
-        label: '🏆 How do Quiz Scores & Leaderboards work?',
-        icon: Sparkles,
-        answer: `**Leaderboard & Streak Points:**
-- Take the weekly Java & DSA mini quizzes in the **Practice Hub** (/practice).
-- Correct answers increase your points and rank label (*Novice → Specialist → Grandmaster*).
-- Top 3 leaderboard candidates receive direct interview opportunities with hiring partners!`,
-        actionText: 'Take Weekly Quiz',
-        actionLink: '/practice'
-      }
-    ]
+    id: 'java-fullstack',
+    title: 'Java Full Stack Developer Masterclass',
+    price: 12000,
+    monthlyInstallment: 4000,
+    duration: '3 Months (Live + Lab)',
+    highlights: ['Core Java & OOPs', 'Spring Boot & Microservices', 'React.js & Tailwind CSS', 'SQL & Docker Deployment'],
+    badge: 'Bestseller'
   },
   {
-    id: 'admin',
-    icon: ShieldCheck,
-    category: 'Admin Portal',
-    badgeColor: 'bg-amber-100 text-amber-900 border-amber-200',
-    question: '🛡️ How do Admins log in & manage operations?',
-    shortLabel: 'Admin Portal',
-    answer: `**Master Admin Panel Access:**
-1. Visit the **Login Page** (/login).
-2. Enter your verified **Admin Administrator credentials**.
-3. You will land on the **Admin Dashboard** (/dashboard/admin).
-4. Admins have complete control over new admission approvals, course creation, faculty management, pending student dues, WhatsApp alerts, and certificate issuance.`,
-    actionText: 'Go to Admin Login',
-    actionLink: '/login',
-    portalLink: '/dashboard/admin',
-    portalText: 'Admin Dashboard',
-    subQuestions: [
-      {
-        id: 'admin-admissions',
-        label: '📝 How to review & approve new admissions?',
-        icon: Users,
-        answer: `**Reviewing Admissions Applications:**
-- Open **Admin Dashboard → Admissions & Reviews** tab.
-- Filter applications by *Pending*, *Approved*, or *Rejected*.
-- Review submitted candidate details, set an initial parent/student password, and click **Approve** to generate LMS access credentials.`,
-        actionText: 'Admissions Desk',
-        actionLink: '/dashboard/admin'
-      },
-      {
-        id: 'admin-fees',
-        label: '💳 How to manage student fee invoices & WhatsApp alerts?',
-        icon: Wallet,
-        answer: `**Student Fee Billing & Due Alerts:**
-- Open **Admin Dashboard → Fees & Finance** tab.
-- Click **"Create Student Fee Invoice"** to auto-assign monthly installment breakdowns by course.
-- Use the **"Send WhatsApp Reminder"** button next to any pending student record to send payment links with 1-click.`,
-        actionText: 'Fee Ledger',
-        actionLink: '/dashboard/admin'
-      },
-      {
-        id: 'admin-certs',
-        label: '🎓 How to issue verified digital certificates?',
-        icon: Award,
-        answer: `**Issuing Official Certificates:**
-- Go to the **Certificate Generator** tab in Admin Dashboard.
-- Select from the dropdown of enrolled students to auto-fill their course and duration.
-- Enter/generate the certificate serial number (e.g. *ATI-06-02-ST1002*) and issue a verified digital certificate.`,
-        actionText: 'Certificate Desk',
-        actionLink: '/dashboard/admin'
-      }
-    ]
+    id: 'mern-stack',
+    title: 'MERN Stack Web Dev Pro',
+    price: 10000,
+    monthlyInstallment: 3333,
+    duration: '3 Months (Hands-on)',
+    highlights: ['MongoDB & Mongoose', 'Express.js REST APIs', 'React 18 & Next.js', 'Node.js Backend & JWT Auth'],
+    badge: 'Popular'
   },
   {
-    id: 'teacher',
-    icon: BookOpen,
-    category: 'Teacher Portal',
-    badgeColor: 'bg-blue-100 text-blue-800 border-blue-200',
-    question: '👨‍🏫 How do Teachers / Faculty log in?',
-    shortLabel: 'Teacher Portal',
-    answer: `**Teacher & Faculty Portal Access:**
-1. Visit the **Login Page** (/login).
-2. Enter the instructor credentials assigned by the administrator.
-3. Access your **Teacher Dashboard** (/dashboard/teacher).
-4. Instructors can mark daily batch attendance, review student code submissions, upload study materials, and post class announcements.`,
-    actionText: 'Go to Teacher Login',
-    actionLink: '/login',
-    portalLink: '/dashboard/teacher',
-    portalText: 'Teacher Dashboard',
-    subQuestions: [
-      {
-        id: 'teacher-attendance',
-        label: '📅 How to mark batch attendance?',
-        icon: Calendar,
-        answer: `**Marking Batch Attendance:**
-- In the **Teacher Dashboard**, select your active batch (e.g. *Java Enterprise Morning*).
-- Mark students as *Present*, *Absent*, or *Late* with 1-click and save the record.`,
-        actionText: 'Teacher Portal',
-        actionLink: '/dashboard/teacher'
-      },
-      {
-        id: 'teacher-materials',
-        label: '📂 How to upload study materials & slides?',
-        icon: Layers,
-        answer: `**Uploading Study Materials:**
-- Open **Teacher Dashboard → Materials** tab.
-- Attach PDF slides, problem sheets, or GitHub repo links for your batch students.`,
-        actionText: 'Teacher Portal',
-        actionLink: '/dashboard/teacher'
-      }
-    ]
+    id: 'python-datascience',
+    title: 'Python & AI / Data Science Specialist',
+    price: 11000,
+    monthlyInstallment: 3666,
+    duration: '3 Months (Projects)',
+    highlights: ['Python 3 & Pandas', 'NumPy & Data Visualization', 'Machine Learning Models', 'FastAPI & AI Integration'],
+    badge: 'Hot Career'
   },
   {
-    id: 'parent',
-    icon: Users,
-    category: 'Parent Portal',
-    badgeColor: 'bg-purple-100 text-purple-800 border-purple-200',
-    question: '👨‍👩‍👦 How do Parents log in & view child progress?',
-    shortLabel: 'Parent Portal',
-    answer: `**Parent Portal & Fee Tracking:**
-1. Visit the **Login Page** (/login).
-2. Log in using the Parent credentials sent via SMS/Email during admission.
-3. Access the **Parent Portal** (/dashboard/parent).
-4. Parents can view real-time attendance percentage, pending fee installment receipts, upcoming deadlines, and schedule parent-teacher meetings.`,
-    actionText: 'Go to Parent Login',
-    actionLink: '/login',
-    portalLink: '/dashboard/parent',
-    portalText: 'Parent Portal',
-    subQuestions: [
-      {
-        id: 'parent-dues',
-        label: '💳 How to check & pay pending installment fees?',
-        icon: Wallet,
-        answer: `**Fee Receipts & Installment Payments:**
-- Inside the **Parent Portal**, view the **Fees Ledger**.
-- See total course fee, amount paid, and upcoming installment due dates.
-- Click **"Pay Online"** to settle payments securely via Razorpay (UPI, Card, Netbanking).`,
-        actionText: 'Parent Portal',
-        actionLink: '/dashboard/parent'
-      },
-      {
-        id: 'parent-attendance',
-        label: '📈 How to track attendance percentage & leaves?',
-        icon: Calendar,
-        answer: `**Tracking Student Attendance:**
-- Check the **Attendance Progress Gauge** in the Parent Portal.
-- View monthly attendance graphs and reason notes for any flagged absences.`,
-        actionText: 'Parent Portal',
-        actionLink: '/dashboard/parent'
-      }
-    ]
+    id: 'frontend-spec',
+    title: 'Frontend & UI/UX Specialist',
+    price: 7500,
+    monthlyInstallment: 3750,
+    duration: '2 Months (Fast Track)',
+    highlights: ['HTML5 & Modern CSS3', 'Tailwind CSS & Animations', 'JavaScript ES6+ & TypeScript', 'React UI Components'],
+    badge: 'Quick Launch'
+  }
+];
+
+// Special combo courses
+const COMBO_COURSES = [
+  {
+    id: 'fullstack-combo',
+    title: '🚀 Full Stack Super Combo (Java + MERN + 1000 DSA)',
+    price: 18000,
+    originalPrice: 22000,
+    discount: '35% OFF',
+    duration: '5 Months (Comprehensive)',
+    description: 'Master both Enterprise Java (Spring Boot) and modern MERN Web Development, with full DSA preparation for top tech product companies.',
+    badge: 'Best Value'
   },
   {
-    id: 'signup',
-    icon: Sparkles,
-    category: 'New Admission',
-    badgeColor: 'bg-rose-100 text-rose-800 border-rose-200',
-    question: '📝 How do I register for a New Course Admission?',
-    shortLabel: 'New Admission',
-    answer: `**New Student Enrollment Process:**
-1. Visit our **Courses Page** (/programs) or click **Sign Up** on the login page.
-2. Select your desired track: **Java Full Stack**, **MERN Developer**, or **Python Data Science**.
-3. Fill in your basic details and complete the initial registration payment.
-4. Your account is activated instantly with 24/7 LMS access and mentor support!`,
-    actionText: 'View All Courses',
-    actionLink: '/programs',
-    portalLink: '/login',
-    portalText: 'Sign Up Now',
-    subQuestions: [
-      {
-        id: 'admission-courses',
-        label: '💡 What courses are currently open for admission?',
-        icon: BookOpen,
-        answer: `**Current Open Cohorts:**
-- **Java Full Stack Developer** (Core Java, Spring Boot, Microservices, React, SQL)
-- **MERN Stack Developer** (MongoDB, Express, React, Node.js, Next.js)
-- **Python Developer & Data Science** (Python, Django, Pandas, ML algorithms)
-- **Frontend Specialization** (HTML5, Tailwind CSS, JavaScript, React)`,
-        actionText: 'Explore Course Details',
-        actionLink: '/programs'
-      },
-      {
-        id: 'admission-installments',
-        label: '💵 Are monthly installment payment plans available?',
-        icon: Wallet,
-        answer: `**Flexible Payment Options:**
-- Yes! You can pay in full or choose a **1-Month, 2-Month, or 3-Month installment plan**.
-- Installment payments are tracked transparently in the student & parent dashboards.`,
-        actionText: 'View Fee Structure',
-        actionLink: '/fees'
-      }
-    ]
+    id: 'ai-fullstack-bundle',
+    title: '🤖 AI + Full Stack Career Bundle (Python AI + React + Java)',
+    price: 21000,
+    originalPrice: 27000,
+    discount: '40% OFF',
+    duration: '6 Months (Complete Master)',
+    description: 'Combines full stack web development with Python GenAI, Machine Learning, and Cloud deployments for high-paying AI Engineer roles.',
+    badge: 'Ultimate Bundle'
   },
   {
-    id: 'reset',
-    icon: Key,
-    category: 'Account Help',
-    badgeColor: 'bg-slate-100 text-slate-800 border-slate-200',
-    question: '🔑 I forgot my password or cannot log in. What should I do?',
-    shortLabel: 'Login Help',
-    answer: `**Login Assistance & Password Recovery:**
-1. Make sure you are using the correct registered email address.
-2. If you don't have an account yet, click **"Sign Up"** to create a student account.
-3. For immediate password reset assistance, contact our technical helpdesk directly at **+91 98765 43210** or email **support@programmingwallah.com**.`,
-    actionText: 'Contact Support Helpdesk',
-    actionLink: '/contact',
-    subQuestions: [
-      {
-        id: 'help-contact',
-        label: '📞 How to speak to an admissions advisor?',
-        icon: Users,
-        answer: `**Advisor Hotline:**
-- Call us directly at **+91 98765 43210** (Mon - Sat: 9:00 AM to 7:00 PM).
-- Or submit a callback request on our **Contact Page** (/contact).`,
-        actionText: 'Contact Us',
-        actionLink: '/contact'
-      }
-    ]
+    id: 'placement-guaranteed',
+    title: '💼 100% Placement Track (All Courses + 1-on-1 Mock Interviews)',
+    price: 24999,
+    originalPrice: 35000,
+    discount: 'Direct Referral',
+    duration: '6 Months + Placement',
+    description: 'All courses included with dedicated mentor guidance, resume ATS optimization, mock interviews, and guaranteed corporate interviews.',
+    badge: 'Job Guarantee'
   }
 ];
 
@@ -302,25 +119,58 @@ export default function RoleLoginChatbot() {
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
 
+  // Initial personalized greeting based on login state
   const getGreetingMessage = () => {
     if (user) {
-      const userRoleName = user.role ? user.role.toUpperCase() : 'STUDENT';
-      return {
-        id: 'welcome-user',
-        sender: 'bot',
-        text: `👋 **Welcome back, ${user.name || 'User'}!**\n\nYou are currently signed in as **${userRoleName}** (${user.email}).\n\nI can help you navigate your dashboard, answer role questions, or guide you through learning & management tools. Choose an option below:`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        userDetected: true,
-        showMainQuestions: true
-      };
+      const userRole = user.role ? user.role.toUpperCase() : 'STUDENT';
+      if (user.role === 'admin') {
+        return {
+          id: 'welcome-admin',
+          sender: 'bot',
+          text: `🛡️ **Welcome Administrator ${user.name}!**\n\nYou are logged in with **Admin privileges** (${user.email}).\n\nI can help you check any student's submitted vs remaining fees, issue fee receipts, review pending admissions, and manage courses. Select an action below:`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          userDetected: true,
+          mode: 'admin'
+        };
+      } else if (user.role === 'teacher') {
+        return {
+          id: 'welcome-teacher',
+          sender: 'bot',
+          text: `👨‍🏫 **Welcome Faculty Member ${user.name}!**\n\nYou are signed in as **Teacher / Instructor** (${user.email}).\n\nI can help you track batch attendance, grade student DSA submissions, and post course materials. Choose an option below:`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          userDetected: true,
+          mode: 'teacher'
+        };
+      } else if (user.role === 'parent') {
+        return {
+          id: 'welcome-parent',
+          sender: 'bot',
+          text: `👨‍👩‍👦 **Welcome ${user.name}!**\n\nYou are logged in as **Parent** (${user.email}).\n\nView your child's attendance progress, check remaining fee installments, download receipts, or schedule teacher meetings below:`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          userDetected: true,
+          mode: 'parent'
+        };
+      } else {
+        // Student / User
+        return {
+          id: 'welcome-student',
+          sender: 'bot',
+          text: `👋 **Welcome back, ${user.name}!**\n\nYou are logged in as **Student** (${user.email}).\n\nI can give you your **Fee Receipt**, calculate your **Remaining Fees & Monthly Installments**, or guide you through your enrolled courses. Click any question below:`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          userDetected: true,
+          mode: 'student'
+        };
+      }
     }
+
+    // Guest / One-Time Viewer
     return {
       id: 'welcome-guest',
       sender: 'bot',
-      text: "👋 **Hello! Welcome to AppleTree Infotech Assistant.**\n\nI automatically detect roles and guide you through **Role-Based Logins** (Student, Admin, Teacher, Parent) and portal tools. Select a role below to get started!",
+      text: `👋 **Hello! Welcome to AppleTree Infotech.**\n\nI can help you explore **Courses & Live Prices**, learn **How to Buy Courses**, check **Combo Discount Bundles**, or access **Role-Based Logins** (Student, Admin, Teacher, Parent). Click any option below!`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       userDetected: false,
-      showMainQuestions: true
+      mode: 'guest'
     };
   };
 
@@ -338,16 +188,14 @@ export default function RoleLoginChatbot() {
     }
   }, [messages, isOpen, isTyping]);
 
-  // Handle clicking a Main Role Topic
-  const handleSelectRole = (roleObj) => {
-    setCurrentActiveRole(roleObj);
+  // ── 1. GUEST ACTIONS: Course Prices, How to Buy, Combos ──
+  const handleShowHowToBuy = () => {
     const userMsg = {
       id: `user-${Date.now()}`,
       sender: 'user',
-      text: roleObj.question,
+      text: '🛒 How do I buy a course & get instant access?',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
-
     setMessages(prev => [...prev, userMsg]);
     setIsTyping(true);
 
@@ -355,30 +203,24 @@ export default function RoleLoginChatbot() {
       const botMsg = {
         id: `bot-${Date.now()}`,
         sender: 'bot',
-        text: roleObj.answer,
-        actionText: roleObj.actionText,
-        actionLink: roleObj.actionLink,
-        portalText: roleObj.portalText,
-        portalLink: roleObj.portalLink,
+        text: `**How to Buy Courses at AppleTree Infotech:**\n\n1. **Select Your Track**: Browse our courses (Java, MERN, Python, Frontend, or Combo).\n2. **Choose Payment Option**: Pay in full or select easy **Monthly Installments (₹3,333/month)**.\n3. **Instant LMS Activation**: Complete checkout via UPI, Google Pay, Card, or Netbanking. Your Student LMS account is activated in under 60 seconds!\n4. **Includes**: 24/7 in-browser compiler, live mentor sessions, interview prep, and verified ISO certificate.`,
+        actionText: 'Browse Courses & Buy Now',
+        actionLink: '/programs',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        roleContext: roleObj,
-        subQuestions: roleObj.subQuestions || [],
-        showSubQuestions: true
+        showGuestSubQuestions: true
       };
       setIsTyping(false);
       setMessages(prev => [...prev, botMsg]);
-    }, 400);
+    }, 350);
   };
 
-  // Handle clicking a Sub-Question
-  const handleSelectSubQuestion = (subQ, parentRole) => {
+  const handleShowAllCourses = () => {
     const userMsg = {
       id: `user-${Date.now()}`,
       sender: 'user',
-      text: subQ.label,
+      text: '📚 Show all present courses and prices',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
-
     setMessages(prev => [...prev, userMsg]);
     setIsTyping(true);
 
@@ -386,32 +228,192 @@ export default function RoleLoginChatbot() {
       const botMsg = {
         id: `bot-${Date.now()}`,
         sender: 'bot',
-        text: subQ.answer,
-        actionText: subQ.actionText,
-        actionLink: subQ.actionLink,
+        text: `**Current Available Courses & Live Fees:**\n\n` + 
+          AVAILABLE_COURSES.map(c => `• **${c.title}** (${c.duration})\n  💰 **₹${c.price.toLocaleString('en-IN')}** total (or ₹${c.monthlyInstallment.toLocaleString('en-IN')}/month)\n  ⚡ *Highlights*: ${c.highlights.join(' • ')}`).join('\n\n'),
+        actionText: 'Enroll in a Course',
+        actionLink: '/programs',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        roleContext: parentRole,
-        subQuestions: parentRole?.subQuestions || [],
-        showSubQuestions: true
+        showGuestSubQuestions: true
+      };
+      setIsTyping(false);
+      setMessages(prev => [...prev, botMsg]);
+    }, 350);
+  };
+
+  const handleShowComboCourses = () => {
+    const userMsg = {
+      id: `user-${Date.now()}`,
+      sender: 'user',
+      text: '🎁 Show combo courses and discount bundles',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    setMessages(prev => [...prev, userMsg]);
+    setIsTyping(true);
+
+    setTimeout(() => {
+      const botMsg = {
+        id: `bot-${Date.now()}`,
+        sender: 'bot',
+        text: `**Special Combo Courses & Discount Bundles:**\n\n` +
+          COMBO_COURSES.map(c => `⭐ **${c.title}**\n  💰 **Offer Price: ₹${c.price.toLocaleString('en-IN')}** ~~(Regular: ₹${c.originalPrice.toLocaleString('en-IN')} - ${c.discount})~~\n  ⏱️ Duration: ${c.duration}\n  📝 ${c.description}`).join('\n\n'),
+        actionText: 'Claim Combo Offer',
+        actionLink: '/programs',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        showGuestSubQuestions: true
+      };
+      setIsTyping(false);
+      setMessages(prev => [...prev, botMsg]);
+    }, 350);
+  };
+
+  // ── 2. STUDENT ACTIONS: Fee Receipts, Remaining Fees, Monthly Payments ──
+  const handleStudentFeeReceipt = () => {
+    const userMsg = {
+      id: `user-${Date.now()}`,
+      sender: 'user',
+      text: '🧾 Generate / Download my Fee Receipt',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    setMessages(prev => [...prev, userMsg]);
+    setIsTyping(true);
+
+    setTimeout(() => {
+      const botMsg = {
+        id: `bot-${Date.now()}`,
+        sender: 'bot',
+        text: `**Official Digital Fee Receipt Generated:**\n\nHere is your verified fee invoice receipt for your enrolled program:`,
+        isReceipt: true,
+        receiptData: {
+          receiptNo: `REC-2024-${Math.floor(1000 + Math.random() * 9000)}`,
+          studentName: user?.name || 'Enrolled Student',
+          email: user?.email || 'student@programmingwallah.com',
+          course: 'Java & React Full Stack Developer',
+          totalFee: 12000,
+          paidAmount: 8000,
+          remainingAmount: 4000,
+          status: 'PARTIAL',
+          date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+        },
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        showStudentSubQuestions: true
       };
       setIsTyping(false);
       setMessages(prev => [...prev, botMsg]);
     }, 400);
   };
 
-  // Return to All Roles View
-  const handleBackToAllRoles = () => {
-    setCurrentActiveRole(null);
-    const botMsg = {
-      id: `bot-${Date.now()}`,
-      sender: 'bot',
-      text: `Select any role category below to explore login guides and sub-questions:`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      showMainQuestions: true
+  const handleStudentRemainingFees = () => {
+    const userMsg = {
+      id: `user-${Date.now()}`,
+      sender: 'user',
+      text: '💳 How much fees is remaining / submitted for my course?',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
-    setMessages(prev => [...prev, botMsg]);
+    setMessages(prev => [...prev, userMsg]);
+    setIsTyping(true);
+
+    setTimeout(() => {
+      const botMsg = {
+        id: `bot-${Date.now()}`,
+        sender: 'bot',
+        text: `**Your Fee Account Status (${user?.name || 'Student'}):**\n\n• **Enrolled Track**: Java Full Stack Developer\n• **Total Course Price**: ₹12,000\n• ✅ **Fees Submitted (Paid)**: ₹8,000 (Installments 1 & 2)\n• ⏳ **Remaining Fees Due**: **₹4,000**\n• 📅 **Next Installment Due Date**: 15th of next month\n\nYou can settle your remaining installment online via UPI or card.`,
+        actionText: 'Pay Remaining Fee',
+        actionLink: '/dashboard/student',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        showStudentSubQuestions: true
+      };
+      setIsTyping(false);
+      setMessages(prev => [...prev, botMsg]);
+    }, 350);
   };
 
+  const handleStudentMonthlyPlan = () => {
+    const userMsg = {
+      id: `user-${Date.now()}`,
+      sender: 'user',
+      text: '📅 How do monthly installment payments work?',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    setMessages(prev => [...prev, userMsg]);
+    setIsTyping(true);
+
+    setTimeout(() => {
+      const botMsg = {
+        id: `bot-${Date.now()}`,
+        sender: 'bot',
+        text: `**Monthly Installment Breakdown:**\n\n• **Month 1 (Admission)**: ₹4,000 *(Paid at enrollment)*\n• **Month 2 (Mid-Term)**: ₹4,000 *(Paid on Day 30)*\n• **Month 3 (Final Phase)**: ₹4,000 *(Paid on Day 60)*\n\n*Note: Zero interest or hidden charges. Official GST tax invoice issued upon every installment payment.*`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        showStudentSubQuestions: true
+      };
+      setIsTyping(false);
+      setMessages(prev => [...prev, botMsg]);
+    }, 350);
+  };
+
+  // ── 3. ADMIN ACTIONS: Student Fee Inquiries (Submitted vs Remaining) ──
+  const handleAdminStudentFeeStatus = (studentName, course, total, paid, remaining, status) => {
+    const userMsg = {
+      id: `user-${Date.now()}`,
+      sender: 'user',
+      text: `💰 Check fee details for ${studentName}`,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    setMessages(prev => [...prev, userMsg]);
+    setIsTyping(true);
+
+    setTimeout(() => {
+      const botMsg = {
+        id: `bot-${Date.now()}`,
+        sender: 'bot',
+        text: `**Student Financial Audit: ${studentName}**\n\n• **Course Program**: ${course}\n• **Total Course Fee**: ₹${total.toLocaleString('en-IN')}\n• ✅ **Fees Submitted (Paid)**: **₹${paid.toLocaleString('en-IN')}**\n• ⏳ **Remaining Fees Due**: **₹${remaining.toLocaleString('en-IN')}**\n• **Status**: ${status}\n• **Due Date**: Due in 3 days\n\nAdmin can send a 1-click WhatsApp reminder or issue an official receipt below:`,
+        isReceipt: true,
+        receiptData: {
+          receiptNo: `ATI-ADMIN-${Math.floor(1000 + Math.random() * 9000)}`,
+          studentName: studentName,
+          email: `${studentName.toLowerCase().replace(/\s+/g, '')}@gmail.com`,
+          course: course,
+          totalFee: total,
+          paidAmount: paid,
+          remainingAmount: remaining,
+          status: status,
+          date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+        },
+        actionText: 'Open Fee Billing Desk',
+        actionLink: '/dashboard/admin',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        showAdminSubQuestions: true
+      };
+      setIsTyping(false);
+      setMessages(prev => [...prev, botMsg]);
+    }, 400);
+  };
+
+  const handleAdminOverallFeeSummary = () => {
+    const userMsg = {
+      id: `user-${Date.now()}`,
+      sender: 'user',
+      text: '📊 Show overall Academy Fee Collection Summary',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    setMessages(prev => [...prev, userMsg]);
+    setIsTyping(true);
+
+    setTimeout(() => {
+      const botMsg = {
+        id: `bot-${Date.now()}`,
+        sender: 'bot',
+        text: `**Academy Financial Overview (Ghaziabad Campus):**\n\n• **Total Invoiced**: ₹4,85,000\n• 🟢 **Total Collected (Paid)**: ₹3,92,000 (81% Collection Rate)\n• 🔴 **Total Outstanding Dues**: ₹93,000 (Across 7 active batches)\n• **Next Billing Cycle**: 1st of next month`,
+        actionText: 'View Admin Invoices Ledger',
+        actionLink: '/dashboard/admin',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        showAdminSubQuestions: true
+      };
+      setIsTyping(false);
+      setMessages(prev => [...prev, botMsg]);
+    }, 350);
+  };
+
+  // Text message submission handler
   const handleSendMessage = (e) => {
     e?.preventDefault();
     if (!inputValue.trim()) return;
@@ -429,77 +431,88 @@ export default function RoleLoginChatbot() {
     setIsTyping(true);
 
     setTimeout(() => {
-      // Find matching role knowledge
-      let matchRole = null;
-      let matchSubQ = null;
-
-      if (query.includes('compiler') || query.includes('practice') || query.includes('dsa') || query.includes('code')) {
-        matchRole = ROLE_KNOWLEDGE_BASE[0];
-        matchSubQ = matchRole.subQuestions?.find(sq => sq.id === 'student-compiler');
-      } else if (query.includes('cert') || query.includes('verify')) {
-        matchRole = ROLE_KNOWLEDGE_BASE[0];
-        matchSubQ = matchRole.subQuestions?.find(sq => sq.id === 'student-cert');
-      } else if (query.includes('student') || query.includes('learner') || query.includes('lms')) {
-        matchRole = ROLE_KNOWLEDGE_BASE[0];
-      } else if (query.includes('admin') || query.includes('manage') || query.includes('approve')) {
-        matchRole = ROLE_KNOWLEDGE_BASE[1];
-      } else if (query.includes('teacher') || query.includes('faculty') || query.includes('instructor')) {
-        matchRole = ROLE_KNOWLEDGE_BASE[2];
-      } else if (query.includes('parent') || query.includes('child') || query.includes('guardian')) {
-        matchRole = ROLE_KNOWLEDGE_BASE[3];
-      } else if (query.includes('fee') || query.includes('installment') || query.includes('due') || query.includes('pay')) {
-        matchRole = ROLE_KNOWLEDGE_BASE[1];
-        matchSubQ = matchRole.subQuestions?.find(sq => sq.id === 'admin-fees');
-      } else if (query.includes('admission') || query.includes('register') || query.includes('enroll')) {
-        matchRole = ROLE_KNOWLEDGE_BASE[4];
-      } else if (query.includes('password') || query.includes('reset') || query.includes('forgot') || query.includes('help')) {
-        matchRole = ROLE_KNOWLEDGE_BASE[5];
-      }
-
       let botMsg;
-      if (matchSubQ && matchRole) {
+
+      if (query.includes('receipt') || query.includes('invoice') || query.includes('bill')) {
         botMsg = {
           id: `bot-${Date.now()}`,
           sender: 'bot',
-          text: matchSubQ.answer,
-          actionText: matchSubQ.actionText,
-          actionLink: matchSubQ.actionLink,
+          text: `**Digital Fee Invoice & Receipt Generated:**`,
+          isReceipt: true,
+          receiptData: {
+            receiptNo: `REC-2024-${Math.floor(1000 + Math.random() * 9000)}`,
+            studentName: user?.name || 'Ishika Rani',
+            email: user?.email || 'student@programmingwallah.com',
+            course: 'Java & React Full Stack Developer',
+            totalFee: 12000,
+            paidAmount: 8000,
+            remainingAmount: 4000,
+            status: 'PARTIAL',
+            date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+          },
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          roleContext: matchRole,
-          subQuestions: matchRole.subQuestions || [],
-          showSubQuestions: true
+          showStudentSubQuestions: true
         };
-      } else if (matchRole) {
+      } else if (query.includes('remaining') || query.includes('due') || query.includes('submitted') || query.includes('pending fee')) {
         botMsg = {
           id: `bot-${Date.now()}`,
           sender: 'bot',
-          text: matchRole.answer,
-          actionText: matchRole.actionText,
-          actionLink: matchRole.actionLink,
-          portalText: matchRole.portalText,
-          portalLink: matchRole.portalLink,
+          text: `**Student Fee Status Report:**\n\n• **Course**: Java & React Full Stack\n• **Total Course Fee**: ₹12,000\n• ✅ **Fees Submitted (Paid)**: ₹8,000\n• ⏳ **Remaining Fees Due**: **₹4,000**\n• **Status**: Active Installment (Due on 15th)`,
+          actionText: 'View Fees in Portal',
+          actionLink: user?.role === 'admin' ? '/dashboard/admin' : '/dashboard/student',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          roleContext: matchRole,
-          subQuestions: matchRole.subQuestions || [],
-          showSubQuestions: true
+          showStudentSubQuestions: true
+        };
+      } else if (query.includes('combo') || query.includes('bundle') || query.includes('discount')) {
+        botMsg = {
+          id: `bot-${Date.now()}`,
+          sender: 'bot',
+          text: `**Special Combo Courses & Discount Bundles:**\n\n` +
+            COMBO_COURSES.map(c => `⭐ **${c.title}**\n  💰 **₹${c.price.toLocaleString('en-IN')}** ~~(Regular: ₹${c.originalPrice.toLocaleString('en-IN')} - ${c.discount})~~\n  ⏱️ Duration: ${c.duration}\n  📝 ${c.description}`).join('\n\n'),
+          actionText: 'Claim Combo Offer',
+          actionLink: '/programs',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          showGuestSubQuestions: true
+        };
+      } else if (query.includes('price') || query.includes('course') || query.includes('cost') || query.includes('fee')) {
+        botMsg = {
+          id: `bot-${Date.now()}`,
+          sender: 'bot',
+          text: `**Available Courses & Live Fee Pricing:**\n\n` + 
+            AVAILABLE_COURSES.map(c => `• **${c.title}** (${c.duration})\n  💰 **₹${c.price.toLocaleString('en-IN')}** total (or ₹${c.monthlyInstallment.toLocaleString('en-IN')}/month)`).join('\n\n'),
+          actionText: 'Explore Course Details',
+          actionLink: '/programs',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          showGuestSubQuestions: true
+        };
+      } else if (query.includes('buy') || query.includes('how to buy') || query.includes('enroll') || query.includes('admission')) {
+        botMsg = {
+          id: `bot-${Date.now()}`,
+          sender: 'bot',
+          text: `**How to Buy & Enroll Online:**\n\n1. Go to **Courses Page** (/programs).\n2. Select your course or Combo Bundle.\n3. Choose 1-time payment or 3-Month Installments.\n4. Complete payment via UPI/Card for **Instant LMS Activation**!`,
+          actionText: 'Enroll Now',
+          actionLink: '/programs',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          showGuestSubQuestions: true
         };
       } else {
         botMsg = {
           id: `bot-${Date.now()}`,
           sender: 'bot',
-          text: `I'm ready to assist with **Role-Based Logins** & portal tools! Please select a category or sub-question below:`,
+          text: `I'm here to assist with **Course Prices**, **How to Buy**, **Combo Offers**, **Student Fee Receipts**, and **Remaining Fees**. Please pick an option below:`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          showMainQuestions: true
+          showGuestSubQuestions: !user,
+          showStudentSubQuestions: user && user.role !== 'admin',
+          showAdminSubQuestions: user && user.role === 'admin'
         };
       }
 
       setIsTyping(false);
       setMessages(prev => [...prev, botMsg]);
-    }, 450);
+    }, 400);
   };
 
   const handleResetChat = () => {
-    setCurrentActiveRole(null);
     setMessages([getGreetingMessage()]);
   };
 
@@ -512,15 +525,19 @@ export default function RoleLoginChatbot() {
     }
   };
 
+  const handlePrintReceipt = (receipt) => {
+    window.print();
+  };
+
   return (
     <>
-      {/* ── 1. FLOATING CHATBOT TRIGGER BUTTON ── */}
+      {/* ── 1. FLOATING TRIGGER BUTTON ── */}
       <div className="fixed bottom-6 right-6 z-50">
         {!isOpen && (
           <button
             onClick={() => setIsOpen(true)}
             className="group relative flex items-center gap-2.5 bg-[#1c1d21] hover:bg-black text-white px-4 py-3.5 rounded-full shadow-[0_15px_35px_rgba(0,0,0,0.35)] border border-amber-400/50 hover:border-amber-400 transition-all duration-300 transform hover:scale-105 cursor-pointer"
-            aria-label="Open Role Login Assistant"
+            aria-label="Open Course & Fee Assistant"
           >
             {/* Live Indicator Ping */}
             <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
@@ -534,15 +551,15 @@ export default function RoleLoginChatbot() {
 
             <div className="text-left pr-1 hidden sm:block">
               <p className="text-[11px] font-black leading-tight text-white flex items-center gap-1">
-                <span>{user ? user.name?.split(' ')[0] : 'Role Assistant'}</span>
+                <span>{user ? user.name?.split(' ')[0] : 'Courses & Fees Bot'}</span>
                 <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded-full border ${
                   user ? 'bg-emerald-400/15 text-emerald-300 border-emerald-400/30' : 'bg-amber-400/15 text-amber-300 border-amber-400/30'
                 }`}>
                   {user ? (user.role || 'User') : 'AI'}
                 </span>
               </p>
-              <p className="text-[9px] text-slate-400 font-medium truncate max-w-[130px]">
-                {user ? `Logged In • Auto-Detect` : 'Role Login & Portal Q&A'}
+              <p className="text-[9px] text-slate-400 font-medium truncate max-w-[140px]">
+                {user ? `${user.role?.toUpperCase()} • Fees & Receipts` : 'Buy Courses • Prices & Combos'}
               </p>
             </div>
           </button>
@@ -551,7 +568,7 @@ export default function RoleLoginChatbot() {
 
       {/* ── 2. CHATBOT WINDOW MODAL ── */}
       {isOpen && (
-        <div className="fixed bottom-6 right-4 sm:right-6 z-50 w-[92vw] sm:w-[420px] max-h-[85vh] h-[640px] bg-[#faf8f2] border border-white/90 shadow-[0_25px_60px_rgba(0,0,0,0.3)] rounded-[32px] overflow-hidden flex flex-col transition-all duration-300 animate-in fade-in slide-in-from-bottom-5">
+        <div className="fixed bottom-6 right-4 sm:right-6 z-50 w-[92vw] sm:w-[430px] max-h-[85vh] h-[650px] bg-[#faf8f2] border border-white/90 shadow-[0_25px_60px_rgba(0,0,0,0.3)] rounded-[32px] overflow-hidden flex flex-col transition-all duration-300 animate-in fade-in slide-in-from-bottom-5">
           
           {/* Header */}
           <div className="bg-[#1c1d21] text-white p-4 flex items-center justify-between border-b border-white/10 shadow-sm select-none">
@@ -564,16 +581,16 @@ export default function RoleLoginChatbot() {
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <h3 className="font-extrabold text-sm text-white leading-tight">AppleTree Bot</h3>
+                  <h3 className="font-extrabold text-sm text-white leading-tight">AppleTree Assistant</h3>
                   <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${
                     user ? 'bg-emerald-400/20 text-emerald-300 border-emerald-400/30' : 'bg-amber-400/20 text-amber-300 border-amber-400/30'
                   }`}>
-                    {user ? `${user.role?.toUpperCase() || 'USER'}` : 'ROLE HELPER'}
+                    {user ? `${user.role?.toUpperCase() || 'USER'}` : 'COURSES & FEES'}
                   </span>
                 </div>
                 <p className="text-[10px] text-slate-300 font-semibold flex items-center gap-1">
                   <span className={`w-1.5 h-1.5 rounded-full ${user ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-                  {user ? `Active User: ${user.name}` : 'Online • Role & Sub-Questions Q&A'}
+                  {user ? `Signed in: ${user.name}` : 'Ghaziabad Hub • Instant Q&A & Receipts'}
                 </p>
               </div>
             </div>
@@ -612,7 +629,7 @@ export default function RoleLoginChatbot() {
                 }}
                 className="text-[10px] font-bold text-amber-300 hover:text-amber-200 uppercase tracking-wider underline cursor-pointer shrink-0 ml-2"
               >
-                My Portal →
+                Open Portal →
               </button>
             </div>
           )}
@@ -627,7 +644,7 @@ export default function RoleLoginChatbot() {
               >
                 {/* Message Bubble */}
                 <div
-                  className={`max-w-[88%] p-3.5 rounded-2xl text-xs leading-relaxed shadow-sm ${
+                  className={`max-w-[92%] p-3.5 rounded-2xl text-xs leading-relaxed shadow-sm ${
                     msg.sender === 'user'
                       ? 'bg-[#1c1d21] text-white rounded-br-none border border-slate-800'
                       : 'bg-white text-slate-800 rounded-bl-none border border-slate-200/80'
@@ -650,27 +667,84 @@ export default function RoleLoginChatbot() {
                     })}
                   </div>
 
-                  {/* 1-Click Action Buttons if available */}
-                  {(msg.actionLink || msg.portalLink) && (
+                  {/* ── DIGITAL FEE RECEIPT CARD (If generated) ── */}
+                  {msg.isReceipt && msg.receiptData && (
+                    <div className="mt-3 p-3.5 rounded-2xl bg-amber-50/90 border border-amber-300 text-slate-900 shadow-sm space-y-2.5">
+                      <div className="flex items-center justify-between border-b border-amber-200/80 pb-2">
+                        <div>
+                          <p className="font-black text-xs text-[#5B468C] tracking-tight">AppleTree Infotech Pvt. Ltd.</p>
+                          <p className="text-[9px] text-slate-500">Ghaziabad Hub • Official Fee Receipt</p>
+                        </div>
+                        <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[9px] font-black border border-emerald-200">
+                          {msg.receiptData.status}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-[10px]">
+                        <div>
+                          <span className="text-slate-400 block font-bold">RECEIPT NO:</span>
+                          <span className="font-mono font-bold text-slate-800">{msg.receiptData.receiptNo}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block font-bold">DATE:</span>
+                          <span className="font-bold text-slate-800">{msg.receiptData.date}</span>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-slate-400 block font-bold">STUDENT:</span>
+                          <span className="font-bold text-slate-900 text-xs">{msg.receiptData.studentName}</span>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-slate-400 block font-bold">PROGRAM:</span>
+                          <span className="font-semibold text-slate-800">{msg.receiptData.course}</span>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-amber-200/80 pt-2 space-y-1 text-[11px]">
+                        <div className="flex justify-between text-slate-600">
+                          <span>Total Course Fee:</span>
+                          <span className="font-bold">₹{msg.receiptData.totalFee.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-emerald-700 font-bold">
+                          <span>Fees Submitted (Paid):</span>
+                          <span>₹{msg.receiptData.paidAmount.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-rose-600 font-black border-t border-dashed border-amber-300 pt-1">
+                          <span>Remaining Balance Due:</span>
+                          <span>₹{msg.receiptData.remainingAmount.toLocaleString('en-IN')}</span>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 flex gap-2">
+                        <button
+                          onClick={() => window.print()}
+                          className="flex-1 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 text-[10px] font-bold flex items-center justify-center gap-1 shadow-2xs cursor-pointer"
+                        >
+                          <Printer className="w-3 h-3 text-slate-600" />
+                          <span>Print / PDF</span>
+                        </button>
+                        {msg.receiptData.remainingAmount > 0 && (
+                          <button
+                            onClick={() => handleNavigate(user?.role === 'admin' ? '/dashboard/admin' : '/dashboard/student')}
+                            className="flex-1 py-1.5 rounded-xl bg-[#1c1d21] hover:bg-black text-white text-[10px] font-bold flex items-center justify-center gap-1 shadow-2xs cursor-pointer"
+                          >
+                            <CreditCard className="w-3 h-3 text-amber-400" />
+                            <span>Pay Balance</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 1-Click Action Button */}
+                  {msg.actionLink && (
                     <div className="mt-3 pt-2.5 border-t border-slate-100 flex flex-wrap gap-2">
-                      {msg.actionLink && (
-                        <button
-                          onClick={() => handleNavigate(msg.actionLink)}
-                          className="inline-flex items-center gap-1.5 bg-[#1c1d21] hover:bg-black text-white text-[10px] font-bold px-3 py-1.5 rounded-xl shadow-sm transition-all cursor-pointer"
-                        >
-                          <span>{msg.actionText || 'Continue'}</span>
-                          <ArrowRight className="w-3 h-3 text-amber-400" />
-                        </button>
-                      )}
-                      {msg.portalLink && (
-                        <button
-                          onClick={() => handleNavigate(msg.portalLink)}
-                          className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-[10px] font-bold px-3 py-1.5 rounded-xl shadow-sm transition-all cursor-pointer"
-                        >
-                          <span>{msg.portalText}</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </button>
-                      )}
+                      <button
+                        onClick={() => handleNavigate(msg.actionLink)}
+                        className="inline-flex items-center gap-1.5 bg-[#1c1d21] hover:bg-black text-white text-[10px] font-bold px-3 py-1.5 rounded-xl shadow-sm transition-all cursor-pointer"
+                      >
+                        <span>{msg.actionText || 'Continue'}</span>
+                        <ArrowRight className="w-3 h-3 text-amber-400" />
+                      </button>
                     </div>
                   )}
 
@@ -679,90 +753,183 @@ export default function RoleLoginChatbot() {
                   </span>
                 </div>
 
-                {/* ── SUB-QUESTIONS ACCORDION (If Available) ── */}
-                {msg.sender === 'bot' && msg.showSubQuestions && msg.subQuestions?.length > 0 && (
+                {/* ── 1. GUEST / FIRST-TIME VIEWER QUESTION CHIPS ── */}
+                {msg.sender === 'bot' && (msg.mode === 'guest' || msg.showGuestSubQuestions) && (
                   <div className="w-full mt-3 space-y-2">
-                    <div className="flex items-center justify-between pl-1">
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 flex items-center gap-1">
-                        <CornerDownRight className="w-3 h-3 text-amber-600" />
-                        <span>Related Sub-Questions ({msg.roleContext?.shortLabel}):</span>
-                      </span>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      {msg.subQuestions.map((subQ) => {
-                        const SubIcon = subQ.icon || ChevronRight;
-                        return (
-                          <button
-                            key={subQ.id}
-                            onClick={() => handleSelectSubQuestion(subQ, msg.roleContext)}
-                            className="w-full flex items-center gap-2 p-2.5 rounded-xl bg-amber-50/80 hover:bg-amber-100/90 border border-amber-200/80 text-left transition-all group shadow-2xs cursor-pointer"
-                          >
-                            <div className="w-5 h-5 rounded-lg bg-amber-200/80 text-amber-900 flex items-center justify-center shrink-0">
-                              <SubIcon className="w-3 h-3" />
-                            </div>
-                            <span className="text-[11px] font-bold text-slate-800 group-hover:text-amber-950 flex-1 leading-tight">
-                              {subQ.label}
-                            </span>
-                            <ChevronRight className="w-3 h-3 text-amber-500 group-hover:translate-x-0.5 transition-transform shrink-0" />
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {/* Back to All Roles Button */}
-                    <button
-                      onClick={handleBackToAllRoles}
-                      className="w-full py-2 px-3 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-[10px] font-bold transition-colors text-center cursor-pointer flex items-center justify-center gap-1.5 mt-2"
-                    >
-                      <RotateCcw className="w-3 h-3 text-slate-500" />
-                      <span>↩️ View All Role Categories</span>
-                    </button>
-                  </div>
-                )}
-
-                {/* ── MAIN ROLE CATEGORIES ── */}
-                {msg.sender === 'bot' && msg.showMainQuestions && (
-                  <div className="w-full mt-3.5 space-y-2">
-                    <div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-500 pl-1">
-                      <HelpCircle className="w-3 h-3 text-amber-500" />
-                      <span>Select a Role Category:</span>
+                    <div className="flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-500 pl-1">
+                      <Sparkles className="w-3 h-3 text-amber-500" />
+                      <span>Explore Courses & Enrollment:</span>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                      {ROLE_KNOWLEDGE_BASE.map((q) => {
-                        const IconComp = q.icon;
-                        const isMyRole = user && (user.role === q.id || (user.role === 'user' && q.id === 'student'));
-                        return (
-                          <button
-                            key={q.id}
-                            onClick={() => handleSelectRole(q)}
-                            className={`flex items-center gap-2 p-2 rounded-xl text-left transition-all group shadow-xs cursor-pointer border ${
-                              isMyRole 
-                                ? 'bg-emerald-50/90 border-emerald-300 ring-1 ring-emerald-400/40' 
-                                : 'bg-white hover:bg-amber-50/80 border-slate-200 hover:border-amber-300'
-                            }`}
-                          >
-                            <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${
-                              isMyRole ? 'bg-emerald-200 text-emerald-900 font-bold' : 'bg-slate-100 group-hover:bg-amber-100 text-slate-700 group-hover:text-amber-800'
-                            }`}>
-                              <IconComp className="w-3.5 h-3.5" />
-                            </div>
-                            <div className="overflow-hidden">
-                              <p className="text-[11px] font-bold text-slate-800 group-hover:text-slate-950 truncate flex items-center gap-1">
-                                <span>{q.shortLabel}</span>
-                                {isMyRole && (
-                                  <span className="text-[8px] bg-emerald-600 text-white px-1 py-0.2 rounded-sm font-extrabold">YOU</span>
-                                )}
-                              </p>
-                              <p className="text-[9px] text-slate-400 group-hover:text-slate-600 truncate">
-                                {q.category}
-                              </p>
-                            </div>
-                            <ChevronRight className="w-3 h-3 text-slate-300 group-hover:text-amber-600 ml-auto shrink-0" />
-                          </button>
-                        );
-                      })}
+                      <button
+                        onClick={handleShowHowToBuy}
+                        className="flex items-center gap-2 p-2 rounded-xl bg-white hover:bg-amber-50/80 border border-slate-200 hover:border-amber-300 text-left transition-all group shadow-xs cursor-pointer"
+                      >
+                        <div className="w-6 h-6 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                          <ShoppingBag className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="overflow-hidden">
+                          <p className="text-[11px] font-bold text-slate-800 group-hover:text-slate-950 truncate">How to Buy Courses</p>
+                          <p className="text-[9px] text-slate-400 group-hover:text-slate-600 truncate">Enrollment & Activation</p>
+                        </div>
+                        <ChevronRight className="w-3 h-3 text-slate-300 group-hover:text-amber-600 ml-auto shrink-0" />
+                      </button>
+
+                      <button
+                        onClick={handleShowAllCourses}
+                        className="flex items-center gap-2 p-2 rounded-xl bg-white hover:bg-amber-50/80 border border-slate-200 hover:border-amber-300 text-left transition-all group shadow-xs cursor-pointer"
+                      >
+                        <div className="w-6 h-6 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center shrink-0">
+                          <BookOpen className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="overflow-hidden">
+                          <p className="text-[11px] font-bold text-slate-800 group-hover:text-slate-950 truncate">All Present Courses</p>
+                          <p className="text-[9px] text-slate-400 group-hover:text-slate-600 truncate">Live Prices & Monthly EMI</p>
+                        </div>
+                        <ChevronRight className="w-3 h-3 text-slate-300 group-hover:text-amber-600 ml-auto shrink-0" />
+                      </button>
+
+                      <button
+                        onClick={handleShowComboCourses}
+                        className="flex items-center gap-2 p-2 rounded-xl bg-amber-50/90 hover:bg-amber-100/90 border border-amber-200 text-left transition-all group shadow-xs cursor-pointer sm:col-span-2"
+                      >
+                        <div className="w-6 h-6 rounded-lg bg-amber-200 text-amber-900 flex items-center justify-center shrink-0 font-bold">
+                          <Percent className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="overflow-hidden">
+                          <p className="text-[11px] font-bold text-amber-950 truncate flex items-center gap-1.5">
+                            <span>Combo Courses & Discount Bundles</span>
+                            <span className="text-[8px] bg-rose-500 text-white px-1.5 py-0.2 rounded-full font-black">UP TO 40% OFF</span>
+                          </p>
+                          <p className="text-[9px] text-amber-800/80 truncate">Full Stack Super Combo, AI Bundles & Placement Track</p>
+                        </div>
+                        <ChevronRight className="w-3 h-3 text-amber-600 ml-auto shrink-0" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── 2. STUDENT / USER QUESTION CHIPS ── */}
+                {msg.sender === 'bot' && (msg.mode === 'student' || msg.showStudentSubQuestions) && (
+                  <div className="w-full mt-3 space-y-2">
+                    <div className="flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-500 pl-1">
+                      <Wallet className="w-3 h-3 text-emerald-500" />
+                      <span>Student Fee & Learning Services:</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                      <button
+                        onClick={handleStudentFeeReceipt}
+                        className="flex items-center gap-2 p-2 rounded-xl bg-white hover:bg-emerald-50/80 border border-slate-200 hover:border-emerald-300 text-left transition-all group shadow-xs cursor-pointer"
+                      >
+                        <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+                          <FileText className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="overflow-hidden">
+                          <p className="text-[11px] font-bold text-slate-800 group-hover:text-slate-950 truncate">Get Fee Receipt</p>
+                          <p className="text-[9px] text-slate-400 group-hover:text-slate-600 truncate">Print / Download Invoice</p>
+                        </div>
+                        <ChevronRight className="w-3 h-3 text-slate-300 group-hover:text-emerald-600 ml-auto shrink-0" />
+                      </button>
+
+                      <button
+                        onClick={handleStudentRemainingFees}
+                        className="flex items-center gap-2 p-2 rounded-xl bg-white hover:bg-emerald-50/80 border border-slate-200 hover:border-emerald-300 text-left transition-all group shadow-xs cursor-pointer"
+                      >
+                        <div className="w-6 h-6 rounded-lg bg-purple-100 text-purple-800 flex items-center justify-center shrink-0">
+                          <Wallet className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="overflow-hidden">
+                          <p className="text-[11px] font-bold text-slate-800 group-hover:text-slate-950 truncate">Remaining Fees</p>
+                          <p className="text-[9px] text-slate-400 group-hover:text-slate-600 truncate">Submitted vs Due Balance</p>
+                        </div>
+                        <ChevronRight className="w-3 h-3 text-slate-300 group-hover:text-emerald-600 ml-auto shrink-0" />
+                      </button>
+
+                      <button
+                        onClick={handleStudentMonthlyPlan}
+                        className="flex items-center gap-2 p-2 rounded-xl bg-white hover:bg-emerald-50/80 border border-slate-200 hover:border-emerald-300 text-left transition-all group shadow-xs cursor-pointer"
+                      >
+                        <div className="w-6 h-6 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center shrink-0">
+                          <Calendar className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="overflow-hidden">
+                          <p className="text-[11px] font-bold text-slate-800 group-hover:text-slate-950 truncate">Monthly Installments</p>
+                          <p className="text-[9px] text-slate-400 group-hover:text-slate-600 truncate">Payment Schedule</p>
+                        </div>
+                        <ChevronRight className="w-3 h-3 text-slate-300 group-hover:text-emerald-600 ml-auto shrink-0" />
+                      </button>
+
+                      <button
+                        onClick={() => handleNavigate('/dashboard/student')}
+                        className="flex items-center gap-2 p-2 rounded-xl bg-white hover:bg-emerald-50/80 border border-slate-200 hover:border-emerald-300 text-left transition-all group shadow-xs cursor-pointer"
+                      >
+                        <div className="w-6 h-6 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                          <BookOpen className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="overflow-hidden">
+                          <p className="text-[11px] font-bold text-slate-800 group-hover:text-slate-950 truncate">My Enrolled Courses</p>
+                          <p className="text-[9px] text-slate-400 group-hover:text-slate-600 truncate">Open LMS Dashboard</p>
+                        </div>
+                        <ChevronRight className="w-3 h-3 text-slate-300 group-hover:text-emerald-600 ml-auto shrink-0" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── 3. ADMIN QUESTION CHIPS: Check Student Fees & Institutional Overview ── */}
+                {msg.sender === 'bot' && (msg.mode === 'admin' || msg.showAdminSubQuestions) && (
+                  <div className="w-full mt-3 space-y-2">
+                    <div className="flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-500 pl-1">
+                      <ShieldCheck className="w-3 h-3 text-amber-500" />
+                      <span>Admin Fee Audit & Student Lookup:</span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                        <button
+                          onClick={() => handleAdminStudentFeeStatus('Ishika Rani', 'Java & React Full Stack', 12000, 8000, 4000, 'PARTIAL')}
+                          className="flex items-center gap-2 p-2 rounded-xl bg-white hover:bg-amber-50/80 border border-slate-200 hover:border-amber-300 text-left transition-all group shadow-xs cursor-pointer"
+                        >
+                          <div className="w-6 h-6 rounded-lg bg-amber-100 text-amber-900 flex items-center justify-center shrink-0 font-bold text-[10px]">
+                            IR
+                          </div>
+                          <div className="overflow-hidden">
+                            <p className="text-[11px] font-bold text-slate-800 group-hover:text-slate-950 truncate">Ishika Rani</p>
+                            <p className="text-[9px] text-slate-500 truncate">Paid: ₹8,000 • Due: ₹4,000</p>
+                          </div>
+                          <ChevronRight className="w-3 h-3 text-slate-300 group-hover:text-amber-600 ml-auto shrink-0" />
+                        </button>
+
+                        <button
+                          onClick={() => handleAdminStudentFeeStatus('Aryan Mehta', 'MERN Stack Web Dev', 10000, 10000, 0, 'PAID')}
+                          className="flex items-center gap-2 p-2 rounded-xl bg-white hover:bg-amber-50/80 border border-slate-200 hover:border-amber-300 text-left transition-all group shadow-xs cursor-pointer"
+                        >
+                          <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-900 flex items-center justify-center shrink-0 font-bold text-[10px]">
+                            AM
+                          </div>
+                          <div className="overflow-hidden">
+                            <p className="text-[11px] font-bold text-slate-800 group-hover:text-slate-950 truncate">Aryan Mehta</p>
+                            <p className="text-[9px] text-emerald-600 font-bold truncate">Fully Paid: ₹10,000</p>
+                          </div>
+                          <ChevronRight className="w-3 h-3 text-slate-300 group-hover:text-amber-600 ml-auto shrink-0" />
+                        </button>
+                      </div>
+
+                      <button
+                        onClick={handleAdminOverallFeeSummary}
+                        className="w-full flex items-center gap-2 p-2.5 rounded-xl bg-[#1c1d21] text-white hover:bg-black transition-all group shadow-xs cursor-pointer text-left"
+                      >
+                        <div className="w-6 h-6 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center shrink-0 font-bold">
+                          <Wallet className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="overflow-hidden flex-1">
+                          <p className="text-[11px] font-bold text-white truncate">Academy Overall Fee Summary</p>
+                          <p className="text-[9px] text-slate-400 truncate">Total Invoiced, Total Collected & Outstanding</p>
+                        </div>
+                        <ChevronRight className="w-3 h-3 text-amber-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                      </button>
                     </div>
                   </div>
                 )}
@@ -787,7 +954,7 @@ export default function RoleLoginChatbot() {
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Ask about LMS, compiler, fees, permissions..."
+              placeholder="Ask about fee receipts, prices, remaining dues..."
               className="flex-1 px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium outline-none focus:border-slate-800 focus:bg-white transition-all placeholder:text-slate-400"
             />
             <button
