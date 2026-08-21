@@ -36,6 +36,7 @@ import AdminDashboard from './portals/AdminDashboard.jsx';
 // Layout Components
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
+import RoleLoginChatbot from './components/RoleLoginChatbot.jsx';
 
 // Private Route Wrapper
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -144,6 +145,7 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
         </Routes>
       </main>
       {!isLoginPage && <Footer />}
+      <RoleLoginChatbot />
     </div>
   );
 }
