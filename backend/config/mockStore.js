@@ -13,6 +13,104 @@ import { getMySQLPool } from './mysql.js';
 
 const DATA_FILE = path.join(process.cwd(), 'mockData.json');
 
+async function syncRelationalMySQL(pool, collectionName, items) {
+  try {
+    if (!pool || !Array.isArray(items)) return;
+    
+    if (collectionName === 'users') {
+      for (const u of items) {
+        await pool.query(
+          `INSERT INTO users (id, name, email, password, role, profile_image)
+           VALUES (?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE name=VALUES(name), password=VALUES(password), role=VALUES(role), profile_image=VALUES(profile_image)`,
+          [u._id || u.id, u.name || '', String(u.email || '').trim().toLowerCase(), u.password || '', u.role || 'user', u.profileImage || '']
+        ).catch(() => {});
+      }
+    } else if (collectionName === 'admissions') {
+      for (const a of items) {
+        await pool.query(
+          `INSERT INTO admissions (id, application_number, student_name, student_dob, student_gender, student_class, parent_father_name, parent_mother_name, parent_email, parent_phone, parent_address, status, remarks, documents_json)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE student_name=VALUES(student_name), status=VALUES(status), remarks=VALUES(remarks)`,
+          [
+            a._id || a.id,
+            a.applicationNumber || '',
+            a.studentDetails?.name || '',
+            a.studentDetails?.dateOfBirth ? String(a.studentDetails.dateOfBirth).slice(0, 10) : null,
+            a.studentDetails?.gender || 'Male',
+            a.studentDetails?.class || 'Nursery',
+            a.parentDetails?.fatherName || '',
+            a.parentDetails?.motherName || '',
+            String(a.parentDetails?.email || '').trim().toLowerCase(),
+            a.parentDetails?.phone || '',
+            a.parentDetails?.address || '',
+            a.status || 'pending',
+            a.remarks || '',
+            JSON.stringify(a.documents || {})
+          ]
+        ).catch(() => {});
+      }
+    } else if (collectionName === 'students') {
+      for (const s of items) {
+        await pool.query(
+          `INSERT INTO students (id, name, student_id, date_of_birth, gender, class, parent_id, teacher_id, photo)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE name=VALUES(name), class=VALUES(class), photo=VALUES(photo)`,
+          [
+            s._id || s.id,
+            s.name || '',
+            s.studentId || '',
+            s.dateOfBirth ? String(s.dateOfBirth).slice(0, 10) : null,
+            s.gender || 'Male',
+            s.class || 'Nursery',
+            s.parentId || null,
+            s.teacherId || null,
+            s.photo || ''
+          ]
+        ).catch(() => {});
+      }
+    } else if (collectionName === 'fees') {
+      for (const f of items) {
+        await pool.query(
+          `INSERT INTO fees (id, student_id, amount, term, due_date, status, payment_date, transaction_id, payment_method)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE amount=VALUES(amount), status=VALUES(status), payment_date=VALUES(payment_date), transaction_id=VALUES(transaction_id)`,
+          [
+            f._id || f.id,
+            f.studentId || '',
+            Number(f.amount) || 0,
+            f.term || 'Tuition Fee',
+            f.dueDate ? String(f.dueDate).slice(0, 10) : null,
+            f.status || 'pending',
+            f.paymentDate ? String(f.paymentDate).slice(0, 10) : null,
+            f.transactionId || '',
+            f.paymentMethod || ''
+          ]
+        ).catch(() => {});
+      }
+    } else if (collectionName === 'courses') {
+      for (const c of items) {
+        await pool.query(
+          `INSERT INTO courses (id, title, description, price, duration, category, level, is_active, is_published)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE title=VALUES(title), price=VALUES(price), is_published=VALUES(is_published)`,
+          [
+            c._id || c.id,
+            c.title || '',
+            c.description || '',
+            Number(c.price) || 0,
+            c.duration || '',
+            c.category || 'general',
+            c.level || 'Beginner',
+            c.isActive !== false ? 1 : 0,
+            c.isPublished !== false ? 1 : 0
+          ]
+        ).catch(() => {});
+      }
+    }
+  } catch (e) {}
+}
+
 async function saveToMySQL(collectionName, data) {
   try {
     const pool = getMySQLPool();
@@ -21,6 +119,7 @@ async function saveToMySQL(collectionName, data) {
       'INSERT INTO system_store (collection_name, data_json) VALUES (?, ?) ON DUPLICATE KEY UPDATE data_json = VALUES(data_json)',
       [collectionName, JSON.stringify(data)]
     );
+    await syncRelationalMySQL(pool, collectionName, data);
   } catch (err) {
     // MySQL not reachable or table not yet initialized, fallback safely
   }
