@@ -192,6 +192,73 @@ router.post('/login', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
+// @desc    Google OAuth / 1-Click Google Sign-In
+// @route   POST /api/auth/google-login
+// @access  Public
+router.post('/google-login', async (req, res) => {
+  const { googleId, avatar } = req.body;
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const name = req.body.name || (email ? email.split('@')[0] : 'Google User');
+  const role = req.body.role || 'user';
+
+  if (!email) {
+    return res.status(400).json({ success: false, message: 'Google email is required' });
+  }
+
+  try {
+    if (mockStore.isMock) {
+      let user = await mockStore.findOne('users', { email });
+      if (!user) {
+        user = await mockStore.create('users', {
+          name,
+          email,
+          role,
+          profileImage: avatar || '/clay_mascot.png',
+          googleId: googleId || `g_${Date.now()}`,
+          isGoogleAuth: true
+        });
+      }
+
+      return res.json({
+        success: true,
+        token: generateToken(user._id),
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          profileImage: user.profileImage || avatar
+        }
+      });
+    }
+
+    // MongoDB
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({
+        name,
+        email,
+        password: `google_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+        role,
+        profileImage: avatar,
+        googleId: googleId || `g_${Date.now()}`
+      });
+    }
+
+    res.json({
+      success: true,
+      token: generateToken(user._id),
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profileImage: user.profileImage || avatar
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 // @desc    Get current user profile

@@ -56,7 +56,7 @@ const PORTALS = [
 ];
 
 export default function Login() {
-  const { login, register, user, error, loading } = useAuth();
+  const { login, register, loginWithGoogle, user, error, loading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -99,6 +99,29 @@ export default function Login() {
       else navigate('/lms/dashboard');
     } else {
       setValErr(res.message || `Login to ${portal.name} failed.`);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setValErr('');
+    const targetEmail = email && email.includes('@') ? email : `student_${Date.now().toString().slice(-4)}@gmail.com`;
+    const targetName = name || (targetEmail ? targetEmail.split('@')[0] : 'Google Student');
+
+    const res = await loginWithGoogle({
+      email: targetEmail,
+      name: targetName,
+      avatar: '/clay_mascot.png',
+      role: selectedPortal.role || 'user'
+    });
+
+    if (res.success) {
+      confetti({ particleCount: 160, spread: 90, origin: { y: 0.6 } });
+      if (selectedPortalId === 'admin') navigate('/dashboard/admin');
+      else if (selectedPortalId === 'teacher') navigate('/dashboard/teacher');
+      else if (selectedPortalId === 'parent') navigate('/dashboard/parent');
+      else navigate('/lms/dashboard');
+    } else {
+      setValErr(res.message || 'Google login failed.');
     }
   };
 
@@ -183,18 +206,26 @@ export default function Login() {
           }}
         />
 
-        {/* ── Top Brand Badge ── */}
-        <div className="relative z-10 flex items-center gap-3 pt-4">
-          <div className="w-11 h-11 rounded-2xl flex items-center justify-center bg-gradient-to-br from-pink-500/30 to-rose-600/30 border border-pink-500/40 backdrop-blur-md shadow-[0_0_20px_rgba(244,63,94,0.35)]">
-            <Flame className="w-6 h-6 text-pink-400 fill-pink-400/30" />
+        {/* ── Top Brand Badge: Programming Wallah & Appletree Infotech ── */}
+        <div className="relative z-10 flex items-center gap-3.5 pt-4">
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br from-pink-500/30 to-rose-600/30 border border-pink-500/40 backdrop-blur-md shadow-[0_0_20px_rgba(244,63,94,0.35)] overflow-hidden p-1.5">
+            <img 
+              src="/appletree_logo.png" 
+              alt="Appletree Logo" 
+              className="w-full h-full object-contain drop-shadow"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = '/logo.png';
+              }}
+            />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-lg tracking-tight text-white">Job Workplace</span>
+              <span className="font-extrabold text-xl tracking-tight text-white">Programming Wallah</span>
               <span className="bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-full border border-white/20">AI</span>
             </div>
             <p className="text-[11px] font-extrabold tracking-widest text-[#f43f5e] uppercase">
-              NEXT-GEN CAREERS
+              APPLETREE INFOTECH
             </p>
           </div>
         </div>
@@ -218,7 +249,7 @@ export default function Login() {
 
           {/* Subtitle */}
           <p className="text-sm text-slate-300 font-medium leading-relaxed max-w-md">
-            Automate your applications, match with verified tech employers, and unlock compensation parity.
+            Master full-stack technologies with Programming Wallah & Appletree Infotech. Match with verified tech employers, and launch your dream career.
           </p>
         </div>
       </div>
@@ -397,10 +428,10 @@ export default function Login() {
               )}
             </button>
 
-            {/* Secondary Action: 1-Click / Google Access Pill Button */}
+            {/* Secondary Action: Google One-Click Login */}
             <button
               type="button"
-              onClick={() => isRegister ? handleQuickStudentSignUp() : handleQuickLogin(selectedPortal)}
+              onClick={handleGoogleSignIn}
               disabled={loading}
               className="w-full py-3.5 rounded-full font-bold text-sm text-white bg-[#141822] hover:bg-[#1a202c] border border-slate-800 hover:border-slate-700 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2.5 shadow-sm"
             >
@@ -423,7 +454,7 @@ export default function Login() {
                   d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
                 />
               </svg>
-              <span>{isRegister ? '⚡ 1-Click Instant Signup' : 'Continue with Google'}</span>
+              <span>Continue with Google</span>
             </button>
           </form>
 

@@ -120,6 +120,50 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Google Login handler
+  const loginWithGoogle = async (googleUser = {}) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const email = googleUser.email || `google_student_${Date.now().toString().slice(-4)}@pranidha.edu`;
+      const name = googleUser.name || 'Google Student';
+      const avatar = googleUser.avatar || '/clay_mascot.png';
+      const role = googleUser.role || 'user';
+
+      const res = await fetch('/api/auth/google-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name, avatar, role, googleId: googleUser.googleId })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        localStorage.setItem('token', data.token);
+        setToken(data.token);
+        setUser(data.user);
+
+        // Fetch profile
+        const meRes = await fetch('/api/auth/me', {
+          headers: { Authorization: `Bearer ${data.token}` }
+        });
+        const meData = await meRes.json();
+        if (meData.success) {
+          setProfile(meData.profile);
+        }
+        setLoading(false);
+        return { success: true, user: data.user };
+      } else {
+        setError(data.message || 'Google login failed');
+        setLoading(false);
+        return { success: false, message: data.message };
+      }
+    } catch (err) {
+      setError('Google login connection failed. Try again.');
+      setLoading(false);
+      return { success: false, message: 'Google login connection failed.' };
+    }
+  };
+
   // Logout handler
   const logout = () => {
     localStorage.removeItem('token');
@@ -139,6 +183,7 @@ export const AuthProvider = ({ children }) => {
         error,
         login,
         register,
+        loginWithGoogle,
         logout,
         setProfile
       }}
