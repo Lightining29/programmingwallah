@@ -103,7 +103,8 @@ export default function AdminDashboard() {
   const [admStdName, setAdmStdName] = useState('');
   const [admStdDob, setAdmStdDob] = useState('');
   const [admStdGender, setAdmStdGender] = useState('Male');
-  const [admStdClass, setAdmStdClass] = useState(COURSE_OPTIONS[0]);
+  const [admSelectedCourses, setAdmSelectedCourses] = useState(['Java Development']);
+  const [admStdClass, setAdmStdClass] = useState('Java Development');
   const [admParentFather, setAdmParentFather] = useState('');
   const [admParentMother, setAdmParentMother] = useState('');
   const [admParentEmail, setAdmParentEmail] = useState('');
@@ -113,6 +114,30 @@ export default function AdminDashboard() {
   const [admissionFee, setAdmissionFee] = useState('5000');
   const [admTuitionFee, setAdmTuitionFee] = useState('24000');
   const [admPaymentPlan, setAdmPaymentPlan] = useState('1month');
+
+  const handleToggleCourse = (courseName) => {
+    let updated;
+    if (admSelectedCourses.includes(courseName)) {
+      if (admSelectedCourses.length === 1) {
+        updated = [courseName];
+      } else {
+        updated = admSelectedCourses.filter(c => c !== courseName);
+      }
+    } else {
+      updated = [...admSelectedCourses, courseName];
+    }
+    setAdmSelectedCourses(updated);
+    const combinedName = updated.join(' + ');
+    setAdmStdClass(combinedName);
+
+    // Sum suggested prices for the selected courses
+    let totalSum = 0;
+    updated.forEach(cName => {
+      const match = courses?.find(c => c.title && c.title.toLowerCase() === cName.toLowerCase());
+      totalSum += (match && match.price) ? Number(match.price) : 15000;
+    });
+    setAdmTuitionFee(String(totalSum));
+  };
 
   const getPlanCount = (plan) => {
     if (plan === '1month' || plan === '1' || plan === 'full') return 1;
@@ -2478,16 +2503,46 @@ export default function AdminDashboard() {
                             <option value="Other">Other</option>
                           </select>
                         </div>
-                        <div className="space-y-1">
-                          <label className="font-bold text-slate-600">Course</label>
-                          <select
-                            value={admStdClass} onChange={e => setAdmStdClass(e.target.value)}
-                            className="w-full bg-[#0f172a] border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-600"
-                          >
-                            {courseOptions.map((course) => (
-                              <option key={course} value={course}>{course}</option>
-                            ))}
-                          </select>
+                        <div className="space-y-1 sm:col-span-3">
+                          <div className="flex items-center justify-between">
+                            <label className="font-bold text-slate-700 text-xs">
+                              Select Course(s) <span className="text-[11px] text-brandCoral font-normal">(Click multiple to combine, e.g. Java + MERN)</span>
+                            </label>
+                            <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-100">
+                              {admSelectedCourses.length} Selected: {admStdClass}
+                            </span>
+                          </div>
+
+                          {/* Multi-Select Course Pills */}
+                          <div className="flex flex-wrap gap-1.5 p-2 bg-slate-50 border border-slate-200 rounded-xl mt-1">
+                            {courseOptions.map((course) => {
+                              const isSelected = admSelectedCourses.includes(course);
+                              return (
+                                <button
+                                  key={course}
+                                  type="button"
+                                  onClick={() => handleToggleCourse(course)}
+                                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                                    isSelected
+                                      ? 'bg-[#5B468C] text-white border-[#5B468C] shadow-sm scale-[1.02]'
+                                      : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-100'
+                                  }`}
+                                >
+                                  {isSelected && <Check className="w-3 h-3 text-white" />}
+                                  <span>{course}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {/* Editable Combined Course Title */}
+                          <input
+                            type="text"
+                            placeholder="Selected Course combination..."
+                            value={admStdClass}
+                            onChange={(e) => setAdmStdClass(e.target.value)}
+                            className="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-700 text-xs mt-1"
+                          />
                         </div>
                       </div>
                     </div>
@@ -2590,22 +2645,37 @@ export default function AdminDashboard() {
                         </div>
                       </div>
 
-                      {/* Live Fee Calculation Breakdown Card */}
-                      <div className="p-3.5 rounded-2xl border border-orange-200 bg-orange-50/70 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs">
-                        <div className="space-y-1">
-                          <div className="flex flex-wrap items-center gap-2 font-bold text-slate-700">
-                            <span>Admission Fee: <strong className="text-emerald-700">₹{Number(admissionFee || 0).toLocaleString()}</strong> <span className="text-[10px] text-slate-500 font-normal">(Paid at Admission)</span></span>
-                            <span>|</span>
-                            <span>Remaining Installment Balance: <strong className="text-indigo-700">₹{Math.max(0, Number(admTuitionFee || 0) - Number(admissionFee || 0)).toLocaleString()}</strong></span>
-                          </div>
-                          <p className="text-[11px] text-slate-500 font-semibold">
-                            Installments: <strong>{getPlanCount(admPaymentPlan)} Month(s)</strong> (~<strong className="text-slate-800">₹{Math.round(Math.max(0, Number(admTuitionFee || 0) - Number(admissionFee || 0)) / getPlanCount(admPaymentPlan)).toLocaleString()}</strong> per installment)
-                          </p>
-                        </div>
-                        <div className="bg-white px-3.5 py-2 rounded-xl border border-orange-200 text-right shrink-0 shadow-sm">
-                          <span className="text-[9px] uppercase font-extrabold text-slate-400 block">Total Fees Payable</span>
-                          <span className="text-base font-black text-[#E53935]">
+                      {/* Live Fee Calculation Breakdown Cards Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {/* 1. Total Fee */}
+                        <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between">
+                          <span className="text-[10px] uppercase font-extrabold text-slate-400">Total Course Fee</span>
+                          <span className="text-xl font-black text-slate-900 mt-1">
                             ₹{Number(admTuitionFee || 0).toLocaleString()}
+                          </span>
+                          <span className="text-[10px] text-slate-500 mt-0.5 font-medium">Grand Total Decided</span>
+                        </div>
+
+                        {/* 2. Admission Fee Paid */}
+                        <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 shadow-sm flex flex-col justify-between">
+                          <span className="text-[10px] uppercase font-extrabold text-emerald-700">Admission Fee (Paid Upfront)</span>
+                          <span className="text-xl font-black text-emerald-800 mt-1">
+                            ₹{Number(admissionFee || 0).toLocaleString()}
+                          </span>
+                          <span className="text-[10px] text-emerald-600 mt-0.5 font-medium">Paid at Admission Desk</span>
+                        </div>
+
+                        {/* 3. Remaining Balance */}
+                        <div className="p-3.5 rounded-2xl bg-amber-50 border-2 border-amber-400 shadow-sm flex flex-col justify-between">
+                          <span className="text-[10px] uppercase font-extrabold text-amber-800 flex items-center justify-between">
+                            <span>Remaining Balance</span>
+                            <span className="text-[9px] bg-amber-200 text-amber-900 px-1.5 py-0.2 rounded font-black">TO COLLECT</span>
+                          </span>
+                          <span className="text-xl font-black text-amber-900 mt-1">
+                            ₹{Math.max(0, Number(admTuitionFee || 0) - Number(admissionFee || 0)).toLocaleString()}
+                          </span>
+                          <span className="text-[10px] text-amber-800 mt-0.5 font-semibold">
+                            {getPlanCount(admPaymentPlan)} Month(s) (~₹{Math.round(Math.max(0, Number(admTuitionFee || 0) - Number(admissionFee || 0)) / getPlanCount(admPaymentPlan)).toLocaleString()}/mo)
                           </span>
                         </div>
                       </div>

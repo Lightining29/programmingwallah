@@ -228,32 +228,31 @@ export async function createAdmissionFromPayment({
       });
     }
 
-    let course = null;
-    const courses = await mockStore.find('courses', { title: normalizedStudent.class });
-    if (courses && courses.length > 0) {
-      course = courses[0];
-    } else {
-      const allCourses = await mockStore.find('courses') || [];
-      course = allCourses.find(c => String(c.title).toLowerCase() === String(normalizedStudent.class).toLowerCase());
+    const courseTitles = String(normalizedStudent.class || '')
+      .split(/\s*\+\s*|\s*,\s*/)
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    const allCourses = await mockStore.find('courses') || [];
+    let calculatedTotal = 0;
+
+    for (const cTitle of courseTitles) {
+      const match = allCourses.find(c => String(c.title).toLowerCase() === cTitle.toLowerCase());
+      if (match) {
+        calculatedTotal += Number(match.price) || 15000;
+        await mockStore.create('enrollments', {
+          user: String(parentUser._id),
+          course: String(match._id),
+          paymentStatus: 'paid',
+          status: 'active',
+          enrolledAt: new Date()
+        });
+      }
     }
 
     let totalAmount = Number(tuitionFee || courseFee) || 0;
     if (!totalAmount) {
-      if (course && course.price) {
-        totalAmount = Number(course.price) || 15000;
-      } else {
-        totalAmount = 15000;
-      }
-    }
-
-    if (course) {
-      await mockStore.create('enrollments', {
-        user: String(parentUser._id),
-        course: String(course._id),
-        paymentStatus: 'paid',
-        status: 'active',
-        enrolledAt: new Date()
-      });
+      totalAmount = calculatedTotal || 15000;
     }
 
     const remainingTuition = Math.max(0, totalAmount - admissionFeeVal);
@@ -393,26 +392,31 @@ export async function createAdmissionFromPayment({
     });
   }
 
-  let course = await Course.findOne({ title: { $regex: new RegExp(`^${escapeRegExp(normalizedStudent.class)}$`, 'i') } });
-  let totalAmount = Number(tuitionFee || courseFee) || 0;
+  const courseTitles = String(normalizedStudent.class || '')
+    .split(/\s*\+\s*|\s*,\s*/)
+    .map(s => s.trim())
+    .filter(Boolean);
 
-  if (!totalAmount) {
-    if (course && course.price) {
-      totalAmount = Number(course.price) || 15000;
-    } else {
-      totalAmount = 15000;
+  let calculatedTotal = 0;
+  const CourseEnrollment = (await import('../models/CourseEnrollment.js')).default;
+
+  for (const cTitle of courseTitles) {
+    const match = await Course.findOne({ title: { $regex: new RegExp(`^${escapeRegExp(cTitle)}$`, 'i') } });
+    if (match) {
+      calculatedTotal += Number(match.price) || 15000;
+      await CourseEnrollment.findOneAndUpdate(
+        { user: parentUser._id, course: match._id },
+        { paymentStatus: 'paid', status: 'active', enrolledAt: new Date() },
+        { upsert: true, new: true }
+      );
+      match.totalEnrollments = (match.totalEnrollments || 0) + 1;
+      await match.save();
     }
   }
 
-  if (course) {
-    const CourseEnrollment = (await import('../models/CourseEnrollment.js')).default;
-    await CourseEnrollment.findOneAndUpdate(
-      { user: parentUser._id, course: course._id },
-      { paymentStatus: 'paid', status: 'active', enrolledAt: new Date() },
-      { upsert: true, new: true }
-    );
-    course.totalEnrollments = (course.totalEnrollments || 0) + 1;
-    await course.save();
+  let totalAmount = Number(tuitionFee || courseFee) || 0;
+  if (!totalAmount) {
+    totalAmount = calculatedTotal || 15000;
   }
 
   const remainingTuition = Math.max(0, totalAmount - admissionFeeVal);
