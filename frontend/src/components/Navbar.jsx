@@ -26,12 +26,12 @@ export default function Navbar() {
     { name: 'HOME', path: '/' },
     { name: 'ABOUT', path: '/about' },
     { name: 'COURSES', path: '/programs' },
+    { name: 'TUTORIALS', path: '/tutorials' },
     { name: 'LEARNING', path: '/lms' },
     { name: 'PRACTICE', path: '/practice' },
     { name: 'MEETINGS', path: '/meetings' },
     { name: 'GALLERY', path: '/gallery' },
-    { name: 'CONTACT', path: '/contact' },
-    { name: 'PAYMENT TEST', path: '/payment-demo' }
+    { name: 'CONTACT', path: '/contact' }
   ];
 
   const getDashboardPath = () => {

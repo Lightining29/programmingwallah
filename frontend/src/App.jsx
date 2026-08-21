@@ -19,6 +19,7 @@ import FeeStructurePage from './pages/FeeStructurePage.jsx';
 import Contact from './pages/Contact.jsx';
 import Login from './pages/Login.jsx';
 import Practice from './pages/Practice.jsx';
+import Tutorials from './pages/Tutorials.jsx';
 import RazorpayTestPage from './pages/RazorpayTestPage.jsx';
 import VerifyCertificate from './pages/VerifyCertificate.jsx';
 
@@ -117,6 +118,7 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/practice" element={<Practice />} />
+          <Route path="/tutorials" element={<Tutorials />} />
           <Route path="/payment-demo" element={<RazorpayTestPage />} />
           <Route path="/verify-certificate" element={<VerifyCertificate />} />
           <Route path="/verify-certificate/:certNumber" element={<VerifyCertificate />} />
