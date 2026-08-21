@@ -540,7 +540,7 @@ router.post('/admissions/create', uploadAdmissions.fields([
   { name: 'reportCard', maxCount: 1 },
   { name: 'addressProof', maxCount: 1 }
 ]), async (req, res) => {
-  let { studentDetails, parentDetails, password, admissionFee, addressProofType, paymentPlan = 'installments' } = req.body;
+  let { studentDetails, parentDetails, password, admissionFee, tuitionFee, courseFee, addressProofType, paymentPlan = '4months' } = req.body;
   
   try {
     if (typeof studentDetails === 'string') {
@@ -721,11 +721,20 @@ router.post('/admissions/create', uploadAdmissions.fields([
         });
       }
 
-      let totalAmount = 15000;
+      let totalAmount = Number(tuitionFee || courseFee) || 0;
+      if (!totalAmount) {
+        const mockCourses = await mockStore.find('courses') || [];
+        const courseMatch = mockCourses.find(c => c.title && c.title.toLowerCase() === (normalizedStudent.class || '').toLowerCase());
+        if (courseMatch && courseMatch.price) {
+          totalAmount = Number(courseMatch.price) || 15000;
+        } else {
+          totalAmount = 15000;
+        }
+      }
+
       const mockCourses = await mockStore.find('courses') || [];
       const courseMatch = mockCourses.find(c => c.title && c.title.toLowerCase() === (normalizedStudent.class || '').toLowerCase());
       if (courseMatch) {
-        if (courseMatch.price) totalAmount = Number(courseMatch.price) || 15000;
         await mockStore.create('enrollments', {
           user: String(parentUser._id),
           course: String(courseMatch._id),
@@ -735,11 +744,27 @@ router.post('/admissions/create', uploadAdmissions.fields([
         });
       }
 
-      if (paymentPlan === 'full') {
+      const count = (paymentPlan === '1month' || paymentPlan === '1months' || paymentPlan === '1' || paymentPlan === 'full')
+        ? 1
+        : (paymentPlan === '2months' || paymentPlan === '2')
+        ? 2
+        : (paymentPlan === '3months' || paymentPlan === '3')
+        ? 3
+        : (paymentPlan === '4months' || paymentPlan === '4')
+        ? 4
+        : (paymentPlan === '5months' || paymentPlan === '5')
+        ? 5
+        : (paymentPlan === '6months' || paymentPlan === '6')
+        ? 6
+        : (paymentPlan === '10months' || paymentPlan === '10')
+        ? 10
+        : 12;
+
+      if (count === 1) {
         await mockStore.create('fees', {
           studentId: newStudent._id,
           amount: totalAmount,
-          term: 'Full Course Tuition Fee',
+          term: 'Course Tuition Fee (1 Month / Full)',
           dueDate: new Date(),
           status: 'paid',
           paymentDate: new Date(),
@@ -747,7 +772,6 @@ router.post('/admissions/create', uploadAdmissions.fields([
           paymentMethod: 'Admission Desk Cash'
         });
       } else {
-        const count = paymentPlan === '4months' ? 4 : paymentPlan === '5months' ? 5 : paymentPlan === '6months' ? 6 : paymentPlan === '3months' ? 3 : 12;
         const installmentAmount = Math.round(totalAmount / count);
         const lastInstallmentAmount = totalAmount - (installmentAmount * (count - 1));
 

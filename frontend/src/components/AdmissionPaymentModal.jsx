@@ -33,6 +33,9 @@ export default function AdmissionPaymentModal({ admissionData, onClose, onSucces
     if (admissionData.paymentPlan) {
       fd.append('paymentPlan', admissionData.paymentPlan);
     }
+    if (admissionData.tuitionFee) {
+      fd.append('tuitionFee', String(admissionData.tuitionFee));
+    }
     if (photoFile) fd.append('photo', photoFile);
     return fd;
   };

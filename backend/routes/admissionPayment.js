@@ -92,6 +92,7 @@ router.post('/create', uploadAdmissions.single('photo'), async (req, res) => {
           parentDetails,
           paymentMethod: method === 'upi' ? 'UPI' : 'Cash',
           admissionFee: amountNum,
+          tuitionFee: Number(req.body.tuitionFee || req.body.courseFee) || 0,
           photo: photoForService,
           paymentPlan: payload.paymentPlan
         });

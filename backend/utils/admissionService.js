@@ -61,22 +61,34 @@ function normalizeDob(value) {
 }
 
 function getInstallmentCount(paymentPlan) {
-  if (paymentPlan === 'full') return 1;
-  if (paymentPlan === '4months') return 4;
-  if (paymentPlan === '5months') return 5;
-  if (paymentPlan === '6months') return 6;
-  if (paymentPlan === '3months') return 3;
-  if (paymentPlan === 'monthly' || paymentPlan === '12months' || paymentPlan === 'installments') return 12;
+  if (paymentPlan === '1month' || paymentPlan === '1months' || paymentPlan === '1' || paymentPlan === 'full') return 1;
+  if (paymentPlan === '2months' || paymentPlan === '2') return 2;
+  if (paymentPlan === '3months' || paymentPlan === '3') return 3;
+  if (paymentPlan === '4months' || paymentPlan === '4') return 4;
+  if (paymentPlan === '5months' || paymentPlan === '5') return 5;
+  if (paymentPlan === '6months' || paymentPlan === '6') return 6;
+  if (paymentPlan === '10months' || paymentPlan === '10') return 10;
+  if (paymentPlan === 'monthly' || paymentPlan === '12months' || paymentPlan === '12' || paymentPlan === 'installments') return 12;
   const parsed = parseInt(paymentPlan, 10);
   if (!isNaN(parsed) && parsed > 0) return parsed;
-  return 4;
+  return 1;
 }
 
 /**
  * Create a full admission (parent + student + admission record + fees) from a
  * verified payment. Works in both mock and MongoDB modes.
  */
-export async function createAdmissionFromPayment({ studentDetails = {}, parentDetails = {}, paymentMethod = 'Cash', admissionFee = 0, password, photo, paymentPlan = 'installments' }) {
+export async function createAdmissionFromPayment({
+  studentDetails = {},
+  parentDetails = {},
+  paymentMethod = 'Cash',
+  admissionFee = 0,
+  tuitionFee,
+  courseFee,
+  password,
+  photo,
+  paymentPlan = '1month'
+}) {
   const isMock = mockStore.isMock;
   const appNo = genAppNo();
   const studentPublicId = genStudentId();
@@ -225,9 +237,16 @@ export async function createAdmissionFromPayment({ studentDetails = {}, parentDe
       course = allCourses.find(c => String(c.title).toLowerCase() === String(normalizedStudent.class).toLowerCase());
     }
 
-    let totalAmount = 15000;
+    let totalAmount = Number(tuitionFee || courseFee) || 0;
+    if (!totalAmount) {
+      if (course && course.price) {
+        totalAmount = Number(course.price) || 15000;
+      } else {
+        totalAmount = 15000;
+      }
+    }
+
     if (course) {
-      totalAmount = Number(course.price) || 0;
       await mockStore.create('enrollments', {
         user: String(parentUser._id),
         course: String(course._id),
@@ -237,11 +256,12 @@ export async function createAdmissionFromPayment({ studentDetails = {}, parentDe
       });
     }
 
-    if (paymentPlan === 'full') {
+    const count = getInstallmentCount(paymentPlan);
+    if (count === 1) {
       await mockStore.create('fees', {
         studentId: newStudent._id,
         amount: totalAmount,
-        term: 'Full Course Tuition Fee',
+        term: 'Course Tuition Fee (1 Month / Full)',
         dueDate: new Date(),
         status: 'paid',
         paymentDate: new Date(),
@@ -249,7 +269,6 @@ export async function createAdmissionFromPayment({ studentDetails = {}, parentDe
         paymentMethod
       });
     } else {
-      const count = getInstallmentCount(paymentPlan);
       const installmentAmount = Math.round(totalAmount / count);
       const lastInstallmentAmount = totalAmount - (installmentAmount * (count - 1));
 
@@ -260,7 +279,7 @@ export async function createAdmissionFromPayment({ studentDetails = {}, parentDe
         await mockStore.create('fees', {
           studentId: newStudent._id,
           amount: amt,
-          term: `Month ${i} Installment`,
+          term: `Month ${i} Tuition Fee`,
           dueDate,
           status: i === 1 ? 'paid' : 'pending',
           paymentDate: i === 1 ? new Date() : null,
@@ -371,10 +390,17 @@ export async function createAdmissionFromPayment({ studentDetails = {}, parentDe
   }
 
   let course = await Course.findOne({ title: { $regex: new RegExp(`^${escapeRegExp(normalizedStudent.class)}$`, 'i') } });
-  let totalAmount = 15000;
+  let totalAmount = Number(tuitionFee || courseFee) || 0;
+
+  if (!totalAmount) {
+    if (course && course.price) {
+      totalAmount = Number(course.price) || 15000;
+    } else {
+      totalAmount = 15000;
+    }
+  }
 
   if (course) {
-    totalAmount = Number(course.price) || 0;
     const CourseEnrollment = (await import('../models/CourseEnrollment.js')).default;
     await CourseEnrollment.findOneAndUpdate(
       { user: parentUser._id, course: course._id },
@@ -385,11 +411,12 @@ export async function createAdmissionFromPayment({ studentDetails = {}, parentDe
     await course.save();
   }
 
-  if (paymentPlan === 'full') {
+  const count = getInstallmentCount(paymentPlan);
+  if (count === 1) {
     await Fee.create({
       studentId: student._id,
       amount: totalAmount,
-      term: 'Full Course Tuition Fee',
+      term: 'Course Tuition Fee (1 Month / Full)',
       dueDate: new Date(),
       status: 'paid',
       paymentDate: new Date(),
@@ -397,7 +424,6 @@ export async function createAdmissionFromPayment({ studentDetails = {}, parentDe
       paymentMethod
     });
   } else {
-    const count = getInstallmentCount(paymentPlan);
     const installmentAmount = Math.round(totalAmount / count);
     const lastInstallmentAmount = totalAmount - (installmentAmount * (count - 1));
 
@@ -408,7 +434,7 @@ export async function createAdmissionFromPayment({ studentDetails = {}, parentDe
       await Fee.create({
         studentId: student._id,
         amount: amt,
-        term: `Month ${i} Installment`,
+        term: `Month ${i} Tuition Fee`,
         dueDate,
         status: i === 1 ? 'paid' : 'pending',
         paymentDate: i === 1 ? new Date() : null,

@@ -110,12 +110,20 @@ export default function AdminDashboard() {
   const [admParentPhone, setAdmParentPhone] = useState('');
   const [admParentAddress, setAdmParentAddress] = useState('');
   const [admParentPassword, setAdmParentPassword] = useState('');
-  const [admPhoto, setAdmPhoto] = useState(null);
-  const [admReportCard, setAdmReportCard] = useState(null);
-  const [admAddressProofType, setAdmAddressProofType] = useState('Electricity Bill');
-  const [admAddressProof, setAdmAddressProof] = useState(null);
-  const [admissionFee, setAdmissionFee] = useState('');
-  const [admPaymentPlan, setAdmPaymentPlan] = useState('4months');
+  const [admissionFee, setAdmissionFee] = useState('5000');
+  const [admTuitionFee, setAdmTuitionFee] = useState('24000');
+  const [admPaymentPlan, setAdmPaymentPlan] = useState('1month');
+
+  const getPlanCount = (plan) => {
+    if (plan === '1month' || plan === '1' || plan === 'full') return 1;
+    if (plan === '2months' || plan === '2') return 2;
+    if (plan === '3months' || plan === '3') return 3;
+    if (plan === '4months' || plan === '4') return 4;
+    if (plan === '5months' || plan === '5') return 5;
+    if (plan === '6months' || plan === '6') return 6;
+    if (plan === '10months' || plan === '10') return 10;
+    return 12;
+  };
 
   // Admission payment modal (Cash / UPI → auto-saves student on verified payment)
   const [admissionPaymentOpen, setAdmissionPaymentOpen] = useState(false);
@@ -1759,6 +1767,8 @@ export default function AdminDashboard() {
     setAdmPhoto(null); setAdmReportCard(null);
     setAdmAddressProofType('Electricity Bill'); setAdmAddressProof(null);
     setAdmissionFee('');
+    setAdmTuitionFee('');
+    setAdmPaymentPlan('4months');
     const inputs = ['adm-photo-input', 'adm-report-input', 'adm-address-proof-input'];
     inputs.forEach((id) => { const el = document.getElementById(id); if (el) el.value = ''; });
 
@@ -1797,6 +1807,7 @@ export default function AdminDashboard() {
           formData.append('parentDetails', JSON.stringify(parentDetails));
           formData.append('password', admParentPassword);
           formData.append('admissionFee', admissionFee || '0');
+          formData.append('tuitionFee', admTuitionFee || '0');
           formData.append('paymentPlan', admPaymentPlan);
           formData.append('addressProofType', admAddressProofType);
 
@@ -1852,6 +1863,7 @@ export default function AdminDashboard() {
             setAdmAddressProofType('Electricity Bill');
             setAdmAddressProof(null);
             setAdmissionFee('');
+            setAdmTuitionFee('');
             setAdmPaymentPlan('4months');
 
             const photoInput = document.getElementById('adm-photo-input');
@@ -2535,84 +2547,66 @@ export default function AdminDashboard() {
                       </div>
                     </div>
 
-                    {/* Document Upload Section */}
-                    <div className="space-y-3">
-                      <h5 className="pb-1 font-bold border-b text-slate-800 font-quicksand">3. Supporting Documents (Optional)</h5>
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 text-slate-600">
+                    {/* Course Fees & Installments Plan Section */}
+                    <div className="space-y-4">
+                      <h5 className="pb-1 font-bold border-b text-slate-800 font-quicksand">3. Course Fees & Installment Plan (Decided by Admin)</h5>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                         <div className="space-y-1">
-                          <label className="font-bold text-slate-600">Student Passport Size Photo (Image)</label>
-                          <input
-                            id="adm-photo-input"
-                            type="file" accept=".png,.jpg,.jpeg"
-                            onChange={e => setAdmPhoto(e.target.files[0])}
-                            className="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none text-xs"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="font-bold text-slate-600">Previous School Report Card / Marksheet (PDF / Image)</label>
-                          <input
-                            id="adm-report-input"
-                            type="file" accept=".pdf,.png,.jpg,.jpeg"
-                            onChange={e => setAdmReportCard(e.target.files[0])}
-                            className="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none text-xs"
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-3 p-3 space-y-1 border sm:col-span-2 sm:grid-cols-2 bg-slate-100/50 rounded-2xl border-slate-200/50">
-                          <div className="space-y-1">
-                            <label className="font-bold text-slate-600">Address Proof Document Type</label>
-                            <select
-                              value={admAddressProofType}
-                              onChange={e => setAdmAddressProofType(e.target.value)}
-                              className="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-600 text-xs"
-                            >
-                              <option value="Electricity Bill">Electricity Bill</option>
-                              <option value="Water Bill">Water Bill</option>
-                              <option value="Rent Agreement">Rent Agreement</option>
-                              <option value="Ration Card">Ration Card</option>
-                            </select>
-                          </div>
-                          <div className="space-y-1">
-                            <label className="font-bold text-slate-600">Upload Address Proof (PDF / Image)</label>
-                            <input
-                              id="adm-address-proof-input"
-                              type="file" accept=".pdf,.png,.jpg,.jpeg"
-                              onChange={e => setAdmAddressProof(e.target.files[0])}
-                              className="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none text-xs"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Admission Fees Section */}
-                    <div className="space-y-3">
-                      <h5 className="pb-1 font-bold border-b text-slate-800 font-quicksand">4. Admission Fees Collection</h5>
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <div className="space-y-1">
-                          <label className="font-bold text-slate-600">Admission Fee Amount (₹)</label>
+                          <label className="font-bold text-slate-600">Admission Fee (₹)</label>
                           <input
                             type="number"
-                            placeholder="Enter fee amount (e.g. 5000)"
+                            placeholder="e.g. 5000"
                             value={admissionFee}
                             onChange={e => setAdmissionFee(e.target.value)}
                             className="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-700 text-xs"
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="font-bold text-slate-600">Payment Plan</label>
+                          <label className="font-bold text-slate-600">Total Tuition / Course Fee (₹)</label>
+                          <input
+                            type="number"
+                            placeholder="e.g. 24000"
+                            value={admTuitionFee}
+                            onChange={e => setAdmTuitionFee(e.target.value)}
+                            className="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-700 text-xs"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="font-bold text-slate-600">Installment Plan</label>
                           <select
                             value={admPaymentPlan}
                             onChange={e => setAdmPaymentPlan(e.target.value)}
                             className="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-600 text-xs font-quicksand"
                           >
+                            <option value="1month">1 Month (Full Course Fee / 1 Installment)</option>
+                            <option value="2months">2 Months Installments</option>
+                            <option value="3months">3 Months Installments</option>
                             <option value="4months">4 Months Installments</option>
                             <option value="5months">5 Months Installments</option>
                             <option value="6months">6 Months Installments</option>
-                            <option value="3months">3 Months Installments</option>
+                            <option value="10months">10 Months Installments</option>
                             <option value="monthly">Monthly (12 Installments)</option>
-                            <option value="full">Full Fee Payment</option>
                           </select>
+                        </div>
+                      </div>
+
+                      {/* Live Fee Calculation Breakdown Card */}
+                      <div className="p-3.5 rounded-2xl border border-orange-200 bg-orange-50/70 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs">
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap items-center gap-2 font-bold text-slate-700">
+                            <span>Admission Fee: <strong className="text-emerald-700">₹{Number(admissionFee || 0).toLocaleString()}</strong></span>
+                            <span>+</span>
+                            <span>Course Tuition Fee: <strong className="text-indigo-700">₹{Number(admTuitionFee || 0).toLocaleString()}</strong></span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 font-semibold">
+                            Installments: <strong>{getPlanCount(admPaymentPlan)} Month(s)</strong> (~<strong className="text-slate-800">₹{Math.round((Number(admTuitionFee || 0)) / getPlanCount(admPaymentPlan)).toLocaleString()}</strong> per installment)
+                          </p>
+                        </div>
+                        <div className="bg-white px-3.5 py-2 rounded-xl border border-orange-200 text-right shrink-0 shadow-sm">
+                          <span className="text-[9px] uppercase font-extrabold text-slate-400 block">Total Student Fees</span>
+                          <span className="text-base font-black text-[#E53935]">
+                            ₹{(Number(admissionFee || 0) + Number(admTuitionFee || 0)).toLocaleString()}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -6106,7 +6100,8 @@ export default function AdminDashboard() {
             studentDetails: { name: admStdName, dateOfBirth: admStdDob, gender: admStdGender, class: admStdClass },
             parentDetails: { fatherName: admParentFather, motherName: admParentMother, email: admParentEmail, phone: admParentPhone, address: admParentAddress },
             amount: admissionFee,
-            photo: admPhoto
+            tuitionFee: admTuitionFee,
+            paymentPlan: admPaymentPlan
           }}
           onClose={() => setAdmissionPaymentOpen(false)}
           onSuccess={handleAdmissionPaymentSuccess}
