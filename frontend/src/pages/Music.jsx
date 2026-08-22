@@ -58,7 +58,8 @@ import {
   ArrowUpDown,
   Filter,
   FileText,
-  Upload
+  Upload,
+  Loader2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -78,7 +79,6 @@ export const getDriveStreamUrl = (driveIdOrUrl) => {
   if (match && match[1]) {
     fileId = match[1];
   }
-  // Try backend proxy stream, fallback to direct cloud CDN
   return `/api/music/stream/${fileId}`;
 };
 
@@ -1047,7 +1047,7 @@ const AMBIENT_SOUNDS = [
 export default function Music() {
   // ── State Storage ──
   const [tracks, setTracks] = useState(() => {
-    const saved = localStorage.getItem('appletree_music_tracks_v5');
+    const saved = localStorage.getItem('appletree_music_tracks_v6');
     if (saved) {
       try { 
         const parsed = JSON.parse(saved); 
@@ -1058,7 +1058,7 @@ export default function Music() {
   });
 
   const [playlists, setPlaylists] = useState(() => {
-    const saved = localStorage.getItem('appletree_music_playlists_v5');
+    const saved = localStorage.getItem('appletree_music_playlists_v6');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { return INITIAL_PLAYLISTS; }
     }
@@ -1066,12 +1066,15 @@ export default function Music() {
   });
 
   const [favoriteTrackIds, setFavoriteTrackIds] = useState(() => {
-    const saved = localStorage.getItem('appletree_favorite_songs_v5');
+    const saved = localStorage.getItem('appletree_favorite_songs_v6');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { return [DEFAULT_MUSIC_TRACKS[0]?.id, DEFAULT_MUSIC_TRACKS[1]?.id]; }
     }
     return [DEFAULT_MUSIC_TRACKS[0]?.id, DEFAULT_MUSIC_TRACKS[1]?.id];
   });
+
+  // ── In-Memory Audio Blob Cache (Zero-delay offline playback) ──
+  const blobCacheRef = useRef({});
 
   // ── Playback Engine State ──
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
@@ -1083,6 +1086,7 @@ export default function Music() {
   const [isShuffle, setIsShuffle] = useState(false);
   const [repeatMode, setRepeatMode] = useState('off');
   const [isBuffering, setIsBuffering] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(null);
   const [playbackError, setPlaybackError] = useState(null);
   const [isFullscreenVisualizer, setIsFullscreenVisualizer] = useState(false);
   const [audioPreset, setAudioPreset] = useState('Lo-Fi Warmth');
@@ -1135,61 +1139,99 @@ export default function Music() {
 
   // Sync to localStorage
   useEffect(() => {
-    localStorage.setItem('appletree_music_tracks_v5', JSON.stringify(tracks));
+    localStorage.setItem('appletree_music_tracks_v6', JSON.stringify(tracks));
   }, [tracks]);
 
   useEffect(() => {
-    localStorage.setItem('appletree_music_playlists_v5', JSON.stringify(playlists));
+    localStorage.setItem('appletree_music_playlists_v6', JSON.stringify(playlists));
   }, [playlists]);
 
   useEffect(() => {
-    localStorage.setItem('appletree_favorite_songs_v5', JSON.stringify(favoriteTrackIds));
+    localStorage.setItem('appletree_favorite_songs_v6', JSON.stringify(favoriteTrackIds));
   }, [favoriteTrackIds]);
 
   const currentTrack = tracks[currentTrackIndex] || tracks[0];
 
-  // Helper to load track into audio element
-  const loadTrackSource = (track, autoPlay = false) => {
-    if (!audioRef.current || !track) return;
+  // ─────────────────────────────────────────────────────────────────────────
+  // FETCH AUDIO DATABYTES & CREATE LOCAL IN-MEMORY BLOB OBJECT URL
+  // ─────────────────────────────────────────────────────────────────────────
+  const fetchAndPlayTrack = async (track, shouldPlay = true) => {
+    if (!track || !audioRef.current) return;
     const fileId = track.driveId || track.id;
-    // Primary: Proxy route, Fallback: Direct CDN
-    const primaryUrl = getDriveStreamUrl(track.driveId || track.streamUrl);
-    
-    setPlaybackError(null);
-    audioRef.current.src = primaryUrl;
-    audioRef.current.load();
 
-    if (autoPlay) {
-      setIsBuffering(true);
-      const playPromise = audioRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            setIsBuffering(false);
-            setIsPlaying(true);
-          })
-          .catch(err => {
-            console.warn('Proxy play failed, trying direct cloud CDN fallback:', err);
-            if (fileId) {
-              audioRef.current.src = getDirectCloudUrl(fileId);
-              audioRef.current.play()
-                .then(() => {
-                  setIsBuffering(false);
-                  setIsPlaying(true);
-                })
-                .catch(() => setIsBuffering(false));
-            } else {
-              setIsBuffering(false);
+    // Check if Blob is already in local memory cache
+    if (blobCacheRef.current[fileId]) {
+      const cachedUrl = blobCacheRef.current[fileId];
+      if (audioRef.current.src !== cachedUrl) {
+        audioRef.current.src = cachedUrl;
+      }
+      if (shouldPlay) {
+        setIsBuffering(false);
+        audioRef.current.play()
+          .then(() => setIsPlaying(true))
+          .catch(e => console.warn('Play cache error:', e));
+      }
+      return;
+    }
+
+    // Otherwise, fetch audio data bytes
+    setIsBuffering(true);
+    setLoadingProgress('Loading audio data...');
+    setPlaybackError(null);
+
+    const endpointsToTry = [
+      getDriveStreamUrl(track.driveId || track.streamUrl),
+      getDirectCloudUrl(fileId),
+      'https://drive.google.com/uc?export=download&id=' + fileId
+    ];
+
+    for (const url of endpointsToTry) {
+      try {
+        const response = await fetch(url);
+        if (response.ok) {
+          const blob = await response.blob();
+          if (blob.size > 1000) {
+            const objectUrl = URL.createObjectURL(blob);
+            blobCacheRef.current[fileId] = objectUrl;
+
+            audioRef.current.src = objectUrl;
+            audioRef.current.load();
+
+            if (shouldPlay) {
+              await audioRef.current.play();
+              setIsPlaying(true);
             }
-          });
+            setIsBuffering(false);
+            setLoadingProgress(null);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Fetch audio bytes attempt from ' + url + ' failed, trying next endpoint...', err);
       }
     }
+
+    // Direct fallback if fetch is blocked
+    const directFallback = getDirectCloudUrl(fileId);
+    audioRef.current.src = directFallback;
+    if (shouldPlay) {
+      audioRef.current.play()
+        .then(() => {
+          setIsPlaying(true);
+          setIsBuffering(false);
+        })
+        .catch(() => {
+          setIsBuffering(false);
+          setPlaybackError('Tap play button to start audio');
+        });
+    }
+    setLoadingProgress(null);
   };
 
   // Sync track when index changes
   useEffect(() => {
     if (currentTrack) {
-      loadTrackSource(currentTrack, isPlaying);
+      fetchAndPlayTrack(currentTrack, isPlaying);
     }
   }, [currentTrackIndex]);
 
@@ -1210,7 +1252,9 @@ export default function Music() {
       }
     };
     const handleLoadedMetadata = () => {
-      setDuration(audio.duration || 0);
+      if (audio.duration && !isNaN(audio.duration)) {
+        setDuration(audio.duration);
+      }
       setIsBuffering(false);
       setPlaybackError(null);
     };
@@ -1225,14 +1269,10 @@ export default function Music() {
       setPlaybackError(null);
     };
     const handleError = (e) => {
-      console.warn('Audio tag encountered error, attempting direct CDN fallback...', e);
+      console.warn('Audio element error, retrying byte fetch...', e);
       setIsBuffering(false);
-      if (currentTrack?.driveId) {
-        const directUrl = getDirectCloudUrl(currentTrack.driveId);
-        if (audio.src !== directUrl) {
-          audio.src = directUrl;
-          audio.play().catch(() => {});
-        }
+      if (currentTrack) {
+        fetchAndPlayTrack(currentTrack, true);
       }
     };
     const handleEnded = () => {
@@ -1342,7 +1382,7 @@ export default function Music() {
       setIsBuffering(true);
       setPlaybackError(null);
       if (!audioRef.current.src || audioRef.current.src === window.location.href) {
-        loadTrackSource(currentTrack, true);
+        fetchAndPlayTrack(currentTrack, true);
       } else {
         const playPromise = audioRef.current.play();
         if (playPromise !== undefined) {
@@ -1352,8 +1392,8 @@ export default function Music() {
               setIsBuffering(false);
             })
             .catch(e => {
-              console.warn('Direct play error, retrying fallback source:', e);
-              loadTrackSource(currentTrack, true);
+              console.warn('Play error, re-fetching bytes:', e);
+              fetchAndPlayTrack(currentTrack, true);
             });
         }
       }
@@ -1366,7 +1406,7 @@ export default function Music() {
       setCurrentTrackIndex(idx);
       setIsPlaying(true);
       setIsBuffering(true);
-      loadTrackSource(track, true);
+      fetchAndPlayTrack(track, true);
     }
   };
 
@@ -1466,8 +1506,9 @@ export default function Music() {
 
   // Reset to Google Drive Folder Default Tracks
   const handleResetToDriveFolder = () => {
+    blobCacheRef.current = {};
     setTracks(DEFAULT_MUSIC_TRACKS);
-    localStorage.setItem('appletree_music_tracks_v5', JSON.stringify(DEFAULT_MUSIC_TRACKS));
+    localStorage.setItem('appletree_music_tracks_v6', JSON.stringify(DEFAULT_MUSIC_TRACKS));
     confetti({ particleCount: 60, spread: 70, origin: { y: 0.5 } });
   };
 
@@ -1523,7 +1564,6 @@ export default function Music() {
       let importedCount = 0;
       let newBatch = [];
 
-      // Check if user pasted JSON array
       if (bulkInputText.trim().startsWith('[') && bulkInputText.trim().endsWith(']')) {
         const parsed = JSON.parse(bulkInputText.trim());
         if (Array.isArray(parsed)) {
@@ -1548,7 +1588,6 @@ export default function Music() {
           importedCount = newBatch.length;
         }
       } else {
-        // Parse lines (URLs or Name,ID,Artist format)
         const lines = bulkInputText.split('\n').map(l => l.trim()).filter(Boolean);
         lines.forEach((line, idx) => {
           let title = '';
@@ -1683,7 +1722,7 @@ export default function Music() {
       <div className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-600/10 blur-[130px] pointer-events-none animate-pulse" />
       <div className="fixed bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-rose-600/10 blur-[140px] pointer-events-none animate-pulse [animation-delay:2s]" />
 
-      {/* Standard Native Audio Element without restrictive crossOrigin */}
+      {/* Standard Native Audio Element */}
       <audio ref={audioRef} preload="auto" />
 
       {/* Hidden Ambience Audio Elements */}
@@ -1730,7 +1769,7 @@ export default function Music() {
             <p className="text-[11px] text-slate-400 font-medium flex items-center gap-2">
               <span>Auto-Fetched from Google Drive Folder</span>
               <span className="w-1 h-1 rounded-full bg-slate-600" />
-              <span className="text-amber-400/90 font-mono">Direct Cloud Stream</span>
+              <span className="text-amber-400/90 font-mono">In-Memory Audio Streaming</span>
             </p>
           </div>
         </div>
@@ -2023,6 +2062,13 @@ export default function Music() {
                 {currentTrack?.lyrics && (
                   <p className="text-xs text-amber-200/90 italic bg-white/5 border border-white/10 rounded-2xl p-3 max-w-xl backdrop-blur-sm">
                     "{currentTrack.lyrics}"
+                  </p>
+                )}
+
+                {loadingProgress && (
+                  <p className="text-xs text-emerald-300 font-bold bg-emerald-500/20 border border-emerald-400/30 rounded-xl px-3 py-1.5 inline-flex items-center gap-1.5">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>{loadingProgress}</span>
                   </p>
                 )}
 
@@ -2405,7 +2451,7 @@ export default function Music() {
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0d1017]/95 backdrop-blur-2xl border-t border-white/15 px-4 sm:px-8 py-3 shadow-[0_-20px_50px_rgba(0,0,0,0.8)]">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
           
-          {/* Track Info (Left) - STRICT SIZE TO PREVENT IMAGE OVERFLOW */}
+          {/* Track Info (Left) */}
           <div className="flex items-center gap-3 w-full md:w-1/4 shrink-0">
             <div className="relative group shrink-0 w-12 h-12">
               <img

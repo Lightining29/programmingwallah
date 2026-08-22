@@ -20,7 +20,7 @@ export async function handleStreamAudio(req, res) {
     // Forward status code (200 or 206)
     res.status(driveRes.statusCode || 200);
 
-    // Set correct audio streaming headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Content-Type', driveRes.headers['content-type'] || 'audio/mpeg');
     res.setHeader('Accept-Ranges', 'bytes');
     res.setHeader('Content-Disposition', 'inline');
