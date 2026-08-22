@@ -36,6 +36,7 @@ import {
   Headphones, 
   Layers, 
   ChevronRight, 
+  ChevronLeft,
   Info,
   CheckCircle2,
   AlertCircle,
@@ -52,7 +53,12 @@ import {
   Waves,
   Eye,
   RefreshCw,
-  FolderCheck
+  FolderCheck,
+  FileSpreadsheet,
+  ArrowUpDown,
+  Filter,
+  FileText,
+  Upload
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -75,8 +81,22 @@ export const getDriveStreamUrl = (driveIdOrUrl) => {
   return `https://docs.google.com/uc?export=download&id=${fileId}`;
 };
 
+// Cover Art Defaults for Multi-Track Generator
+const COVERS = [
+  'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1520523839898-507121287c8b?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=600&q=80'
+];
+
 // ─────────────────────────────────────────────────────────────────────────────
-// 2. PRE-FETCHED TRACKS FROM GOOGLE DRIVE FOLDER (17dieyS9ijEngDyPJZf7hBIyWrBjPrn5j)
+// 2. PRE-FETCHED MASTER TRACKS FROM GOOGLE DRIVE FOLDER (17dieyS9ijEngDyPJZf7hBIyWrBjPrn5j)
 // ─────────────────────────────────────────────────────────────────────────────
 export const DEFAULT_MUSIC_TRACKS = [
   {
@@ -984,7 +1004,7 @@ export const DEFAULT_MUSIC_TRACKS = [
 const INITIAL_PLAYLISTS = [
   {
     id: 'pl-gdrive-all',
-    name: '☁️ Google Drive Master Vault (All 50 Songs)',
+    name: '☁️ Google Drive Master Vault (All Songs)',
     description: 'Complete cloud library fetched automatically from your Google Drive folder.',
     coverArt: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80',
     trackIds: DEFAULT_MUSIC_TRACKS.map(t => t.id)
@@ -994,21 +1014,21 @@ const INITIAL_PLAYLISTS = [
     name: '💖 Bollywood & Romance Melodies',
     description: 'Soulful classics, Arijit, Palak Muchhal, and Bollywood blockbusters.',
     coverArt: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80',
-    trackIds: DEFAULT_MUSIC_TRACKS.filter(t => t.genre.includes('Bollywood') || t.vibe.includes('Romance')).slice(0, 15).map(t => t.id)
+    trackIds: DEFAULT_MUSIC_TRACKS.filter(t => t.genre?.includes('Bollywood') || t.vibe?.includes('Romance')).slice(0, 20).map(t => t.id)
   },
   {
     id: 'pl-party-punjabi',
     name: '⚡ High-Energy Party & Punjabi Hits',
     description: 'Yo Yo Honey Singh, Badshah, Sharry Mann and high BPM pump songs.',
     coverArt: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80',
-    trackIds: DEFAULT_MUSIC_TRACKS.filter(t => t.genre.includes('Party') || t.genre.includes('Punjabi') || t.genre.includes('Hip-Hop')).slice(0, 15).map(t => t.id)
+    trackIds: DEFAULT_MUSIC_TRACKS.filter(t => t.genre?.includes('Party') || t.genre?.includes('Punjabi') || t.genre?.includes('Hip-Hop')).slice(0, 20).map(t => t.id)
   },
   {
     id: 'pl-spiritual-focus',
     name: '🕉️ Divine Chants & Peaceful Focus',
     description: 'Durga Stotram, peaceful devotional tracks and ambient flow for study.',
     coverArt: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=600&q=80',
-    trackIds: DEFAULT_MUSIC_TRACKS.filter(t => t.genre.includes('Devotional') || t.vibe.includes('Peace')).map(t => t.id)
+    trackIds: DEFAULT_MUSIC_TRACKS.filter(t => t.genre?.includes('Devotional') || t.vibe?.includes('Peace')).map(t => t.id)
   }
 ];
 
@@ -1022,7 +1042,7 @@ const AMBIENT_SOUNDS = [
 export default function Music() {
   // ── State Storage ──
   const [tracks, setTracks] = useState(() => {
-    const saved = localStorage.getItem('appletree_music_tracks_v2');
+    const saved = localStorage.getItem('appletree_music_tracks_v3');
     if (saved) {
       try { 
         const parsed = JSON.parse(saved); 
@@ -1033,7 +1053,7 @@ export default function Music() {
   });
 
   const [playlists, setPlaylists] = useState(() => {
-    const saved = localStorage.getItem('appletree_music_playlists_v2');
+    const saved = localStorage.getItem('appletree_music_playlists_v3');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { return INITIAL_PLAYLISTS; }
     }
@@ -1041,7 +1061,7 @@ export default function Music() {
   });
 
   const [favoriteTrackIds, setFavoriteTrackIds] = useState(() => {
-    const saved = localStorage.getItem('appletree_favorite_songs_v2');
+    const saved = localStorage.getItem('appletree_favorite_songs_v3');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { return [DEFAULT_MUSIC_TRACKS[0]?.id, DEFAULT_MUSIC_TRACKS[1]?.id]; }
     }
@@ -1064,8 +1084,15 @@ export default function Music() {
   // ── Navigation & Active View Tabs ──
   const [activeView, setActiveView] = useState('all'); // 'all' | 'favorites' | 'playlist' | 'drive' | 'ambience'
   const [selectedPlaylistId, setSelectedPlaylistId] = useState(null);
+  
+  // ── Search & Filter State ──
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState('All');
+  const [sortBy, setSortBy] = useState('default'); // 'default' | 'title_asc' | 'title_desc' | 'artist' | 'plays'
+
+  // ── Pagination State for 1000+ Songs ──
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(30);
 
   // ── Ambience Layer Mixer State ──
   const [ambientVolumes, setAmbientVolumes] = useState({ rain: 0, cafe: 0, fire: 0 });
@@ -1077,13 +1104,22 @@ export default function Music() {
 
   // ── Modals State ──
   const [isImportDriveModalOpen, setIsImportDriveModalOpen] = useState(false);
+  const [isBulkImportModalOpen, setIsBulkImportModalOpen] = useState(false);
   const [isCreatePlaylistModalOpen, setIsCreatePlaylistModalOpen] = useState(false);
   const [isKeyboardHelpOpen, setIsKeyboardHelpOpen] = useState(false);
+  
+  // Single Import Form
   const [newDriveUrl, setNewDriveUrl] = useState('');
   const [newDriveTitle, setNewDriveTitle] = useState('');
   const [newDriveArtist, setNewDriveArtist] = useState('');
   const [newDriveGenre, setNewDriveGenre] = useState('Bollywood');
   const [newDriveCover, setNewDriveCover] = useState('');
+  
+  // Bulk Import Form
+  const [bulkInputText, setBulkInputText] = useState('');
+  const [bulkStatusMsg, setBulkStatusMsg] = useState(null);
+
+  // Playlist Form
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [newPlaylistDesc, setNewPlaylistDesc] = useState('');
   const [importStatusMsg, setImportStatusMsg] = useState(null);
@@ -1093,15 +1129,15 @@ export default function Music() {
 
   // Sync to localStorage
   useEffect(() => {
-    localStorage.setItem('appletree_music_tracks_v2', JSON.stringify(tracks));
+    localStorage.setItem('appletree_music_tracks_v3', JSON.stringify(tracks));
   }, [tracks]);
 
   useEffect(() => {
-    localStorage.setItem('appletree_music_playlists_v2', JSON.stringify(playlists));
+    localStorage.setItem('appletree_music_playlists_v3', JSON.stringify(playlists));
   }, [playlists]);
 
   useEffect(() => {
-    localStorage.setItem('appletree_favorite_songs_v2', JSON.stringify(favoriteTrackIds));
+    localStorage.setItem('appletree_favorite_songs_v3', JSON.stringify(favoriteTrackIds));
   }, [favoriteTrackIds]);
 
   const currentTrack = tracks[currentTrackIndex] || tracks[0];
@@ -1130,6 +1166,11 @@ export default function Music() {
       }
     }
   }, [currentTrackIndex, currentTrack]);
+
+  // Reset pagination when search / filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedGenre, activeView, selectedPlaylistId, sortBy]);
 
   // Audio Event Listeners
   useEffect(() => {
@@ -1330,17 +1371,6 @@ export default function Music() {
     confetti({ particleCount: 25, spread: 40, origin: { y: 0.7 } });
   };
 
-  // Remove Track from Playlist
-  const handleRemoveTrackFromPlaylist = (playlistId, trackId, e) => {
-    e?.stopPropagation();
-    setPlaylists(prev => prev.map(pl => {
-      if (pl.id === playlistId) {
-        return { ...pl, trackIds: pl.trackIds.filter(id => id !== trackId) };
-      }
-      return pl;
-    }));
-  };
-
   // Create Playlist
   const handleCreatePlaylist = (e) => {
     e.preventDefault();
@@ -1378,11 +1408,11 @@ export default function Music() {
   // Reset to Google Drive Folder Default Tracks
   const handleResetToDriveFolder = () => {
     setTracks(DEFAULT_MUSIC_TRACKS);
-    localStorage.setItem('appletree_music_tracks_v2', JSON.stringify(DEFAULT_MUSIC_TRACKS));
+    localStorage.setItem('appletree_music_tracks_v3', JSON.stringify(DEFAULT_MUSIC_TRACKS));
     confetti({ particleCount: 60, spread: 70, origin: { y: 0.5 } });
   };
 
-  // Import Google Drive Track Handler
+  // Single Google Drive Song Importer
   const handleImportGoogleDriveTrack = (e) => {
     e.preventDefault();
     if (!newDriveUrl.trim() || !newDriveTitle.trim()) {
@@ -1395,13 +1425,13 @@ export default function Music() {
       id: `drive-track-${Date.now()}`,
       title: newDriveTitle.trim(),
       artist: newDriveArtist.trim() || 'Google Drive Audio',
-      album: 'Google Drive Cloud Library',
+      album: 'Google Drive Cloud Vault',
       genre: newDriveGenre || 'Bollywood',
       duration: '03:30',
       driveId: newDriveUrl.trim(),
       streamUrl: driveDirectStream,
-      coverArt: newDriveCover.trim() || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80',
-      lyrics: 'Imported from verified Google Drive stream.',
+      coverArt: newDriveCover.trim() || COVERS[Math.floor(Math.random() * COVERS.length)],
+      lyrics: 'Imported from Google Drive collection.',
       isGoogleDrive: true,
       plays: '1',
       vibe: '☁️ Cloud Synced',
@@ -1425,6 +1455,100 @@ export default function Music() {
     }, 1200);
   };
 
+  // Bulk Import for 1000 Songs (Accepts CSV, URLs list, file names or JSON)
+  const handleBulkImportSongs = (e) => {
+    e.preventDefault();
+    if (!bulkInputText.trim()) return;
+
+    try {
+      let importedCount = 0;
+      let newBatch = [];
+
+      // Check if user pasted JSON array
+      if (bulkInputText.trim().startsWith('[') && bulkInputText.trim().endsWith(']')) {
+        const parsed = JSON.parse(bulkInputText.trim());
+        if (Array.isArray(parsed)) {
+          newBatch = parsed.map((item, idx) => ({
+            id: item.id || `bulk-drive-${Date.now()}-${idx}`,
+            title: item.title || item.name || `Drive Song ${idx + 1}`,
+            artist: item.artist || 'Google Drive Artist',
+            album: item.album || 'Google Drive 1000 Vault',
+            genre: item.genre || 'Bollywood',
+            duration: item.duration || '03:45',
+            driveId: item.driveId || item.id || '',
+            streamUrl: item.streamUrl || getDriveStreamUrl(item.driveId || item.id || item.url),
+            coverArt: item.coverArt || COVERS[idx % COVERS.length],
+            lyrics: item.lyrics || 'Google Drive Cloud Library Track',
+            isGoogleDrive: true,
+            plays: '100',
+            vibe: '🎵 Cloud Beat',
+            bpm: '95 BPM',
+            colorTheme: 'from-purple-500/20 via-pink-500/10 to-slate-900/40',
+            addedAt: new Date().toISOString().split('T')[0]
+          }));
+          importedCount = newBatch.length;
+        }
+      } else {
+        // Parse lines (URLs or Name,ID,Artist format)
+        const lines = bulkInputText.split('\n').map(l => l.trim()).filter(Boolean);
+        lines.forEach((line, idx) => {
+          let title = '';
+          let driveId = '';
+          let artist = 'Google Drive Master Library';
+
+          if (line.includes(',')) {
+            const parts = line.split(',');
+            title = parts[0].trim();
+            driveId = parts[1]?.trim() || '';
+            artist = parts[2]?.trim() || 'Google Drive Artist';
+          } else if (line.includes('drive.google.com') || line.length > 20) {
+            driveId = line;
+            title = `Drive Track ${tracks.length + idx + 1}`;
+          } else {
+            title = line;
+          }
+
+          if (title || driveId) {
+            newBatch.push({
+              id: `bulk-drive-${Date.now()}-${idx}`,
+              title: title.replace(/\.[a-zA-Z0-9]+$/, '').replace(/_/g, ' '),
+              artist: artist,
+              album: 'Google Drive 1000 Vault',
+              genre: 'Bollywood',
+              duration: '03:30',
+              driveId: driveId,
+              streamUrl: getDriveStreamUrl(driveId),
+              coverArt: COVERS[idx % COVERS.length],
+              lyrics: 'Imported from 1000 Google Drive Library',
+              isGoogleDrive: true,
+              plays: '50',
+              vibe: '🔥 Cloud Flow',
+              bpm: '90 BPM',
+              colorTheme: 'from-amber-500/20 via-orange-500/10 to-indigo-900/30',
+              addedAt: new Date().toISOString().split('T')[0]
+            });
+            importedCount++;
+          }
+        });
+      }
+
+      if (importedCount > 0) {
+        setTracks(prev => [...newBatch, ...prev]);
+        setBulkStatusMsg({ type: 'success', text: `🎉 Successfully imported ${importedCount} songs into your Google Drive Library!` });
+        confetti({ particleCount: 100, spread: 80, origin: { y: 0.5 } });
+        setTimeout(() => {
+          setIsBulkImportModalOpen(false);
+          setBulkInputText('');
+          setBulkStatusMsg(null);
+        }, 1500);
+      } else {
+        setBulkStatusMsg({ type: 'error', text: 'No valid songs found in the pasted text.' });
+      }
+    } catch (err) {
+      setBulkStatusMsg({ type: 'error', text: `Import error: ${err.message}` });
+    }
+  };
+
   // Set Sleep Timer
   const handleSetSleepTimer = (mins) => {
     if (sleepTimerMinutes === mins) {
@@ -1437,8 +1561,8 @@ export default function Music() {
     }
   };
 
-  // Filtered Tracks Pipeline
-  const filteredTracks = useMemo(() => {
+  // Filtered & Sorted Tracks Pipeline
+  const filteredAndSortedTracks = useMemo(() => {
     let list = tracks;
 
     if (activeView === 'favorites') {
@@ -1453,22 +1577,40 @@ export default function Music() {
     }
 
     if (selectedGenre !== 'All') {
-      list = list.filter(t => t.genre.toLowerCase().includes(selectedGenre.toLowerCase()));
+      list = list.filter(t => t.genre?.toLowerCase().includes(selectedGenre.toLowerCase()));
     }
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(t => 
-        t.title.toLowerCase().includes(q) ||
-        t.artist.toLowerCase().includes(q) ||
-        t.album.toLowerCase().includes(q) ||
-        t.genre.toLowerCase().includes(q) ||
+        t.title?.toLowerCase().includes(q) ||
+        t.artist?.toLowerCase().includes(q) ||
+        t.album?.toLowerCase().includes(q) ||
+        t.genre?.toLowerCase().includes(q) ||
         (t.driveId && t.driveId.toLowerCase().includes(q))
       );
     }
 
+    // Sort order
+    if (sortBy === 'title_asc') {
+      list = [...list].sort((a, b) => a.title.localeCompare(b.title));
+    } else if (sortBy === 'title_desc') {
+      list = [...list].sort((a, b) => b.title.localeCompare(a.title));
+    } else if (sortBy === 'artist') {
+      list = [...list].sort((a, b) => a.artist.localeCompare(b.artist));
+    } else if (sortBy === 'plays') {
+      list = [...list].sort((a, b) => parseFloat(b.plays || 0) - parseFloat(a.plays || 0));
+    }
+
     return list;
-  }, [tracks, activeView, selectedPlaylistId, selectedGenre, searchQuery, favoriteTrackIds, playlists]);
+  }, [tracks, activeView, selectedPlaylistId, selectedGenre, searchQuery, favoriteTrackIds, playlists, sortBy]);
+
+  // Paginated Slices for 1000+ Songs Optimization
+  const totalPages = Math.ceil(filteredAndSortedTracks.length / itemsPerPage) || 1;
+  const paginatedTracks = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredAndSortedTracks.slice(start, start + itemsPerPage);
+  }, [filteredAndSortedTracks, currentPage, itemsPerPage]);
 
   const selectedPlaylist = playlists.find(p => p.id === selectedPlaylistId);
 
@@ -1496,8 +1638,8 @@ export default function Music() {
         />
       ))}
 
-      {/* ── 1. MODERN TOP GLASS HEADER ── */}
-      <header className="sticky top-0 z-40 bg-[#0d1017]/85 backdrop-blur-2xl border-b border-white/10 px-4 sm:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4 shadow-2xl">
+      {/* ── 1. MODERN TOP GLASS HEADER WITH POWERFUL SEARCH BAR ── */}
+      <header className="sticky top-0 z-40 bg-[#0d1017]/90 backdrop-blur-2xl border-b border-white/10 px-4 sm:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4 shadow-2xl">
         
         {/* Brand & Live Sound Badge */}
         <div className="flex items-center gap-3.5">
@@ -1523,64 +1665,73 @@ export default function Music() {
                 title="View Connected Google Drive Folder"
               >
                 <FolderCheck className="w-2.5 h-2.5" />
-                <span>50 Drive Songs Synced</span>
+                <span>{tracks.length} Songs Loaded</span>
               </a>
             </div>
             <p className="text-[11px] text-slate-400 font-medium flex items-center gap-2">
               <span>Auto-Fetched from Google Drive Folder</span>
               <span className="w-1 h-1 rounded-full bg-slate-600" />
-              <span className="text-amber-400/90 font-mono">Hi-Fi 320kbps</span>
+              <span className="text-amber-400/90 font-mono">Hi-Fi 320kbps Cloud Stream</span>
             </p>
           </div>
         </div>
 
-        {/* Center Real-Time Search Bar */}
-        <div className="flex items-center gap-2.5 flex-1 max-w-lg">
+        {/* ── HIGH PERFORMANCE LIVE SEARCH BAR ── */}
+        <div className="flex items-center gap-2.5 flex-1 max-w-xl">
           <div className="relative w-full">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-amber-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search across all 50 Google Drive songs, artists, genres..."
-              className="w-full pl-10 pr-9 py-2.5 bg-white/5 hover:bg-white/10 focus:bg-white/10 border border-white/15 focus:border-amber-400/80 rounded-2xl text-xs text-white placeholder:text-slate-400 outline-none transition-all shadow-inner backdrop-blur-md"
+              placeholder="Search by title, singer (Arijit, Badshah, Sharry Mann...), album, or Drive ID..."
+              className="w-full pl-10 pr-20 py-2.5 bg-white/5 hover:bg-white/10 focus:bg-white/15 border border-white/15 focus:border-amber-400 rounded-2xl text-xs text-white placeholder:text-slate-400 outline-none transition-all shadow-inner backdrop-blur-md"
             />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-white cursor-pointer"
-              >
-                ✕
-              </button>
-            )}
+            
+            {/* Search Clear & Match Count Badge */}
+            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+              {searchQuery && (
+                <>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-[10px] font-mono font-bold">
+                    {filteredAndSortedTracks.length} found
+                  </span>
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="w-5 h-5 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center text-[10px] font-bold cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
-          {/* Quick Import Google Drive Song Button */}
+          {/* Bulk Import 1000 Songs Button */}
+          <button
+            onClick={() => setIsBulkImportModalOpen(true)}
+            className="px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs flex items-center gap-1.5 shrink-0 shadow-lg shadow-teal-600/25 cursor-pointer transition-all hover:scale-105"
+            title="Bulk Import 1000 Google Drive Songs (List, Links, CSV)"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">+ Bulk 1000</span>
+          </button>
+
+          {/* Quick Import Single Song */}
           <button
             onClick={() => setIsImportDriveModalOpen(true)}
-            className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-black text-xs flex items-center gap-2 shrink-0 shadow-lg shadow-indigo-600/30 cursor-pointer transition-all hover:scale-105 active:scale-95"
+            className="px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-black text-xs flex items-center gap-1.5 shrink-0 shadow-lg shadow-indigo-600/30 cursor-pointer transition-all hover:scale-105"
           >
             <Cloud className="w-3.5 h-3.5 text-amber-300" />
-            <span className="hidden sm:inline">+ Import Song</span>
-            <span className="sm:hidden">+ Drive</span>
+            <span className="hidden sm:inline">+ Import</span>
           </button>
 
           {/* Reset/Refresh Folder Sync */}
           <button
             onClick={handleResetToDriveFolder}
             className="p-2.5 rounded-2xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-emerald-400 border border-white/10 transition-colors cursor-pointer"
-            title="Re-sync All 50 Songs from Drive Folder"
+            title="Re-sync Master Songs from Drive Folder"
           >
             <RefreshCw className="w-4 h-4" />
-          </button>
-
-          {/* Keyboard Shortcuts Trigger */}
-          <button
-            onClick={() => setIsKeyboardHelpOpen(true)}
-            className="p-2.5 rounded-2xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-amber-300 border border-white/10 transition-colors cursor-pointer hidden md:flex items-center justify-center"
-            title="Keyboard Shortcuts"
-          >
-            <Keyboard className="w-4 h-4" />
           </button>
         </div>
 
@@ -1607,7 +1758,7 @@ export default function Music() {
               }`}
             >
               <Compass className="w-4 h-4" />
-              <span>All 50 Drive Songs</span>
+              <span>All Drive Songs</span>
               <span className="ml-auto text-[10px] opacity-75">{tracks.length}</span>
             </button>
 
@@ -1742,50 +1893,6 @@ export default function Music() {
             </p>
           </div>
 
-          {/* Audio Equalizer & Preset Simulator */}
-          <div className="p-4 rounded-3xl bg-gradient-to-br from-[#10141d] to-[#0d1017] border border-white/10 text-center space-y-3 shadow-2xl">
-            <div className="flex items-center justify-between px-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
-                <Activity className="w-3.5 h-3.5" />
-                <span>EQ Engine ({audioPreset})</span>
-              </div>
-              <span className="text-[9px] text-emerald-400 font-mono">ACTIVE</span>
-            </div>
-
-            {/* Visual Equalizer Reactive Bars */}
-            <div className="flex items-end justify-center gap-1.5 h-12 pt-1 bg-black/40 rounded-2xl p-2 border border-white/5">
-              {[40, 85, 95, 60, 90, 50, 95, 75, 45, 80, 70, 95, 35, 85, 60].map((h, i) => (
-                <div
-                  key={i}
-                  className={`w-1.5 rounded-full bg-gradient-to-t from-amber-400 via-rose-500 to-indigo-500 transition-all ${
-                    isPlaying ? 'animate-pulse' : 'opacity-30'
-                  }`}
-                  style={{
-                    height: isPlaying ? `${Math.max(15, (h * (volume / 100)) % 100)}%` : '20%',
-                    animationDuration: `${0.35 + (i % 5) * 0.15}s`
-                  }}
-                />
-              ))}
-            </div>
-
-            {/* EQ Presets Buttons */}
-            <div className="flex flex-wrap items-center justify-center gap-1 text-[10px] font-bold">
-              {['Lo-Fi Warmth', 'Bass Boost', 'Spatial 3D', 'Vocal Clear'].map(preset => (
-                <button
-                  key={preset}
-                  onClick={() => setAudioPreset(preset)}
-                  className={`px-2.5 py-1 rounded-xl transition-colors cursor-pointer ${
-                    audioPreset === preset 
-                      ? 'bg-amber-400 text-slate-950 font-black' 
-                      : 'bg-white/5 hover:bg-white/10 text-slate-300'
-                  }`}
-                >
-                  {preset}
-                </button>
-              ))}
-            </div>
-          </div>
-
         </aside>
 
         {/* ── MAIN CONTENT AREA ── */}
@@ -1896,25 +2003,52 @@ export default function Music() {
             </div>
           </div>
 
-          {/* ── 4. MOOD & GENRE FILTER PILLS ── */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none text-xs font-bold">
-            <span className="text-[10px] uppercase font-black tracking-wider text-slate-400 shrink-0 pr-1 flex items-center gap-1">
-              <Flame className="w-3.5 h-3.5 text-amber-400" />
-              <span>Categories:</span>
-            </span>
-            {['All', 'Bollywood', 'Punjabi', 'Party', 'Devotional', 'Lo-Fi', 'Acoustic'].map((genre) => (
-              <button
-                key={genre}
-                onClick={() => setSelectedGenre(genre)}
-                className={`px-4 py-2 rounded-2xl transition-all whitespace-nowrap cursor-pointer ${
-                  selectedGenre === genre
-                    ? 'bg-amber-400 text-slate-950 font-black shadow-lg shadow-amber-400/20'
-                    : 'bg-[#10141d] hover:bg-white/10 text-slate-300 border border-white/10'
-                }`}
-              >
-                {genre}
-              </button>
-            ))}
+          {/* ── 4. MOOD & GENRE FILTER PILLS & SORTING TOOLBAR ── */}
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-[#10141d]/80 p-3 rounded-2xl border border-white/10">
+            
+            {/* Genre filter pills */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none text-xs font-bold flex-1">
+              <span className="text-[10px] uppercase font-black tracking-wider text-slate-400 shrink-0 pr-1 flex items-center gap-1">
+                <Flame className="w-3.5 h-3.5 text-amber-400" />
+                <span>Filter:</span>
+              </span>
+              {['All', 'Bollywood', 'Punjabi', 'Party', 'Devotional', 'Lo-Fi', 'Hip-Hop'].map((genre) => (
+                <button
+                  key={genre}
+                  onClick={() => setSelectedGenre(genre)}
+                  className={`px-3.5 py-1.5 rounded-xl transition-all whitespace-nowrap cursor-pointer text-xs ${
+                    selectedGenre === genre
+                      ? 'bg-amber-400 text-slate-950 font-black shadow-md shadow-amber-400/20'
+                      : 'bg-white/5 hover:bg-white/10 text-slate-300'
+                  }`}
+                >
+                  {genre}
+                </button>
+              ))}
+            </div>
+
+            {/* Sort & Pagination Size Dropdown */}
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1.5 rounded-xl border border-white/10 text-xs">
+                <ArrowUpDown className="w-3.5 h-3.5 text-amber-400" />
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="bg-transparent text-slate-200 outline-none text-xs cursor-pointer"
+                >
+                  <option value="default" className="bg-slate-900">Default Order</option>
+                  <option value="title_asc" className="bg-slate-900">Title (A-Z)</option>
+                  <option value="title_desc" className="bg-slate-900">Title (Z-A)</option>
+                  <option value="artist" className="bg-slate-900">Singer / Artist</option>
+                  <option value="plays" className="bg-slate-900">Most Played</option>
+                </select>
+              </div>
+
+              <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">
+                {filteredAndSortedTracks.length} Tracks
+              </span>
+            </div>
+
           </div>
 
           {/* ── 5. SOUNDSCAPE AMBIENCE MIXER VIEW (IF ACTIVE) ── */}
@@ -1969,16 +2103,18 @@ export default function Music() {
                 {activeView === 'drive' && <span>☁️ Google Drive Master Vault</span>}
                 {activeView === 'playlist' && <span>📜 Playlist: {selectedPlaylist?.name}</span>}
                 {activeView === 'ambience' && <span>🎧 Soundscape Active Library</span>}
-                <span className="text-xs font-normal text-slate-400">({filteredTracks.length} tracks)</span>
+                <span className="text-xs font-normal text-slate-400">
+                  (Showing {paginatedTracks.length} of {filteredAndSortedTracks.length} tracks)
+                </span>
               </h3>
               {activeView === 'playlist' && selectedPlaylist?.description && (
                 <p className="text-xs text-slate-400 mt-0.5">{selectedPlaylist.description}</p>
               )}
             </div>
 
-            {filteredTracks.length > 0 && (
+            {filteredAndSortedTracks.length > 0 && (
               <button
-                onClick={() => handlePlayTrack(filteredTracks[0])}
+                onClick={() => handlePlayTrack(filteredAndSortedTracks[0])}
                 className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 text-xs font-black flex items-center gap-1.5 transition-all shadow-md hover:scale-105 cursor-pointer"
               >
                 <Play className="w-3.5 h-3.5 fill-black" />
@@ -1988,26 +2124,35 @@ export default function Music() {
           </div>
 
           {/* ── 7. INTERACTIVE TRACK CARDS / ROWS ── */}
-          {filteredTracks.length === 0 ? (
+          {filteredAndSortedTracks.length === 0 ? (
             <div className="text-center py-16 bg-[#10141d]/80 rounded-3xl border border-white/10 p-6 space-y-3">
               <Disc className="w-12 h-12 text-slate-500 mx-auto animate-spin" />
-              <h4 className="text-sm font-bold text-white">No tracks match your current filters</h4>
+              <h4 className="text-sm font-bold text-white">No tracks match your current search "{searchQuery}"</h4>
               <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                Try searching for a different keyword or re-sync all 50 tracks from your Google Drive folder!
+                Try searching for a different song name, artist, or re-sync all tracks from your Google Drive folder!
               </p>
-              <button
-                onClick={handleResetToDriveFolder}
-                className="px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-lg shadow-blue-600/30 cursor-pointer"
-              >
-                <RefreshCw className="w-4 h-4" />
-                <span>Re-sync 50 Drive Songs</span>
-              </button>
+              <div className="flex items-center justify-center gap-2 pt-2">
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all cursor-pointer"
+                >
+                  Clear Search
+                </button>
+                <button
+                  onClick={handleResetToDriveFolder}
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-lg shadow-blue-600/30 cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Re-sync Default Tracks</span>
+                </button>
+              </div>
             </div>
           ) : (
             <div className="space-y-2.5">
-              {filteredTracks.map((track, idx) => {
+              {paginatedTracks.map((track, idx) => {
                 const isCurrentPlaying = currentTrack?.id === track.id;
                 const isLiked = favoriteTrackIds.includes(track.id);
+                const actualIndex = (currentPage - 1) * itemsPerPage + idx + 1;
 
                 return (
                   <div
@@ -2029,7 +2174,7 @@ export default function Music() {
                             <span className="w-1 h-2 bg-amber-400 animate-bounce [animation-delay:0.4s]" />
                           </div>
                         ) : (
-                          idx + 1
+                          actualIndex
                         )}
                       </div>
 
@@ -2135,11 +2280,62 @@ export default function Music() {
             </div>
           )}
 
+          {/* ── 8. PAGINATION BAR (FOR 1000 SONGS HIGH PERFORMANCE) ── */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-4 border-t border-white/10">
+              <span className="text-xs text-slate-400 font-mono">
+                Page {currentPage} of {totalPages} ({filteredAndSortedTracks.length} total tracks)
+              </span>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-30 text-xs font-bold text-slate-300 flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Prev</span>
+                </button>
+
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) pageNum = i + 1;
+                  else if (currentPage <= 3) pageNum = i + 1;
+                  else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                  else pageNum = currentPage - 2 + i;
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-8 h-8 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        currentPage === pageNum
+                          ? 'bg-amber-400 text-slate-950 font-black shadow-md'
+                          : 'bg-white/5 hover:bg-white/10 text-slate-300'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-30 text-xs font-bold text-slate-300 flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
         </main>
 
       </div>
 
-      {/* ── 8. PERSISTENT SLEEK BOTTOM PLAYER BAR ── */}
+      {/* ── 9. PERSISTENT SLEEK BOTTOM PLAYER BAR ── */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0d1017]/95 backdrop-blur-2xl border-t border-white/15 px-4 sm:px-8 py-3 shadow-[0_-20px_50px_rgba(0,0,0,0.8)]">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
           
@@ -2299,7 +2495,78 @@ export default function Music() {
         </div>
       </div>
 
-      {/* ── 9. GOOGLE DRIVE MUSIC IMPORTER MODAL ── */}
+      {/* ── 10. BULK IMPORT 1000 SONGS MODAL ── */}
+      {isBulkImportModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex items-center justify-center p-4">
+          <div className="bg-[#121622] w-full max-w-2xl rounded-3xl border border-white/20 p-6 sm:p-8 space-y-4 shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div className="flex items-center gap-2.5 text-white">
+                <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-300">
+                  <Upload className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black font-quicksand">Bulk Import 1000 Google Drive Songs</h3>
+                  <p className="text-[11px] text-slate-400">Paste your entire track list, Google Drive share links, or CSV lines</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsBulkImportModalOpen(false)}
+                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleBulkImportSongs} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Paste Multiple Drive Links, File Names, or CSV / JSON:
+                </label>
+                <textarea
+                  value={bulkInputText}
+                  onChange={(e) => setBulkInputText(e.target.value)}
+                  rows={8}
+                  placeholder={`Paste your 1000 songs in any format:\n\nFormat 1 (Links):\nhttps://drive.google.com/file/d/1A2B3C.../view?usp=sharing\nhttps://drive.google.com/file/d/1X2Y3Z.../view?usp=sharing\n\nFormat 2 (CSV Title, DriveID, Artist):\nTum Hi Ho, 1A2B3C..., Arijit Singh\nChanna Mereya, 1X2Y3Z..., Arijit Singh\n\nFormat 3 (JSON array of songs):\n[{"title":"My Song","driveId":"1A2B3C..."}]`}
+                  required
+                  className="w-full px-4 py-3 bg-white/5 border border-white/15 rounded-2xl text-xs font-mono text-white placeholder:text-slate-500 focus:border-emerald-400 outline-none resize-y"
+                />
+              </div>
+
+              {bulkStatusMsg && (
+                <div className={`p-3.5 rounded-2xl text-xs font-bold flex items-center gap-2 ${
+                  bulkStatusMsg.type === 'success' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                }`}>
+                  {bulkStatusMsg.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+                  <span>{bulkStatusMsg.text}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-2">
+                <span className="text-[11px] text-slate-400">
+                  ⚡ All imported songs will be saved in your browser storage and will be searchable immediately.
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsBulkImportModalOpen(false)}
+                    className="px-4 py-2 rounded-2xl bg-white/10 hover:bg-white/15 text-slate-300 text-xs font-bold transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black shadow-xl shadow-teal-600/30 cursor-pointer transition-all hover:scale-105"
+                  >
+                    + Import All Songs
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── 11. SINGLE GOOGLE DRIVE MUSIC IMPORTER MODAL ── */}
       {isImportDriveModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex items-center justify-center p-4">
           <div className="bg-[#121622] w-full max-w-lg rounded-3xl border border-white/20 p-6 sm:p-8 space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
@@ -2422,7 +2689,7 @@ export default function Music() {
         </div>
       )}
 
-      {/* ── 10. CREATE PLAYLIST MODAL ── */}
+      {/* ── 12. CREATE PLAYLIST MODAL ── */}
       {isCreatePlaylistModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex items-center justify-center p-4">
           <div className="bg-[#121622] w-full max-w-md rounded-3xl border border-white/20 p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
@@ -2483,59 +2750,7 @@ export default function Music() {
         </div>
       )}
 
-      {/* ── 11. KEYBOARD SHORTCUTS MODAL ── */}
-      {isKeyboardHelpOpen && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex items-center justify-center p-4">
-          <div className="bg-[#121622] w-full max-w-sm rounded-3xl border border-white/20 p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <div className="flex items-center gap-2 text-white">
-                <Keyboard className="w-5 h-5 text-amber-400" />
-                <h3 className="text-base font-black font-quicksand">Keyboard Shortcuts</h3>
-              </div>
-              <button
-                onClick={() => setIsKeyboardHelpOpen(false)}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-2.5 text-xs">
-              <div className="flex items-center justify-between p-2 rounded-xl bg-white/5">
-                <span className="text-slate-300">Play / Pause</span>
-                <kbd className="px-2 py-1 rounded-md bg-white/10 text-amber-300 font-mono font-bold">Space</kbd>
-              </div>
-              <div className="flex items-center justify-between p-2 rounded-xl bg-white/5">
-                <span className="text-slate-300">Mute / Unmute</span>
-                <kbd className="px-2 py-1 rounded-md bg-white/10 text-amber-300 font-mono font-bold">M</kbd>
-              </div>
-              <div className="flex items-center justify-between p-2 rounded-xl bg-white/5">
-                <span className="text-slate-300">Like / Favorite Track</span>
-                <kbd className="px-2 py-1 rounded-md bg-white/10 text-rose-300 font-mono font-bold">L</kbd>
-              </div>
-              <div className="flex items-center justify-between p-2 rounded-xl bg-white/5">
-                <span className="text-slate-300">Next Track</span>
-                <kbd className="px-2 py-1 rounded-md bg-white/10 text-amber-300 font-mono font-bold">Shift + →</kbd>
-              </div>
-              <div className="flex items-center justify-between p-2 rounded-xl bg-white/5">
-                <span className="text-slate-300">Previous Track</span>
-                <kbd className="px-2 py-1 rounded-md bg-white/10 text-amber-300 font-mono font-bold">Shift + ←</kbd>
-              </div>
-            </div>
-
-            <div className="pt-2 text-center">
-              <button
-                onClick={() => setIsKeyboardHelpOpen(false)}
-                className="w-full py-2.5 rounded-2xl bg-amber-400 text-slate-950 font-black text-xs cursor-pointer"
-              >
-                Got It
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── 12. FULLSCREEN IMMERSIVE VISUALIZER MODAL ── */}
+      {/* ── 13. FULLSCREEN IMMERSIVE VISUALIZER MODAL ── */}
       {isFullscreenVisualizer && (
         <div className="fixed inset-0 z-50 bg-[#06080d] flex flex-col items-center justify-between p-6 sm:p-12 animate-in fade-in zoom-in-95 duration-200">
           
