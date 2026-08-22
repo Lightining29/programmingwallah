@@ -36,7 +36,7 @@ import {
   Headphones, 
   Layers, 
   ChevronRight, 
-  ChevronLeft,
+  ChevronLeft, 
   Info,
   CheckCircle2,
   AlertCircle,
@@ -63,7 +63,7 @@ import {
 import confetti from 'canvas-confetti';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 1. GOOGLE DRIVE DIRECT STREAM HELPER (CORS 206 BYTES READY)
+// 1. GOOGLE DRIVE DIRECT STREAM HELPER
 // ─────────────────────────────────────────────────────────────────────────────
 export const GOOGLE_DRIVE_FOLDER_URL = "https://drive.google.com/drive/folders/17dieyS9ijEngDyPJZf7hBIyWrBjPrn5j?usp=sharing";
 export const GOOGLE_DRIVE_FOLDER_ID = "17dieyS9ijEngDyPJZf7hBIyWrBjPrn5j";
@@ -78,7 +78,11 @@ export const getDriveStreamUrl = (driveIdOrUrl) => {
   if (match && match[1]) {
     fileId = match[1];
   }
-  // drive.usercontent.google.com provides direct audio/mpeg 200/206 streaming with CORS *
+  // Try backend proxy stream, fallback to direct cloud CDN
+  return `/api/music/stream/${fileId}`;
+};
+
+export const getDirectCloudUrl = (fileId) => {
   return `https://drive.usercontent.google.com/download?id=${fileId}&export=download&authuser=0`;
 };
 
@@ -108,7 +112,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Punjabi",
     "duration": "03:30",
     "driveId": "1b4Ugq6_uM1FanwBwdj-z2b9TiSbAwXFf",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1b4Ugq6_uM1FanwBwdj-z2b9TiSbAwXFf&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1b4Ugq6_uM1FanwBwdj-z2b9TiSbAwXFf",
     "coverArt": "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 4.3 MB",
     "isGoogleDrive": true,
@@ -126,7 +130,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Party & Hip-Hop",
     "duration": "02:58",
     "driveId": "1xm3dYmhazwvs6twCIbJr6if_jN5F16NH",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1xm3dYmhazwvs6twCIbJr6if_jN5F16NH&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1xm3dYmhazwvs6twCIbJr6if_jN5F16NH",
     "coverArt": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 2.9 MB",
     "isGoogleDrive": true,
@@ -144,7 +148,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Devotional",
     "duration": "09:20",
     "driveId": "1AamZM6nJBHBKG7pCa0hfd8V2py-rjt3x",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1AamZM6nJBHBKG7pCa0hfd8V2py-rjt3x&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1AamZM6nJBHBKG7pCa0hfd8V2py-rjt3x",
     "coverArt": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 13.9 MB",
     "isGoogleDrive": true,
@@ -162,7 +166,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood Hits",
     "duration": "04:10",
     "driveId": "1uF_Ss3XFWV5uRPhSiR0MGxgphdmeBoKI",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1uF_Ss3XFWV5uRPhSiR0MGxgphdmeBoKI&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1uF_Ss3XFWV5uRPhSiR0MGxgphdmeBoKI",
     "coverArt": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 4.2 MB",
     "isGoogleDrive": true,
@@ -180,7 +184,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Desi Hip-Hop",
     "duration": "03:12",
     "driveId": "1Z1CKL5LGq7rGgEm6vNXwZ6Akg86Nar0Q",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1Z1CKL5LGq7rGgEm6vNXwZ6Akg86Nar0Q&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1Z1CKL5LGq7rGgEm6vNXwZ6Akg86Nar0Q",
     "coverArt": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 2.8 MB",
     "isGoogleDrive": true,
@@ -198,7 +202,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Desi Hip-Hop",
     "duration": "03:12",
     "driveId": "1DI9IZJMSgVhICb-k8nNIlI9i1B_exjj2",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1DI9IZJMSgVhICb-k8nNIlI9i1B_exjj2&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1DI9IZJMSgVhICb-k8nNIlI9i1B_exjj2",
     "coverArt": "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 2.5 MB",
     "isGoogleDrive": true,
@@ -216,7 +220,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood Hits",
     "duration": "03:05",
     "driveId": "1179yW97xoyx_P8t7JMUWYEaclgVCLb5i",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1179yW97xoyx_P8t7JMUWYEaclgVCLb5i&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1179yW97xoyx_P8t7JMUWYEaclgVCLb5i",
     "coverArt": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 2.9 MB",
     "isGoogleDrive": true,
@@ -234,7 +238,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood Hits",
     "duration": "03:05",
     "driveId": "1N_qyMSTrvb0itW3BFyCKbKiNJ_-DZ662",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1N_qyMSTrvb0itW3BFyCKbKiNJ_-DZ662&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1N_qyMSTrvb0itW3BFyCKbKiNJ_-DZ662",
     "coverArt": "https://images.unsplash.com/photo-1520523839898-507121287c8b?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 2.1 MB",
     "isGoogleDrive": true,
@@ -252,7 +256,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1N2Qm3Nmhp7EMljnVzTnB3e_3all714d5",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1N2Qm3Nmhp7EMljnVzTnB3e_3all714d5&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1N2Qm3Nmhp7EMljnVzTnB3e_3all714d5",
     "coverArt": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 3 MB",
     "isGoogleDrive": true,
@@ -270,7 +274,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood Romance",
     "duration": "05:19",
     "driveId": "1E2O5wVb1fM9IFBRDoyk0eoHM2SeWkkoD",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1E2O5wVb1fM9IFBRDoyk0eoHM2SeWkkoD&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1E2O5wVb1fM9IFBRDoyk0eoHM2SeWkkoD",
     "coverArt": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 3.9 MB",
     "isGoogleDrive": true,
@@ -288,7 +292,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1yu6xs4HTidplnk0AnHbLO0yrpP6-RMmI",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1yu6xs4HTidplnk0AnHbLO0yrpP6-RMmI&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1yu6xs4HTidplnk0AnHbLO0yrpP6-RMmI",
     "coverArt": "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 4.5 MB",
     "isGoogleDrive": true,
@@ -306,7 +310,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1pMhqAmHqphCFW4T4Sz4LQoTsjUYkugq-",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1pMhqAmHqphCFW4T4Sz4LQoTsjUYkugq-&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1pMhqAmHqphCFW4T4Sz4LQoTsjUYkugq-",
     "coverArt": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 2.4 MB",
     "isGoogleDrive": true,
@@ -324,7 +328,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1MU1MV67NpFI_it_kLnHme8ZLtM8zviFc",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1MU1MV67NpFI_it_kLnHme8ZLtM8zviFc&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1MU1MV67NpFI_it_kLnHme8ZLtM8zviFc",
     "coverArt": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 2.3 MB",
     "isGoogleDrive": true,
@@ -342,7 +346,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1NTTHDz2EQYcxJpAx5KXhdAoXgNj5oort",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1NTTHDz2EQYcxJpAx5KXhdAoXgNj5oort&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1NTTHDz2EQYcxJpAx5KXhdAoXgNj5oort",
     "coverArt": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 2.6 MB",
     "isGoogleDrive": true,
@@ -360,7 +364,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1aGt3RaL706BjeYA48QHn35DwzJ5Y18O0",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1aGt3RaL706BjeYA48QHn35DwzJ5Y18O0&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1aGt3RaL706BjeYA48QHn35DwzJ5Y18O0",
     "coverArt": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 4.2 MB",
     "isGoogleDrive": true,
@@ -378,7 +382,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood Romance",
     "duration": "05:19",
     "driveId": "1s94Wvj916uEMK0n7A5IHp11p6pBX5hzJ",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1s94Wvj916uEMK0n7A5IHp11p6pBX5hzJ&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1s94Wvj916uEMK0n7A5IHp11p6pBX5hzJ",
     "coverArt": "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 5.2 MB",
     "isGoogleDrive": true,
@@ -396,7 +400,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1Ax-Ejlllr-tfkHuQQtgZ6wzaQqZGl4bZ",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1Ax-Ejlllr-tfkHuQQtgZ6wzaQqZGl4bZ&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1Ax-Ejlllr-tfkHuQQtgZ6wzaQqZGl4bZ",
     "coverArt": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 2.6 MB",
     "isGoogleDrive": true,
@@ -414,7 +418,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "13i07t1D2WgAo8w76WCiOiYeNhIx80rNL",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=13i07t1D2WgAo8w76WCiOiYeNhIx80rNL&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/13i07t1D2WgAo8w76WCiOiYeNhIx80rNL",
     "coverArt": "https://images.unsplash.com/photo-1520523839898-507121287c8b?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 2.2 MB",
     "isGoogleDrive": true,
@@ -432,7 +436,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1R0EuNfuhnmHm20tzzTRd2PgDHpHLxxZK",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1R0EuNfuhnmHm20tzzTRd2PgDHpHLxxZK&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1R0EuNfuhnmHm20tzzTRd2PgDHpHLxxZK",
     "coverArt": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 3.8 MB",
     "isGoogleDrive": true,
@@ -450,7 +454,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1Z469ss9CLh67S4KNl9XyDRvw6zmXdbes",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1Z469ss9CLh67S4KNl9XyDRvw6zmXdbes&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1Z469ss9CLh67S4KNl9XyDRvw6zmXdbes",
     "coverArt": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 3.4 MB",
     "isGoogleDrive": true,
@@ -468,7 +472,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1NBgIW-cwTGEaR-B5jLZnsWfsE6hGUZio",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1NBgIW-cwTGEaR-B5jLZnsWfsE6hGUZio&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1NBgIW-cwTGEaR-B5jLZnsWfsE6hGUZio",
     "coverArt": "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 2.9 MB",
     "isGoogleDrive": true,
@@ -486,7 +490,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood Hits",
     "duration": "04:10",
     "driveId": "1bGelRNaqXDEXNovM13ACZxnKV8Z5y7hg",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1bGelRNaqXDEXNovM13ACZxnKV8Z5y7hg&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1bGelRNaqXDEXNovM13ACZxnKV8Z5y7hg",
     "coverArt": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 3.9 MB",
     "isGoogleDrive": true,
@@ -504,7 +508,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1UYmaovc4ACUfOqFB5ZxGqGdwiDzJrQYf",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1UYmaovc4ACUfOqFB5ZxGqGdwiDzJrQYf&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1UYmaovc4ACUfOqFB5ZxGqGdwiDzJrQYf",
     "coverArt": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 3.4 MB",
     "isGoogleDrive": true,
@@ -522,7 +526,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood Hits",
     "duration": "04:10",
     "driveId": "15j3PmVTkP8w2rXCog6A9sndveOYMq1vh",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=15j3PmVTkP8w2rXCog6A9sndveOYMq1vh&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/15j3PmVTkP8w2rXCog6A9sndveOYMq1vh",
     "coverArt": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 1.7 MB",
     "isGoogleDrive": true,
@@ -540,7 +544,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Desi Hip-Hop",
     "duration": "03:12",
     "driveId": "1sBmnhrMgyyyO70eOpRN6UpicadaxAAh-",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1sBmnhrMgyyyO70eOpRN6UpicadaxAAh-&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1sBmnhrMgyyyO70eOpRN6UpicadaxAAh-",
     "coverArt": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 3 MB",
     "isGoogleDrive": true,
@@ -558,7 +562,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood Romance",
     "duration": "05:19",
     "driveId": "1vorBCRtVXuHjRq269h-p3RxzzvX-ivOT",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1vorBCRtVXuHjRq269h-p3RxzzvX-ivOT&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1vorBCRtVXuHjRq269h-p3RxzzvX-ivOT",
     "coverArt": "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 4 MB",
     "isGoogleDrive": true,
@@ -576,7 +580,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1WXkEDHWnHVaqMU-pxq1TDRYI8-4KJWfj",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1WXkEDHWnHVaqMU-pxq1TDRYI8-4KJWfj&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1WXkEDHWnHVaqMU-pxq1TDRYI8-4KJWfj",
     "coverArt": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 2 MB",
     "isGoogleDrive": true,
@@ -594,7 +598,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1ttzGRK4OOzup9s8TQXHAvZ6gVl4mxl4w",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1ttzGRK4OOzup9s8TQXHAvZ6gVl4mxl4w&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1ttzGRK4OOzup9s8TQXHAvZ6gVl4mxl4w",
     "coverArt": "https://images.unsplash.com/photo-1520523839898-507121287c8b?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 3 MB",
     "isGoogleDrive": true,
@@ -612,7 +616,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1w1ghPiNFYKHO-3KApHtvlCzcvPiqXXU3",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1w1ghPiNFYKHO-3KApHtvlCzcvPiqXXU3&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1w1ghPiNFYKHO-3KApHtvlCzcvPiqXXU3",
     "coverArt": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 3.5 MB",
     "isGoogleDrive": true,
@@ -630,7 +634,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1mXTkha4wRDFMfE66FpzEj33ZuRp7hxrc",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1mXTkha4wRDFMfE66FpzEj33ZuRp7hxrc&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1mXTkha4wRDFMfE66FpzEj33ZuRp7hxrc",
     "coverArt": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 3.8 MB",
     "isGoogleDrive": true,
@@ -648,7 +652,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1DvoJv3OhMdJKwoZp_pp6XO1K8DLG7ULs",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1DvoJv3OhMdJKwoZp_pp6XO1K8DLG7ULs&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1DvoJv3OhMdJKwoZp_pp6XO1K8DLG7ULs",
     "coverArt": "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 3.1 MB",
     "isGoogleDrive": true,
@@ -666,7 +670,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1ewVwYLGLQO7cFg_HyFhO01xIjF1l024m",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1ewVwYLGLQO7cFg_HyFhO01xIjF1l024m&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1ewVwYLGLQO7cFg_HyFhO01xIjF1l024m",
     "coverArt": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 3.5 MB",
     "isGoogleDrive": true,
@@ -684,7 +688,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "16oFvi8rI62QGHBLUPV7RwvTZjEPlKjM2",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=16oFvi8rI62QGHBLUPV7RwvTZjEPlKjM2&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/16oFvi8rI62QGHBLUPV7RwvTZjEPlKjM2",
     "coverArt": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 3.2 MB",
     "isGoogleDrive": true,
@@ -702,7 +706,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood Romance",
     "duration": "05:19",
     "driveId": "1OzWLLvvb2VZBp8w9sc6mlJqPraPFgooy",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1OzWLLvvb2VZBp8w9sc6mlJqPraPFgooy&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1OzWLLvvb2VZBp8w9sc6mlJqPraPFgooy",
     "coverArt": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 2.5 MB",
     "isGoogleDrive": true,
@@ -720,7 +724,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood Hits",
     "duration": "04:10",
     "driveId": "19croPuLNBazhqQzFYD-8Ftsqd4iMzcL2",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=19croPuLNBazhqQzFYD-8Ftsqd4iMzcL2&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/19croPuLNBazhqQzFYD-8Ftsqd4iMzcL2",
     "coverArt": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 3.7 MB",
     "isGoogleDrive": true,
@@ -738,7 +742,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1kwyflxsLoWR1pL9nALBLqAWD6OuyKy0G",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1kwyflxsLoWR1pL9nALBLqAWD6OuyKy0G&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1kwyflxsLoWR1pL9nALBLqAWD6OuyKy0G",
     "coverArt": "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 3.9 MB",
     "isGoogleDrive": true,
@@ -756,7 +760,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood Romance",
     "duration": "05:19",
     "driveId": "1T_H6Qb8nKV1M612_oBs8VIis_HqzWS1x",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1T_H6Qb8nKV1M612_oBs8VIis_HqzWS1x&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1T_H6Qb8nKV1M612_oBs8VIis_HqzWS1x",
     "coverArt": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 2.3 MB",
     "isGoogleDrive": true,
@@ -774,7 +778,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1D4KErVEXmKvjXzl6S91lMMSBgGkzWe3r",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1D4KErVEXmKvjXzl6S91lMMSBgGkzWe3r&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1D4KErVEXmKvjXzl6S91lMMSBgGkzWe3r",
     "coverArt": "https://images.unsplash.com/photo-1520523839898-507121287c8b?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 4.1 MB",
     "isGoogleDrive": true,
@@ -792,7 +796,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1KRTVYIezHhnGEZFBKCAncvHmyD93YRsk",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1KRTVYIezHhnGEZFBKCAncvHmyD93YRsk&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1KRTVYIezHhnGEZFBKCAncvHmyD93YRsk",
     "coverArt": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 4.7 MB",
     "isGoogleDrive": true,
@@ -810,7 +814,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "17TV0L7qihSYHSoCk_TvcyfF9VCWhs-IW",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=17TV0L7qihSYHSoCk_TvcyfF9VCWhs-IW&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/17TV0L7qihSYHSoCk_TvcyfF9VCWhs-IW",
     "coverArt": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 4.1 MB",
     "isGoogleDrive": true,
@@ -828,7 +832,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1W_DErr3XGZP5FqMCMx6KGe1D64Asa--1",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1W_DErr3XGZP5FqMCMx6KGe1D64Asa--1&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1W_DErr3XGZP5FqMCMx6KGe1D64Asa--1",
     "coverArt": "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 4.7 MB",
     "isGoogleDrive": true,
@@ -846,7 +850,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood Romance",
     "duration": "05:19",
     "driveId": "1Sj_LAlI7Ll0qB99LLukSPPr45tzfJQ3e",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1Sj_LAlI7Ll0qB99LLukSPPr45tzfJQ3e&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1Sj_LAlI7Ll0qB99LLukSPPr45tzfJQ3e",
     "coverArt": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 1.9 MB",
     "isGoogleDrive": true,
@@ -864,7 +868,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood Romance",
     "duration": "05:19",
     "driveId": "1jQ6PnMZ3np2qT_XLdWqp6zVhTmaL75kg",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1jQ6PnMZ3np2qT_XLdWqp6zVhTmaL75kg&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1jQ6PnMZ3np2qT_XLdWqp6zVhTmaL75kg",
     "coverArt": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 4 MB",
     "isGoogleDrive": true,
@@ -882,7 +886,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1fxFDZoSQbg8WhwPojrkAVD1sQB-0yEtA",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1fxFDZoSQbg8WhwPojrkAVD1sQB-0yEtA&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1fxFDZoSQbg8WhwPojrkAVD1sQB-0yEtA",
     "coverArt": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 3.2 MB",
     "isGoogleDrive": true,
@@ -900,7 +904,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1XiVURN2kkkIcuvrafJ_bvwAHfB7i3C-n",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1XiVURN2kkkIcuvrafJ_bvwAHfB7i3C-n&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1XiVURN2kkkIcuvrafJ_bvwAHfB7i3C-n",
     "coverArt": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 2.6 MB",
     "isGoogleDrive": true,
@@ -918,7 +922,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1UlGDvV9CZ52d1JBEH6rV4pcUMt5IHdOm",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1UlGDvV9CZ52d1JBEH6rV4pcUMt5IHdOm&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1UlGDvV9CZ52d1JBEH6rV4pcUMt5IHdOm",
     "coverArt": "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 4 MB",
     "isGoogleDrive": true,
@@ -936,7 +940,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "12ehLlrZbpIJGBt_SjjjpRoFnwehryg93",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=12ehLlrZbpIJGBt_SjjjpRoFnwehryg93&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/12ehLlrZbpIJGBt_SjjjpRoFnwehryg93",
     "coverArt": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 3.3 MB",
     "isGoogleDrive": true,
@@ -954,7 +958,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1t5ZXFoZTp9SewxDk7dvXtUXmnIRgRL_e",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1t5ZXFoZTp9SewxDk7dvXtUXmnIRgRL_e&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1t5ZXFoZTp9SewxDk7dvXtUXmnIRgRL_e",
     "coverArt": "https://images.unsplash.com/photo-1520523839898-507121287c8b?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 2.4 MB",
     "isGoogleDrive": true,
@@ -972,7 +976,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Bollywood",
     "duration": "03:45",
     "driveId": "1-ALQHd5dW46r2CTzG1X1wZvXZZI6hiov",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1-ALQHd5dW46r2CTzG1X1wZvXZZI6hiov&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1-ALQHd5dW46r2CTzG1X1wZvXZZI6hiov",
     "coverArt": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 2.8 MB",
     "isGoogleDrive": true,
@@ -990,7 +994,7 @@ export const DEFAULT_MUSIC_TRACKS = [
     "genre": "Punjabi",
     "duration": "03:30",
     "driveId": "1NZ_81bK2gj_7_QGpg7ffENydjRrRMOrR",
-    "streamUrl": "https://drive.usercontent.google.com/download?id=1NZ_81bK2gj_7_QGpg7ffENydjRrRMOrR&export=download&authuser=0",
+    "streamUrl": "/api/music/stream/1NZ_81bK2gj_7_QGpg7ffENydjRrRMOrR",
     "coverArt": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=600&q=80",
     "lyrics": "Streamed live from Google Drive collection. Size: 4.8 MB",
     "isGoogleDrive": true,
@@ -1043,7 +1047,7 @@ const AMBIENT_SOUNDS = [
 export default function Music() {
   // ── State Storage ──
   const [tracks, setTracks] = useState(() => {
-    const saved = localStorage.getItem('appletree_music_tracks_v4');
+    const saved = localStorage.getItem('appletree_music_tracks_v5');
     if (saved) {
       try { 
         const parsed = JSON.parse(saved); 
@@ -1054,7 +1058,7 @@ export default function Music() {
   });
 
   const [playlists, setPlaylists] = useState(() => {
-    const saved = localStorage.getItem('appletree_music_playlists_v4');
+    const saved = localStorage.getItem('appletree_music_playlists_v5');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { return INITIAL_PLAYLISTS; }
     }
@@ -1062,7 +1066,7 @@ export default function Music() {
   });
 
   const [favoriteTrackIds, setFavoriteTrackIds] = useState(() => {
-    const saved = localStorage.getItem('appletree_favorite_songs_v4');
+    const saved = localStorage.getItem('appletree_favorite_songs_v5');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { return [DEFAULT_MUSIC_TRACKS[0]?.id, DEFAULT_MUSIC_TRACKS[1]?.id]; }
     }
@@ -1131,46 +1135,63 @@ export default function Music() {
 
   // Sync to localStorage
   useEffect(() => {
-    localStorage.setItem('appletree_music_tracks_v4', JSON.stringify(tracks));
+    localStorage.setItem('appletree_music_tracks_v5', JSON.stringify(tracks));
   }, [tracks]);
 
   useEffect(() => {
-    localStorage.setItem('appletree_music_playlists_v4', JSON.stringify(playlists));
+    localStorage.setItem('appletree_music_playlists_v5', JSON.stringify(playlists));
   }, [playlists]);
 
   useEffect(() => {
-    localStorage.setItem('appletree_favorite_songs_v4', JSON.stringify(favoriteTrackIds));
+    localStorage.setItem('appletree_favorite_songs_v5', JSON.stringify(favoriteTrackIds));
   }, [favoriteTrackIds]);
 
   const currentTrack = tracks[currentTrackIndex] || tracks[0];
 
-  // Initialize and Sync Main Audio with direct CORS endpoint
-  useEffect(() => {
-    if (audioRef.current && currentTrack) {
-      const streamSrc = getDriveStreamUrl(currentTrack.driveId || currentTrack.streamUrl);
-      
-      setPlaybackError(null);
-      if (audioRef.current.src !== streamSrc && streamSrc) {
-        audioRef.current.src = streamSrc;
-        audioRef.current.load();
-        if (isPlaying) {
-          setIsBuffering(true);
-          const playPromise = audioRef.current.play();
-          if (playPromise !== undefined) {
-            playPromise
-              .then(() => {
-                setIsBuffering(false);
-                setIsPlaying(true);
-              })
-              .catch(err => {
-                console.warn('Playback error / waiting user gesture:', err);
-                setIsBuffering(false);
-              });
-          }
-        }
+  // Helper to load track into audio element
+  const loadTrackSource = (track, autoPlay = false) => {
+    if (!audioRef.current || !track) return;
+    const fileId = track.driveId || track.id;
+    // Primary: Proxy route, Fallback: Direct CDN
+    const primaryUrl = getDriveStreamUrl(track.driveId || track.streamUrl);
+    
+    setPlaybackError(null);
+    audioRef.current.src = primaryUrl;
+    audioRef.current.load();
+
+    if (autoPlay) {
+      setIsBuffering(true);
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsBuffering(false);
+            setIsPlaying(true);
+          })
+          .catch(err => {
+            console.warn('Proxy play failed, trying direct cloud CDN fallback:', err);
+            if (fileId) {
+              audioRef.current.src = getDirectCloudUrl(fileId);
+              audioRef.current.play()
+                .then(() => {
+                  setIsBuffering(false);
+                  setIsPlaying(true);
+                })
+                .catch(() => setIsBuffering(false));
+            } else {
+              setIsBuffering(false);
+            }
+          });
       }
     }
-  }, [currentTrackIndex, currentTrack]);
+  };
+
+  // Sync track when index changes
+  useEffect(() => {
+    if (currentTrack) {
+      loadTrackSource(currentTrack, isPlaying);
+    }
+  }, [currentTrackIndex]);
 
   // Reset pagination when search / filter changes
   useEffect(() => {
@@ -1182,7 +1203,12 @@ export default function Music() {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
+    const handleTimeUpdate = () => {
+      setCurrentTime(audio.currentTime);
+      if (audio.duration && !isNaN(audio.duration)) {
+        setDuration(audio.duration);
+      }
+    };
     const handleLoadedMetadata = () => {
       setDuration(audio.duration || 0);
       setIsBuffering(false);
@@ -1199,9 +1225,15 @@ export default function Music() {
       setPlaybackError(null);
     };
     const handleError = (e) => {
-      console.warn('Audio tag error event:', e);
+      console.warn('Audio tag encountered error, attempting direct CDN fallback...', e);
       setIsBuffering(false);
-      setPlaybackError('Stream buffering... Tap play to retry');
+      if (currentTrack?.driveId) {
+        const directUrl = getDirectCloudUrl(currentTrack.driveId);
+        if (audio.src !== directUrl) {
+          audio.src = directUrl;
+          audio.play().catch(() => {});
+        }
+      }
     };
     const handleEnded = () => {
       if (repeatMode === 'one') {
@@ -1229,7 +1261,7 @@ export default function Music() {
       audio.removeEventListener('error', handleError);
       audio.removeEventListener('ended', handleEnded);
     };
-  }, [repeatMode, tracks, isShuffle]);
+  }, [repeatMode, tracks, isShuffle, currentTrack]);
 
   // Volume Controller
   useEffect(() => {
@@ -1309,21 +1341,21 @@ export default function Music() {
     } else {
       setIsBuffering(true);
       setPlaybackError(null);
-      const streamSrc = getDriveStreamUrl(currentTrack.driveId || currentTrack.streamUrl);
-      if (audioRef.current.src !== streamSrc) {
-        audioRef.current.src = streamSrc;
-      }
-      const playPromise = audioRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            setIsPlaying(true);
-            setIsBuffering(false);
-          })
-          .catch(e => {
-            console.warn('Audio play interrupt:', e);
-            setIsBuffering(false);
-          });
+      if (!audioRef.current.src || audioRef.current.src === window.location.href) {
+        loadTrackSource(currentTrack, true);
+      } else {
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              setIsPlaying(true);
+              setIsBuffering(false);
+            })
+            .catch(e => {
+              console.warn('Direct play error, retrying fallback source:', e);
+              loadTrackSource(currentTrack, true);
+            });
+        }
       }
     }
   };
@@ -1334,20 +1366,7 @@ export default function Music() {
       setCurrentTrackIndex(idx);
       setIsPlaying(true);
       setIsBuffering(true);
-      setPlaybackError(null);
-      if (audioRef.current) {
-        const streamSrc = getDriveStreamUrl(track.driveId || track.streamUrl);
-        audioRef.current.src = streamSrc;
-        const playPromise = audioRef.current.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => setIsBuffering(false))
-            .catch(e => {
-              console.warn('Play error:', e);
-              setIsBuffering(false);
-            });
-        }
-      }
+      loadTrackSource(track, true);
     }
   };
 
@@ -1379,7 +1398,7 @@ export default function Music() {
   };
 
   const formatTime = (secs) => {
-    if (isNaN(secs)) return '00:00';
+    if (isNaN(secs) || !secs) return '00:00';
     const minutes = Math.floor(secs / 60);
     const seconds = Math.floor(secs % 60);
     return `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
@@ -1448,7 +1467,7 @@ export default function Music() {
   // Reset to Google Drive Folder Default Tracks
   const handleResetToDriveFolder = () => {
     setTracks(DEFAULT_MUSIC_TRACKS);
-    localStorage.setItem('appletree_music_tracks_v4', JSON.stringify(DEFAULT_MUSIC_TRACKS));
+    localStorage.setItem('appletree_music_tracks_v5', JSON.stringify(DEFAULT_MUSIC_TRACKS));
     confetti({ particleCount: 60, spread: 70, origin: { y: 0.5 } });
   };
 
@@ -1664,8 +1683,8 @@ export default function Music() {
       <div className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-600/10 blur-[130px] pointer-events-none animate-pulse" />
       <div className="fixed bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-rose-600/10 blur-[140px] pointer-events-none animate-pulse [animation-delay:2s]" />
 
-      {/* Hidden Native Audio Element with crossOrigin */}
-      <audio ref={audioRef} preload="metadata" crossOrigin="anonymous" />
+      {/* Standard Native Audio Element without restrictive crossOrigin */}
+      <audio ref={audioRef} preload="auto" />
 
       {/* Hidden Ambience Audio Elements */}
       {AMBIENT_SOUNDS.map(snd => (
@@ -1711,7 +1730,7 @@ export default function Music() {
             <p className="text-[11px] text-slate-400 font-medium flex items-center gap-2">
               <span>Auto-Fetched from Google Drive Folder</span>
               <span className="w-1 h-1 rounded-full bg-slate-600" />
-              <span className="text-amber-400/90 font-mono">Direct 206 HTTP Stream</span>
+              <span className="text-amber-400/90 font-mono">Direct Cloud Stream</span>
             </p>
           </div>
         </div>

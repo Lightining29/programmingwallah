@@ -16,6 +16,7 @@ import admissionPaymentRoutes from './routes/admissionPayment.js';
 import razorpayRoutes from './routes/razorpay.js';
 import lmsRoutes from './routes/lms.js';
 import paymentRoutes from './routes/payment.js';
+import musicRoutes from './routes/music.js';
 
 // Load environment variables from multiple possible locations (root .env and backend/.env)
 dotenv.config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), '../.env') });
@@ -95,6 +96,7 @@ app.use('/api/admission-payment', admissionPaymentRoutes);
 app.use('/api/razorpay', razorpayRoutes);
 app.use('/api/lms', lmsRoutes);
 app.use('/api', paymentRoutes);
+app.use('/api/music', musicRoutes);
 
 // Candidate directories for built frontend assets
 const distCandidates = [
