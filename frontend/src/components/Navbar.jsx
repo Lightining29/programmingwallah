@@ -29,6 +29,7 @@ export default function Navbar() {
     { name: 'TUTORIALS', path: '/tutorials' },
     { name: 'PRACTICE', path: '/practice' },
     { name: 'MUSIC', path: '/music' },
+    { name: 'GAMES', path: '/games' },
     { name: 'LEARNING', path: '/lms' },
     { name: 'MEETINGS', path: '/meetings' },
     { name: 'GALLERY', path: '/gallery' },

@@ -14,9 +14,11 @@ import adminRoutes from './routes/admin.js';
 import meetingsRoutes from './routes/meetings.js';
 import admissionPaymentRoutes from './routes/admissionPayment.js';
 import razorpayRoutes from './routes/razorpay.js';
+import http from 'http';
 import lmsRoutes from './routes/lms.js';
 import paymentRoutes from './routes/payment.js';
 import musicRoutes from './routes/music.js';
+import { setupGameSocket } from './socket/gameSocket.js';
 
 // Load environment variables from multiple possible locations (root .env and backend/.env)
 dotenv.config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), '../.env') });
@@ -163,8 +165,14 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, async () => {
+const httpServer = http.createServer(app);
+
+// Initialize Real-time Multiplayer Gaming Socket Hub
+setupGameSocket(httpServer);
+
+const server = httpServer.listen(PORT, async () => {
   console.log(`\x1b[32m✔ Pranidha School Backend running in ${process.env.NODE_ENV || 'production'} mode on port ${PORT}\x1b[0m`);
+  console.log(`\x1b[35m✔ Real-time Multiplayer Gaming Socket Server initialized\x1b[0m`);
   
   // Connect to Hostinger MySQL Database
   try {
