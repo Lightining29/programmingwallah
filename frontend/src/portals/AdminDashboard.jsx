@@ -2533,6 +2533,219 @@ export default function AdminDashboard() {
     printWindow.document.close();
   };
 
+  // Download / Print complete Student Profile dossier as PDF
+  const handleDownloadStudentProfilePDF = (std) => {
+    if (!std) return;
+    const pInfo = getStudentParentInfo(std);
+    const sFees = fees.filter(fee => {
+      const info = getStudentInfo(fee);
+      return info.id === std._id || info.id === std.studentId;
+    });
+    const isAllPaid = sFees.length > 0 && sFees.every(fee => fee.status === 'paid');
+    const totalPaid = sFees.filter(f => f.status === 'paid').reduce((sum, f) => sum + f.amount, 0);
+    const totalPending = sFees.filter(f => f.status !== 'paid').reduce((sum, f) => sum + f.amount, 0);
+    const dobFormatted = std.dateOfBirth ? new Date(std.dateOfBirth).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
+    const genDate = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Please allow popups in your browser to download/print the student profile PDF.');
+      return;
+    }
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Student Profile - ${std.name} (${std.studentId || std._id})</title>
+          <meta charset="utf-8">
+          <style>
+            @page { size: A4 portrait; margin: 12mm; }
+            * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; background: #fff; margin: 0; padding: 15px; }
+            .header-banner { border-bottom: 3px solid #5B468C; padding-bottom: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; }
+            .brand-title { font-size: 24px; font-weight: 900; color: #5B468C; margin: 0; letter-spacing: -0.5px; }
+            .brand-sub { font-size: 11px; color: #64748b; margin: 3px 0 0 0; font-weight: 500; }
+            .badge-dossier { background: #EAE8FC; color: #7C3AED; font-weight: 800; font-size: 11px; padding: 5px 14px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 1px; border: 1px solid #DEDAFB; }
+            
+            .student-hero { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px 20px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; }
+            .student-name { font-size: 22px; font-weight: 800; color: #0f172a; margin: 0; }
+            .student-id { font-size: 12px; color: #64748b; font-family: monospace; font-weight: 700; margin-top: 3px; }
+            .course-pill { background: #5B468C; color: #fff; font-weight: 800; font-size: 13px; padding: 6px 16px; border-radius: 10px; }
+
+            .section-box { border: 1px solid #e2e8f0; border-radius: 14px; padding: 15px 18px; margin-bottom: 16px; background: #ffffff; }
+            .section-title { font-size: 13px; font-weight: 800; color: #334155; margin: 0 0 12px 0; padding-bottom: 6px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; text-transform: uppercase; letter-spacing: 0.5px; }
+            
+            .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+            .grid-full { grid-column: span 2; }
+            .field-label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+            .field-val { font-size: 13px; font-weight: 700; color: #0f172a; word-break: break-word; }
+
+            .tuition-status-badge { font-size: 10px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; text-transform: uppercase; }
+            .status-paid { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+            .status-pending { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+
+            .stat-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+            .stat-card { padding: 12px 16px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; }
+            .stat-val-paid { font-size: 18px; font-weight: 900; color: #16a34a; font-family: monospace; }
+            .stat-val-due { font-size: 18px; font-weight: 900; color: #e11d48; font-family: monospace; }
+
+            table.fee-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 11px; }
+            table.fee-table th { background: #f1f5f9; color: #475569; font-weight: 800; text-align: left; padding: 8px 10px; border: 1px solid #e2e8f0; }
+            table.fee-table td { padding: 8px 10px; border: 1px solid #e2e8f0; color: #334155; }
+
+            .footer-notes { margin-top: 25px; padding-top: 12px; border-top: 1px dashed #cbd5e1; display: flex; justify-content: space-between; align-items: flex-end; font-size: 10px; color: #94a3b8; }
+            .signature-box { text-align: right; }
+            .sig-line { width: 170px; border-top: 1px solid #64748b; margin-top: 40px; margin-left: auto; }
+
+            @media print {
+              .no-print { display: none !important; }
+              body { padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header-banner">
+            <div>
+              <h1 class="brand-title">APPLETREE INFOTECH</h1>
+              <p class="brand-sub">Official Student Admission Dossier & Profile Record</p>
+            </div>
+            <div>
+              <span class="badge-dossier">OFFICIAL RECORD</span>
+            </div>
+          </div>
+
+          <div class="student-hero">
+            <div>
+              <h2 class="student-name">${std.name}</h2>
+              <p class="student-id">Student ID: ${std.studentId || std._id}</p>
+            </div>
+            <div>
+              <span class="course-pill">${std.class || 'Course'}</span>
+            </div>
+          </div>
+
+          <!-- Section 1: Academic & Personal -->
+          <div class="section-box">
+            <div class="section-title">
+              <span>1. Academic & Personal Details</span>
+            </div>
+            <div class="grid-2">
+              <div>
+                <div class="field-label">Gender</div>
+                <div class="field-val">${std.gender || 'Male'}</div>
+              </div>
+              <div>
+                <div class="field-label">Enrolled Course</div>
+                <div class="field-val" style="color: #7C3AED;">${std.class || 'N/A'}</div>
+              </div>
+              <div>
+                <div class="field-label">Date of Birth</div>
+                <div class="field-val">${dobFormatted}</div>
+              </div>
+              <div>
+                <div class="field-label">Database Record ID</div>
+                <div class="field-val" style="font-family: monospace;">${std._id}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Parent / Guardian -->
+          <div class="section-box">
+            <div class="section-title">
+              <span>2. Parent / Guardian Contacts</span>
+            </div>
+            <div class="grid-2">
+              <div>
+                <div class="field-label">Parent / Guardian Name</div>
+                <div class="field-val">${pInfo.name}</div>
+              </div>
+              <div>
+                <div class="field-label">Phone Number</div>
+                <div class="field-val">${pInfo.phone}</div>
+              </div>
+              <div class="grid-full">
+                <div class="field-label">Email Address</div>
+                <div class="field-val" style="font-family: monospace;">${pInfo.email}</div>
+              </div>
+              <div class="grid-full">
+                <div class="field-label">Home Address</div>
+                <div class="field-val">${pInfo.address}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Fee Payment Status -->
+          <div class="section-box">
+            <div class="section-title">
+              <span>3. Fee Payment & Financial Summary</span>
+              <span class="tuition-status-badge ${isAllPaid ? 'status-paid' : 'status-pending'}">
+                ${isAllPaid ? 'FULL FEES SUBMITTED' : 'INSTALLMENTS IN PROGRESS'}
+              </span>
+            </div>
+            
+            <div class="stat-cards">
+              <div class="stat-card">
+                <div class="field-label">Total Amount Paid</div>
+                <div class="stat-val-paid">₹${totalPaid.toLocaleString('en-IN')}</div>
+              </div>
+              <div class="stat-card">
+                <div class="field-label">Outstanding Balance</div>
+                <div class="stat-val-due">₹${totalPending.toLocaleString('en-IN')}</div>
+              </div>
+            </div>
+
+            ${sFees.length > 0 ? `
+              <table class="fee-table">
+                <thead>
+                  <tr>
+                    <th>Term / Invoice</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Txn Reference</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${sFees.map(f => `
+                    <tr>
+                      <td style="font-weight: 700;">${f.term || 'Installment'}</td>
+                      <td style="font-family: monospace;">₹${Number(f.amount || 0).toLocaleString('en-IN')}</td>
+                      <td>
+                        <span style="font-weight: 800; color: ${f.status === 'paid' ? '#16a34a' : '#ea580c'};">
+                          ${(f.status || 'pending').toUpperCase()}
+                        </span>
+                      </td>
+                      <td>${f.paymentDate ? new Date(f.paymentDate).toLocaleDateString('en-IN') : (f.dueDate ? new Date(f.dueDate).toLocaleDateString('en-IN') : '—')}</td>
+                      <td style="font-family: monospace; font-size: 10px;">${f.transactionId || '—'}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            ` : ''}
+          </div>
+
+          <div class="footer-notes">
+            <div>
+              <span>Generated on: ${genDate} • AppleTree Infotech Verified Record</span>
+            </div>
+            <div class="signature-box">
+              <div class="sig-line"></div>
+              <span>Authorized Signature & Stamp</span>
+            </div>
+          </div>
+
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   return (
     <div className="min-h-screen bg-[#c5c9d2] p-2 sm:p-5 lg:p-8 flex justify-center items-start font-sans print:p-0 print:m-0 print:bg-white">
       
@@ -3740,6 +3953,15 @@ export default function AdminDashboard() {
                                       className="px-3 py-1.5 font-bold text-[10px] rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all cursor-pointer"
                                     >
                                       View
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDownloadStudentProfilePDF(std)}
+                                      className="px-3 py-1.5 font-bold text-[10px] rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                                      title="Download / Print Student Profile PDF"
+                                    >
+                                      <Download className="w-3 h-3 text-indigo-600" />
+                                      <span>Profile PDF</span>
                                     </button>
                                     <button
                                       type="button"
@@ -6517,12 +6739,23 @@ export default function AdminDashboard() {
       {selectedStudentProfile && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
           <div className="bg-white border-[6px] border-white rounded-[2.5rem] w-full max-w-xl p-6 md:p-8 shadow-2xl relative text-slate-800 max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={() => setSelectedStudentProfile(null)}
-              className="absolute flex items-center justify-center w-8 h-8 text-xl font-bold transition-colors rounded-full top-4 right-4 bg-slate-50 hover:bg-slate-100 text-slate-500"
-            >
-              ×
-            </button>
+            <div className="absolute flex items-center gap-2 top-4 right-4">
+              <button
+                type="button"
+                onClick={() => handleDownloadStudentProfilePDF(selectedStudentProfile)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-full transition-all cursor-pointer shadow-xs"
+                title="Download / Print Official PDF"
+              >
+                <Download className="w-3.5 h-3.5 text-indigo-600" />
+                <span>PDF</span>
+              </button>
+              <button
+                onClick={() => setSelectedStudentProfile(null)}
+                className="flex items-center justify-center w-8 h-8 text-xl font-bold transition-colors rounded-full bg-slate-50 hover:bg-slate-100 text-slate-500 cursor-pointer"
+              >
+                ×
+              </button>
+            </div>
 
             <div className="pb-4 space-y-1 text-center border-b-2 border-slate-100">
               <span className="text-[10px] font-extrabold tracking-widest text-[#7C3AED] bg-[#EAE8FC] px-3 py-1 rounded-full">STUDENT CARD</span>
@@ -6626,10 +6859,19 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="pt-2">
+            <div className="pt-2 flex flex-col sm:flex-row gap-3">
               <button
+                type="button"
+                onClick={() => handleDownloadStudentProfilePDF(selectedStudentProfile)}
+                className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-[#7C3AED] to-[#5B468C] hover:from-[#6D28D9] hover:to-[#4C1D95] text-white font-quicksand font-bold text-xs shadow-md flex items-center justify-center space-x-2 transition-all active:scale-[0.98] cursor-pointer"
+              >
+                <Download className="w-4 h-4" />
+                <span>DOWNLOAD / PRINT PDF</span>
+              </button>
+              <button
+                type="button"
                 onClick={() => setSelectedStudentProfile(null)}
-                className="w-full py-3 px-6 rounded-2xl bg-[#9F92EC] hover:bg-[#8C7EB5] text-white font-quicksand font-bold text-xs shadow transition-all active:scale-[0.98] cursor-pointer"
+                className="py-3 px-6 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-quicksand font-bold text-xs transition-all active:scale-[0.98] cursor-pointer"
               >
                 CLOSE
               </button>
