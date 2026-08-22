@@ -59,7 +59,9 @@ import {
   Filter,
   FileText,
   Upload,
-  Loader2
+  Loader2,
+  LayoutGrid,
+  List as ListIcon
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -86,7 +88,7 @@ export const getDirectCloudUrl = (fileId) => {
   return `https://drive.usercontent.google.com/download?id=${fileId}&export=download&authuser=0`;
 };
 
-// Cover Art Defaults for Multi-Track Generator
+// Cover Art Defaults
 const COVERS = [
   'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80',
   'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80',
@@ -1009,23 +1011,26 @@ export const DEFAULT_MUSIC_TRACKS = [
 const INITIAL_PLAYLISTS = [
   {
     id: 'pl-gdrive-all',
-    name: '☁️ Google Drive Master Vault (All Songs)',
+    name: '☁️ Google Drive Master Vault',
     description: 'Complete cloud library fetched automatically from your Google Drive folder.',
     coverArt: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80',
+    color: 'from-blue-600 to-indigo-900',
     trackIds: DEFAULT_MUSIC_TRACKS.map(t => t.id)
   },
   {
     id: 'pl-bollywood-top',
     name: '💖 Bollywood & Romance Melodies',
-    description: 'Soulful classics, Arijit, Palak Muchhal, and Bollywood blockbusters.',
+    description: 'Soulful classics, Arijit Singh, Palak Muchhal, and Bollywood blockbusters.',
     coverArt: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80',
+    color: 'from-rose-600 to-pink-900',
     trackIds: DEFAULT_MUSIC_TRACKS.filter(t => t.genre?.includes('Bollywood') || t.vibe?.includes('Romance')).slice(0, 20).map(t => t.id)
   },
   {
     id: 'pl-party-punjabi',
     name: '⚡ High-Energy Party & Punjabi Hits',
-    description: 'Yo Yo Honey Singh, Badshah, Sharry Mann and high BPM pump songs.',
+    description: 'Yo Yo Honey Singh, Badshah, Sharry Mann and high BPM party pump songs.',
     coverArt: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80',
+    color: 'from-amber-600 to-orange-900',
     trackIds: DEFAULT_MUSIC_TRACKS.filter(t => t.genre?.includes('Party') || t.genre?.includes('Punjabi') || t.genre?.includes('Hip-Hop')).slice(0, 20).map(t => t.id)
   },
   {
@@ -1033,6 +1038,7 @@ const INITIAL_PLAYLISTS = [
     name: '🕉️ Divine Chants & Peaceful Focus',
     description: 'Durga Stotram, peaceful devotional tracks and ambient flow for study.',
     coverArt: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=600&q=80',
+    color: 'from-emerald-600 to-teal-900',
     trackIds: DEFAULT_MUSIC_TRACKS.filter(t => t.genre?.includes('Devotional') || t.vibe?.includes('Peace')).map(t => t.id)
   }
 ];
@@ -1047,7 +1053,7 @@ const AMBIENT_SOUNDS = [
 export default function Music() {
   // ── State Storage ──
   const [tracks, setTracks] = useState(() => {
-    const saved = localStorage.getItem('appletree_music_tracks_v6');
+    const saved = localStorage.getItem('appletree_music_tracks_v7');
     if (saved) {
       try { 
         const parsed = JSON.parse(saved); 
@@ -1058,7 +1064,7 @@ export default function Music() {
   });
 
   const [playlists, setPlaylists] = useState(() => {
-    const saved = localStorage.getItem('appletree_music_playlists_v6');
+    const saved = localStorage.getItem('appletree_music_playlists_v7');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { return INITIAL_PLAYLISTS; }
     }
@@ -1066,12 +1072,15 @@ export default function Music() {
   });
 
   const [favoriteTrackIds, setFavoriteTrackIds] = useState(() => {
-    const saved = localStorage.getItem('appletree_favorite_songs_v6');
+    const saved = localStorage.getItem('appletree_favorite_songs_v7');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { return [DEFAULT_MUSIC_TRACKS[0]?.id, DEFAULT_MUSIC_TRACKS[1]?.id]; }
     }
     return [DEFAULT_MUSIC_TRACKS[0]?.id, DEFAULT_MUSIC_TRACKS[1]?.id];
   });
+
+  // ── Layout Display View: 'cards' (Grid) vs 'list' (Rows) ──
+  const [viewDisplayMode, setViewDisplayMode] = useState('cards'); // 'cards' | 'list'
 
   // ── In-Memory Audio Blob Cache (Zero-delay offline playback) ──
   const blobCacheRef = useRef({});
@@ -1089,7 +1098,6 @@ export default function Music() {
   const [loadingProgress, setLoadingProgress] = useState(null);
   const [playbackError, setPlaybackError] = useState(null);
   const [isFullscreenVisualizer, setIsFullscreenVisualizer] = useState(false);
-  const [audioPreset, setAudioPreset] = useState('Lo-Fi Warmth');
 
   // ── Navigation & Active View Tabs ──
   const [activeView, setActiveView] = useState('all'); // 'all' | 'favorites' | 'playlist' | 'drive' | 'ambience'
@@ -1100,7 +1108,7 @@ export default function Music() {
   const [selectedGenre, setSelectedGenre] = useState('All');
   const [sortBy, setSortBy] = useState('default'); // 'default' | 'title_asc' | 'title_desc' | 'artist' | 'plays'
 
-  // ── Pagination State for 1000+ Songs ──
+  // ── Pagination State ──
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(30);
 
@@ -1116,7 +1124,6 @@ export default function Music() {
   const [isImportDriveModalOpen, setIsImportDriveModalOpen] = useState(false);
   const [isBulkImportModalOpen, setIsBulkImportModalOpen] = useState(false);
   const [isCreatePlaylistModalOpen, setIsCreatePlaylistModalOpen] = useState(false);
-  const [isKeyboardHelpOpen, setIsKeyboardHelpOpen] = useState(false);
   
   // Single Import Form
   const [newDriveUrl, setNewDriveUrl] = useState('');
@@ -1139,15 +1146,15 @@ export default function Music() {
 
   // Sync to localStorage
   useEffect(() => {
-    localStorage.setItem('appletree_music_tracks_v6', JSON.stringify(tracks));
+    localStorage.setItem('appletree_music_tracks_v7', JSON.stringify(tracks));
   }, [tracks]);
 
   useEffect(() => {
-    localStorage.setItem('appletree_music_playlists_v6', JSON.stringify(playlists));
+    localStorage.setItem('appletree_music_playlists_v7', JSON.stringify(playlists));
   }, [playlists]);
 
   useEffect(() => {
-    localStorage.setItem('appletree_favorite_songs_v6', JSON.stringify(favoriteTrackIds));
+    localStorage.setItem('appletree_favorite_songs_v7', JSON.stringify(favoriteTrackIds));
   }, [favoriteTrackIds]);
 
   const currentTrack = tracks[currentTrackIndex] || tracks[0];
@@ -1159,7 +1166,6 @@ export default function Music() {
     if (!track || !audioRef.current) return;
     const fileId = track.driveId || track.id;
 
-    // Check if Blob is already in local memory cache
     if (blobCacheRef.current[fileId]) {
       const cachedUrl = blobCacheRef.current[fileId];
       if (audioRef.current.src !== cachedUrl) {
@@ -1174,7 +1180,6 @@ export default function Music() {
       return;
     }
 
-    // Otherwise, fetch audio data bytes
     setIsBuffering(true);
     setLoadingProgress('Loading audio data...');
     setPlaybackError(null);
@@ -1211,7 +1216,6 @@ export default function Music() {
       }
     }
 
-    // Direct fallback if fetch is blocked
     const directFallback = getDirectCloudUrl(fileId);
     audioRef.current.src = directFallback;
     if (shouldPlay) {
@@ -1228,14 +1232,12 @@ export default function Music() {
     setLoadingProgress(null);
   };
 
-  // Sync track when index changes
   useEffect(() => {
     if (currentTrack) {
       fetchAndPlayTrack(currentTrack, isPlaying);
     }
   }, [currentTrackIndex]);
 
-  // Reset pagination when search / filter changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, selectedGenre, activeView, selectedPlaylistId, sortBy]);
@@ -1458,7 +1460,8 @@ export default function Music() {
   };
 
   // Add Track to Playlist
-  const handleAddTrackToPlaylist = (playlistId, trackId) => {
+  const handleAddTrackToPlaylist = (playlistId, trackId, e) => {
+    e?.stopPropagation();
     setPlaylists(prev => prev.map(pl => {
       if (pl.id === playlistId) {
         if (!pl.trackIds.includes(trackId)) {
@@ -1480,6 +1483,7 @@ export default function Music() {
       name: newPlaylistName.trim(),
       description: newPlaylistDesc.trim() || 'Custom user created playlist.',
       coverArt: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80',
+      color: 'from-purple-600 to-indigo-950',
       trackIds: []
     };
 
@@ -1508,7 +1512,7 @@ export default function Music() {
   const handleResetToDriveFolder = () => {
     blobCacheRef.current = {};
     setTracks(DEFAULT_MUSIC_TRACKS);
-    localStorage.setItem('appletree_music_tracks_v6', JSON.stringify(DEFAULT_MUSIC_TRACKS));
+    localStorage.setItem('appletree_music_tracks_v7', JSON.stringify(DEFAULT_MUSIC_TRACKS));
     confetti({ particleCount: 60, spread: 70, origin: { y: 0.5 } });
   };
 
@@ -1555,7 +1559,7 @@ export default function Music() {
     }, 1200);
   };
 
-  // Bulk Import for 1000 Songs (Accepts CSV, URLs list, file names or JSON)
+  // Bulk Import for 1000 Songs
   const handleBulkImportSongs = (e) => {
     e.preventDefault();
     if (!bulkInputText.trim()) return;
@@ -1689,7 +1693,6 @@ export default function Music() {
       );
     }
 
-    // Sort order
     if (sortBy === 'title_asc') {
       list = [...list].sort((a, b) => a.title.localeCompare(b.title));
     } else if (sortBy === 'title_desc') {
@@ -1703,7 +1706,6 @@ export default function Music() {
     return list;
   }, [tracks, activeView, selectedPlaylistId, selectedGenre, searchQuery, favoriteTrackIds, playlists, sortBy]);
 
-  // Paginated Slices for 1000+ Songs Optimization
   const totalPages = Math.ceil(filteredAndSortedTracks.length / itemsPerPage) || 1;
   const paginatedTracks = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
@@ -1994,7 +1996,7 @@ export default function Music() {
         </aside>
 
         {/* ── MAIN CONTENT AREA ── */}
-        <main className="lg:col-span-9 space-y-6">
+        <main className="lg:col-span-9 space-y-8">
           
           {/* ── 3. HERO SPOTLIGHT BANNER WITH 3D SPINNING VINYL TURNTABLE ── */}
           <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#171b26] via-[#1a1f2e] to-[#121622] p-6 sm:p-8 text-white shadow-2xl border border-white/15">
@@ -2002,30 +2004,24 @@ export default function Music() {
             
             <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
               
-              {/* 3D Vinyl Record with Tonearm & Grooves */}
+              {/* 3D Vinyl Record */}
               <div className="relative group shrink-0">
-                
-                {/* Turntable Vinyl Disc */}
                 <div className={`relative w-44 h-44 sm:w-52 sm:h-52 rounded-full bg-[#111] border-4 border-[#222] shadow-[0_0_50px_rgba(0,0,0,0.8)] flex items-center justify-center transition-all ${
                   isPlaying ? 'animate-[spin_6s_linear_infinite]' : ''
                 }`}>
-                  {/* Concentric Vinyl Grooves */}
                   <div className="absolute inset-2 rounded-full border border-white/5 pointer-events-none" />
                   <div className="absolute inset-5 rounded-full border border-white/5 pointer-events-none" />
                   <div className="absolute inset-8 rounded-full border border-white/5 pointer-events-none" />
                   <div className="absolute inset-12 rounded-full border border-white/5 pointer-events-none" />
                   
-                  {/* Center Album Art Label */}
                   <img
                     src={currentTrack?.coverArt || DEFAULT_MUSIC_TRACKS[0].coverArt}
                     alt="Album Cover"
                     className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover shadow-2xl border-2 border-amber-400/60"
                   />
-                  {/* Center Spindle Hole */}
                   <div className="absolute w-4 h-4 rounded-full bg-[#0d1017] border border-white/20 shadow-inner" />
                 </div>
 
-                {/* Tonearm Stylus Simulation */}
                 <div className={`absolute top-0 right-0 w-16 h-28 pointer-events-none transition-transform duration-700 origin-top-right ${
                   isPlaying ? 'rotate-12' : '-rotate-12 opacity-60'
                 }`}>
@@ -2085,7 +2081,7 @@ export default function Music() {
                     onClick={() => handlePlayTrack(currentTrack)}
                     className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300 hover:to-orange-300 text-slate-950 font-black text-xs transition-all flex items-center gap-2 shadow-xl shadow-amber-500/20 cursor-pointer transform hover:scale-105 active:scale-95"
                   >
-                    {isPlaying ? <Pause className="w-4 h-4 fill-black" /> : <Play className="w-4 h-4 fill-black" />}
+                    {isPlaying ? <Pause className="w-4 h-4 fill-black" /> : <Play className="w-4 h-4 fill-black ml-0.5" />}
                     <span>{isPlaying ? 'Pause Track' : 'Play Spotlight'}</span>
                   </button>
 
@@ -2115,7 +2111,98 @@ export default function Music() {
             </div>
           </div>
 
-          {/* ── 4. MOOD & GENRE FILTER PILLS & SORTING TOOLBAR ── */}
+          {/* ── 4. FEATURED PLAYLIST CARDS SECTION ── */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-amber-400/20 text-amber-300">
+                  <ListMusic className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black font-quicksand text-white">Curated Playlists & Vaults</h3>
+                  <p className="text-xs text-slate-400">Select any playlist card to stream its full collection</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setIsCreatePlaylistModalOpen(true)}
+                className="px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-amber-300 border border-white/10 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>New Playlist</span>
+              </button>
+            </div>
+
+            {/* Playlist Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {playlists.map((pl) => {
+                const isSelected = activeView === 'playlist' && selectedPlaylistId === pl.id;
+                const plTracks = tracks.filter(t => pl.trackIds.includes(t.id));
+
+                return (
+                  <div
+                    key={pl.id}
+                    onClick={() => {
+                      setSelectedPlaylistId(pl.id);
+                      setActiveView('playlist');
+                    }}
+                    className={`group relative rounded-3xl overflow-hidden p-5 border transition-all cursor-pointer flex flex-col justify-between shadow-2xl ${
+                      isSelected 
+                        ? 'bg-gradient-to-b from-white/20 via-[#161b28] to-[#10141d] border-amber-400 shadow-amber-500/20 scale-[1.02]' 
+                        : 'bg-[#10141d]/90 hover:bg-[#151a26] border-white/10 hover:border-white/25'
+                    }`}
+                  >
+                    <div className="space-y-3">
+                      <div className="relative aspect-video rounded-2xl overflow-hidden shadow-lg border border-white/10">
+                        <img 
+                          src={pl.coverArt} 
+                          alt={pl.name} 
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-3">
+                          <span className="text-[10px] font-black uppercase text-amber-300 tracking-wider">
+                            {pl.trackIds.length} Songs
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 className="text-sm font-black font-quicksand text-white group-hover:text-amber-300 transition-colors line-clamp-1">
+                          {pl.name}
+                        </h4>
+                        <p className="text-[11px] text-slate-400 line-clamp-2 mt-1">
+                          {pl.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 flex items-center justify-between">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedPlaylistId(pl.id);
+                          setActiveView('playlist');
+                          if (plTracks.length > 0) {
+                            handlePlayTrack(plTracks[0]);
+                          }
+                        }}
+                        className="w-9 h-9 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 flex items-center justify-center shadow-lg shadow-amber-500/30 transition-transform hover:scale-110 active:scale-95 cursor-pointer"
+                        title="Play Playlist"
+                      >
+                        <Play className="w-4 h-4 fill-black ml-0.5" />
+                      </button>
+
+                      <span className="text-[10px] font-mono text-slate-400 group-hover:text-slate-200">
+                        Open &rarr;
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── 5. MOOD & GENRE FILTER PILLS & VIEW TOGGLE (CARDS VS LIST) ── */}
           <div className="flex flex-wrap items-center justify-between gap-3 bg-[#10141d]/80 p-3 rounded-2xl border border-white/10">
             
             {/* Genre filter pills */}
@@ -2139,8 +2226,32 @@ export default function Music() {
               ))}
             </div>
 
-            {/* Sort & Pagination Size Dropdown */}
+            {/* View Mode Toggle (Song Cards Grid vs Compact List) + Sorting */}
             <div className="flex items-center gap-2 shrink-0">
+              
+              {/* View Switcher Button */}
+              <div className="flex items-center bg-white/5 p-1 rounded-xl border border-white/10">
+                <button
+                  onClick={() => setViewDisplayMode('cards')}
+                  className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                    viewDisplayMode === 'cards' ? 'bg-amber-400 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white'
+                  }`}
+                  title="Card Grid View"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewDisplayMode('list')}
+                  className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                    viewDisplayMode === 'list' ? 'bg-amber-400 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white'
+                  }`}
+                  title="Compact List View"
+                >
+                  <ListIcon className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Sort Dropdown */}
               <div className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1.5 rounded-xl border border-white/10 text-xs">
                 <ArrowUpDown className="w-3.5 h-3.5 text-amber-400" />
                 <select
@@ -2148,11 +2259,11 @@ export default function Music() {
                   onChange={(e) => setSortBy(e.target.value)}
                   className="bg-transparent text-slate-200 outline-none text-xs cursor-pointer"
                 >
-                  <option value="default" className="bg-slate-900">Default Order</option>
-                  <option value="title_asc" className="bg-slate-900">Title (A-Z)</option>
-                  <option value="title_desc" className="bg-slate-900">Title (Z-A)</option>
-                  <option value="artist" className="bg-slate-900">Singer / Artist</option>
-                  <option value="plays" className="bg-slate-900">Most Played</option>
+                  <option value="default" className="bg-slate-900">Default</option>
+                  <option value="title_asc" className="bg-slate-900">A-Z</option>
+                  <option value="title_desc" className="bg-slate-900">Z-A</option>
+                  <option value="artist" className="bg-slate-900">Singer</option>
+                  <option value="plays" className="bg-slate-900">Plays</option>
                 </select>
               </div>
 
@@ -2163,55 +2274,12 @@ export default function Music() {
 
           </div>
 
-          {/* ── 5. SOUNDSCAPE AMBIENCE MIXER VIEW (IF ACTIVE) ── */}
-          {activeView === 'ambience' && (
-            <div className="p-6 rounded-3xl bg-[#10141d] border border-white/10 space-y-4 shadow-2xl">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-base font-black font-quicksand text-white flex items-center gap-2">
-                    <Waves className="w-5 h-5 text-teal-400" />
-                    <span>Background Soundscape Mixer</span>
-                  </h3>
-                  <p className="text-xs text-slate-400">
-                    Blend gentle ambient background sounds underneath your music to maximize coding concentration.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                {AMBIENT_SOUNDS.map(snd => {
-                  const Icon = snd.icon;
-                  const currentVol = ambientVolumes[snd.id] || 0;
-                  return (
-                    <div key={snd.id} className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Icon className="w-4 h-4 text-teal-300" />
-                          <span className="text-xs font-bold text-white">{snd.name}</span>
-                        </div>
-                        <span className="text-xs font-mono font-bold text-slate-400">{currentVol}%</span>
-                      </div>
-                      <input
-                        type="range"
-                        min={0}
-                        max={100}
-                        value={currentVol}
-                        onChange={(e) => setAmbientVolumes(prev => ({ ...prev, [snd.id]: parseInt(e.target.value) }))}
-                        className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-teal-400"
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           {/* ── 6. ACTIVE VIEW HEADER & ACTIONS ── */}
           <div className="flex items-center justify-between border-b border-white/10 pb-3">
             <div>
               <h3 className="text-lg font-black font-quicksand text-white flex items-center gap-2">
-                {activeView === 'all' && <span>🎵 All Google Drive Songs</span>}
-                {activeView === 'favorites' && <span>💖 Your Liked Songs & Favorites</span>}
+                {activeView === 'all' && <span>🎵 All Song Cards</span>}
+                {activeView === 'favorites' && <span>💖 Your Liked Songs</span>}
                 {activeView === 'drive' && <span>☁️ Google Drive Master Vault</span>}
                 {activeView === 'playlist' && <span>📜 Playlist: {selectedPlaylist?.name}</span>}
                 {activeView === 'ambience' && <span>🎧 Soundscape Active Library</span>}
@@ -2235,7 +2303,7 @@ export default function Music() {
             )}
           </div>
 
-          {/* ── 7. INTERACTIVE TRACK CARDS / ROWS ── */}
+          {/* ── 7. INTERACTIVE SONG CARDS (GRID OR LIST) ── */}
           {filteredAndSortedTracks.length === 0 ? (
             <div className="text-center py-16 bg-[#10141d]/80 rounded-3xl border border-white/10 p-6 space-y-3">
               <Disc className="w-12 h-12 text-slate-500 mx-auto animate-spin" />
@@ -2259,7 +2327,127 @@ export default function Music() {
                 </button>
               </div>
             </div>
+          ) : viewDisplayMode === 'cards' ? (
+            
+            /* ── VISUAL SONG CARDS GRID (SPOTIFY / APPLE MUSIC STYLE) ── */
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-5">
+              {paginatedTracks.map((track, idx) => {
+                const isCurrentPlaying = currentTrack?.id === track.id;
+                const isLiked = favoriteTrackIds.includes(track.id);
+
+                return (
+                  <div
+                    key={track.id}
+                    onClick={() => handlePlayTrack(track)}
+                    className={`group relative rounded-3xl overflow-hidden p-3.5 border transition-all cursor-pointer flex flex-col justify-between shadow-xl ${
+                      isCurrentPlaying
+                        ? 'bg-amber-400/15 border-amber-400/80 shadow-amber-500/20 scale-[1.02]'
+                        : 'bg-[#10141d]/90 hover:bg-[#161c28] border-white/10 hover:border-white/30 hover:scale-[1.03]'
+                    }`}
+                  >
+                    {/* Cover Art & Floating Overlay */}
+                    <div className="relative aspect-square rounded-2xl overflow-hidden shadow-lg border border-white/10 mb-3">
+                      <img
+                        src={track.coverArt}
+                        alt={track.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                      
+                      {/* Dark Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                      {/* Favorite Heart Badge */}
+                      <button
+                        onClick={(e) => toggleFavorite(track.id, e)}
+                        className={`absolute top-2.5 right-2.5 p-2 rounded-xl backdrop-blur-md transition-all cursor-pointer ${
+                          isLiked ? 'bg-rose-500 text-white shadow-lg' : 'bg-black/50 text-white hover:bg-black/80'
+                        }`}
+                        title="Favorite"
+                      >
+                        <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-white' : ''}`} />
+                      </button>
+
+                      {/* Floating Play Button */}
+                      <div className={`absolute bottom-2.5 right-2.5 transition-all duration-300 ${
+                        isCurrentPlaying && isPlaying ? 'opacity-100 scale-100' : 'opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0'
+                      }`}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isCurrentPlaying) togglePlay();
+                            else handlePlayTrack(track);
+                          }}
+                          className="w-10 h-10 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 flex items-center justify-center shadow-2xl shadow-amber-500/50 cursor-pointer"
+                        >
+                          {isCurrentPlaying && isPlaying ? (
+                            <Pause className="w-4 h-4 fill-black" />
+                          ) : (
+                            <Play className="w-4 h-4 fill-black ml-0.5" />
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Live Equalizer Animation if Currently Playing */}
+                      {isCurrentPlaying && isPlaying && (
+                        <div className="absolute bottom-2.5 left-2.5 flex items-end gap-0.5 bg-black/60 backdrop-blur-md px-2 py-1 rounded-xl">
+                          <span className="w-1 h-3 bg-amber-400 animate-bounce" />
+                          <span className="w-1 h-4 bg-amber-400 animate-bounce [animation-delay:0.2s]" />
+                          <span className="w-1 h-2 bg-amber-400 animate-bounce [animation-delay:0.4s]" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Metadata */}
+                    <div className="space-y-1">
+                      <h4 className={`text-xs font-bold truncate ${isCurrentPlaying ? 'text-amber-300 font-black' : 'text-white'}`}>
+                        {track.title}
+                      </h4>
+                      <p className="text-[11px] text-slate-400 truncate">
+                        {track.artist}
+                      </p>
+                    </div>
+
+                    {/* Footer Tags & Add to Playlist */}
+                    <div className="pt-3 flex items-center justify-between border-t border-white/5 mt-2">
+                      <span className="text-[10px] font-mono text-slate-400 font-medium">
+                        {track.duration}
+                      </span>
+
+                      {/* Add to playlist menu */}
+                      <div className="relative group/pl">
+                        <button
+                          onClick={(e) => e.stopPropagation()}
+                          className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                          title="Add to Playlist"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                        
+                        <div className="absolute right-0 bottom-full mb-1 hidden group-hover/pl:block w-44 p-2 rounded-2xl bg-slate-900 border border-white/15 shadow-2xl z-30 animate-in fade-in zoom-in-95 duration-150">
+                          <span className="text-[9px] font-black uppercase text-slate-400 px-2 py-1 block border-b border-white/10 mb-1">
+                            Add to Playlist:
+                          </span>
+                          {playlists.map(pl => (
+                            <button
+                              key={pl.id}
+                              onClick={(e) => handleAddTrackToPlaylist(pl.id, track.id, e)}
+                              className="w-full text-left px-2.5 py-1.5 rounded-xl text-[10px] hover:bg-white/10 text-slate-200 flex items-center justify-between cursor-pointer"
+                            >
+                              <span className="truncate">{pl.name}</span>
+                              {pl.trackIds.includes(track.id) && <Check className="w-3 h-3 text-emerald-400" />}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                );
+              })}
+            </div>
           ) : (
+            
+            /* ── COMPACT LIST VIEW ── */
             <div className="space-y-2.5">
               {paginatedTracks.map((track, idx) => {
                 const isCurrentPlaying = currentTrack?.id === track.id;
@@ -2276,7 +2464,6 @@ export default function Music() {
                         : 'bg-[#10141d]/80 hover:bg-white/10 border-white/5 text-slate-300'
                     }`}
                   >
-                    {/* Track Index & Quick Play */}
                     <div className="flex items-center gap-3.5 min-w-0 flex-1">
                       <div className="w-7 text-center text-xs font-mono font-bold text-slate-500 group-hover:hidden">
                         {isCurrentPlaying && isPlaying ? (
@@ -2301,14 +2488,12 @@ export default function Music() {
                         {isCurrentPlaying && isPlaying ? <Pause className="w-3.5 h-3.5 fill-black" /> : <Play className="w-3.5 h-3.5 fill-black ml-0.5" />}
                       </button>
 
-                      {/* Thumbnail Cover */}
                       <img
                         src={track.coverArt}
                         alt={track.title}
                         className="w-12 h-12 rounded-2xl object-cover shadow-md shrink-0 border border-white/10 group-hover:scale-105 transition-transform"
                       />
 
-                      {/* Title & Artist */}
                       <div className="truncate min-w-0 pr-2">
                         <h4 className={`text-xs font-bold truncate ${isCurrentPlaying ? 'text-amber-300 font-black' : 'text-white'}`}>
                           {track.title}
@@ -2321,7 +2506,6 @@ export default function Music() {
                       </div>
                     </div>
 
-                    {/* Vibe & Google Drive Cloud Tag */}
                     <div className="hidden md:flex items-center gap-2 text-xs font-medium text-slate-400">
                       {track.vibe && (
                         <span className="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px]">
@@ -2336,10 +2520,8 @@ export default function Music() {
                       )}
                     </div>
 
-                    {/* Actions: Add to Playlist, Like, Duration */}
                     <div className="flex items-center gap-3 shrink-0 text-xs">
                       
-                      {/* Add to Playlist Selector */}
                       <div className="relative group/pl">
                         <button
                           onClick={(e) => e.stopPropagation()}
@@ -2356,10 +2538,7 @@ export default function Music() {
                           {playlists.map(pl => (
                             <button
                               key={pl.id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAddTrackToPlaylist(pl.id, track.id);
-                              }}
+                              onClick={(e) => handleAddTrackToPlaylist(pl.id, track.id, e)}
                               className="w-full text-left px-2.5 py-1.5 rounded-xl text-[11px] hover:bg-white/10 text-slate-200 flex items-center justify-between cursor-pointer"
                             >
                               <span className="truncate">{pl.name}</span>
@@ -2369,7 +2548,6 @@ export default function Music() {
                         </div>
                       </div>
 
-                      {/* Favorite Button */}
                       <button
                         onClick={(e) => toggleFavorite(track.id, e)}
                         className={`p-2 rounded-xl hover:bg-white/10 transition-colors cursor-pointer ${
@@ -2380,7 +2558,6 @@ export default function Music() {
                         <Heart className={`w-4 h-4 ${isLiked ? 'fill-rose-500' : ''}`} />
                       </button>
 
-                      {/* Duration */}
                       <span className="text-[11px] font-mono text-slate-400 w-10 text-right font-medium">
                         {track.duration}
                       </span>
@@ -2392,7 +2569,7 @@ export default function Music() {
             </div>
           )}
 
-          {/* ── 8. PAGINATION BAR (FOR 1000 SONGS HIGH PERFORMANCE) ── */}
+          {/* ── 8. PAGINATION BAR ── */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between pt-4 border-t border-white/10">
               <span className="text-xs text-slate-400 font-mono">
