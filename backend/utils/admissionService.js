@@ -182,6 +182,7 @@ export async function createAdmissionFromPayment({
       gender: normalizedStudent.gender,
       class: normalizedStudent.class,
       parentId: parentProfile._id,
+      parentDetails: normalizedParent,
       teacherId,
       photo: studentPhoto.photoPath,
       photoData: studentPhoto.photoData,

@@ -417,6 +417,29 @@ export default function AdminDashboard() {
   const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);
   const [editingStudent, setEditingStudent] = useState(null);
 
+  // Helper to reliably extract parent contacts from student object or linked admission
+  const getStudentParentInfo = (std) => {
+    if (!std) return { name: 'N/A', phone: 'N/A', email: 'N/A', address: 'N/A' };
+
+    const pObj = (std.parentId && typeof std.parentId === 'object') ? std.parentId : null;
+    const pDet = std.parentDetails || {};
+
+    const admMatch = (admissions || []).find(a => 
+      (a.studentDetails?.name && String(a.studentDetails.name).trim().toLowerCase() === String(std.name || '').trim().toLowerCase()) ||
+      (a.studentDetails?.studentId && a.studentDetails.studentId === std.studentId) ||
+      (a.applicationNumber && a.applicationNumber === std.studentId) ||
+      (String(a._id) === String(std.admissionId))
+    );
+    const admP = admMatch?.parentDetails || {};
+
+    const name = pObj?.name || pObj?.fatherName || pObj?.motherName || pDet.fatherName || pDet.motherName || pDet.name || admP.fatherName || admP.motherName || admP.name || std.parentName || 'N/A';
+    const phone = pObj?.phone || pDet.phone || admP.phone || std.parentPhone || std.phone || 'N/A';
+    const email = pObj?.email || pDet.email || admP.email || std.parentEmail || std.email || 'N/A';
+    const address = pObj?.address || pDet.address || admP.address || std.parentAddress || std.address || 'N/A';
+
+    return { name, phone, email, address };
+  };
+
   // Form states for Editing Student
   const [editStdName, setEditStdName] = useState('');
   const [editStdDob, setEditStdDob] = useState('');
@@ -2363,9 +2386,10 @@ export default function AdminDashboard() {
     setEditStdDob(dobFormatted);
     setEditStdGender(std.gender || 'Male');
     setEditStdClass(std.class || COURSE_OPTIONS[0]);
-    setEditParentName(std.parentId?.name || std.parentDetails?.fatherName || std.parentDetails?.motherName || '');
-    setEditParentPhone(std.parentId?.phone || std.parentDetails?.phone || '');
-    setEditParentAddress(std.parentId?.address || std.parentDetails?.address || '');
+    const parentInfo = getStudentParentInfo(std);
+    setEditParentName(parentInfo.name !== 'N/A' ? parentInfo.name : '');
+    setEditParentPhone(parentInfo.phone !== 'N/A' ? parentInfo.phone : '');
+    setEditParentAddress(parentInfo.address !== 'N/A' ? parentInfo.address : '');
   };
 
   // Save changes to Student Profile
@@ -3695,12 +3719,19 @@ export default function AdminDashboard() {
                                 </td>
                                 <td className="p-4">{std.gender}</td>
                                 <td className="p-4">
-                                  <span className="block font-bold text-slate-800">
-                                    {std.parentId?.name || std.parentDetails?.fatherName || std.parentDetails?.motherName || 'N/A'}
-                                  </span>
-                                  <span className="text-[10px] text-slate-450 block mt-0.5 font-mono">
-                                    {std.parentId?.phone || std.parentDetails?.phone || 'N/A'}
-                                  </span>
+                                  {(() => {
+                                    const pInfo = getStudentParentInfo(std);
+                                    return (
+                                      <>
+                                        <span className="block font-bold text-slate-800">
+                                          {pInfo.name}
+                                        </span>
+                                        <span className="text-[10px] text-slate-450 block mt-0.5 font-mono">
+                                          {pInfo.phone}
+                                        </span>
+                                      </>
+                                    );
+                                  })()}
                                 </td>
                                 <td className="p-4">
                                   <div className="flex items-center justify-end gap-2">
@@ -6526,27 +6557,32 @@ export default function AdminDashboard() {
               </div>
 
               {/* Parent Details */}
-              <div className="space-y-3">
-                <h5 className="pb-1 text-sm font-bold border-b font-quicksand text-slate-800">2. Parent / Guardian Contacts</h5>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-[10px] text-slate-400 uppercase block font-bold">Parent Name</span>
-                    <span className="text-sm font-bold text-slate-855">{selectedStudentProfile.parentId?.name || selectedStudentProfile.parentDetails?.fatherName || selectedStudentProfile.parentDetails?.motherName || 'N/A'}</span>
+              {(() => {
+                const pInfo = getStudentParentInfo(selectedStudentProfile);
+                return (
+                  <div className="space-y-3">
+                    <h5 className="pb-1 text-sm font-bold border-b font-quicksand text-slate-800">2. Parent / Guardian Contacts</h5>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-[10px] text-slate-400 uppercase block font-bold">Parent Name</span>
+                        <span className="text-sm font-bold text-slate-800">{pInfo.name}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 uppercase block font-bold">Phone Number</span>
+                        <span className="text-sm font-bold text-slate-800">{pInfo.phone}</span>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-[10px] text-slate-400 uppercase block font-bold">Email Address</span>
+                        <span className="font-mono text-sm font-bold text-slate-800">{pInfo.email}</span>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-[10px] text-slate-400 uppercase block font-bold">Home Address</span>
+                        <span className="text-sm font-bold text-slate-800">{pInfo.address}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 uppercase block font-bold">Phone Number</span>
-                    <span className="text-sm font-bold text-slate-855">{selectedStudentProfile.parentId?.phone || selectedStudentProfile.parentDetails?.phone || 'N/A'}</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-[10px] text-slate-400 uppercase block font-bold">Email Address</span>
-                    <span className="font-mono text-sm font-bold text-slate-855">{selectedStudentProfile.parentId?.email || selectedStudentProfile.parentDetails?.email || 'N/A'}</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-[10px] text-slate-400 uppercase block font-bold">Home Address</span>
-                    <span className="text-sm font-bold text-slate-855">{selectedStudentProfile.parentId?.address || selectedStudentProfile.parentDetails?.address || 'N/A'}</span>
-                  </div>
-                </div>
-              </div>
+                );
+              })()}
 
               {/* Fee Payment Status */}
               <div className="space-y-3">

@@ -496,9 +496,57 @@ router.put('/admissions/:id', async (req, res) => {
 router.get('/students', async (req, res) => {
   try {
     if (mockStore.isMock) {
-      const list = await mockStore.find('students');
+      const list = await mockStore.find('students') || [];
+      const parents = await mockStore.find('parents') || [];
+      const admissions = await mockStore.find('admissions') || [];
+
       const mappedList = list.map(std => {
         const stdObj = { ...std };
+
+        // 1. Resolve parentId object
+        let parentObj = null;
+        if (stdObj.parentId && typeof stdObj.parentId === 'object' && stdObj.parentId.name) {
+          parentObj = stdObj.parentId;
+        } else if (stdObj.parentId) {
+          parentObj = parents.find(p => String(p._id) === String(stdObj.parentId) || String(p.userId) === String(stdObj.parentId));
+        }
+
+        // 2. Fallback to embedded parentDetails or matching admission record
+        if (!parentObj && stdObj.parentDetails) {
+          parentObj = {
+            name: stdObj.parentDetails.fatherName || stdObj.parentDetails.motherName || 'Parent',
+            phone: stdObj.parentDetails.phone || '',
+            email: stdObj.parentDetails.email || '',
+            address: stdObj.parentDetails.address || ''
+          };
+        } else if (!parentObj) {
+          const admMatch = admissions.find(a => 
+            (a.studentDetails?.name && String(a.studentDetails.name).toLowerCase() === String(stdObj.name).toLowerCase()) ||
+            String(a._id) === String(stdObj.admissionId)
+          );
+          if (admMatch && admMatch.parentDetails) {
+            parentObj = {
+              name: admMatch.parentDetails.fatherName || admMatch.parentDetails.motherName || 'Parent',
+              phone: admMatch.parentDetails.phone || '',
+              email: admMatch.parentDetails.email || '',
+              address: admMatch.parentDetails.address || ''
+            };
+          }
+        }
+
+        if (parentObj) {
+          stdObj.parentId = parentObj;
+          if (!stdObj.parentDetails) {
+            stdObj.parentDetails = {
+              fatherName: parentObj.name || parentObj.fatherName || '',
+              motherName: parentObj.motherName || '',
+              phone: parentObj.phone || '',
+              email: parentObj.email || '',
+              address: parentObj.address || ''
+            };
+          }
+        }
+
         if (stdObj.photoData && stdObj.photoData.data) {
           stdObj.photo = `/api/admin/students/photo/${stdObj._id}`;
         }
@@ -506,14 +554,34 @@ router.get('/students', async (req, res) => {
       });
       return res.json({ success: true, count: mappedList.length, data: mappedList });
     }
+
     const list = await Student.find().populate('parentId teacherId');
-    const mappedList = list.map(std => {
+    const mappedList = await Promise.all(list.map(async std => {
       const stdObj = std.toObject();
+
+      // If parentId is not populated or missing contact details, look up from Admission record
+      if (!stdObj.parentId || !stdObj.parentId.name) {
+        try {
+          const Admission = (await import('../models/Admission.js')).default;
+          const admMatch = await Admission.findOne({ 'studentDetails.name': stdObj.name });
+          if (admMatch && admMatch.parentDetails) {
+            stdObj.parentId = {
+              name: admMatch.parentDetails.fatherName || admMatch.parentDetails.motherName || 'Parent',
+              phone: admMatch.parentDetails.phone || '',
+              email: admMatch.parentDetails.email || '',
+              address: admMatch.parentDetails.address || ''
+            };
+          }
+        } catch (e) {
+          // ignore lookup error
+        }
+      }
+
       if (stdObj.photoData && stdObj.photoData.data) {
         stdObj.photo = `/api/admin/students/photo/${stdObj._id}`;
       }
       return stdObj;
-    });
+    }));
     res.json({ success: true, count: mappedList.length, data: mappedList });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -671,6 +739,7 @@ router.post('/admissions/create', uploadAdmissions.fields([
         gender: normalizedStudent.gender,
         class: normalizedStudent.class,
         parentId: parentProfile._id,
+        parentDetails: normalizedParent,
         teacherId,
         photo: photoFile ? `/api/admin/students/photo/${studentDbId}` : '',
         photoData: photoFile ? makeDocData(photoFile) : undefined,
