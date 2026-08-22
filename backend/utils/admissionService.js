@@ -260,11 +260,11 @@ export async function createAdmissionFromPayment({
     const count = getInstallmentCount(paymentPlan);
 
     if (remainingTuition > 0) {
-      if (count === 1) {
+      if (paymentPlan === 'full' && admissionFeeVal === 0) {
         await mockStore.create('fees', {
           studentId: newStudent._id,
           amount: remainingTuition,
-          term: 'Remaining Course Fee (1 Month / Full)',
+          term: 'Full Course Tuition Fee',
           dueDate: new Date(),
           status: 'paid',
           paymentDate: new Date(),
@@ -277,17 +277,17 @@ export async function createAdmissionFromPayment({
 
         for (let i = 1; i <= count; i++) {
           const dueDate = new Date();
-          dueDate.setMonth(dueDate.getMonth() + (i - 1));
+          dueDate.setMonth(dueDate.getMonth() + i); // Charge starting from NEXT month
           const amt = i === count ? lastInstallmentAmount : installmentAmount;
           await mockStore.create('fees', {
             studentId: newStudent._id,
             amount: amt,
             term: `Month ${i} Tuition Fee`,
             dueDate,
-            status: i === 1 ? 'paid' : 'pending',
-            paymentDate: i === 1 ? new Date() : null,
-            transactionId: i === 1 ? genTxn('TXN-INIT') : '',
-            paymentMethod: i === 1 ? paymentMethod : ''
+            status: 'pending',
+            paymentDate: null,
+            transactionId: '',
+            paymentMethod: ''
           });
         }
       }
@@ -424,11 +424,11 @@ export async function createAdmissionFromPayment({
   const count = getInstallmentCount(paymentPlan);
 
   if (remainingTuition > 0) {
-    if (count === 1) {
+    if (paymentPlan === 'full' && admissionFeeVal === 0) {
       await Fee.create({
         studentId: student._id,
         amount: remainingTuition,
-        term: 'Remaining Course Fee (1 Month / Full)',
+        term: 'Full Course Tuition Fee',
         dueDate: new Date(),
         status: 'paid',
         paymentDate: new Date(),
@@ -441,17 +441,17 @@ export async function createAdmissionFromPayment({
 
       for (let i = 1; i <= count; i++) {
         const dueDate = new Date();
-        dueDate.setMonth(dueDate.getMonth() + (i - 1));
+        dueDate.setMonth(dueDate.getMonth() + i); // Charge starting from NEXT month
         const amt = i === count ? lastInstallmentAmount : installmentAmount;
         await Fee.create({
           studentId: student._id,
           amount: amt,
           term: `Month ${i} Tuition Fee`,
           dueDate,
-          status: i === 1 ? 'paid' : 'pending',
-          paymentDate: i === 1 ? new Date() : null,
-          transactionId: i === 1 ? genTxn('TXN-INIT') : '',
-          paymentMethod: i === 1 ? paymentMethod : ''
+          status: 'pending',
+          paymentDate: null,
+          transactionId: '',
+          paymentMethod: ''
         });
       }
     }
