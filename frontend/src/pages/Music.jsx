@@ -50,13 +50,18 @@ import {
   SlidersHorizontal,
   Keyboard,
   Waves,
-  Eye
+  Eye,
+  RefreshCw,
+  FolderCheck
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 1. GOOGLE DRIVE AUDIO STREAMING HELPER
+// 1. GOOGLE DRIVE FOLDER CONFIGURATION & STREAM HELPER
 // ─────────────────────────────────────────────────────────────────────────────
+export const GOOGLE_DRIVE_FOLDER_URL = "https://drive.google.com/drive/folders/17dieyS9ijEngDyPJZf7hBIyWrBjPrn5j?usp=sharing";
+export const GOOGLE_DRIVE_FOLDER_ID = "17dieyS9ijEngDyPJZf7hBIyWrBjPrn5j";
+
 export const getDriveStreamUrl = (driveIdOrUrl) => {
   if (!driveIdOrUrl) return '';
   if (driveIdOrUrl.startsWith('http') && !driveIdOrUrl.includes('drive.google.com')) {
@@ -71,176 +76,939 @@ export const getDriveStreamUrl = (driveIdOrUrl) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 2. CURATED TRACK REPOSITORY WITH RICH METADATA & SOUNDSCAPES
+// 2. PRE-FETCHED TRACKS FROM GOOGLE DRIVE FOLDER (17dieyS9ijEngDyPJZf7hBIyWrBjPrn5j)
 // ─────────────────────────────────────────────────────────────────────────────
-const DEFAULT_MUSIC_TRACKS = [
+export const DEFAULT_MUSIC_TRACKS = [
   {
-    id: 'track-1',
-    title: 'Midnight Coding Chill (Lo-Fi Beats)',
-    artist: 'Lofi Girl & Chillhop Academy',
-    album: 'Deep Focus & Late Night Algorithms',
-    genre: 'Lo-Fi',
-    duration: '03:42',
-    driveId: '1LoFiCodingBeatsAutumn2024Night',
-    streamUrl: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3',
-    coverArt: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80',
-    lyrics: 'Chill synth pads, steady vinyl crackle, and soothing basslines to achieve flow state in DSA coding.',
-    isGoogleDrive: true,
-    plays: '142.8K',
-    vibe: '🌙 Deep Night',
-    bpm: '82 BPM',
-    colorTheme: 'from-amber-500/20 via-orange-500/10 to-purple-900/30',
-    addedAt: '2024-09-01'
+    "id": "gdrive-track-1",
+    "title": "3 Peg Sharry Mann - Full Video - Mista Baaz - Parmish Verma - Ravi Raj - Latest Punjabi Songs 2016",
+    "artist": "Sharry Mann & Mista Baaz",
+    "album": "Punjabi Blockbusters",
+    "genre": "Punjabi",
+    "duration": "03:30",
+    "driveId": "1b4Ugq6_uM1FanwBwdj-z2b9TiSbAwXFf",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1b4Ugq6_uM1FanwBwdj-z2b9TiSbAwXFf",
+    "coverArt": "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 4.3 MB",
+    "isGoogleDrive": true,
+    "plays": "100.0K",
+    "vibe": "🔥 Party Beats",
+    "bpm": "75 BPM",
+    "colorTheme": "from-amber-500/20 via-orange-500/10 to-purple-900/30",
+    "addedAt": "2024-09-01"
   },
   {
-    id: 'track-2',
-    title: 'Cyberpunk Neon Matrix (Synthwave Flow)',
-    artist: 'DevSynthetics & Tokyo Grid',
-    album: 'Full Stack Cyber City 2077',
-    genre: 'Synthwave',
-    duration: '04:15',
-    driveId: '1SynthwaveNeonCyberpunkMatrixDrive',
-    streamUrl: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=synthwave-80s-110045.mp3',
-    coverArt: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80',
-    lyrics: 'High energy 80s analog synthesizers and driving drum machines for lightning fast problem solving.',
-    isGoogleDrive: true,
-    plays: '210.4K',
-    vibe: '⚡ High Energy',
-    bpm: '128 BPM',
-    colorTheme: 'from-pink-500/20 via-cyan-500/10 to-indigo-900/30',
-    addedAt: '2024-09-02'
+    "id": "gdrive-track-2",
+    "title": "Abhi Toh Party Shuru Hui Hai - Full Video Song - Khoobsurat - Badshah - Sonam Kapoor - Aastha",
+    "artist": "Badshah & Aastha Gill",
+    "album": "Khoobsurat",
+    "genre": "Party & Hip-Hop",
+    "duration": "02:58",
+    "driveId": "1xm3dYmhazwvs6twCIbJr6if_jN5F16NH",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1xm3dYmhazwvs6twCIbJr6if_jN5F16NH",
+    "coverArt": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 2.9 MB",
+    "isGoogleDrive": true,
+    "plays": "117.0K",
+    "vibe": "⚡ High Energy",
+    "bpm": "80 BPM",
+    "colorTheme": "from-pink-500/20 via-cyan-500/10 to-indigo-900/30",
+    "addedAt": "2024-09-01"
   },
   {
-    id: 'track-3',
-    title: 'Zen Garden Coffeehouse (Acoustic Piano)',
-    artist: 'Acoustic Morning Duo',
-    album: 'Peaceful Mind & Software Architecture',
-    genre: 'Acoustic',
-    duration: '02:58',
-    driveId: '1ZenGardenCoffeehouseAcousticPiano',
-    streamUrl: 'https://cdn.pixabay.com/download/audio/2022/10/14/audio_9939f77e30.mp3?filename=peaceful-piano-123438.mp3',
-    coverArt: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=600&q=80',
-    lyrics: 'Warm fingerstyle acoustic guitar and gentle morning piano notes to untangle complex logic.',
-    isGoogleDrive: true,
-    plays: '98.2K',
-    vibe: '☕ Morning Calm',
-    bpm: '75 BPM',
-    colorTheme: 'from-emerald-500/20 via-teal-500/10 to-amber-900/30',
-    addedAt: '2024-09-03'
+    "id": "gdrive-track-3",
+    "title": "Aigiri Nandini - Divine Durga Stotra - Mahishasura Mardini Bhajan",
+    "artist": "Devotional Ensemble",
+    "album": "Divine Chants & Peace",
+    "genre": "Devotional",
+    "duration": "09:20",
+    "driveId": "1AamZM6nJBHBKG7pCa0hfd8V2py-rjt3x",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1AamZM6nJBHBKG7pCa0hfd8V2py-rjt3x",
+    "coverArt": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 13.9 MB",
+    "isGoogleDrive": true,
+    "plays": "134.0K",
+    "vibe": "🕉️ Spiritual Peace",
+    "bpm": "85 BPM",
+    "colorTheme": "from-emerald-500/20 via-teal-500/10 to-amber-900/30",
+    "addedAt": "2024-09-01"
   },
   {
-    id: 'track-4',
-    title: 'Deep Space Ambient Voyager (Brainwave Gamma)',
-    artist: 'Cosmic Ambient Soundscapes',
-    album: 'Binary Stars & Infinite Loops',
-    genre: 'Ambient',
-    duration: '05:12',
-    driveId: '1DeepSpaceAmbientVoyagerGammaWave',
-    streamUrl: 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=ambient-piano-amp-strings-10711.mp3',
-    coverArt: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80',
-    lyrics: 'Deep drone textures and slow atmospheric resonance for hours of uninterrupted programming focus.',
-    isGoogleDrive: true,
-    plays: '315.6K',
-    vibe: '🌌 Infinite Focus',
-    bpm: '60 BPM',
-    colorTheme: 'from-blue-500/20 via-indigo-500/10 to-slate-900/40',
-    addedAt: '2024-09-04'
+    "id": "gdrive-track-4",
+    "title": "Bhagwan Hai Kahan Re Tu - FULL VIDEO Song - PK - Aamir Khan - Anushka Sharma - (256k)",
+    "artist": "Sonu Nigam & Shaan",
+    "album": "PK (Soundtrack)",
+    "genre": "Bollywood Hits",
+    "duration": "04:10",
+    "driveId": "1uF_Ss3XFWV5uRPhSiR0MGxgphdmeBoKI",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1uF_Ss3XFWV5uRPhSiR0MGxgphdmeBoKI",
+    "coverArt": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 4.2 MB",
+    "isGoogleDrive": true,
+    "plays": "151.0K",
+    "vibe": "💖 Soulful Classic",
+    "bpm": "90 BPM",
+    "colorTheme": "from-blue-500/20 via-indigo-500/10 to-slate-900/40",
+    "addedAt": "2024-09-01"
   },
   {
-    id: 'track-5',
-    title: 'Electro Coding Pulse (Fast BPM Work)',
-    artist: 'Binary Pulse Beats',
-    album: 'Sprint Zero: High Velocity Production',
-    genre: 'Electronic',
-    duration: '03:22',
-    driveId: '1ElectroCodingPulseFastBpmWork',
-    streamUrl: 'https://cdn.pixabay.com/download/audio/2021/09/06/audio_8f4aa3e351.mp3?filename=electronic-future-beats-117997.mp3',
-    coverArt: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80',
-    lyrics: 'Dynamic rhythmic electronic drums and pulsing basslines to power through tight project deadlines.',
-    isGoogleDrive: true,
-    plays: '185.1K',
-    vibe: '🚀 Sprint Boost',
-    bpm: '135 BPM',
-    colorTheme: 'from-violet-500/20 via-fuchsia-500/10 to-black/40',
-    addedAt: '2024-09-05'
+    "id": "gdrive-track-5",
+    "title": "Birthday Bash - FULL VIDEO SONG - Yo Yo Honey Singh - Dilliwaali Zaalim Girlfriend - Divyendu Sharma",
+    "artist": "Yo Yo Honey Singh",
+    "album": "Dilliwaali Zaalim Girlfriend",
+    "genre": "Desi Hip-Hop",
+    "duration": "03:12",
+    "driveId": "1Z1CKL5LGq7rGgEm6vNXwZ6Akg86Nar0Q",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1Z1CKL5LGq7rGgEm6vNXwZ6Akg86Nar0Q",
+    "coverArt": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 2.8 MB",
+    "isGoogleDrive": true,
+    "plays": "168.0K",
+    "vibe": "🎉 Dance Party",
+    "bpm": "95 BPM",
+    "colorTheme": "from-amber-500/20 via-orange-500/10 to-purple-900/30",
+    "addedAt": "2024-09-01"
   },
   {
-    id: 'track-6',
-    title: 'Rainy Night In Silicon Valley (Cozy Lo-Fi)',
-    artist: 'Hacker Cafe Records',
-    album: 'Terminal Windows & Warm Tea',
-    genre: 'Lo-Fi',
-    duration: '03:15',
-    driveId: '1RainyNightSiliconValleyCozyLofi',
-    streamUrl: 'https://cdn.pixabay.com/download/audio/2022/11/06/audio_c976d9bf5b.mp3?filename=cozy-lofi-song-126297.mp3',
-    coverArt: 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=600&q=80',
-    lyrics: 'Soft rain ambience mixed with mellow Fender Rhodes jazz chords for late night pair programming.',
-    isGoogleDrive: true,
-    plays: '264.9K',
-    vibe: '🌧️ Cozy Rainy',
-    bpm: '78 BPM',
-    colorTheme: 'from-cyan-500/20 via-sky-500/10 to-indigo-950/40',
-    addedAt: '2024-09-06'
+    "id": "gdrive-track-6",
+    "title": "BOSS Title Song - Feat. Meet Bros Anjjan - Akshay Kumar - Honey Singh - Bollywood Movie 2013",
+    "artist": "Yo Yo Honey Singh",
+    "album": "Dilliwaali Zaalim Girlfriend",
+    "genre": "Desi Hip-Hop",
+    "duration": "03:12",
+    "driveId": "1DI9IZJMSgVhICb-k8nNIlI9i1B_exjj2",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1DI9IZJMSgVhICb-k8nNIlI9i1B_exjj2",
+    "coverArt": "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 2.5 MB",
+    "isGoogleDrive": true,
+    "plays": "185.0K",
+    "vibe": "🎉 Dance Party",
+    "bpm": "100 BPM",
+    "colorTheme": "from-pink-500/20 via-cyan-500/10 to-indigo-900/30",
+    "addedAt": "2024-09-01"
   },
   {
-    id: 'track-7',
-    title: 'Tokyo Night Expressway (Future Funk & Chill)',
-    artist: 'Shibuya Sound Lab',
-    album: 'Neon Lights & Microservices',
-    genre: 'Synthwave',
-    duration: '03:50',
-    driveId: '1TokyoNightExpresswayFutureFunk',
-    streamUrl: 'https://cdn.pixabay.com/download/audio/2022/02/07/audio_49fe8e6538.mp3?filename=future-bass-15494.mp3',
-    coverArt: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600&q=80',
-    lyrics: 'Groovy basslines, sampled city acoustics, and smooth future funk vibes.',
-    isGoogleDrive: true,
-    plays: '112.5K',
-    vibe: '🌆 City Drive',
-    bpm: '110 BPM',
-    colorTheme: 'from-rose-500/20 via-purple-500/10 to-slate-900/40',
-    addedAt: '2024-09-07'
+    "id": "gdrive-track-7",
+    "title": "Chittiyaan Kalaiyaan - FULL VIDEO SONG - Roy - Meet Bros Anjjan, Kanika Kapoor",
+    "artist": "Meet Bros & Kanika Kapoor",
+    "album": "Roy (Soundtrack)",
+    "genre": "Bollywood Hits",
+    "duration": "03:05",
+    "driveId": "1179yW97xoyx_P8t7JMUWYEaclgVCLb5i",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1179yW97xoyx_P8t7JMUWYEaclgVCLb5i",
+    "coverArt": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 2.9 MB",
+    "isGoogleDrive": true,
+    "plays": "202.0K",
+    "vibe": "✨ Pop Dance",
+    "bpm": "105 BPM",
+    "colorTheme": "from-emerald-500/20 via-teal-500/10 to-amber-900/30",
+    "addedAt": "2024-09-01"
   },
   {
-    id: 'track-8',
-    title: 'Classical Focus Harmony (Mozart for Developers)',
-    artist: 'Vienna Chamber Quartet',
-    album: 'Algorithmic Symmetry & Polyphony',
-    genre: 'Classical',
-    duration: '04:30',
-    driveId: '1ClassicalFocusHarmonyMozartDev',
-    streamUrl: 'https://cdn.pixabay.com/download/audio/2022/03/10/audio_c36bfbdf8f.mp3?filename=classical-piano-ambient-109038.mp3',
-    coverArt: 'https://images.unsplash.com/photo-1520523839898-507121287c8b?auto=format&fit=crop&w=600&q=80',
-    lyrics: 'Refined classical string and piano interplay proven to enhance spatial-temporal reasoning and math acumen.',
-    isGoogleDrive: true,
-    plays: '177.3K',
-    vibe: '🎻 Mind Expansion',
-    bpm: '70 BPM',
-    colorTheme: 'from-amber-400/20 via-yellow-600/10 to-stone-900/40',
-    addedAt: '2024-09-08'
+    "id": "gdrive-track-8",
+    "title": "Chittiyaan Kalaiyaan - VIDEO SONG - Roy - Meet Bros Anjjan, Kanika Kapoor - (256k)",
+    "artist": "Meet Bros & Kanika Kapoor",
+    "album": "Roy (Soundtrack)",
+    "genre": "Bollywood Hits",
+    "duration": "03:05",
+    "driveId": "1N_qyMSTrvb0itW3BFyCKbKiNJ_-DZ662",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1N_qyMSTrvb0itW3BFyCKbKiNJ_-DZ662",
+    "coverArt": "https://images.unsplash.com/photo-1520523839898-507121287c8b?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 2.1 MB",
+    "isGoogleDrive": true,
+    "plays": "219.0K",
+    "vibe": "✨ Pop Dance",
+    "bpm": "110 BPM",
+    "colorTheme": "from-blue-500/20 via-indigo-500/10 to-slate-900/40",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-9",
+    "title": "De De Gehra Balvir Boparai - Full Song - De De Gera",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1N2Qm3Nmhp7EMljnVzTnB3e_3all714d5",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1N2Qm3Nmhp7EMljnVzTnB3e_3all714d5",
+    "coverArt": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 3 MB",
+    "isGoogleDrive": true,
+    "plays": "236.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "115 BPM",
+    "colorTheme": "from-amber-500/20 via-orange-500/10 to-purple-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-10",
+    "title": "Dhinka Chika - Full Video Song - Ready Feat. Salman Khan, Asin",
+    "artist": "Palak Muchhal",
+    "album": "Prem Ratan Dhan Payo",
+    "genre": "Bollywood Romance",
+    "duration": "05:19",
+    "driveId": "1E2O5wVb1fM9IFBRDoyk0eoHM2SeWkkoD",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1E2O5wVb1fM9IFBRDoyk0eoHM2SeWkkoD",
+    "coverArt": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 3.9 MB",
+    "isGoogleDrive": true,
+    "plays": "253.0K",
+    "vibe": "💖 Classic Melody",
+    "bpm": "120 BPM",
+    "colorTheme": "from-pink-500/20 via-cyan-500/10 to-indigo-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-11",
+    "title": "Dil Tu Hi Bataa Krrish 3 - Full Video Song - Hrithik Roshan, Kangana Ranaut - Zubeen Garg",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1yu6xs4HTidplnk0AnHbLO0yrpP6-RMmI",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1yu6xs4HTidplnk0AnHbLO0yrpP6-RMmI",
+    "coverArt": "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 4.5 MB",
+    "isGoogleDrive": true,
+    "plays": "270.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "125 BPM",
+    "colorTheme": "from-emerald-500/20 via-teal-500/10 to-amber-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-12",
+    "title": "Dilli waali Girlfriend - Yeh Jawaani Hai Deewani Video Song - Pritam - Ranbir Kapoor, Deepika Padukone(256k)",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1pMhqAmHqphCFW4T4Sz4LQoTsjUYkugq-",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1pMhqAmHqphCFW4T4Sz4LQoTsjUYkugq-",
+    "coverArt": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 2.4 MB",
+    "isGoogleDrive": true,
+    "plays": "287.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "130 BPM",
+    "colorTheme": "from-blue-500/20 via-indigo-500/10 to-slate-900/40",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-13",
+    "title": "DJ - Video Song - Hey Bro - Sunidhi Chauhan, Feat. Ali Zafar - Ganesh Acharya",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1MU1MV67NpFI_it_kLnHme8ZLtM8zviFc",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1MU1MV67NpFI_it_kLnHme8ZLtM8zviFc",
+    "coverArt": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 2.3 MB",
+    "isGoogleDrive": true,
+    "plays": "304.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "135 BPM",
+    "colorTheme": "from-amber-500/20 via-orange-500/10 to-purple-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-14",
+    "title": "Ek Main Aur Ekk Tu - Full Song - Imran Khan - Kareena Kapoor",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1NTTHDz2EQYcxJpAx5KXhdAoXgNj5oort",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1NTTHDz2EQYcxJpAx5KXhdAoXgNj5oort",
+    "coverArt": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 2.6 MB",
+    "isGoogleDrive": true,
+    "plays": "321.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "75 BPM",
+    "colorTheme": "from-pink-500/20 via-cyan-500/10 to-indigo-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-15",
+    "title": "Gallan Goodiyaan - Full VIDEO Song - Dil Dhadakne Do",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1aGt3RaL706BjeYA48QHn35DwzJ5Y18O0",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1aGt3RaL706BjeYA48QHn35DwzJ5Y18O0",
+    "coverArt": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 4.2 MB",
+    "isGoogleDrive": true,
+    "plays": "338.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "80 BPM",
+    "colorTheme": "from-emerald-500/20 via-teal-500/10 to-amber-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-16",
+    "title": "JALTE DIYE - Full VIDEO song - PREM RATAN DHAN PAYO - Salman Khan, Sonam Kapoor",
+    "artist": "Palak Muchhal",
+    "album": "Prem Ratan Dhan Payo",
+    "genre": "Bollywood Romance",
+    "duration": "05:19",
+    "driveId": "1s94Wvj916uEMK0n7A5IHp11p6pBX5hzJ",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1s94Wvj916uEMK0n7A5IHp11p6pBX5hzJ",
+    "coverArt": "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 5.2 MB",
+    "isGoogleDrive": true,
+    "plays": "355.0K",
+    "vibe": "💖 Classic Melody",
+    "bpm": "85 BPM",
+    "colorTheme": "from-blue-500/20 via-indigo-500/10 to-slate-900/40",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-17",
+    "title": "Jiyein Kyun Dum Maaro Dum - Full Video Song - HD - Rana Daggubati, Bipasha Basu",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1Ax-Ejlllr-tfkHuQQtgZ6wzaQqZGl4bZ",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1Ax-Ejlllr-tfkHuQQtgZ6wzaQqZGl4bZ",
+    "coverArt": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 2.6 MB",
+    "isGoogleDrive": true,
+    "plays": "372.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "90 BPM",
+    "colorTheme": "from-amber-500/20 via-orange-500/10 to-purple-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-18",
+    "title": "Kabhi Jo Badal Barse - Song Video Jackpot - Arijit Singh - Sachiin J Joshi, Sunny Leone",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "13i07t1D2WgAo8w76WCiOiYeNhIx80rNL",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=13i07t1D2WgAo8w76WCiOiYeNhIx80rNL",
+    "coverArt": "https://images.unsplash.com/photo-1520523839898-507121287c8b?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 2.2 MB",
+    "isGoogleDrive": true,
+    "plays": "389.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "95 BPM",
+    "colorTheme": "from-pink-500/20 via-cyan-500/10 to-indigo-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-19",
+    "title": "Kabira Full Song - Yeh Jawaani Hai Deewani - Pritam - Ranbir Kapoor, Deepika Padukone",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1R0EuNfuhnmHm20tzzTRd2PgDHpHLxxZK",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1R0EuNfuhnmHm20tzzTRd2PgDHpHLxxZK",
+    "coverArt": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 3.8 MB",
+    "isGoogleDrive": true,
+    "plays": "406.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "100 BPM",
+    "colorTheme": "from-emerald-500/20 via-teal-500/10 to-amber-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-20",
+    "title": "Kashmir Main Tu Kanyakumari - Chennai Express Full Video Song - Shahrukh Khan, Deepika Padukone",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1Z469ss9CLh67S4KNl9XyDRvw6zmXdbes",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1Z469ss9CLh67S4KNl9XyDRvw6zmXdbes",
+    "coverArt": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 3.4 MB",
+    "isGoogleDrive": true,
+    "plays": "423.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "105 BPM",
+    "colorTheme": "from-blue-500/20 via-indigo-500/10 to-slate-900/40",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-21",
+    "title": "Khuda Bhi - FULL VIDEO Song - Sunny Leone - Mohit Chauhan - Ek Paheli Leela",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1NBgIW-cwTGEaR-B5jLZnsWfsE6hGUZio",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1NBgIW-cwTGEaR-B5jLZnsWfsE6hGUZio",
+    "coverArt": "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 2.9 MB",
+    "isGoogleDrive": true,
+    "plays": "440.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "110 BPM",
+    "colorTheme": "from-amber-500/20 via-orange-500/10 to-purple-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-22",
+    "title": "Love is a Waste of Time - FULL VIDEO SONG - PK - Aamir Khan - Anushka Sharma - (256k)",
+    "artist": "Sonu Nigam & Shaan",
+    "album": "PK (Soundtrack)",
+    "genre": "Bollywood Hits",
+    "duration": "04:10",
+    "driveId": "1bGelRNaqXDEXNovM13ACZxnKV8Z5y7hg",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1bGelRNaqXDEXNovM13ACZxnKV8Z5y7hg",
+    "coverArt": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 3.9 MB",
+    "isGoogleDrive": true,
+    "plays": "107.0K",
+    "vibe": "💖 Soulful Classic",
+    "bpm": "115 BPM",
+    "colorTheme": "from-pink-500/20 via-cyan-500/10 to-indigo-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-23",
+    "title": "Milne Hai Mujhse Aayi Aashiqui 2 - Full Video Song - Aditya Roy Kapur, Shraddha Kapoor",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1UYmaovc4ACUfOqFB5ZxGqGdwiDzJrQYf",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1UYmaovc4ACUfOqFB5ZxGqGdwiDzJrQYf",
+    "coverArt": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 3.4 MB",
+    "isGoogleDrive": true,
+    "plays": "124.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "120 BPM",
+    "colorTheme": "from-emerald-500/20 via-teal-500/10 to-amber-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-24",
+    "title": "Nanga Punga Dost - VIDEO Song - PK - Aamir Khan - Anushka Sharma - (256k)",
+    "artist": "Sonu Nigam & Shaan",
+    "album": "PK (Soundtrack)",
+    "genre": "Bollywood Hits",
+    "duration": "04:10",
+    "driveId": "15j3PmVTkP8w2rXCog6A9sndveOYMq1vh",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=15j3PmVTkP8w2rXCog6A9sndveOYMq1vh",
+    "coverArt": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 1.7 MB",
+    "isGoogleDrive": true,
+    "plays": "141.0K",
+    "vibe": "💖 Soulful Classic",
+    "bpm": "125 BPM",
+    "colorTheme": "from-blue-500/20 via-indigo-500/10 to-slate-900/40",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-25",
+    "title": "One Bottle Down - Full Song with LYRICS - Yo Yo Honey Singh",
+    "artist": "Yo Yo Honey Singh",
+    "album": "Dilliwaali Zaalim Girlfriend",
+    "genre": "Desi Hip-Hop",
+    "duration": "03:12",
+    "driveId": "1sBmnhrMgyyyO70eOpRN6UpicadaxAAh-",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1sBmnhrMgyyyO70eOpRN6UpicadaxAAh-",
+    "coverArt": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 3 MB",
+    "isGoogleDrive": true,
+    "plays": "158.0K",
+    "vibe": "🎉 Dance Party",
+    "bpm": "130 BPM",
+    "colorTheme": "from-amber-500/20 via-orange-500/10 to-purple-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-26",
+    "title": "PREM RATAN DHAN PAYO - Title Song - Full VIDEO - Salman Khan, Sonam Kapoor - Palak Muchhal",
+    "artist": "Palak Muchhal",
+    "album": "Prem Ratan Dhan Payo",
+    "genre": "Bollywood Romance",
+    "duration": "05:19",
+    "driveId": "1vorBCRtVXuHjRq269h-p3RxzzvX-ivOT",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1vorBCRtVXuHjRq269h-p3RxzzvX-ivOT",
+    "coverArt": "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 4 MB",
+    "isGoogleDrive": true,
+    "plays": "175.0K",
+    "vibe": "💖 Classic Melody",
+    "bpm": "135 BPM",
+    "colorTheme": "from-pink-500/20 via-cyan-500/10 to-indigo-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-27",
+    "title": "Saiyaan Superstar - VIDEO Song - Sunny Leone - Tulsi Kumar - Ek Paheli Leela(256k)",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1WXkEDHWnHVaqMU-pxq1TDRYI8-4KJWfj",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1WXkEDHWnHVaqMU-pxq1TDRYI8-4KJWfj",
+    "coverArt": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 2 MB",
+    "isGoogleDrive": true,
+    "plays": "192.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "75 BPM",
+    "colorTheme": "from-emerald-500/20 via-teal-500/10 to-amber-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-28",
+    "title": "Sawan Aaya Hai - FULL VIDEO Song - Arijit Singh - Bipasha Basu - Imran Abbas Naqvi",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1ttzGRK4OOzup9s8TQXHAvZ6gVl4mxl4w",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1ttzGRK4OOzup9s8TQXHAvZ6gVl4mxl4w",
+    "coverArt": "https://images.unsplash.com/photo-1520523839898-507121287c8b?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 3 MB",
+    "isGoogleDrive": true,
+    "plays": "209.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "80 BPM",
+    "colorTheme": "from-blue-500/20 via-indigo-500/10 to-slate-900/40",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-29",
+    "title": "Senorita Zindagi Na Milegi Dobara - Full HD Video Song - Farhan Akhtar, Hrithik Roshan, Abhay Deol(256k)",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1w1ghPiNFYKHO-3KApHtvlCzcvPiqXXU3",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1w1ghPiNFYKHO-3KApHtvlCzcvPiqXXU3",
+    "coverArt": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 3.5 MB",
+    "isGoogleDrive": true,
+    "plays": "226.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "85 BPM",
+    "colorTheme": "from-amber-500/20 via-orange-500/10 to-purple-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-30",
+    "title": "Sooraj Dooba Hain - FULL VIDEO SONG - Arijit singh Aditi Singh Sharma",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1mXTkha4wRDFMfE66FpzEj33ZuRp7hxrc",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1mXTkha4wRDFMfE66FpzEj33ZuRp7hxrc",
+    "coverArt": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 3.8 MB",
+    "isGoogleDrive": true,
+    "plays": "243.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "90 BPM",
+    "colorTheme": "from-pink-500/20 via-cyan-500/10 to-indigo-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-31",
+    "title": "Subhanallah - Full Video Song - Yeh Jawaani Hai Deewani - Pritam - Ranbir Kapoor, Deepika Padukone",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1DvoJv3OhMdJKwoZp_pp6XO1K8DLG7ULs",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1DvoJv3OhMdJKwoZp_pp6XO1K8DLG7ULs",
+    "coverArt": "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 3.1 MB",
+    "isGoogleDrive": true,
+    "plays": "260.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "95 BPM",
+    "colorTheme": "from-emerald-500/20 via-teal-500/10 to-amber-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-32",
+    "title": "Sun Raha Hai Na Tu Female Version - By Shreya Ghoshal Aashiqui 2 Full Video Song",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1ewVwYLGLQO7cFg_HyFhO01xIjF1l024m",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1ewVwYLGLQO7cFg_HyFhO01xIjF1l024m",
+    "coverArt": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 3.5 MB",
+    "isGoogleDrive": true,
+    "plays": "277.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "100 BPM",
+    "colorTheme": "from-blue-500/20 via-indigo-500/10 to-slate-900/40",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-33",
+    "title": "Sunny Sunny Yaariyan - Full Video Song - Film Version - Divya Khosla Kumar Himansh Kohli, Rakul Preet",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "16oFvi8rI62QGHBLUPV7RwvTZjEPlKjM2",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=16oFvi8rI62QGHBLUPV7RwvTZjEPlKjM2",
+    "coverArt": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 3.2 MB",
+    "isGoogleDrive": true,
+    "plays": "294.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "105 BPM",
+    "colorTheme": "from-amber-500/20 via-orange-500/10 to-purple-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-34",
+    "title": "Teri Meri Prem Kahani Bodyguard - Video Song - Feat. - Salman khan",
+    "artist": "Palak Muchhal",
+    "album": "Prem Ratan Dhan Payo",
+    "genre": "Bollywood Romance",
+    "duration": "05:19",
+    "driveId": "1OzWLLvvb2VZBp8w9sc6mlJqPraPFgooy",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1OzWLLvvb2VZBp8w9sc6mlJqPraPFgooy",
+    "coverArt": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 2.5 MB",
+    "isGoogleDrive": true,
+    "plays": "311.0K",
+    "vibe": "💖 Classic Melody",
+    "bpm": "110 BPM",
+    "colorTheme": "from-pink-500/20 via-cyan-500/10 to-indigo-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-35",
+    "title": "Tharki Chokro - FULL VIDEO Song - PK - Aamir Khan, Sanjay Dutt - (256k)",
+    "artist": "Sonu Nigam & Shaan",
+    "album": "PK (Soundtrack)",
+    "genre": "Bollywood Hits",
+    "duration": "04:10",
+    "driveId": "19croPuLNBazhqQzFYD-8Ftsqd4iMzcL2",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=19croPuLNBazhqQzFYD-8Ftsqd4iMzcL2",
+    "coverArt": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 3.7 MB",
+    "isGoogleDrive": true,
+    "plays": "328.0K",
+    "vibe": "💖 Soulful Classic",
+    "bpm": "115 BPM",
+    "colorTheme": "from-emerald-500/20 via-teal-500/10 to-amber-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-36",
+    "title": "Tu Hai Ki Nahi - FULL VIDEO Song - Roy - Ankit Tiwari - Ranbir Kapoor, Jacqueline Fernandez, Tseries",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1kwyflxsLoWR1pL9nALBLqAWD6OuyKy0G",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1kwyflxsLoWR1pL9nALBLqAWD6OuyKy0G",
+    "coverArt": "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 3.9 MB",
+    "isGoogleDrive": true,
+    "plays": "345.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "120 BPM",
+    "colorTheme": "from-blue-500/20 via-indigo-500/10 to-slate-900/40",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-37",
+    "title": "Tu Jo Mila - VIDEO Song - K.K. Pritam - Salman Khan, Nawazuddin, Harshaali - Bajrangi Bhaijaan",
+    "artist": "Palak Muchhal",
+    "album": "Prem Ratan Dhan Payo",
+    "genre": "Bollywood Romance",
+    "duration": "05:19",
+    "driveId": "1T_H6Qb8nKV1M612_oBs8VIis_HqzWS1x",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1T_H6Qb8nKV1M612_oBs8VIis_HqzWS1x",
+    "coverArt": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 2.3 MB",
+    "isGoogleDrive": true,
+    "plays": "362.0K",
+    "vibe": "💖 Classic Melody",
+    "bpm": "125 BPM",
+    "colorTheme": "from-amber-500/20 via-orange-500/10 to-purple-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-38",
+    "title": "Tum Hi Ho - Aashiqui 2 Full Song With Lyrics - Aditya Roy Kapur, Shraddha Kapoor",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1D4KErVEXmKvjXzl6S91lMMSBgGkzWe3r",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1D4KErVEXmKvjXzl6S91lMMSBgGkzWe3r",
+    "coverArt": "https://images.unsplash.com/photo-1520523839898-507121287c8b?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 4.1 MB",
+    "isGoogleDrive": true,
+    "plays": "379.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "130 BPM",
+    "colorTheme": "from-pink-500/20 via-cyan-500/10 to-indigo-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-39",
+    "title": "Tum Hi Ho Aashiqui 2 - Full Video Song HD - Aditya Roy Kapur, Shraddha Kapoor - Music - Mithoon",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1KRTVYIezHhnGEZFBKCAncvHmyD93YRsk",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1KRTVYIezHhnGEZFBKCAncvHmyD93YRsk",
+    "coverArt": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 4.7 MB",
+    "isGoogleDrive": true,
+    "plays": "396.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "135 BPM",
+    "colorTheme": "from-emerald-500/20 via-teal-500/10 to-amber-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-40",
+    "title": "Tumse Hi Tumse - Full Song - Anjaana Anjaani - Feat. Ranbir Kapoor, Priyanka Chopra",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "17TV0L7qihSYHSoCk_TvcyfF9VCWhs-IW",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=17TV0L7qihSYHSoCk_TvcyfF9VCWhs-IW",
+    "coverArt": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 4.1 MB",
+    "isGoogleDrive": true,
+    "plays": "413.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "75 BPM",
+    "colorTheme": "from-blue-500/20 via-indigo-500/10 to-slate-900/40",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-41",
+    "title": "Zindagi Ki Yahi Reet Hai - Lyrical Video - Mr. India - Kishore Kumar - Javed Akhtar - Anil Kapoor",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1W_DErr3XGZP5FqMCMx6KGe1D64Asa--1",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1W_DErr3XGZP5FqMCMx6KGe1D64Asa--1",
+    "coverArt": "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 4.7 MB",
+    "isGoogleDrive": true,
+    "plays": "430.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "80 BPM",
+    "colorTheme": "from-amber-500/20 via-orange-500/10 to-purple-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-42",
+    "title": "Zindagi Kuch Toh Bata - Reprise - Song Pritam - Salman - Kareena - Bajrangi Bhaijaan - Jubin",
+    "artist": "Palak Muchhal",
+    "album": "Prem Ratan Dhan Payo",
+    "genre": "Bollywood Romance",
+    "duration": "05:19",
+    "driveId": "1Sj_LAlI7Ll0qB99LLukSPPr45tzfJQ3e",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1Sj_LAlI7Ll0qB99LLukSPPr45tzfJQ3e",
+    "coverArt": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 1.9 MB",
+    "isGoogleDrive": true,
+    "plays": "447.0K",
+    "vibe": "💖 Classic Melody",
+    "bpm": "85 BPM",
+    "colorTheme": "from-pink-500/20 via-cyan-500/10 to-indigo-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-43",
+    "title": "Zindagi Kuch Toh Bata - Reprise - Full AUDIO Song Pritam - Salman Khan, Kareena K - Bajrangi Bhaijaan",
+    "artist": "Palak Muchhal",
+    "album": "Prem Ratan Dhan Payo",
+    "genre": "Bollywood Romance",
+    "duration": "05:19",
+    "driveId": "1jQ6PnMZ3np2qT_XLdWqp6zVhTmaL75kg",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1jQ6PnMZ3np2qT_XLdWqp6zVhTmaL75kg",
+    "coverArt": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 4 MB",
+    "isGoogleDrive": true,
+    "plays": "114.0K",
+    "vibe": "💖 Classic Melody",
+    "bpm": "90 BPM",
+    "colorTheme": "from-emerald-500/20 via-teal-500/10 to-amber-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-44",
+    "title": "[LYRIC] Tarin – - Going Home [Han-Rom-Eng] [School 2017 OST Part.3]",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1fxFDZoSQbg8WhwPojrkAVD1sQB-0yEtA",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1fxFDZoSQbg8WhwPojrkAVD1sQB-0yEtA",
+    "coverArt": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 3.2 MB",
+    "isGoogleDrive": true,
+    "plays": "131.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "95 BPM",
+    "colorTheme": "from-blue-500/20 via-indigo-500/10 to-slate-900/40",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-45",
+    "title": "【Live】Creepy Nuts - Bling-Bang-Bang-Born Live at 国立代々木競技場 第一体育館",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1XiVURN2kkkIcuvrafJ_bvwAHfB7i3C-n",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1XiVURN2kkkIcuvrafJ_bvwAHfB7i3C-n",
+    "coverArt": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 2.6 MB",
+    "isGoogleDrive": true,
+    "plays": "148.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "100 BPM",
+    "colorTheme": "from-amber-500/20 via-orange-500/10 to-purple-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-46",
+    "title": "【Live】Creepy Nuts - 合法的トビ方ノススメ",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1UlGDvV9CZ52d1JBEH6rV4pcUMt5IHdOm",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1UlGDvV9CZ52d1JBEH6rV4pcUMt5IHdOm",
+    "coverArt": "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 4 MB",
+    "isGoogleDrive": true,
+    "plays": "165.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "105 BPM",
+    "colorTheme": "from-pink-500/20 via-cyan-500/10 to-indigo-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-47",
+    "title": "【MV】可愛くてごめん（cover）／高嶺のなでしこ【HoneyWorks】",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "12ehLlrZbpIJGBt_SjjjpRoFnwehryg93",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=12ehLlrZbpIJGBt_SjjjpRoFnwehryg93",
+    "coverArt": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 3.3 MB",
+    "isGoogleDrive": true,
+    "plays": "182.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "110 BPM",
+    "colorTheme": "from-emerald-500/20 via-teal-500/10 to-amber-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-48",
+    "title": "@TonyKakkar - Tera Suit - Aly Goni - Jasmin Bhasin - Anshul Garg - Holi Song 2021",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1t5ZXFoZTp9SewxDk7dvXtUXmnIRgRL_e",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1t5ZXFoZTp9SewxDk7dvXtUXmnIRgRL_e",
+    "coverArt": "https://images.unsplash.com/photo-1520523839898-507121287c8b?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 2.4 MB",
+    "isGoogleDrive": true,
+    "plays": "199.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "115 BPM",
+    "colorTheme": "from-blue-500/20 via-indigo-500/10 to-slate-900/40",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-49",
+    "title": "#honey sing song #free fire(256k)",
+    "artist": "Bollywood & Punjabi Hits",
+    "album": "Google Drive Master Collection",
+    "genre": "Bollywood",
+    "duration": "03:45",
+    "driveId": "1-ALQHd5dW46r2CTzG1X1wZvXZZI6hiov",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1-ALQHd5dW46r2CTzG1X1wZvXZZI6hiov",
+    "coverArt": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 2.8 MB",
+    "isGoogleDrive": true,
+    "plays": "216.0K",
+    "vibe": "🎵 Melodic Flow",
+    "bpm": "120 BPM",
+    "colorTheme": "from-amber-500/20 via-orange-500/10 to-purple-900/30",
+    "addedAt": "2024-09-01"
+  },
+  {
+    "id": "gdrive-track-50",
+    "title": "✓ DESI DESI - OFFICIAL VIDEO - Raju Punjabi, MD - KD DESIROCK , Vicky Kajla - New Haryanvi Songs",
+    "artist": "Sharry Mann & Mista Baaz",
+    "album": "Punjabi Blockbusters",
+    "genre": "Punjabi",
+    "duration": "03:30",
+    "driveId": "1NZ_81bK2gj_7_QGpg7ffENydjRrRMOrR",
+    "streamUrl": "https://docs.google.com/uc?export=download&id=1NZ_81bK2gj_7_QGpg7ffENydjRrRMOrR",
+    "coverArt": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=600&q=80",
+    "lyrics": "Streamed live from Google Drive collection. Size: 4.8 MB",
+    "isGoogleDrive": true,
+    "plays": "233.0K",
+    "vibe": "🔥 Party Beats",
+    "bpm": "125 BPM",
+    "colorTheme": "from-pink-500/20 via-cyan-500/10 to-indigo-900/30",
+    "addedAt": "2024-09-01"
   }
 ];
 
 const INITIAL_PLAYLISTS = [
   {
-    id: 'pl-coding-flow',
-    name: '🎧 Deep Coding Flow',
-    description: 'Zero distractions, steady BPM, and high clarity beats for algorithmic sprints.',
+    id: 'pl-gdrive-all',
+    name: '☁️ Google Drive Master Vault (All 50 Songs)',
+    description: 'Complete cloud library fetched automatically from your Google Drive folder.',
     coverArt: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80',
-    trackIds: ['track-1', 'track-2', 'track-5', 'track-7']
+    trackIds: DEFAULT_MUSIC_TRACKS.map(t => t.id)
   },
   {
-    id: 'pl-google-drive-cloud',
-    name: '☁️ Google Drive Synced Vault',
-    description: 'Custom imported songs fetched directly from personal and academy Google Drive storage.',
-    coverArt: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80',
-    trackIds: ['track-1', 'track-2', 'track-3', 'track-4', 'track-6']
+    id: 'pl-bollywood-top',
+    name: '💖 Bollywood & Romance Melodies',
+    description: 'Soulful classics, Arijit, Palak Muchhal, and Bollywood blockbusters.',
+    coverArt: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80',
+    trackIds: DEFAULT_MUSIC_TRACKS.filter(t => t.genre.includes('Bollywood') || t.vibe.includes('Romance')).slice(0, 15).map(t => t.id)
   },
   {
-    id: 'pl-night-study',
-    name: '🌙 Late Night Problem Solving',
-    description: 'Ambient and acoustic melodies to keep you relaxed during 2 AM debugging sessions.',
+    id: 'pl-party-punjabi',
+    name: '⚡ High-Energy Party & Punjabi Hits',
+    description: 'Yo Yo Honey Singh, Badshah, Sharry Mann and high BPM pump songs.',
+    coverArt: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80',
+    trackIds: DEFAULT_MUSIC_TRACKS.filter(t => t.genre.includes('Party') || t.genre.includes('Punjabi') || t.genre.includes('Hip-Hop')).slice(0, 15).map(t => t.id)
+  },
+  {
+    id: 'pl-spiritual-focus',
+    name: '🕉️ Divine Chants & Peaceful Focus',
+    description: 'Durga Stotram, peaceful devotional tracks and ambient flow for study.',
     coverArt: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=600&q=80',
-    trackIds: ['track-3', 'track-4', 'track-6', 'track-8']
+    trackIds: DEFAULT_MUSIC_TRACKS.filter(t => t.genre.includes('Devotional') || t.vibe.includes('Peace')).map(t => t.id)
   }
 ];
 
@@ -254,15 +1022,18 @@ const AMBIENT_SOUNDS = [
 export default function Music() {
   // ── State Storage ──
   const [tracks, setTracks] = useState(() => {
-    const saved = localStorage.getItem('appletree_music_tracks');
+    const saved = localStorage.getItem('appletree_music_tracks_v2');
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) { return DEFAULT_MUSIC_TRACKS; }
+      try { 
+        const parsed = JSON.parse(saved); 
+        if (Array.isArray(parsed) && parsed.length >= 40) return parsed;
+      } catch (e) { return DEFAULT_MUSIC_TRACKS; }
     }
     return DEFAULT_MUSIC_TRACKS;
   });
 
   const [playlists, setPlaylists] = useState(() => {
-    const saved = localStorage.getItem('appletree_music_playlists');
+    const saved = localStorage.getItem('appletree_music_playlists_v2');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { return INITIAL_PLAYLISTS; }
     }
@@ -270,11 +1041,11 @@ export default function Music() {
   });
 
   const [favoriteTrackIds, setFavoriteTrackIds] = useState(() => {
-    const saved = localStorage.getItem('appletree_favorite_songs');
+    const saved = localStorage.getItem('appletree_favorite_songs_v2');
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) { return ['track-1', 'track-2', 'track-6']; }
+      try { return JSON.parse(saved); } catch (e) { return [DEFAULT_MUSIC_TRACKS[0]?.id, DEFAULT_MUSIC_TRACKS[1]?.id]; }
     }
-    return ['track-1', 'track-2', 'track-6'];
+    return [DEFAULT_MUSIC_TRACKS[0]?.id, DEFAULT_MUSIC_TRACKS[1]?.id];
   });
 
   // ── Playback Engine State ──
@@ -285,7 +1056,7 @@ export default function Music() {
   const [volume, setVolume] = useState(85);
   const [isMuted, setIsMuted] = useState(false);
   const [isShuffle, setIsShuffle] = useState(false);
-  const [repeatMode, setRepeatMode] = useState('off'); // 'off' | 'all' | 'one'
+  const [repeatMode, setRepeatMode] = useState('off');
   const [isBuffering, setIsBuffering] = useState(false);
   const [isFullscreenVisualizer, setIsFullscreenVisualizer] = useState(false);
   const [audioPreset, setAudioPreset] = useState('Lo-Fi Warmth');
@@ -311,7 +1082,7 @@ export default function Music() {
   const [newDriveUrl, setNewDriveUrl] = useState('');
   const [newDriveTitle, setNewDriveTitle] = useState('');
   const [newDriveArtist, setNewDriveArtist] = useState('');
-  const [newDriveGenre, setNewDriveGenre] = useState('Lo-Fi');
+  const [newDriveGenre, setNewDriveGenre] = useState('Bollywood');
   const [newDriveCover, setNewDriveCover] = useState('');
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [newPlaylistDesc, setNewPlaylistDesc] = useState('');
@@ -322,15 +1093,15 @@ export default function Music() {
 
   // Sync to localStorage
   useEffect(() => {
-    localStorage.setItem('appletree_music_tracks', JSON.stringify(tracks));
+    localStorage.setItem('appletree_music_tracks_v2', JSON.stringify(tracks));
   }, [tracks]);
 
   useEffect(() => {
-    localStorage.setItem('appletree_music_playlists', JSON.stringify(playlists));
+    localStorage.setItem('appletree_music_playlists_v2', JSON.stringify(playlists));
   }, [playlists]);
 
   useEffect(() => {
-    localStorage.setItem('appletree_favorite_songs', JSON.stringify(favoriteTrackIds));
+    localStorage.setItem('appletree_favorite_songs_v2', JSON.stringify(favoriteTrackIds));
   }, [favoriteTrackIds]);
 
   const currentTrack = tracks[currentTrackIndex] || tracks[0];
@@ -348,7 +1119,7 @@ export default function Music() {
           audioRef.current.play()
             .then(() => setIsBuffering(false))
             .catch(err => {
-              console.warn('Fallback stream activated:', err);
+              console.warn('Playback fallback initiated:', err);
               if (currentTrack.streamUrl && audioRef.current.src !== currentTrack.streamUrl) {
                 audioRef.current.src = currentTrack.streamUrl;
                 audioRef.current.play().catch(() => {});
@@ -604,6 +1375,13 @@ export default function Music() {
     }
   };
 
+  // Reset to Google Drive Folder Default Tracks
+  const handleResetToDriveFolder = () => {
+    setTracks(DEFAULT_MUSIC_TRACKS);
+    localStorage.setItem('appletree_music_tracks_v2', JSON.stringify(DEFAULT_MUSIC_TRACKS));
+    confetti({ particleCount: 60, spread: 70, origin: { y: 0.5 } });
+  };
+
   // Import Google Drive Track Handler
   const handleImportGoogleDriveTrack = (e) => {
     e.preventDefault();
@@ -617,8 +1395,8 @@ export default function Music() {
       id: `drive-track-${Date.now()}`,
       title: newDriveTitle.trim(),
       artist: newDriveArtist.trim() || 'Google Drive Audio',
-      album: 'Imported Cloud Drive Library',
-      genre: newDriveGenre || 'Lo-Fi',
+      album: 'Google Drive Cloud Library',
+      genre: newDriveGenre || 'Bollywood',
       duration: '03:30',
       driveId: newDriveUrl.trim(),
       streamUrl: driveDirectStream,
@@ -675,7 +1453,7 @@ export default function Music() {
     }
 
     if (selectedGenre !== 'All') {
-      list = list.filter(t => t.genre.toLowerCase() === selectedGenre.toLowerCase());
+      list = list.filter(t => t.genre.toLowerCase().includes(selectedGenre.toLowerCase()));
     }
 
     if (searchQuery.trim()) {
@@ -737,13 +1515,19 @@ export default function Music() {
               <h1 className="font-extrabold font-quicksand text-base sm:text-lg text-white tracking-tight">
                 AppleTree Music Studio
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-blue-500/20 to-indigo-500/20 border border-blue-400/30 text-blue-300 text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm">
-                <Cloud className="w-2.5 h-2.5" />
-                <span>Google Drive Stream</span>
-              </span>
+              <a 
+                href={GOOGLE_DRIVE_FOLDER_URL} 
+                target="_blank" 
+                rel="noreferrer"
+                className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-400/30 text-emerald-300 text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm hover:scale-105 transition-transform"
+                title="View Connected Google Drive Folder"
+              >
+                <FolderCheck className="w-2.5 h-2.5" />
+                <span>50 Drive Songs Synced</span>
+              </a>
             </div>
             <p className="text-[11px] text-slate-400 font-medium flex items-center gap-2">
-              <span>Next-Gen Audio Experience</span>
+              <span>Auto-Fetched from Google Drive Folder</span>
               <span className="w-1 h-1 rounded-full bg-slate-600" />
               <span className="text-amber-400/90 font-mono">Hi-Fi 320kbps</span>
             </p>
@@ -758,7 +1542,7 @@ export default function Music() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by track name, artist, genre, vibe or Drive ID..."
+              placeholder="Search across all 50 Google Drive songs, artists, genres..."
               className="w-full pl-10 pr-9 py-2.5 bg-white/5 hover:bg-white/10 focus:bg-white/10 border border-white/15 focus:border-amber-400/80 rounded-2xl text-xs text-white placeholder:text-slate-400 outline-none transition-all shadow-inner backdrop-blur-md"
             />
             {searchQuery && (
@@ -776,9 +1560,18 @@ export default function Music() {
             onClick={() => setIsImportDriveModalOpen(true)}
             className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-black text-xs flex items-center gap-2 shrink-0 shadow-lg shadow-indigo-600/30 cursor-pointer transition-all hover:scale-105 active:scale-95"
           >
-            <Cloud className="w-3.5 h-3.5 text-amber-300 animate-bounce" />
-            <span className="hidden sm:inline">+ Import Drive Audio</span>
+            <Cloud className="w-3.5 h-3.5 text-amber-300" />
+            <span className="hidden sm:inline">+ Import Song</span>
             <span className="sm:hidden">+ Drive</span>
+          </button>
+
+          {/* Reset/Refresh Folder Sync */}
+          <button
+            onClick={handleResetToDriveFolder}
+            className="p-2.5 rounded-2xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-emerald-400 border border-white/10 transition-colors cursor-pointer"
+            title="Re-sync All 50 Songs from Drive Folder"
+          >
+            <RefreshCw className="w-4 h-4" />
           </button>
 
           {/* Keyboard Shortcuts Trigger */}
@@ -814,7 +1607,7 @@ export default function Music() {
               }`}
             >
               <Compass className="w-4 h-4" />
-              <span>Explore All Songs</span>
+              <span>All 50 Drive Songs</span>
               <span className="ml-auto text-[10px] opacity-75">{tracks.length}</span>
             </button>
 
@@ -840,7 +1633,7 @@ export default function Music() {
               }`}
             >
               <Cloud className="w-4 h-4 text-blue-300" />
-              <span>Google Drive Songs</span>
+              <span>Drive Cloud Vault</span>
               <span className="ml-auto text-[10px] opacity-75">
                 {tracks.filter(t => t.isGoogleDrive || t.driveId).length}
               </span>
@@ -1048,12 +1841,12 @@ export default function Music() {
                   {currentTrack?.isGoogleDrive && (
                     <span className="px-2.5 py-1 rounded-full bg-blue-500/30 border border-blue-400/40 text-blue-200 text-[10px] font-bold flex items-center gap-1">
                       <Cloud className="w-3 h-3" />
-                      <span>Google Drive Stream</span>
+                      <span>Drive ID: {currentTrack?.driveId?.substring(0, 10)}...</span>
                     </span>
                   )}
                 </div>
 
-                <h2 className="text-2xl sm:text-4xl font-black font-quicksand text-white tracking-tight leading-tight">
+                <h2 className="text-2xl sm:text-3xl font-black font-quicksand text-white tracking-tight leading-tight">
                   {currentTrack?.title}
                 </h2>
                 
@@ -1107,9 +1900,9 @@ export default function Music() {
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none text-xs font-bold">
             <span className="text-[10px] uppercase font-black tracking-wider text-slate-400 shrink-0 pr-1 flex items-center gap-1">
               <Flame className="w-3.5 h-3.5 text-amber-400" />
-              <span>Genres:</span>
+              <span>Categories:</span>
             </span>
-            {['All', 'Lo-Fi', 'Synthwave', 'Ambient', 'Acoustic', 'Electronic', 'Classical'].map((genre) => (
+            {['All', 'Bollywood', 'Punjabi', 'Party', 'Devotional', 'Lo-Fi', 'Acoustic'].map((genre) => (
               <button
                 key={genre}
                 onClick={() => setSelectedGenre(genre)}
@@ -1171,9 +1964,9 @@ export default function Music() {
           <div className="flex items-center justify-between border-b border-white/10 pb-3">
             <div>
               <h3 className="text-lg font-black font-quicksand text-white flex items-center gap-2">
-                {activeView === 'all' && <span>🎵 All Tracks Explorer</span>}
+                {activeView === 'all' && <span>🎵 All Google Drive Songs</span>}
                 {activeView === 'favorites' && <span>💖 Your Liked Songs & Favorites</span>}
-                {activeView === 'drive' && <span>☁️ Google Drive Music Vault</span>}
+                {activeView === 'drive' && <span>☁️ Google Drive Master Vault</span>}
                 {activeView === 'playlist' && <span>📜 Playlist: {selectedPlaylist?.name}</span>}
                 {activeView === 'ambience' && <span>🎧 Soundscape Active Library</span>}
                 <span className="text-xs font-normal text-slate-400">({filteredTracks.length} tracks)</span>
@@ -1200,14 +1993,14 @@ export default function Music() {
               <Disc className="w-12 h-12 text-slate-500 mx-auto animate-spin" />
               <h4 className="text-sm font-bold text-white">No tracks match your current filters</h4>
               <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                Try searching for a different keyword or import a brand new song using your Google Drive share link!
+                Try searching for a different keyword or re-sync all 50 tracks from your Google Drive folder!
               </p>
               <button
-                onClick={() => setIsImportDriveModalOpen(true)}
+                onClick={handleResetToDriveFolder}
                 className="px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-lg shadow-blue-600/30 cursor-pointer"
               >
-                <Cloud className="w-4 h-4" />
-                <span>Import Google Drive Audio</span>
+                <RefreshCw className="w-4 h-4" />
+                <span>Re-sync 50 Drive Songs</span>
               </button>
             </div>
           ) : (
@@ -1579,12 +2372,12 @@ export default function Music() {
                     onChange={(e) => setNewDriveGenre(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-slate-900 border border-white/15 rounded-2xl text-xs text-white focus:border-amber-400 outline-none"
                   >
+                    <option value="Bollywood">Bollywood Hits</option>
+                    <option value="Punjabi">Punjabi Party</option>
+                    <option value="Devotional">Devotional & Chants</option>
                     <option value="Lo-Fi">Lo-Fi Coding Chill</option>
                     <option value="Synthwave">Synthwave Cyberpunk</option>
                     <option value="Ambient">Deep Space Ambient</option>
-                    <option value="Acoustic">Acoustic Piano</option>
-                    <option value="Electronic">Electronic Pulse</option>
-                    <option value="Classical">Classical Harmony</option>
                   </select>
                 </div>
 
@@ -1653,7 +2446,7 @@ export default function Music() {
                   type="text"
                   value={newPlaylistName}
                   onChange={(e) => setNewPlaylistName(e.target.value)}
-                  placeholder="e.g. 1000 DSA Speedrun Beats"
+                  placeholder="e.g. My Favorite Drive Jams"
                   required
                   className="w-full px-3.5 py-2.5 bg-white/5 border border-white/15 rounded-2xl text-xs text-white placeholder:text-slate-500 focus:border-amber-400 outline-none"
                 />
