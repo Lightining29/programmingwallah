@@ -168,11 +168,15 @@ const PORT = process.env.PORT || 5000;
 const httpServer = http.createServer(app);
 
 // Initialize Real-time Multiplayer Gaming Socket Hub
-setupGameSocket(httpServer);
+try {
+  setupGameSocket(httpServer);
+  console.log(`\x1b[35m✔ Real-time Multiplayer Gaming Socket Server initialized\x1b[0m`);
+} catch (socketErr) {
+  console.warn('Socket initialization notice:', socketErr.message);
+}
 
 const server = httpServer.listen(PORT, async () => {
   console.log(`\x1b[32m✔ Pranidha School Backend running in ${process.env.NODE_ENV || 'production'} mode on port ${PORT}\x1b[0m`);
-  console.log(`\x1b[35m✔ Real-time Multiplayer Gaming Socket Server initialized\x1b[0m`);
   
   // Connect to Hostinger MySQL Database
   try {
