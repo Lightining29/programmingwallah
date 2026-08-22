@@ -327,18 +327,28 @@ export default function AdminDashboard() {
   const [admTuitionFee, setAdmTuitionFee] = useState('24000');
   const [admPaymentPlan, setAdmPaymentPlan] = useState('1month');
 
-  const handleToggleCourse = (courseName) => {
+  const handleToggleCourse = (courseName, e) => {
     const current = Array.isArray(admSelectedCourses) ? admSelectedCourses : ['Java Development'];
     let updated;
-    if (current.includes(courseName)) {
-      if (current.length === 1) {
-        updated = [courseName];
+    
+    // If user clicked with Shift or Ctrl/Cmd, toggle multi-select mode:
+    if (e?.shiftKey || e?.ctrlKey || e?.metaKey) {
+      if (current.includes(courseName)) {
+        updated = current.length > 1 ? current.filter(c => c !== courseName) : [courseName];
       } else {
-        updated = current.filter(c => c !== courseName);
+        updated = [...current, courseName];
       }
     } else {
-      updated = [...current, courseName];
+      // Direct 1-click select/switch to the selected course
+      if (current.includes(courseName) && current.length === 1) {
+        updated = [courseName];
+      } else if (current.includes(courseName) && current.length > 1) {
+        updated = current.filter(c => c !== courseName);
+      } else {
+        updated = [courseName];
+      }
     }
+
     setAdmSelectedCourses(updated);
     const combinedName = updated.join(' + ');
     setAdmStdClass(combinedName);
@@ -559,15 +569,32 @@ export default function AdminDashboard() {
   const [mtgClassFilter, setMtgClassFilter] = useState('');
   const [mtgJoinUrl, setMtgJoinUrl] = useState('');
 
-  // Course options are dynamic: pulled from the published courses (so new courses
-  // added via the Courses Manager tab appear in every dropdown automatically).
-  // Hardcoded COURSE_OPTIONS are kept as a fallback in case the API is empty.
-  const courseOptions = courses.length > 0
-    ? Array.from(new Set([
-        ...courses.map((c) => c.title),
-        ...COURSE_OPTIONS
-      ]))
-    : COURSE_OPTIONS;
+  // Dynamic course options deduplicated cleanly from published courses and defaults
+  const courseOptions = React.useMemo(() => {
+    const list = [];
+    const seen = new Set();
+    
+    // Add courses from backend DB
+    (courses || []).forEach(c => {
+      if (c?.title?.trim() && !seen.has(c.title.trim().toLowerCase())) {
+        seen.add(c.title.trim().toLowerCase());
+        list.push(c.title.trim());
+      }
+    });
+
+    // Add standard defaults if not already present
+    COURSE_OPTIONS.forEach(opt => {
+      const norm = opt.toLowerCase().replace(/dev(eloper|elopment)/g, '');
+      const hasSimilar = Array.from(seen).some(s => s.replace(/dev(eloper|elopment)/g, '') === norm);
+      if (!hasSimilar && !seen.has(opt.toLowerCase())) {
+        seen.add(opt.toLowerCase());
+        list.push(opt);
+      }
+    });
+
+    return list.length > 0 ? list : COURSE_OPTIONS;
+  }, [courses]);
+
   const audienceOptions = ['specific student', 'group chat', 'all learners'];
 
   const [aiQuizCourse, setAiQuizCourse] = useState('Java Development');
@@ -625,21 +652,22 @@ export default function AdminDashboard() {
     fetchCertificates();
   }, [activeTab]);
 
+  // Automatically calculate suggested admission fee when selected courses change without resetting user selection
   useEffect(() => {
     if (courses && courses.length > 0) {
-      const selectedCourse = courses.find((c) => c.title === admStdClass);
-      if (selectedCourse) {
-        setAdmissionFee(selectedCourse.price !== undefined ? String(selectedCourse.price) : '0');
-      } else {
-        // If not found (e.g. it is the initial fallback state), try to set it to the first course
-        const firstCourse = courses[0];
-        if (firstCourse && firstCourse.title) {
-          setAdmStdClass(firstCourse.title);
-          setAdmissionFee(firstCourse.price !== undefined ? String(firstCourse.price) : '0');
+      const currentSelected = Array.isArray(admSelectedCourses) ? admSelectedCourses : [admStdClass].filter(Boolean);
+      let calculatedFee = 0;
+      currentSelected.forEach(cName => {
+        const found = courses.find(c => c?.title && c.title.toLowerCase() === cName.toLowerCase());
+        if (found && found.price !== undefined) {
+          calculatedFee += Number(found.price);
         }
+      });
+      if (calculatedFee > 0) {
+        setAdmissionFee(String(calculatedFee));
       }
     }
-  }, [courses, admStdClass]);
+  }, [courses, admSelectedCourses]);
 
   const fetchFeeStructures = () => {
     fetch('/api/admin/fee-structures', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
@@ -3305,7 +3333,7 @@ export default function AdminDashboard() {
                                 <button
                                   key={course}
                                   type="button"
-                                  onClick={() => handleToggleCourse(course)}
+                                  onClick={(e) => handleToggleCourse(course, e)}
                                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
                                     isSelected
                                       ? 'bg-[#5B468C] text-white border-[#5B468C] shadow-sm scale-[1.02]'
@@ -3324,7 +3352,12 @@ export default function AdminDashboard() {
                             type="text"
                             placeholder="Selected Course combination..."
                             value={admStdClass || ''}
-                            onChange={(e) => setAdmStdClass(e.target.value)}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setAdmStdClass(val);
+                              const parts = val.split('+').map(s => s.trim()).filter(Boolean);
+                              if (parts.length > 0) setAdmSelectedCourses(parts);
+                            }}
                             className="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-700 text-xs mt-1"
                           />
                         </div>
