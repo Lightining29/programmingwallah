@@ -285,11 +285,11 @@ export default function Navbar() {
                   </button>
 
                   {/* Navigation Links */}
-                  <div className="space-y-1 pt-1">
-                    <span className={`text-[9px] font-extrabold tracking-widest uppercase px-2.5 block mb-1.5 ${
-                      isDark ? 'text-slate-500' : 'text-slate-400'
+                  <div className="space-y-1.5 pt-1">
+                    <span className={`text-[11px] font-black tracking-wider uppercase px-2 block mb-2 ${
+                      isDark ? 'text-slate-300' : 'text-slate-600'
                     }`}>
-                      Navigation Menu
+                      NAVIGATION MENU
                     </span>
                     {navLinks.map((link) => {
                       const isActive = location.pathname === link.path;
@@ -299,24 +299,30 @@ export default function Navbar() {
                           key={link.name}
                           to={link.path}
                           onClick={() => setIsOpen(false)}
-                          className={`flex items-center justify-between font-quicksand font-bold text-xs py-2.5 px-3.5 rounded-2xl transition-all ${
+                          className={`flex items-center justify-between font-quicksand font-extrabold text-sm py-3 px-4 rounded-2xl transition-all ${
                             isActive
                               ? isDark
-                                ? 'bg-gradient-to-r from-red-500/20 to-pink-500/20 text-pink-300 border border-pink-500/30 shadow-xs'
-                                : 'bg-gradient-to-r from-brandCoral/15 to-orange-100 text-brandCoral-dark border border-brandCoral/25 shadow-xs'
+                                ? 'bg-gradient-to-r from-red-500/25 to-pink-500/25 text-white border-2 border-red-500/50 shadow-md'
+                                : 'bg-orange-500/15 text-orange-950 border-2 border-orange-400/60 shadow-xs'
                               : isDark
-                              ? 'text-slate-300 hover:bg-white/5 hover:text-white'
-                              : 'text-slate-700 hover:bg-slate-100/80 hover:text-slate-900'
+                              ? 'bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-white hover:text-white shadow-2xs'
+                              : 'bg-slate-100 hover:bg-orange-50/90 border border-slate-200 text-slate-900 hover:text-black shadow-2xs'
                           }`}
                         >
-                          <span className="flex items-center gap-2.5">
-                            {Icon && <Icon className={`w-4 h-4 ${isActive ? (isDark ? 'text-pink-400' : 'text-brandCoral') : (isDark ? 'text-slate-400' : 'text-slate-500')}`} />}
-                            <span>{link.name}</span>
+                          <span className="flex items-center gap-3">
+                            {Icon && (
+                              <Icon className={`w-4 h-4 shrink-0 ${
+                                isActive 
+                                  ? (isDark ? 'text-pink-400' : 'text-brandCoral') 
+                                  : (isDark ? 'text-brandCoral' : 'text-brandCoral-dark')
+                              }`} />
+                            )}
+                            <span className="tracking-wide">{link.name}</span>
                           </span>
                           {isActive ? (
-                            <span className="w-1.5 h-1.5 rounded-full bg-brandCoral shadow-[0_0_8px_rgba(255,112,67,0.8)]" />
+                            <span className="w-2 h-2 rounded-full bg-brandCoral shadow-[0_0_10px_rgba(255,112,67,1)]" />
                           ) : (
-                            <ChevronRight className={`w-3.5 h-3.5 opacity-40 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
+                            <ChevronRight className={`w-4 h-4 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
                           )}
                         </Link>
                       );
@@ -325,28 +331,28 @@ export default function Navbar() {
                 </div>
 
                 {/* Bottom Quick Access Actions */}
-                <div className={`pt-4 mt-4 border-t space-y-2 pb-6 ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
+                <div className={`pt-4 mt-4 border-t space-y-2.5 pb-6 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
                   {user ? (
                     <>
-                      <div className={`flex items-center gap-2.5 px-3 py-2 rounded-xl mb-2 ${
-                        isDark ? 'bg-white/5 text-slate-300' : 'bg-slate-50 text-slate-700'
+                      <div className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl mb-2 border ${
+                        isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
                       }`}>
-                        <div className="w-7 h-7 rounded-full bg-brandSky/20 text-brandSky-dark flex items-center justify-center font-bold text-xs">
+                        <div className="w-8 h-8 rounded-full bg-brandSky/20 text-brandSky-dark flex items-center justify-center font-black text-sm">
                           {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
                         </div>
                         <div className="overflow-hidden">
-                          <p className="text-xs font-bold truncate leading-tight">{user.name || 'User'}</p>
-                          <p className="text-[10px] text-slate-400 capitalize truncate">{user.role || 'Member'}</p>
+                          <p className="text-xs font-black truncate leading-tight">{user.name || 'User'}</p>
+                          <p className={`text-[10px] capitalize font-bold truncate ${isDark ? 'text-slate-300' : 'text-slate-500'}`}>{user.role || 'Member'}</p>
                         </div>
                       </div>
 
                       <Link
                         to={getDashboardPath()}
                         onClick={() => setIsOpen(false)}
-                        className={`w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-xs transition-all shadow-sm ${
+                        className={`w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-extrabold text-xs tracking-wider transition-all shadow-sm ${
                           isDark
-                            ? 'bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/25'
-                            : 'bg-brandSky/15 border border-brandSky/30 text-brandSky-dark hover:bg-brandSky/25'
+                            ? 'bg-cyan-500/20 border-2 border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/30'
+                            : 'bg-brandSky/20 border-2 border-brandSky/40 text-brandSky-dark hover:bg-brandSky/30'
                         }`}
                       >
                         <LayoutDashboard className="w-4 h-4" />
@@ -358,9 +364,9 @@ export default function Navbar() {
                           setIsOpen(false);
                           setShowLogoutConfirm(true);
                         }}
-                        className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl font-bold text-xs transition-all cursor-pointer ${
+                        className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl font-extrabold text-xs tracking-wider transition-all cursor-pointer ${
                           isDark
-                            ? 'bg-rose-500/10 border border-rose-500/20 text-rose-300 hover:bg-rose-500/20'
+                            ? 'bg-rose-500/15 border border-rose-500/30 text-rose-200 hover:bg-rose-500/25'
                             : 'bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100'
                         }`}
                       >
@@ -369,25 +375,25 @@ export default function Navbar() {
                       </button>
                     </>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       <Link
                         to="/login"
                         onClick={() => setIsOpen(false)}
-                        className={`w-full flex items-center justify-center gap-2 py-3 rounded-full font-bold text-xs transition-all shadow-sm ${
+                        className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-full font-black text-xs tracking-wider transition-all shadow-sm ${
                           isDark
-                            ? 'bg-[#1e2330] hover:bg-[#252b3b] border border-slate-700 text-white'
+                            ? 'bg-slate-900 hover:bg-slate-800 border-2 border-slate-700 text-white'
                             : 'bg-slate-900 hover:bg-slate-800 text-white'
                         }`}
                       >
-                        <LogIn className="w-3.5 h-3.5" />
+                        <LogIn className="w-4 h-4" />
                         <span>LOGIN TO LMS</span>
                       </Link>
                       <Link
                         to="/login?register=true"
                         onClick={() => setIsOpen(false)}
-                        className="w-full flex items-center justify-center gap-2 py-3 rounded-full bg-gradient-to-r from-red-500 to-pink-500 text-white font-bold text-xs shadow-md hover:opacity-95 transition-all"
+                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-full bg-gradient-to-r from-red-500 to-pink-500 text-white font-black text-xs tracking-wider shadow-md hover:opacity-95 transition-all"
                       >
-                        <UserPlus className="w-3.5 h-3.5" />
+                        <UserPlus className="w-4 h-4" />
                         <span>GET STARTED FREE</span>
                       </Link>
                     </div>
