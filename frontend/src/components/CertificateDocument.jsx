@@ -124,14 +124,15 @@ export const KalingaUniversityLogo = ({ className = '' }) => (
 // Scanned Signature & Stamp Graphic
 export const SignatureStamp = ({ className = '' }) => (
   <div className={`relative flex flex-col items-start select-none ${className}`}>
-    <div className="relative h-12 w-32 flex items-center">
-      {/* Stylized Signature Path */}
-      <svg className="w-28 h-10 text-blue-900 absolute left-1 top-1" viewBox="0 0 120 40" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-        <path d="M10 25 C20 10 30 35 45 20 C55 10 50 30 65 15 C75 5 80 25 95 18 C105 12 110 22 115 15" />
-        <path d="M25 30 C50 28 85 29 110 26" strokeWidth="1.2" />
-      </svg>
+    <div className="relative h-14 w-36 flex items-center">
+      {/* Uploaded Handwritten Signature Image */}
+      <img
+        src="/signature.png"
+        alt="Authorized Signature"
+        className="h-14 w-auto max-w-[130px] object-contain select-none mix-blend-multiply relative z-10 -ml-1"
+      />
       {/* Circular Partner Stamp in Red */}
-      <div className="absolute -left-2 -top-1 w-14 h-14 rounded-full border-2 border-red-600/75 border-dashed flex items-center justify-center rotate-[-12deg] pointer-events-none opacity-85">
+      <div className="absolute left-10 -top-1 w-14 h-14 rounded-full border-2 border-red-600/75 border-dashed flex items-center justify-center rotate-[-12deg] pointer-events-none opacity-80">
         <span className="text-[6px] font-black text-red-700 text-center uppercase leading-none">
           Apple Tree<br />★ VERIFIED ★<br />Infotech
         </span>
@@ -194,10 +195,7 @@ export default function CertificateDocument({ certificate, qrCodeData }) {
 
           {/* Top Center: Address & Contact */}
           <div className="text-center px-2 flex-1 flex flex-col items-center">
-            <h4 className="text-xs font-bold text-[#0284c7] uppercase tracking-wide mb-0.5 font-serif">
-              Training Center
-            </h4>
-            <p className="text-[9.5px] font-medium text-slate-700 leading-[1.35] max-w-[280px]">
+            <p className="text-[10px] font-semibold text-slate-800 leading-[1.35] max-w-[280px]">
               {companyAddress}
             </p>
             <p className="text-[9px] font-semibold text-slate-800 mt-0.5">
