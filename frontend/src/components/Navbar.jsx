@@ -6,7 +6,7 @@ import { useTheme } from '../context/ThemeContext.jsx';
 import { 
   Menu, X, LogOut, LayoutDashboard, LogIn, UserPlus, BookOpen, 
   Sun, Moon, Home, Info, GraduationCap, Code2, Brain, 
-  Music, Gamepad2, Video, Image, Phone, ChevronRight
+  Music, Gamepad2, Video, Image, Phone, ChevronRight, Briefcase
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ConfirmModal from './ConfirmModal.jsx';
@@ -29,6 +29,7 @@ export default function Navbar() {
   const navLinks = [
     { name: 'HOME', path: '/', icon: Home },
     { name: 'ABOUT', path: '/about', icon: Info },
+    { name: 'CAREERS', path: '/careers', icon: Briefcase },
     { name: 'COURSES', path: '/programs', icon: GraduationCap },
     { name: 'TUTORIALS', path: '/tutorials', icon: Code2 },
     { name: 'PRACTICE', path: '/practice', icon: Brain },

@@ -124,34 +124,76 @@ app.get('/sitemap.xml', (req, res) => {
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://programmingwala.com/careers</loc>
+    <lastmod>2026-08-28</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://programmingwala.com/careers/java-full-stack-developer</loc>
+    <lastmod>2026-08-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://programmingwala.com/careers/aws-devops-engineer</loc>
+    <lastmod>2026-08-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://programmingwala.com/careers/python-developer</loc>
+    <lastmod>2026-08-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.90</priority>
+  </url>
+  <url>
+    <loc>https://programmingwala.com/careers/react-frontend-developer</loc>
+    <lastmod>2026-08-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.90</priority>
+  </url>
+  <url>
+    <loc>https://programmingwala.com/careers/mern-stack-developer</loc>
+    <lastmod>2026-08-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.90</priority>
+  </url>
+  <url>
+    <loc>https://programmingwala.com/careers/data-engineer-ai</loc>
+    <lastmod>2026-08-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.90</priority>
+  </url>
+  <url>
     <loc>https://programmingwala.com/</loc>
     <lastmod>2026-08-28</lastmod>
     <changefreq>daily</changefreq>
-    <priority>0.9</priority>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://programmingwala.com/practice</loc>
+    <lastmod>2026-08-28</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
   </url>
   <url>
     <loc>https://programmingwala.com/programs</loc>
     <lastmod>2026-08-28</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://programmingwala.com/practice</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.85</priority>
   </url>
   <url>
     <loc>https://programmingwala.com/tutorials</loc>
     <lastmod>2026-08-28</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.80</priority>
   </url>
   <url>
     <loc>https://programmingwala.com/verify-certificate</loc>
     <lastmod>2026-08-28</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.75</priority>
   </url>
 </urlset>`;
   res.send(sitemapXml.trim());
@@ -163,6 +205,9 @@ app.get('/robots.txt', (req, res) => {
   res.header('Cache-Control', 'public, max-age=86400');
   res.send(`User-agent: *
 Allow: /
+Allow: /careers
+Allow: /careers/*
+Allow: /jobs/*
 Allow: /manish-kumar
 Allow: /profile/manish-kumar
 Allow: /manish

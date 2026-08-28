@@ -90,25 +90,19 @@ export default function Footer() {
           </ul>
         </div>
 
-        {/* Newsletter / PWA Column */}
+        {/* Trending Career Tracks Column */}
         <div className="space-y-4">
           <h4 className={`inline-block pb-2 font-bold border-b text-md font-quicksand ${isDark ? 'text-white border-cyan-400/30' : 'text-slate-800 border-brandCoral/30'
-            }`}>Our Motto</h4>
-          <p className={`text-sm italic ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-            "Code. Build. Launch. Grow."
-          </p>
-          <div className="pt-2">
-            <span className={`inline-block px-3 py-1 text-xs border rounded-full ${isDark ? 'border-white/10 bg-white/5 text-slate-200' : 'border-slate-200 bg-slate-100 text-slate-700'
-              }`}>
-              ✓ Accessibility Compliant
-            </span>
-          </div>
-          <div>
-            <span className={`inline-block px-3 py-1 mt-1 text-xs border rounded-full ${isDark ? 'border-white/10 bg-white/5 text-slate-200' : 'border-slate-200 bg-slate-100 text-slate-700'
-              }`}>
-              ✓ Progressive Web App (PWA)
-            </span>
-          </div>
+            }`}>Trending Tech Jobs</h4>
+          <ul className="space-y-2 text-xs">
+            <li><Link to="/careers/java-full-stack-developer" className={`transition-colors font-medium ${isDark ? 'hover:text-pink-300 text-slate-300' : 'hover:text-brandCoral text-slate-600'}`}>Java Full Stack Developer</Link></li>
+            <li><Link to="/careers/aws-devops-engineer" className={`transition-colors font-medium ${isDark ? 'hover:text-pink-300 text-slate-300' : 'hover:text-brandCoral text-slate-600'}`}>AWS DevOps Engineer</Link></li>
+            <li><Link to="/careers/python-developer" className={`transition-colors font-medium ${isDark ? 'hover:text-pink-300 text-slate-300' : 'hover:text-brandCoral text-slate-600'}`}>Python AI & Backend Developer</Link></li>
+            <li><Link to="/careers/react-frontend-developer" className={`transition-colors font-medium ${isDark ? 'hover:text-pink-300 text-slate-300' : 'hover:text-brandCoral text-slate-600'}`}>React.js Frontend Engineer</Link></li>
+            <li><Link to="/careers/mern-stack-developer" className={`transition-colors font-medium ${isDark ? 'hover:text-pink-300 text-slate-300' : 'hover:text-brandCoral text-slate-600'}`}>MERN Stack Developer</Link></li>
+            <li><Link to="/careers/data-engineer-ai" className={`transition-colors font-medium ${isDark ? 'hover:text-pink-300 text-slate-300' : 'hover:text-brandCoral text-slate-600'}`}>Data Engineer & GenAI</Link></li>
+            <li><Link to="/careers" className={`transition-colors font-bold ${isDark ? 'text-cyan-400 hover:text-cyan-300' : 'text-brandCoral-dark hover:underline'}`}>Explore All Career Tracks →</Link></li>
+          </ul>
         </div>
 
       </div>

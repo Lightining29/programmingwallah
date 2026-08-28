@@ -1,5 +1,8 @@
 User-agent: *
 Allow: /
+Allow: /careers
+Allow: /careers/*
+Allow: /jobs/*
 Allow: /manish-kumar
 Allow: /profile/manish-kumar
 Allow: /manish

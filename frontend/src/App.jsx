@@ -25,6 +25,8 @@ import Games from './pages/Games.jsx';
 import RazorpayTestPage from './pages/RazorpayTestPage.jsx';
 import VerifyCertificate from './pages/VerifyCertificate.jsx';
 import ManishKumarProfile from './pages/ManishKumarProfile.jsx';
+import CareerTrackHub from './pages/careers/CareerTrackHub.jsx';
+import CareerTrackDetail from './pages/careers/CareerTrackDetail.jsx';
 
 // LMS Pages
 import LMS from './pages/LMS.jsx';
@@ -130,6 +132,13 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
           <Route path="/manish-kumar" element={<ManishKumarProfile />} />
           <Route path="/profile/manish-kumar" element={<ManishKumarProfile />} />
           <Route path="/manish" element={<ManishKumarProfile />} />
+          
+          {/* High-Impact SEO Tech Career Tracks */}
+          <Route path="/careers" element={<CareerTrackHub />} />
+          <Route path="/job-roles" element={<CareerTrackHub />} />
+          <Route path="/trending-tech-jobs" element={<CareerTrackHub />} />
+          <Route path="/careers/:slug" element={<CareerTrackDetail />} />
+          <Route path="/jobs/:slug" element={<CareerTrackDetail />} />
 
           {/* LMS & Student Portal Routes */}
           <Route path="/lms" element={<LMS />} />
