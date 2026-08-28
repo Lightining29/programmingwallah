@@ -266,6 +266,15 @@ export default function ManishKumarProfile() {
     setOrCreateMeta('name', 'keywords', 'Manish Kumar, Manish Kumar Java Developer, Manish Kumar Full Stack Developer, Manish Kumar AWS DevOps Engineer, Manish Kumar Ghaziabad, Best Java Developer India, Spring Boot Expert Manish Kumar, React JS Developer Manish Kumar, ProgrammingWala Founder, Afsha Enterprises Manish Kumar, Java AWS Freelancer Ghaziabad');
     setOrCreateMeta('name', 'author', 'Manish Kumar');
     setOrCreateMeta('name', 'robots', 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1');
+    setOrCreateMeta('name', 'thumbnail', window.location.origin + '/manish/manish_3.jpg');
+    
+    let imgLink = document.querySelector('link[rel="image_src"]');
+    if (!imgLink) {
+      imgLink = document.createElement('link');
+      imgLink.rel = 'image_src';
+      document.head.appendChild(imgLink);
+    }
+    imgLink.href = window.location.origin + '/manish/manish_3.jpg';
 
     setOrCreateMeta('property', 'og:title', 'Manish Kumar | Best Java Full Stack Developer & AWS DevOps Engineer');
     setOrCreateMeta('property', 'og:description', 'Explore the official engineering portfolio of Manish Kumar. Java 21, Spring Boot, React, AWS DevOps, Microservices, and Cloud Architecture.');
