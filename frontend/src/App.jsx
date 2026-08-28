@@ -24,6 +24,7 @@ import Music from './pages/Music.jsx';
 import Games from './pages/Games.jsx';
 import RazorpayTestPage from './pages/RazorpayTestPage.jsx';
 import VerifyCertificate from './pages/VerifyCertificate.jsx';
+import ManishKumarProfile from './pages/ManishKumarProfile.jsx';
 
 // LMS Pages
 import LMS from './pages/LMS.jsx';
@@ -126,6 +127,9 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
           <Route path="/payment-demo" element={<RazorpayTestPage />} />
           <Route path="/verify-certificate" element={<VerifyCertificate />} />
           <Route path="/verify-certificate/:certNumber" element={<VerifyCertificate />} />
+          <Route path="/manish-kumar" element={<ManishKumarProfile />} />
+          <Route path="/profile/manish-kumar" element={<ManishKumarProfile />} />
+          <Route path="/manish" element={<ManishKumarProfile />} />
 
           {/* LMS & Student Portal Routes */}
           <Route path="/lms" element={<LMS />} />
