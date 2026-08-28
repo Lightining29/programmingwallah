@@ -107,21 +107,65 @@ app.get('/sitemap.xml', (req, res) => {
   const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <!-- ========================================================= -->
+  <!-- PRIMARY PROFILE: MANISH KUMAR (TOP PRIORITY 1.0)           -->
+  <!-- ========================================================= -->
   <url>
-    <loc>https://www.afshaenterprises.com/manish-kumar</loc>
+    <loc>https://programmingwala.com/manish-kumar</loc>
+    <lastmod>2026-08-28</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://programmingwala.com/manish/manish_3.jpg</image:loc>
+      <image:title>Manish Kumar - Best Java Full Stack Developer &amp; AWS DevOps Engineer</image:title>
+      <image:caption>Manish Kumar holding the Best Performer of the Institution Award Trophy</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://programmingwala.com/manish/manish_1.jpg</image:loc>
+      <image:title>Manish Kumar - Senior Software Engineer &amp; System Architect</image:title>
+      <image:caption>Manish Kumar - Java Spring Boot &amp; React Full Stack Architect</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://programmingwala.com/manish/manish_2.jpg</image:loc>
+      <image:title>Manish Kumar - AWS DevOps &amp; Cloud Infrastructure Specialist</image:title>
+      <image:caption>Manish Kumar - Docker, Kubernetes &amp; AWS Cloud Infrastructure Engineer</image:caption>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://programmingwala.com/profile/manish-kumar</loc>
     <lastmod>2026-08-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
-      <image:loc>https://www.afshaenterprises.com/manish/manish_3.jpg</image:loc>
-      <image:title>Manish Kumar - Best Java Full Stack Developer &amp; AWS DevOps Engineer</image:title>
+      <image:loc>https://programmingwala.com/manish/manish_3.jpg</image:loc>
+      <image:title>Manish Kumar Portfolio - Best Performer Award</image:title>
+      <image:caption>Manish Kumar Java Full Stack &amp; AWS DevOps Engineering Portfolio</image:caption>
     </image:image>
   </url>
+
   <url>
-    <loc>https://programmingwala.com/manish-kumar</loc>
+    <loc>https://programmingwala.com/manish</loc>
     <lastmod>2026-08-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://programmingwala.com/manish/manish_3.jpg</image:loc>
+      <image:title>Manish Kumar - Lead Software Architect</image:title>
+      <image:caption>Manish Kumar Official Profile</image:caption>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://www.afshaenterprises.com/manish-kumar</loc>
+    <lastmod>2026-08-28</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://www.afshaenterprises.com/manish/manish_3.jpg</image:loc>
+      <image:title>Manish Kumar - Best Java Full Stack Developer &amp; AWS DevOps Engineer</image:title>
+      <image:caption>Manish Kumar holding the Best Performer of the Institution Award Trophy</image:caption>
+    </image:image>
   </url>
   <url>
     <loc>https://programmingwala.com/courses-in-ghaziabad</loc>

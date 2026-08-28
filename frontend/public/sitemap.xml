@@ -2,65 +2,150 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   
-  <!-- Primary Profile: Manish Kumar -->
+  <!-- ========================================================= -->
+  <!-- PRIMARY PROFILE: MANISH KUMAR (TOP PRIORITY 1.0)           -->
+  <!-- ========================================================= -->
+  <url>
+    <loc>https://programmingwala.com/manish-kumar</loc>
+    <lastmod>2026-08-28</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://programmingwala.com/manish/manish_3.jpg</image:loc>
+      <image:title>Manish Kumar - Best Java Full Stack Developer &amp; AWS DevOps Engineer</image:title>
+      <image:caption>Manish Kumar holding the Best Performer of the Institution Award Trophy</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://programmingwala.com/manish/manish_1.jpg</image:loc>
+      <image:title>Manish Kumar - Senior Software Engineer &amp; System Architect</image:title>
+      <image:caption>Manish Kumar - Java Spring Boot &amp; React Full Stack Architect</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://programmingwala.com/manish/manish_2.jpg</image:loc>
+      <image:title>Manish Kumar - AWS DevOps &amp; Cloud Infrastructure Specialist</image:title>
+      <image:caption>Manish Kumar - Docker, Kubernetes &amp; AWS Cloud Infrastructure Engineer</image:caption>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://programmingwala.com/profile/manish-kumar</loc>
+    <lastmod>2026-08-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://programmingwala.com/manish/manish_3.jpg</image:loc>
+      <image:title>Manish Kumar Portfolio - Best Performer Award</image:title>
+      <image:caption>Manish Kumar Java Full Stack &amp; AWS DevOps Engineering Portfolio</image:caption>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://programmingwala.com/manish</loc>
+    <lastmod>2026-08-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://programmingwala.com/manish/manish_3.jpg</image:loc>
+      <image:title>Manish Kumar - Lead Software Architect</image:title>
+      <image:caption>Manish Kumar Official Profile</image:caption>
+    </image:image>
+  </url>
+
   <url>
     <loc>https://www.afshaenterprises.com/manish-kumar</loc>
     <lastmod>2026-08-28</lastmod>
-    <changefreq>weekly</changefreq>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
     <image:image>
       <image:loc>https://www.afshaenterprises.com/manish/manish_3.jpg</image:loc>
       <image:title>Manish Kumar - Best Java Full Stack Developer &amp; AWS DevOps Engineer</image:title>
       <image:caption>Manish Kumar holding the Best Performer of the Institution Award Trophy</image:caption>
     </image:image>
-  </url>
-  
-  <url>
-    <loc>https://programmingwala.com/manish-kumar</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://www.afshaenterprises.com/manish/manish_1.jpg</image:loc>
+      <image:title>Manish Kumar - Full Stack Software Engineer</image:title>
+      <image:caption>Senior Java Developer and Cloud Engineer Manish Kumar</image:caption>
+    </image:image>
   </url>
 
-  <!-- Local SEO: Best Tech Coaching & Courses in RDC Ghaziabad -->
+  <!-- ========================================================= -->
+  <!-- LOCAL SEO: BEST TECH COACHING IN RDC GHAZIABAD            -->
+  <!-- ========================================================= -->
   <url>
     <loc>https://programmingwala.com/courses-in-ghaziabad</loc>
     <lastmod>2026-08-28</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.98</priority>
+    <image:image>
+      <image:loc>https://programmingwala.com/manish/manish_3.jpg</image:loc>
+      <image:title>Best Tech Coaching Institute in RDC Ghaziabad</image:title>
+      <image:caption>AppleTree Infotech RDC Ghaziabad Campus - 100% Placement Support</image:caption>
+    </image:image>
   </url>
+
   <url>
     <loc>https://programmingwala.com/courses/best-tech-coaching-rdc-ghaziabad</loc>
     <lastmod>2026-08-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.98</priority>
+    <image:image>
+      <image:loc>https://programmingwala.com/manish/manish_3.jpg</image:loc>
+      <image:title>Best Tech &amp; Software Development Coaching in RDC Ghaziabad</image:title>
+      <image:caption>AppleTree Infotech RDC Ghaziabad Classroom Coding Lab</image:caption>
+    </image:image>
   </url>
+
   <url>
     <loc>https://programmingwala.com/courses/java-coaching-in-ghaziabad</loc>
     <lastmod>2026-08-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
+    <image:image>
+      <image:loc>https://programmingwala.com/manish/manish_3.jpg</image:loc>
+      <image:title>Best Java Full Stack Developer Coaching in RDC Ghaziabad</image:title>
+      <image:caption>Core Java, Spring Boot 3, Microservices &amp; React.js Training</image:caption>
+    </image:image>
   </url>
+
   <url>
     <loc>https://programmingwala.com/courses/aws-devops-training-ghaziabad</loc>
     <lastmod>2026-08-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
+    <image:image>
+      <image:loc>https://programmingwala.com/manish/manish_2.jpg</image:loc>
+      <image:title>AWS Cloud &amp; DevOps Engineering Training in RDC Ghaziabad</image:title>
+      <image:caption>Docker, Kubernetes &amp; CI/CD Training in Ghaziabad</image:caption>
+    </image:image>
   </url>
+
   <url>
     <loc>https://programmingwala.com/courses/python-ai-training-ghaziabad</loc>
     <lastmod>2026-08-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
+    <image:image>
+      <image:loc>https://programmingwala.com/manish/manish_1.jpg</image:loc>
+      <image:title>Python Full Stack &amp; AI Machine Learning Training in RDC Ghaziabad</image:title>
+      <image:caption>Django, FastAPI &amp; Generative AI Training in Ghaziabad</image:caption>
+    </image:image>
   </url>
+
   <url>
     <loc>https://programmingwala.com/courses/full-stack-developer-course-ghaziabad</loc>
     <lastmod>2026-08-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
+    <image:image>
+      <image:loc>https://programmingwala.com/manish/manish_3.jpg</image:loc>
+      <image:title>Full Stack Web Development (MERN &amp; React) in RDC Ghaziabad</image:title>
+      <image:caption>MongoDB, Express, React &amp; Node.js Training</image:caption>
+    </image:image>
   </url>
 
-  <!-- Job Trending Career Tracks -->
+  <!-- ========================================================= -->
+  <!-- JOB TRENDING CAREER TRACKS                                -->
+  <!-- ========================================================= -->
   <url>
     <loc>https://programmingwala.com/careers</loc>
     <lastmod>2026-08-28</lastmod>
@@ -104,7 +189,9 @@
     <priority>0.90</priority>
   </url>
 
-  <!-- Core Platform URLs -->
+  <!-- ========================================================= -->
+  <!-- CORE PLATFORM ROUTES                                      -->
+  <!-- ========================================================= -->
   <url>
     <loc>https://programmingwala.com/</loc>
     <lastmod>2026-08-28</lastmod>
