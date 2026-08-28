@@ -124,6 +124,42 @@ app.get('/sitemap.xml', (req, res) => {
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://programmingwala.com/courses-in-ghaziabad</loc>
+    <lastmod>2026-08-28</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.98</priority>
+  </url>
+  <url>
+    <loc>https://programmingwala.com/courses/best-tech-coaching-rdc-ghaziabad</loc>
+    <lastmod>2026-08-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.98</priority>
+  </url>
+  <url>
+    <loc>https://programmingwala.com/courses/java-coaching-in-ghaziabad</loc>
+    <lastmod>2026-08-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://programmingwala.com/courses/aws-devops-training-ghaziabad</loc>
+    <lastmod>2026-08-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://programmingwala.com/courses/python-ai-training-ghaziabad</loc>
+    <lastmod>2026-08-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://programmingwala.com/courses/full-stack-developer-course-ghaziabad</loc>
+    <lastmod>2026-08-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
     <loc>https://programmingwala.com/careers</loc>
     <lastmod>2026-08-28</lastmod>
     <changefreq>daily</changefreq>

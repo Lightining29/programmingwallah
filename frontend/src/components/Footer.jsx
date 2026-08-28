@@ -66,6 +66,7 @@ export default function Footer() {
             <li><Link to="/gallery" className={`transition-colors ${isDark ? 'hover:text-cyan-200 text-slate-300' : 'hover:text-brandCoral text-slate-600'}`}>Gallery</Link></li>
             <li><Link to="/calendar" className={`transition-colors ${isDark ? 'hover:text-cyan-200 text-slate-300' : 'hover:text-brandCoral text-slate-600'}`}>Calendar</Link></li>
             <li><Link to="/fees" className={`transition-colors ${isDark ? 'hover:text-cyan-200 text-slate-300' : 'hover:text-brandCoral text-slate-600'}`}>Pay Fees</Link></li>
+            <li><Link to="/courses-in-ghaziabad" className={`transition-colors font-bold ${isDark ? 'hover:text-amber-300 text-amber-400' : 'hover:text-amber-600 text-amber-600'}`}>Courses in RDC</Link></li>
             <li><Link to="/manish-kumar" className={`transition-colors font-bold ${isDark ? 'hover:text-pink-300 text-pink-400' : 'hover:text-pink-600 text-pink-600'}`}>Manish Kumar</Link></li>
           </ul>
         </div>

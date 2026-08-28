@@ -1,5 +1,8 @@
 User-agent: *
 Allow: /
+Allow: /courses-in-ghaziabad
+Allow: /courses/*
+Allow: /coaching/*
 Allow: /careers
 Allow: /careers/*
 Allow: /jobs/*

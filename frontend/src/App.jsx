@@ -27,6 +27,8 @@ import VerifyCertificate from './pages/VerifyCertificate.jsx';
 import ManishKumarProfile from './pages/ManishKumarProfile.jsx';
 import CareerTrackHub from './pages/careers/CareerTrackHub.jsx';
 import CareerTrackDetail from './pages/careers/CareerTrackDetail.jsx';
+import GhaziabadCourseHub from './pages/courses/GhaziabadCourseHub.jsx';
+import GhaziabadCourseDetail from './pages/courses/GhaziabadCourseDetail.jsx';
 
 // LMS Pages
 import LMS from './pages/LMS.jsx';
@@ -139,6 +141,13 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
           <Route path="/trending-tech-jobs" element={<CareerTrackHub />} />
           <Route path="/careers/:slug" element={<CareerTrackDetail />} />
           <Route path="/jobs/:slug" element={<CareerTrackDetail />} />
+
+          {/* Local SEO: Best Tech Coaching in RDC Ghaziabad */}
+          <Route path="/courses-in-ghaziabad" element={<GhaziabadCourseHub />} />
+          <Route path="/coaching-in-rdc-ghaziabad" element={<GhaziabadCourseHub />} />
+          <Route path="/courses/best-tech-coaching-rdc-ghaziabad" element={<GhaziabadCourseHub />} />
+          <Route path="/courses/:slug" element={<GhaziabadCourseDetail />} />
+          <Route path="/coaching/:slug" element={<GhaziabadCourseDetail />} />
 
           {/* LMS & Student Portal Routes */}
           <Route path="/lms" element={<LMS />} />
