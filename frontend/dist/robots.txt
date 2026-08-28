@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Allow: /manish-kumar
+Allow: /profile/manish-kumar
+Allow: /manish
+Allow: /manish/*
+Allow: /verify-certificate/*
+
+Sitemap: https://programmingwala.com/sitemap.xml
+Sitemap: https://www.afshaenterprises.com/sitemap.xml

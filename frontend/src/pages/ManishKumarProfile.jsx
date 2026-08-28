@@ -6,13 +6,13 @@ import {
   GraduationCap, Mail, Phone, MapPin, ExternalLink, Github, 
   Linkedin, CheckCircle2, Star, Sparkles, Code2, Server, Cloud, 
   Database, Terminal, Cpu, ChevronLeft, ChevronRight, Download, 
-  Send, Compass, Heart, Flame, ShieldCheck, Copy, Check
+  Send, Compass, Heart, Flame, ShieldCheck, Copy, Check, Layers,
+  Zap, Globe, CheckCircle, Smartphone
 } from 'lucide-react';
 
 export default function ManishKumarProfile() {
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState('about');
   const [copiedLink, setCopiedLink] = useState(false);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
@@ -42,77 +42,113 @@ export default function ManishKumarProfile() {
   // Technical Skills Matrix
   const skillCategories = [
     {
-      title: 'Backend & Java Ecosystem',
+      title: 'Backend & Java Enterprise Ecosystem',
       icon: Server,
+      accent: 'from-amber-500/20 via-orange-500/10 to-transparent',
+      borderColor: 'border-orange-500/30',
+      badgeColor: 'bg-orange-500/20 text-orange-300 border-orange-500/40',
       skills: [
-        { name: 'Java (17 / 21)', level: 'Expert', desc: 'Core Java, Collections, Multithreading, OOP, Streams' },
-        { name: 'Spring Boot', level: 'Expert', desc: 'Enterprise REST APIs, Dependency Injection, Microservices' },
-        { name: 'Spring Security & JWT', level: 'Advanced', desc: 'OAuth2, Role-based Access Control, Encryption' },
-        { name: 'Hibernate & JPA', level: 'Expert', desc: 'ORM Mapping, Query Optimization, Transaction Management' },
-        { name: 'Microservices Architecture', level: 'Advanced', desc: 'Service Discovery, API Gateway, Circuit Breaker' }
+        { name: 'Java (17 / 21 LTS)', level: 'Expert', desc: 'Core Java, Collections Framework, Multithreading & Concurrency, Memory Model, Lambdas & Streams' },
+        { name: 'Spring Boot 3.x', level: 'Expert', desc: 'Enterprise REST APIs, Auto-configuration, Spring Data JPA, Actuator Metrics, Microservices' },
+        { name: 'Spring Security & JWT', level: 'Advanced', desc: 'Stateless Authentication, Role-based Access Control (RBAC), OAuth2, CSRF & Password Encryption' },
+        { name: 'Hibernate & JPA ORM', level: 'Expert', desc: 'Entity Lifecycle, Criteria API, Lazy/Eager Fetching, Connection Pooling, Query Optimization' },
+        { name: 'Microservices & Distributed Systems', level: 'Advanced', desc: 'Service Discovery (Eureka), API Gateway, Distributed Tracing, Circuit Breaker (Resilience4j)' }
       ]
     },
     {
-      title: 'Cloud & AWS DevOps',
+      title: 'Cloud Architecture & AWS DevOps',
       icon: Cloud,
+      accent: 'from-sky-500/20 via-indigo-500/10 to-transparent',
+      borderColor: 'border-sky-500/30',
+      badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-500/40',
       skills: [
-        { name: 'AWS Cloud Services', level: 'Expert', desc: 'EC2, S3, RDS, IAM, VPC, Route53, CloudFront, Lambda, ECS' },
-        { name: 'Docker & Containerization', level: 'Expert', desc: 'Multi-stage Dockerfiles, Docker Compose, Image Optimization' },
-        { name: 'Kubernetes (K8s)', level: 'Advanced', desc: 'Pod Orchestration, Deployments, ConfigMaps, Services' },
-        { name: 'CI/CD Pipelines (Jenkins & GitHub Actions)', level: 'Expert', desc: 'Automated Build, Test, Security Scans & Zero-Downtime Deployments' },
-        { name: 'Linux Server Administration & Nginx', level: 'Advanced', desc: 'Reverse Proxy, SSL Configuration, Shell Scripting' }
+        { name: 'Amazon Web Services (AWS)', level: 'Expert', desc: 'EC2 Compute, S3 Object Storage, RDS Database, IAM Security, VPC Networking, CloudFront CDN, Route53 DNS, Lambda Serverless, ECS Fargate' },
+        { name: 'Docker & Containerization', level: 'Expert', desc: 'Multi-stage Dockerfiles, Container Security, Docker Compose Orchestration, Image Size Optimization' },
+        { name: 'Kubernetes (K8s)', level: 'Advanced', desc: 'Pods, Deployments, Cluster IP & LoadBalancer Services, ConfigMaps, Ingress Controllers, Auto-scaling' },
+        { name: 'CI/CD Automation (Jenkins & GitHub Actions)', level: 'Expert', desc: 'Automated Build Pipelines, Unit & Integration Testing, Docker Image Publishing, Zero-Downtime Rolling Deployments' },
+        { name: 'Linux Administration & Web Servers', level: 'Expert', desc: 'Ubuntu/RHEL Server Management, Bash Shell Scripting, Nginx Reverse Proxy, SSL/TLS Certificates, Systemd Services' }
       ]
     },
     {
-      title: 'Frontend & Full Stack',
+      title: 'Modern Frontend & Reactive Web Systems',
       icon: Code2,
+      accent: 'from-pink-500/20 via-rose-500/10 to-transparent',
+      borderColor: 'border-pink-500/30',
+      badgeColor: 'bg-pink-500/20 text-pink-300 border-pink-500/40',
       skills: [
-        { name: 'React.js & Vite', level: 'Expert', desc: 'Hooks, Context API, Redux Toolkit, Performance Optimization' },
-        { name: 'JavaScript (ES6+) & TypeScript', level: 'Expert', desc: 'Asynchronous Programming, Event Loop, Type Safety' },
-        { name: 'Tailwind CSS & Framer Motion', level: 'Expert', desc: 'Responsive Design, Animations, Glassmorphism UI' },
-        { name: 'RESTful API & GraphQL Integration', level: 'Expert', desc: 'Axios, Socket.io Real-Time Event Communication' }
+        { name: 'React.js & Vite Ecosystem', level: 'Expert', desc: 'Functional Components, Custom Hooks, Context API, Code Splitting, Lazy Loading, High Performance Rendering' },
+        { name: 'JavaScript (ES6+) & TypeScript', level: 'Expert', desc: 'Asynchronous Programming (Async/Await, Promises), Closures, Prototypes, Strict Static Typing' },
+        { name: 'Tailwind CSS & Framer Motion', level: 'Expert', desc: 'Modern Glassmorphism UI, Responsive Mobile-first Design, Dynamic Animations, Dark/Light Themes' },
+        { name: 'Real-Time Communication & APIs', level: 'Expert', desc: 'Socket.io WebSockets, RESTful API Integration with Axios, GraphQL Client, Optimistic UI Updates' }
       ]
     },
     {
-      title: 'Databases & Development Tools',
+      title: 'Databases, Architecture & Tooling',
       icon: Database,
+      accent: 'from-emerald-500/20 via-teal-500/10 to-transparent',
+      borderColor: 'border-emerald-500/30',
+      badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
       skills: [
-        { name: 'MySQL & PostgreSQL', level: 'Expert', desc: 'Complex Joins, Indexing, Schema Design, Stored Procedures' },
-        { name: 'MongoDB', level: 'Advanced', desc: 'Document Storage, Aggregation Pipelines, Mongoose' },
-        { name: 'Git & GitHub Version Control', level: 'Expert', desc: 'Branching Strategy, Code Reviews, Worktrees' },
-        { name: 'Postman & Swagger', level: 'Expert', desc: 'API Testing, Documentation, Mock Servers' }
+        { name: 'Relational DBs (PostgreSQL & MySQL)', level: 'Expert', desc: 'ACID Transactions, Complex SQL Queries, Composite Indexing, Normalization, Connection Pooling' },
+        { name: 'NoSQL DBs (MongoDB & Redis)', level: 'Advanced', desc: 'Document Modeling, Aggregation Framework, In-Memory Caching, Session Management' },
+        { name: 'Git & Advanced Version Control', level: 'Expert', desc: 'Git Worktrees, Rebase, Cherry-picking, Branching Strategies, GitHub Collaborations, PR Reviews' },
+        { name: 'Testing & API Tooling', level: 'Expert', desc: 'Postman Collections, Swagger/OpenAPI Documentation, JUnit & Mockito Testing, Maven & Gradle Build Tools' }
       ]
     }
   ];
 
-  // Featured Engineering Projects
+  // Featured Engineering Projects with Deep Technical Showcase
   const projects = [
     {
-      title: 'ProgrammingWala LMS Platform',
-      role: 'Lead Architect & Full Stack Developer',
+      title: 'ProgrammingWala LMS & EdTech Ecosystem',
+      role: 'Lead Architect & Full Stack Engineer',
       period: '2025 – Present',
-      description: 'A cutting-edge, multi-portal Learning Management System powering interactive live code editors, music stream players, automated fee receipts, multi-role dashboards (Admin, Student, Teacher, Parent), and instant verifiable ISO certificates with dynamic QR verification.',
-      technologies: ['React.js', 'Node.js', 'Express', 'MongoDB', 'Socket.io', 'Tailwind CSS', 'AWS S3'],
-      link: 'https://programmingwala.com',
-      badge: 'Flagship Project'
+      badge: 'Flagship Platform',
+      badgeClass: 'bg-gradient-to-r from-pink-500 to-rose-500 text-white',
+      liveUrl: 'https://programmingwala.com',
+      githubUrl: 'https://github.com/Lightining29/programmingwallah',
+      summary: 'A comprehensive, enterprise-grade educational platform featuring interactive coding environments, live music streaming with byte-level chunking, multi-role portal dashboards, automated fee tracking, and instant verifiable ISO certificates with dynamic QR code authentication.',
+      achievements: [
+        'Architected real-time multi-portal architecture supporting 4 distinct user roles: Admin, Student, Teacher, and Parent.',
+        'Engineered live interactive practice hub and code compiler with sandbox execution supporting Java, Python, and C++.',
+        'Built automated installment fee engine with instant Razorpay payment verification, receipts generation, and student dossiers.',
+        'Designed high-availability AWS media storage and chunked audio streaming player ensuring zero-buffer playback across thousands of tracks.'
+      ],
+      technologies: ['Java / Node.js', 'React 18', 'MongoDB', 'Express', 'Socket.io', 'Tailwind CSS', 'AWS S3', 'Razorpay API', 'Docker']
     },
     {
-      title: 'Afsha Enterprises E-Commerce Portal',
+      title: 'Afsha Enterprises E-Commerce Platform',
       role: 'Full Stack Engineer & Cloud Architect',
       period: '2025 – 2026',
-      description: 'High-performance commercial e-commerce marketplace featuring instant payment gateway integration, real-time inventory management, advanced SEO schema generation, and high-availability AWS hosting.',
-      technologies: ['React', 'Vite', 'Tailwind CSS', 'AWS CloudFront', 'Payment Gateway API', 'SEO'],
-      link: 'https://www.afshaenterprises.com/manish-kumar',
-      badge: 'Live Client Project'
+      badge: 'Live Commercial Marketplace',
+      badgeClass: 'bg-gradient-to-r from-sky-500 to-indigo-600 text-white',
+      liveUrl: 'https://www.afshaenterprises.com/manish-kumar',
+      githubUrl: 'https://github.com/Lightining29',
+      summary: 'High-conversion commercial e-commerce web platform engineered for wellness and electronics distribution, featuring instant payment processing, real-time inventory management, high-performance SEO meta generation, and global CDN delivery.',
+      achievements: [
+        'Built modern, responsive single-page store architecture with sub-second page loads powered by Vite and Tailwind CSS.',
+        'Integrated secure payment gateways with webhooks for instant order confirmation and automated invoicing.',
+        'Implemented full Schema.org structured JSON-LD data and dynamic OpenGraph meta tags boosting organic Google search rankings.',
+        'Configured AWS CloudFront CDN distribution and SSL/TLS edge caching with 99.9% uptime.'
+      ],
+      technologies: ['React.js', 'Vite', 'Tailwind CSS', 'AWS CloudFront', 'Payment Gateway API', 'JSON-LD SEO', 'Node.js']
     },
     {
       title: 'Enterprise ATS & Microservices Suite',
-      role: 'Java Backend & DevOps Engineer',
+      role: 'Java Backend & Cloud Infrastructure Engineer',
       period: '2024 – 2025',
-      description: 'High-throughput Applicant Tracking System engineered with Java Spring Boot microservices, Kafka event streaming, Docker containers, and automated AWS ECS deployments.',
-      technologies: ['Java 21', 'Spring Boot', 'PostgreSQL', 'Docker', 'Kubernetes', 'AWS ECS', 'Jenkins'],
-      link: 'https://github.com/Lightining29',
-      badge: 'Enterprise Architecture'
+      badge: 'Enterprise Architecture',
+      badgeClass: 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white',
+      liveUrl: 'https://github.com/Lightining29',
+      githubUrl: 'https://github.com/Lightining29',
+      summary: 'High-throughput Applicant Tracking System (ATS) engineered with Java Spring Boot microservices, containerized with Docker, and orchestrated with Kubernetes on AWS ECS.',
+      achievements: [
+        'Engineered decoupled microservices for Candidate Profile Ingestion, Resume Parsing, Job Matching, and Interview Scheduling.',
+        'Secured all internal and external communication with Spring Security, JWT authentication, and API Gateway rate limiting.',
+        'Set up automated Jenkins CI/CD pipeline executing unit tests, Docker builds, and zero-downtime rolling updates.',
+        'Optimized PostgreSQL queries and database indexing reducing search and filter latency by 68%.'
+      ],
+      technologies: ['Java 21', 'Spring Boot 3', 'PostgreSQL', 'Docker', 'Kubernetes', 'AWS ECS', 'Jenkins CI/CD', 'Kafka']
     }
   ];
 
@@ -120,21 +156,24 @@ export default function ManishKumarProfile() {
   const awards = [
     {
       title: 'Best Performer of the Institution Award',
-      issuer: 'AppleTree Infotech & Tech Excellence Board',
+      issuer: 'AppleTree Infotech & Tech Excellence Council',
       date: '2025',
-      description: 'Awarded the gold trophy for exceptional performance, architectural leadership in Java Full Stack development, and high-impact enterprise project deliveries.'
+      badge: '🏆 First Place Winner',
+      description: 'Awarded the gold trophy for outstanding technical brilliance, architectural leadership in Java Full Stack development, and high-impact enterprise project deliveries.'
     },
     {
       title: 'Certified Java Full Stack Developer',
       issuer: 'AppleTree Infotech (ISO 9001:2015 & MSME Certified)',
       date: '2025',
-      description: 'Recognized for mastering Java Spring Boot, Microservices, React frontend architecture, and relational database design.'
+      badge: '📜 Verified Credential',
+      description: 'Recognized for mastering Java Spring Boot, Microservices, React frontend architecture, relational database design, and cloud deployments.'
     },
     {
       title: 'AWS DevOps & Cloud Infrastructure Specialist',
       issuer: 'Cloud & DevOps Practitioners Council',
       date: '2025',
-      description: 'Validated expertise in architecting highly available, fault-tolerant, and secure cloud environments on AWS using Docker, Kubernetes, and CI/CD pipelines.'
+      badge: '☁️ Cloud Specialist',
+      description: 'Validated expertise in architecting highly available, fault-tolerant, and secure cloud environments on AWS using Docker, Kubernetes, and automated CI/CD pipelines.'
     }
   ];
 
@@ -145,16 +184,20 @@ export default function ManishKumarProfile() {
       a: 'Manish Kumar is an award-winning Java Full Stack Developer and AWS DevOps Engineer based in Ghaziabad, Uttar Pradesh, India. He specializes in designing enterprise-grade Java Spring Boot microservices, scalable React web applications, and automated CI/CD deployment pipelines on AWS.'
     },
     {
-      q: 'What core technologies and programming languages does Manish Kumar know?',
-      a: 'Manish Kumar specializes in Java (17/21), Spring Boot, Spring Security, Hibernate/JPA, Microservices, React.js, JavaScript/TypeScript, Tailwind CSS, AWS (EC2, S3, RDS, ECS, Lambda, CloudFront), Docker, Kubernetes, Jenkins CI/CD, MySQL, PostgreSQL, MongoDB, and Linux Administration.'
+      q: 'What core technologies and programming languages does Manish Kumar specialize in?',
+      a: 'Manish Kumar specializes in Java (17/21 LTS), Spring Boot, Spring Security, Hibernate/JPA, Microservices Architecture, React.js, JavaScript (ES6+), TypeScript, Tailwind CSS, Amazon Web Services (EC2, S3, RDS, ECS, Lambda, CloudFront), Docker, Kubernetes, Jenkins CI/CD, MySQL, PostgreSQL, MongoDB, and Linux Server Administration.'
+    },
+    {
+      q: 'What major enterprise projects has Manish Kumar built?',
+      a: 'Manish Kumar architected the ProgrammingWala LMS platform (interactive code compiler, audio streaming, multi-role portal system), the Afsha Enterprises commercial e-commerce platform, and the Enterprise ATS Microservices suite.'
     },
     {
       q: 'What awards and recognition has Manish Kumar won?',
-      a: 'Manish Kumar was awarded the prestigious "Best Performer of the Institution Award" for his technical innovation, software engineering excellence, and successful leadership across enterprise full-stack web platforms.'
+      a: 'Manish Kumar was awarded the prestigious "Best Performer of the Institution Award" for technical innovation, software engineering excellence, and outstanding full-stack project deliveries.'
     },
     {
-      q: 'How can I hire or contact Manish Kumar for software engineering roles or projects?',
-      a: 'You can contact Manish Kumar directly via WhatsApp at +91 7503962162, by phone at +91 9355343070, through email at info@appletreeinfotech.in, or visit his official GitHub profile at https://github.com/Lightining29.'
+      q: 'How can I contact or hire Manish Kumar for engineering roles?',
+      a: 'You can reach Manish Kumar directly via WhatsApp at +91 7503962162, by phone at +91 9355343070, through email at info@appletreeinfotech.in, or visit his GitHub at https://github.com/Lightining29.'
     }
   ];
 
@@ -202,11 +245,9 @@ export default function ManishKumarProfile() {
 
   // Dynamic SEO, Canonical & Schema.org injection
   useEffect(() => {
-    // 1. Set Document Title
     const originalTitle = document.title;
     document.title = 'Manish Kumar | Best Java Full Stack Developer & AWS DevOps Engineer in Ghaziabad, India';
 
-    // 2. Set Meta Tags Helper
     const setOrCreateMeta = (nameOrProp, attrValue, content) => {
       let element = document.querySelector(`meta[${nameOrProp}="${attrValue}"]`);
       if (!element) {
@@ -217,13 +258,11 @@ export default function ManishKumarProfile() {
       element.setAttribute('content', content);
     };
 
-    // Primary Meta Tags
     setOrCreateMeta('name', 'description', "Official profile of Manish Kumar, India's leading Java Full Stack Developer and AWS DevOps Engineer based in Ghaziabad. Specializing in Java Spring Boot, Microservices, React.js, Docker, Kubernetes, and AWS Cloud Architecture.");
     setOrCreateMeta('name', 'keywords', 'Manish Kumar, Manish Kumar Java Developer, Manish Kumar Full Stack Developer, Manish Kumar AWS DevOps Engineer, Manish Kumar Ghaziabad, Best Java Developer India, Spring Boot Expert Manish Kumar, React JS Developer Manish Kumar, ProgrammingWala Founder, Afsha Enterprises Manish Kumar, Java AWS Freelancer Ghaziabad');
     setOrCreateMeta('name', 'author', 'Manish Kumar');
     setOrCreateMeta('name', 'robots', 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1');
 
-    // OpenGraph Tags
     setOrCreateMeta('property', 'og:title', 'Manish Kumar | Best Java Full Stack Developer & AWS DevOps Engineer');
     setOrCreateMeta('property', 'og:description', 'Explore the official engineering portfolio of Manish Kumar. Java 21, Spring Boot, React, AWS DevOps, Microservices, and Cloud Architecture.');
     setOrCreateMeta('property', 'og:image', `${window.location.origin}/manish/manish_3.jpg`);
@@ -235,13 +274,11 @@ export default function ManishKumarProfile() {
     setOrCreateMeta('property', 'profile:gender', 'male');
     setOrCreateMeta('property', 'profile:username', 'manishkumar');
 
-    // Twitter Card Tags
     setOrCreateMeta('name', 'twitter:card', 'summary_large_image');
     setOrCreateMeta('name', 'twitter:title', 'Manish Kumar | Best Java Full Stack Developer & AWS DevOps Engineer');
     setOrCreateMeta('name', 'twitter:description', 'Senior Java Developer & AWS Cloud Architect. Winner of the Best Performer Award.');
     setOrCreateMeta('name', 'twitter:image', `${window.location.origin}/manish/manish_3.jpg`);
 
-    // 3. Canonical Tag
     let canonical = document.querySelector('link[rel="canonical"]');
     if (!canonical) {
       canonical = document.createElement('link');
@@ -250,7 +287,6 @@ export default function ManishKumarProfile() {
     }
     canonical.setAttribute('href', 'https://www.afshaenterprises.com/manish-kumar');
 
-    // 4. Inject JSON-LD Structured Schema Data for Search Engines & AI Copilot
     const structuredData = {
       '@context': 'https://schema.org',
       '@graph': [
@@ -258,7 +294,7 @@ export default function ManishKumarProfile() {
           '@type': 'Person',
           '@id': 'https://www.afshaenterprises.com/manish-kumar#person',
           'name': 'Manish Kumar',
-          'alternateName': ['Manish Kumar Java Developer', 'Manish Kumar AWS Engineer'],
+          'alternateName': ['Manish Kumar Java Developer', 'Manish Kumar AWS Engineer', 'Manish Kumar Software Architect'],
           'jobTitle': 'Senior Java Full Stack Developer & AWS DevOps Engineer',
           'description': 'Manish Kumar is an award-winning Java Full Stack Developer and AWS DevOps Engineer specializing in Java Spring Boot microservices, React web applications, Docker, Kubernetes, and AWS Cloud Architecture.',
           'image': `${window.location.origin}/manish/manish_3.jpg`,
@@ -274,13 +310,13 @@ export default function ManishKumarProfile() {
           'award': 'Best Performer of the Institution Award',
           'knowsAbout': [
             'Java 17',
-            'Java 21',
+            'Java 21 LTS',
             'Spring Boot',
             'Spring Security',
             'Hibernate',
             'Microservices Architecture',
             'React.js',
-            'JavaScript',
+            'JavaScript ES6+',
             'TypeScript',
             'Amazon Web Services (AWS)',
             'Docker',
@@ -352,7 +388,7 @@ export default function ManishKumarProfile() {
   return (
     <div className="min-h-screen bg-[#0b0f19] text-slate-100 font-inter antialiased selection:bg-pink-500 selection:text-white">
       
-      {/* Hidden Structured Semantic Data for AI Crawlers */}
+      {/* Hidden Semantic Headers for AI Crawlers */}
       <div className="sr-only" aria-hidden="false">
         <h1>Manish Kumar | Best Java Full Stack Developer & AWS DevOps Engineer in Ghaziabad, India</h1>
         <p>
@@ -364,7 +400,9 @@ export default function ManishKumarProfile() {
       <div className="max-w-7xl mx-auto md:py-8 md:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* LEFT / TOP: MOBILE-FIRST FULL-PAGE IMAGE SLIDER (MATCHING DESIGN 4) */}
+          {/* ========================================================= */}
+          {/* LEFT: MOBILE-FIRST FULL-PAGE IMAGE SLIDER (MATCHING DESIGN 4) */}
+          {/* ========================================================= */}
           <div className="lg:col-span-5 lg:sticky lg:top-6">
             <div className="relative w-full overflow-hidden bg-slate-950 shadow-2xl rounded-b-[36px] md:rounded-[36px] border-b md:border border-slate-800/80">
               
@@ -516,291 +554,317 @@ export default function ManishKumarProfile() {
                 </div>
               </div>
             </div>
+
+            {/* Quick Contact & Action Card on Desktop */}
+            <div className="hidden lg:block mt-6 p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black uppercase text-slate-400 tracking-wider">Direct Connect</span>
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">
+                  Open for Opportunities
+                </span>
+              </div>
+              <div className="space-y-2.5 text-xs">
+                <a href="tel:+917503962162" className="flex items-center gap-3 p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-pink-500/40 text-slate-200 transition">
+                  <Phone className="w-4 h-4 text-pink-400 shrink-0" />
+                  <span className="font-mono font-bold">+91 7503962162 / +91 9355343070</span>
+                </a>
+                <a href="mailto:info@appletreeinfotech.in" className="flex items-center gap-3 p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-sky-500/40 text-slate-200 transition">
+                  <Mail className="w-4 h-4 text-sky-400 shrink-0" />
+                  <span className="font-mono truncate">info@appletreeinfotech.in</span>
+                </a>
+                <a href="https://github.com/Lightining29" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-purple-500/40 text-slate-200 transition">
+                  <Github className="w-4 h-4 text-purple-400 shrink-0" />
+                  <span>github.com/Lightining29</span>
+                </a>
+              </div>
+            </div>
           </div>
 
-          {/* RIGHT: RICH SLIDING SHEET / CONTENT SECTION */}
-          <div className="lg:col-span-7 px-4 sm:px-6 lg:px-0 space-y-6">
+          {/* ========================================================= */}
+          {/* RIGHT: CONTINUOUS FULL SINGLE-PAGE SHOWCASE (NO TABS / ALL VISIBLE) */}
+          {/* ========================================================= */}
+          <div className="lg:col-span-7 px-4 sm:px-6 lg:px-0 space-y-8">
             
-            {/* Sheet Handle Bar */}
-            <div className="w-12 h-1 rounded-full bg-slate-700 mx-auto lg:hidden" />
-
-            {/* Navigation Tabs Pill Bar */}
-            <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-slate-900/90 border border-slate-800 overflow-x-auto no-scrollbar shadow-md">
-              {[
-                { id: 'about', label: 'About & Bio', icon: Sparkles },
-                { id: 'skills', label: 'Tech Stack', icon: Code2 },
-                { id: 'projects', label: 'Projects', icon: Briefcase },
-                { id: 'awards', label: 'Awards', icon: Award },
-                { id: 'faq', label: 'AI & Copilot FAQ', icon: ShieldCheck }
-              ].map((tab) => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={"flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all cursor-pointer " + (isActive ? "bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-md" : "text-slate-400 hover:text-white hover:bg-slate-800/60")}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* TAB 1: ABOUT & BIO */}
-            {activeTab === 'about' && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-6"
-              >
-                {/* About Bio Card */}
-                <div className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800/90 shadow-xl space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-xs font-black uppercase tracking-widest text-slate-400">
-                      About Manish Kumar
+            {/* 1. ABOUT & EXECUTIVE BIO SECTION */}
+            <section aria-labelledby="about-heading" className="space-y-4">
+              <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-pink-400" />
+                    <h2 id="about-heading" className="text-xs font-black uppercase tracking-widest text-slate-400">
+                      Executive Bio & Engineering Philosophy
                     </h2>
-                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-pink-500/10 text-pink-400 font-bold border border-pink-500/20">
-                      Top Rated Engineer
-                    </span>
                   </div>
-
-                  <p className="text-base sm:text-lg text-slate-200 font-medium leading-relaxed">
-                    I am a high-performing <span className="text-white font-black underline decoration-pink-500 decoration-2">Java Full Stack Developer</span> & <span className="text-white font-black underline decoration-sky-400 decoration-2">AWS DevOps Engineer</span> based in Ghaziabad, India. I specialize in building enterprise-scale web applications, microservices with Java Spring Boot, reactive React.js frontends, and automated cloud deployments on AWS.
-                  </p>
-
-                  <p className="text-sm text-slate-400 leading-relaxed">
-                    Recognized as the <strong className="text-amber-300 font-bold">Best Performer of the Institution</strong>, I combine deep algorithmic problem solving with real-world infrastructure automation (Docker, Kubernetes, Jenkins, AWS). Whether architecting scalable backend APIs or crafting high-conversion user interfaces, I deliver robust, production-grade solutions.
-                  </p>
-
-                  {/* Core Highlights Grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-                    <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 text-center">
-                      <span className="text-2xl font-black text-white block">100%</span>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase">Success Rate</span>
-                    </div>
-                    <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 text-center">
-                      <span className="text-2xl font-black text-amber-400 block">🏆 #1</span>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase">Best Performer</span>
-                    </div>
-                    <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 text-center">
-                      <span className="text-2xl font-black text-pink-400 block">15+</span>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase">Cloud Deploys</span>
-                    </div>
-                    <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 text-center">
-                      <span className="text-2xl font-black text-cyan-400 block">24/7</span>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase">Support & Quality</span>
-                    </div>
-                  </div>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-pink-500/10 text-pink-400 font-bold border border-pink-500/20">
+                    Java & AWS DevOps Leader
+                  </span>
                 </div>
 
-                {/* Interest Chips Section */}
-                <div className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800/90 shadow-xl space-y-3">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">
-                    Interests & Focus Areas
-                  </h3>
-                  <div className="flex flex-wrap gap-2.5 pt-1">
-                    {interests.map((item) => (
-                      <div
-                        key={item.name}
-                        className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-950/80 border border-slate-800 hover:border-pink-500/40 text-xs font-bold text-slate-200 shadow-sm transition-all"
-                      >
-                        <span className="text-base">{item.icon}</span>
-                        <span>{item.name}</span>
-                      </div>
-                    ))}
+                <p className="text-base sm:text-lg text-slate-200 font-medium leading-relaxed">
+                  I am a high-performing <span className="text-white font-black underline decoration-pink-500 decoration-2">Java Full Stack Developer</span> & <span className="text-white font-black underline decoration-sky-400 decoration-2">AWS DevOps Engineer</span> based in Ghaziabad, India. I specialize in architecting resilient backend systems with Java Spring Boot, crafting reactive React web platforms, and automating cloud infrastructure with Docker, Kubernetes, and AWS CI/CD pipelines.
+                </p>
+
+                <p className="text-sm text-slate-400 leading-relaxed">
+                  Winner of the prestigious <strong className="text-amber-300 font-bold">Best Performer of the Institution Award</strong>, I bring end-to-end expertise spanning microservices orchestration, real-time event streaming, database query optimization, and production cloud monitoring. My focus is writing clean, scalable, maintainable code that drives business results and high system reliability.
+                </p>
+
+                {/* Key Metrics Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                  <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-center">
+                    <span className="text-2xl font-black text-white block">100%</span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase">Success Rate</span>
+                  </div>
+                  <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-center">
+                    <span className="text-2xl font-black text-amber-400 block">🏆 #1</span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase">Best Performer</span>
+                  </div>
+                  <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-center">
+                    <span className="text-2xl font-black text-pink-400 block">15+</span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase">Cloud Deploys</span>
+                  </div>
+                  <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-center">
+                    <span className="text-2xl font-black text-cyan-400 block">24/7</span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase">Architecture SLA</span>
                   </div>
                 </div>
+              </div>
 
-                {/* Quick Contact Bar */}
-                <div className="p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-purple-950/40 to-slate-900 border border-purple-500/30 shadow-xl space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-base font-bold text-white">Let’s Build Something Amazing</h3>
-                      <p className="text-xs text-slate-400">Available for Full-Time Roles, Contracts & Consulting</p>
-                    </div>
-                    <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold border border-emerald-500/30">
-                      Open to Work
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                    <a
-                      href="https://wa.me/917503962162?text=Hi%20Manish%2C%20I%20would%20like%20to%20discuss%20a%20developer%20opportunity."
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 p-3 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 hover:bg-emerald-900/50 text-emerald-200 transition"
+              {/* Interests & Focus Chips (Design Ref 4) */}
+              <div className="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-3">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">
+                  Interests & Specializations
+                </h3>
+                <div className="flex flex-wrap gap-2.5 pt-1">
+                  {interests.map((item) => (
+                    <div
+                      key={item.name}
+                      className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-950 border border-slate-800 hover:border-pink-500/40 text-xs font-bold text-slate-200 shadow-sm transition-all"
                     >
-                      <div className="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold">
-                        WA
-                      </div>
-                      <div className="overflow-hidden">
-                        <span className="text-xs font-black block">WhatsApp Chat</span>
-                        <span className="text-[11px] text-emerald-400/80 font-mono">+91 7503962162</span>
-                      </div>
-                    </a>
-
-                    <a
-                      href="mailto:info@appletreeinfotech.in"
-                      className="flex items-center gap-3 p-3 rounded-2xl bg-sky-950/40 border border-sky-500/30 hover:bg-sky-900/50 text-sky-200 transition"
-                    >
-                      <div className="w-8 h-8 rounded-xl bg-sky-500/20 flex items-center justify-center text-sky-400">
-                        <Mail className="w-4 h-4" />
-                      </div>
-                      <div className="overflow-hidden">
-                        <span className="text-xs font-black block">Official Email</span>
-                        <span className="text-[11px] text-sky-400/80 truncate block">info@appletreeinfotech.in</span>
-                      </div>
-                    </a>
-                  </div>
+                      <span className="text-base">{item.icon}</span>
+                      <span>{item.name}</span>
+                    </div>
+                  ))}
                 </div>
-              </motion.div>
-            )}
+              </div>
+            </section>
 
-            {/* TAB 2: TECH STACK & SKILLS */}
-            {activeTab === 'skills' && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-6"
-              >
+            {/* 2. RICH TECH STACK & ARCHITECTURE SECTION (ALL VISIBLE & BEAUTIFUL) */}
+            <section aria-labelledby="tech-stack-heading" className="space-y-4">
+              <div className="flex items-center justify-between pb-1">
+                <div className="flex items-center gap-2">
+                  <Code2 className="w-5 h-5 text-pink-400" />
+                  <h2 id="tech-stack-heading" className="text-lg sm:text-xl font-black text-white">
+                    Core Technical Stack & Engineering Matrix
+                  </h2>
+                </div>
+                <span className="text-xs px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 font-mono">
+                  Full Stack + DevOps
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 gap-5">
                 {skillCategories.map((cat, idx) => {
                   const Icon = cat.icon;
                   return (
-                    <div key={idx} className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800/90 shadow-xl space-y-4">
-                      <div className="flex items-center gap-2.5 pb-2 border-b border-slate-800">
-                        <div className="w-8 h-8 rounded-xl bg-pink-500/20 text-pink-400 flex items-center justify-center">
-                          <Icon className="w-4 h-4" />
+                    <div 
+                      key={idx} 
+                      className={"p-6 rounded-3xl bg-slate-900/90 border " + cat.borderColor + " shadow-xl space-y-4 bg-gradient-to-br " + cat.accent}
+                    >
+                      <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center text-white shadow-inner">
+                            <Icon className="w-5 h-5" />
+                          </div>
+                          <h3 className="text-base sm:text-lg font-black text-white">{cat.title}</h3>
                         </div>
-                        <h3 className="text-base font-bold text-white">{cat.title}</h3>
+                        <span className={"text-[10px] font-black px-2.5 py-0.5 rounded-full border " + cat.badgeColor}>
+                          Verified
+                        </span>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {cat.skills.map((s, sIdx) => (
-                          <div key={sIdx} className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/90 hover:border-slate-700 transition space-y-1.5">
+                          <div 
+                            key={sIdx} 
+                            className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/90 hover:border-slate-700 transition space-y-1.5 shadow-sm"
+                          >
                             <div className="flex items-center justify-between">
                               <span className="font-extrabold text-sm text-white">{s.name}</span>
-                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 font-black">
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-bold">
                                 {s.level}
                               </span>
                             </div>
-                            <p className="text-xs text-slate-400">{s.desc}</p>
+                            <p className="text-xs text-slate-400 leading-relaxed">{s.desc}</p>
                           </div>
                         ))}
                       </div>
                     </div>
                   );
                 })}
-              </motion.div>
-            )}
+              </div>
+            </section>
 
-            {/* TAB 3: FEATURED PROJECTS */}
-            {activeTab === 'projects' && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-4"
-              >
+            {/* 3. FEATURED PROJECTS SHOWCASE (ALL VISIBLE & COMPREHENSIVE) */}
+            <section aria-labelledby="projects-heading" className="space-y-4">
+              <div className="flex items-center justify-between pb-1">
+                <div className="flex items-center gap-2">
+                  <Briefcase className="w-5 h-5 text-sky-400" />
+                  <h2 id="projects-heading" className="text-lg sm:text-xl font-black text-white">
+                    Featured Enterprise Engineering Projects
+                  </h2>
+                </div>
+                <span className="text-xs px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 font-mono">
+                  Production Systems
+                </span>
+              </div>
+
+              <div className="space-y-5">
                 {projects.map((proj, idx) => (
-                  <div key={idx} className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800/90 shadow-xl space-y-4 hover:border-pink-500/40 transition">
-                    <div className="flex items-start justify-between gap-4">
+                  <article 
+                    key={idx} 
+                    className="p-6 sm:p-8 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl space-y-5 hover:border-pink-500/40 transition"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
-                        <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30">
+                        <span className={"text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full shadow-sm " + proj.badgeClass}>
                           {proj.badge}
                         </span>
-                        <h3 className="text-xl font-black text-white mt-1.5">{proj.title}</h3>
-                        <p className="text-xs text-slate-400 font-semibold">{proj.role} • {proj.period}</p>
+                        <h3 className="text-xl sm:text-2xl font-black text-white mt-2">{proj.title}</h3>
+                        <p className="text-xs text-slate-400 font-bold">{proj.role} • {proj.period}</p>
                       </div>
 
-                      <a
-                        href={proj.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
-                        title="Open Live Project"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
+                      <div className="flex items-center gap-2">
+                        {proj.githubUrl && (
+                          <a
+                            href={proj.githubUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition flex items-center gap-1.5 text-xs font-bold"
+                            title="View GitHub Repository"
+                          >
+                            <Github className="w-4 h-4" />
+                            <span>Code</span>
+                          </a>
+                        )}
+                        {proj.liveUrl && (
+                          <a
+                            href={proj.liveUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white transition flex items-center gap-1.5 text-xs font-black shadow-md"
+                            title="Open Live Application"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            <span>Live Site</span>
+                          </a>
+                        )}
+                      </div>
                     </div>
 
                     <p className="text-sm text-slate-300 leading-relaxed">
-                      {proj.description}
+                      {proj.summary}
                     </p>
 
+                    {/* Key Technical Highlights */}
+                    <div className="space-y-2 p-4 rounded-2xl bg-slate-950/70 border border-slate-800/80">
+                      <span className="text-[11px] font-black uppercase text-slate-400 tracking-wider block">
+                        Architectural Milestones & Deliverables:
+                      </span>
+                      <ul className="space-y-1.5">
+                        {proj.achievements.map((ach, achIdx) => (
+                          <li key={achIdx} className="flex items-start gap-2 text-xs text-slate-300">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                            <span>{ach}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Tech Badges */}
                     <div className="flex flex-wrap gap-1.5 pt-1">
                       {proj.technologies.map((t) => (
-                        <span key={t} className="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-bold text-slate-300 font-mono">
+                        <span key={t} className="px-3 py-1 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-bold text-slate-300 font-mono">
                           {t}
                         </span>
                       ))}
                     </div>
-                  </div>
+                  </article>
                 ))}
-              </motion.div>
-            )}
+              </div>
+            </section>
 
-            {/* TAB 4: AWARDS & HONORS */}
-            {activeTab === 'awards' && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-4"
-              >
+            {/* 4. AWARDS & HONORS SECTION */}
+            <section aria-labelledby="awards-heading" className="space-y-4">
+              <div className="flex items-center justify-between pb-1">
+                <div className="flex items-center gap-2">
+                  <Award className="w-5 h-5 text-amber-400" />
+                  <h2 id="awards-heading" className="text-lg sm:text-xl font-black text-white">
+                    Honors, Certifications & Achievements
+                  </h2>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
                 {awards.map((aw, idx) => (
-                  <div key={idx} className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800/90 shadow-xl space-y-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
-                        <Award className="w-5 h-5" />
+                  <div 
+                    key={idx} 
+                    className="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-3 bg-gradient-to-r from-amber-500/10 via-transparent to-slate-900"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
+                          <Award className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-base sm:text-lg font-black text-white">{aw.title}</h3>
+                          <p className="text-xs text-slate-400 font-semibold">{aw.issuer} • {aw.date}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="text-base font-black text-white">{aw.title}</h3>
-                        <p className="text-xs text-slate-400 font-semibold">{aw.issuer} • {aw.date}</p>
-                      </div>
+                      <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        {aw.badge}
+                      </span>
                     </div>
-                    <p className="text-sm text-slate-300 leading-relaxed">
+                    <p className="text-sm text-slate-300 leading-relaxed pl-13">
                       {aw.description}
                     </p>
                   </div>
                 ))}
-              </motion.div>
-            )}
+              </div>
+            </section>
 
-            {/* TAB 5: AI & COPILOT GROUNDING FAQS */}
-            {activeTab === 'faq' && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-4"
-              >
-                <div className="p-4 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 text-cyan-300 text-xs font-semibold flex items-center gap-2.5">
-                  <Sparkles className="w-4 h-4 shrink-0" />
-                  <span>Structured for Microsoft Copilot, Google Search, and AI Assistants.</span>
-                </div>
+            {/* 5. SEARCH ENGINE & COPILOT AI GROUNDING FAQS */}
+            <section aria-labelledby="faq-heading" className="space-y-4">
+              <div className="flex items-center gap-2 pb-1">
+                <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                <h2 id="faq-heading" className="text-lg sm:text-xl font-black text-white">
+                  Verified Knowledge & FAQ Grounding
+                </h2>
+              </div>
 
+              <div className="p-4 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 text-cyan-300 text-xs font-semibold flex items-center gap-2.5">
+                <Sparkles className="w-4 h-4 shrink-0" />
+                <span>Optimized for Microsoft Copilot, ChatGPT, Gemini, and Google Search indexing.</span>
+              </div>
+
+              <div className="space-y-3">
                 {faqs.map((faq, idx) => (
-                  <div key={idx} className="p-5 rounded-3xl bg-slate-900/80 border border-slate-800/90 shadow-xl space-y-2">
-                    <h3 className="text-sm font-black text-white flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-pink-500/20 text-pink-400 flex items-center justify-center text-xs">
+                  <div key={idx} className="p-5 rounded-3xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-2">
+                    <h3 className="text-sm sm:text-base font-black text-white flex items-center gap-2.5">
+                      <span className="w-6 h-6 rounded-full bg-pink-500/20 text-pink-400 flex items-center justify-center text-xs font-black shrink-0">
                         Q
                       </span>
                       <span>{faq.q}</span>
                     </h3>
-                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed pl-7">
+                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed pl-8.5">
                       {faq.a}
                     </p>
                   </div>
                 ))}
-              </motion.div>
-            )}
+              </div>
+            </section>
 
             {/* Bottom Footer Bar */}
-            <div className="pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+            <footer className="pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 pb-12">
               <p>© {new Date().getFullYear()} Manish Kumar. All rights reserved.</p>
               <div className="flex items-center gap-4">
                 <a href="https://github.com/Lightining29" target="_blank" rel="noopener noreferrer" className="hover:text-white transition flex items-center gap-1">
@@ -809,10 +873,10 @@ export default function ManishKumarProfile() {
                 </a>
                 <a href="https://www.afshaenterprises.com/manish-kumar" target="_blank" rel="noopener noreferrer" className="hover:text-white transition flex items-center gap-1">
                   <ExternalLink className="w-4 h-4" />
-                  <span>Afsha Enterprises</span>
+                  <span>Afsha Enterprises Profile</span>
                 </a>
               </div>
-            </div>
+            </footer>
 
           </div>
 
