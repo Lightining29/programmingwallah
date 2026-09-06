@@ -131,16 +131,34 @@ ServerSignature Off
     RewriteCond %{HTTP:X-Forwarded-Proto} !https
     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-    # 6.2 Pass-through /api and /uploads to Node.js Backend
+    # 6.2 Pass-through /api, /uploads, sitemap.xml, robots.txt
     RewriteRule ^api(/.*)?$ - [L]
     RewriteRule ^uploads(/.*)?$ - [L]
+    RewriteRule ^sitemap\.xml$ - [L]
+    RewriteRule ^robots\.txt$ - [L]
 
-    # 6.3 If requested resource is an existing file, directory, or link, serve it directly
+    # 6.3 If requested resource is an existing file or directory in root, serve it directly
     RewriteCond %{REQUEST_FILENAME} -f [OR]
-    RewriteCond %{REQUEST_FILENAME} -d [OR]
-    RewriteCond %{REQUEST_FILENAME} -l
+    RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
 
-    # 6.4 SPA Fallback: Route all client-side navigation (e.g. /admin, /parent, /courses) to index.html
+    # 6.4 If requested asset exists in frontend/dist/ (e.g. assets/*), serve directly
+    RewriteCond %{DOCUMENT_ROOT}/frontend/dist/$1 -f
+    RewriteRule ^(.*)$ frontend/dist/$1 [L]
+
+    # 6.5 If requested asset exists in dist/ (e.g. assets/*), serve directly
+    RewriteCond %{DOCUMENT_ROOT}/dist/$1 -f
+    RewriteRule ^(.*)$ dist/$1 [L]
+
+    # 6.6 SPA Fallback: If frontend/dist/index.html exists, route there
+    RewriteCond %{DOCUMENT_ROOT}/frontend/dist/index.html -f
+    RewriteRule ^ frontend/dist/index.html [L]
+
+    # 6.7 SPA Fallback: If dist/index.html exists, route there
+    RewriteCond %{DOCUMENT_ROOT}/dist/index.html -f
+    RewriteRule ^ dist/index.html [L]
+
+    # 6.8 SPA Fallback: Root index.html
+    RewriteCond %{DOCUMENT_ROOT}/index.html -f
     RewriteRule ^ index.html [L]
 </IfModule>
