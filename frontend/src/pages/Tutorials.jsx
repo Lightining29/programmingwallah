@@ -1108,8 +1108,64 @@ export default function Tutorials() {
         </div>
       </section>
 
+      {/* ── 1.5 INTERACTIVE DIGITAL COURSE HANDBOOK & CURRICULUM FLIPBOOK ── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-8 pt-8">
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-gradient-to-r from-pink-500/10 to-purple-500/10 border border-pink-500/20 text-pink-600 text-xs font-black uppercase tracking-wider">
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Interactive Digital Handbook</span>
+              </div>
+              <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                Digital Curriculum &amp; Learning Flipbook
+              </h2>
+              <p className="text-xs sm:text-base text-slate-600 font-medium">
+                Flip through our complete interactive student handbook, syllabus, and live practical coding modules directly below.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <a
+                href="https://online.anyflip.com/sjnor/uvbj/index.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold transition shadow-sm"
+              >
+                <ExternalLink className="w-4 h-4" />
+                <span>Open Fullscreen Flipbook</span>
+              </a>
+            </div>
+          </div>
+
+          {/* Embedded AnyFlip Flipbook iframe with responsive container */}
+          <div className="relative w-full rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shadow-xl flex justify-center items-center">
+            <iframe
+              title="Interactive Digital Curriculum Flipbook"
+              src="https://online.anyflip.com/sjnor/uvbj/index.html"
+              className="w-full h-[380px] sm:h-[480px] md:h-[560px] border-0"
+              seamless="seamless"
+              scrolling="no"
+              frameBorder="0"
+              allowTransparency="true"
+              allowFullScreen={true}
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm text-slate-500 pt-1">
+            <span className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-pink-500" />
+              <span>Use the page arrows or click &amp; drag the book corners to flip pages.</span>
+            </span>
+            <span className="font-semibold text-slate-700">
+              Powered by AnyFlip Digital Cloud Reader
+            </span>
+          </div>
+        </div>
+      </section>
+
       {/* ── 2. MAIN TUTORIAL LAYOUT (SIDEBAR + ARTICLE CONTENT) ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* Left Sidebar: Topic Navigator */}
