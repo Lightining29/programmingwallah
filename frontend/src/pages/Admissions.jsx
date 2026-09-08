@@ -264,15 +264,16 @@ export default function Admissions() {
                         ) : courses.length > 0 ? (
                           courses.map((course) => (
                             <option key={course._id} value={course.title}>
-                              {course.title}
+                              {course.title} {course.price ? `— ₹${Number(course.price).toLocaleString()}` : ''}
                             </option>
                           ))
                         ) : (
                           <>
-                            <option value="Java Development">Java Development</option>
-                            <option value="MERN Developer">MERN Developer</option>
-                            <option value="Python Developer">Python Developer</option>
-                            <option value="Frontend Developer">Frontend Developer</option>
+                            <option value="Java Development">Java Development — ₹5,000</option>
+                            <option value="MERN Developer">MERN Developer — ₹6,000</option>
+                            <option value="Python Developer">Python Developer — ₹5,000</option>
+                            <option value="Frontend Developer">Frontend Developer — ₹4,500</option>
+                            <option value="Full Stack Java">Full Stack Java — ₹8,000</option>
                           </>
                         )}
                       </select>

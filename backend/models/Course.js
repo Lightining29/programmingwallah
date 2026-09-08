@@ -39,17 +39,14 @@ const CourseSchema = new mongoose.Schema({
   }],
   category: {
     type: String,
-    enum: ['development', 'design', 'marketing', 'other', 'kindergarten', 'preschool', 'early-learning'],
-    default: 'early-learning'
+    default: 'development'
   },
   level: {
     type: String,
-    enum: ['beginner', 'intermediate', 'advanced', 'all-levels'],
     default: 'beginner'
   },
   color: {
     type: String,
-    enum: ['brandMint', 'brandSky', 'brandCoral', 'brandPurple', 'brandOrange', 'brandPink'],
     default: 'brandMint'
   },
   order: {
@@ -112,7 +109,7 @@ const CourseSchema = new mongoose.Schema({
   },
   isPublished: {
     type: Boolean,
-    default: false
+    default: true
   },
   createdAt: {
     type: Date,

@@ -284,7 +284,10 @@ router.get('/fee-structures', async (req, res) => {
 router.get('/courses', async (req, res) => {
   try {
     if (mockStore.isMock) {
-      const list = await mockStore.find('courses');
+      let list = await mockStore.find('courses');
+      if (!list || list.length === 0) {
+        list = mockStore.courses || [];
+      }
       const activeCourses = list
         .filter((course) => course.isActive !== false)
         .sort((a, b) => (a.order || 0) - (b.order || 0));

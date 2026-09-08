@@ -24,7 +24,7 @@ import { getCalculatedFees } from '../utils/feeCalculator.js';
 import { generateLibraryNotePdf } from '../utils/notePdf.js';
 import { protect, authorize } from '../middleware/auth.js';
 import mockStore from '../config/mockStore.js';
-import { uploadGallery, uploadAdmissions, uploadNotes, uploadMaterial, uploadVideo } from '../middleware/upload.js';
+import { uploadGallery, uploadCourse, handleCourseUpload, uploadAdmissions, uploadNotes, uploadMaterial, uploadVideo } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -1946,52 +1946,115 @@ router.delete('/jobs/:id', async (req, res) => {
 // COURSE ROUTES
 // ═══════════════════════════════════════════════════
 
-// Create a course (with optional image upload)
-router.post('/courses', uploadGallery.single('file'), async (req, res) => {
+// Create a course (supports multipart form with optional image upload OR direct JSON)
+router.post('/courses', handleCourseUpload, async (req, res) => {
   try {
     const { title, description, duration, price, milestones, schedule, category, color, order } = req.body;
+
+    if (!title || !String(title).trim()) {
+      return res.status(400).json({ success: false, message: 'Course title is required' });
+    }
+
+    const cleanTitle = String(title).trim();
+    const cleanDesc = description && String(description).trim() 
+      ? String(description).trim() 
+      : `${cleanTitle} comprehensive technical training curriculum and project practice.`;
 
     let parsedMilestones = [];
     if (milestones) {
       try {
-        parsedMilestones = JSON.parse(milestones);
+        parsedMilestones = Array.isArray(milestones) ? milestones : JSON.parse(milestones);
       } catch {
-        parsedMilestones = String(milestones).split(',').map(m => m.trim()).filter(Boolean);
+        parsedMilestones = String(milestones).split('\n').flatMap(m => m.split(',')).map(m => m.trim()).filter(Boolean);
       }
     }
 
     let parsedSchedule = [];
     if (schedule) {
       try {
-        parsedSchedule = JSON.parse(schedule);
+        parsedSchedule = Array.isArray(schedule) ? schedule : JSON.parse(schedule);
       } catch {
         parsedSchedule = [];
       }
     }
 
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : '';
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : (req.body.imageUrl || '');
 
     const payload = {
-      title,
-      description,
-      duration: duration || '',
+      title: cleanTitle,
+      description: cleanDesc,
+      duration: duration || '1 month - 6 months',
       price: price !== undefined && price !== '' ? Number(price) : 0,
       milestones: parsedMilestones,
       schedule: parsedSchedule,
       category: category || 'development',
       color: color || 'brandMint',
-      order: order ? Number(order) : 0,
-      imageUrl
+      order: order !== undefined && order !== '' ? Number(order) : 0,
+      imageUrl,
+      isActive: true,
+      isPublished: true,
+      totalLessons: 0,
+      totalModules: 0,
+      totalEnrollments: 0
     };
 
     if (mockStore.isMock) {
-      const course = await mockStore.create('courses', { ...payload, createdAt: new Date() });
-      return res.status(201).json({ success: true, message: 'Course created!', data: course });
+      const course = await mockStore.create('courses', { ...payload, createdAt: new Date(), updatedAt: new Date() });
+      return res.status(201).json({ success: true, message: 'Course created successfully!', data: course });
     }
     const course = await Course.create(payload);
-    res.status(201).json({ success: true, message: 'Course created!', data: course });
+    res.status(201).json({ success: true, message: 'Course created successfully!', data: course });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('Error creating course:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to create course' });
+  }
+});
+
+// Update an existing course
+router.put('/courses/:id', handleCourseUpload, async (req, res) => {
+  try {
+    const { title, description, duration, price, milestones, schedule, category, color, order, isActive, isPublished } = req.body;
+    const updates = {};
+
+    if (title !== undefined) updates.title = String(title).trim();
+    if (description !== undefined) updates.description = String(description).trim();
+    if (duration !== undefined) updates.duration = duration;
+    if (price !== undefined && price !== '') updates.price = Number(price);
+    if (category !== undefined) updates.category = category;
+    if (color !== undefined) updates.color = color;
+    if (order !== undefined && order !== '') updates.order = Number(order);
+    if (isActive !== undefined) updates.isActive = Boolean(isActive);
+    if (isPublished !== undefined) updates.isPublished = Boolean(isPublished);
+    if (req.file) updates.imageUrl = `/uploads/${req.file.filename}`;
+
+    if (milestones !== undefined) {
+      try {
+        updates.milestones = Array.isArray(milestones) ? milestones : JSON.parse(milestones);
+      } catch {
+        updates.milestones = String(milestones).split('\n').map(m => m.trim()).filter(Boolean);
+      }
+    }
+
+    if (schedule !== undefined) {
+      try {
+        updates.schedule = Array.isArray(schedule) ? schedule : JSON.parse(schedule);
+      } catch {
+        updates.schedule = [];
+      }
+    }
+
+    if (mockStore.isMock) {
+      const course = await mockStore.findByIdAndUpdate('courses', req.params.id, { ...updates, updatedAt: new Date() });
+      if (!course) return res.status(404).json({ success: false, message: 'Course not found' });
+      return res.json({ success: true, message: 'Course updated successfully!', data: course });
+    }
+
+    const course = await Course.findByIdAndUpdate(req.params.id, updates, { new: true });
+    if (!course) return res.status(404).json({ success: false, message: 'Course not found' });
+    res.json({ success: true, message: 'Course updated successfully!', data: course });
+  } catch (error) {
+    console.error('Error updating course:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to update course' });
   }
 });
 
@@ -2000,8 +2063,12 @@ router.get('/courses', async (req, res) => {
   try {
     if (mockStore.isMock) {
       const list = await mockStore.find('courses');
-      list.sort((a, b) => (a.order || 0) - (b.order || 0));
-      return res.json({ success: true, count: list.length, data: list });
+      const safeList = (list || []).map(c => ({
+        ...c,
+        isActive: c.isActive !== false,
+        isPublished: c.isPublished !== false
+      })).sort((a, b) => (a.order || 0) - (b.order || 0));
+      return res.json({ success: true, count: safeList.length, data: safeList });
     }
     const list = await Course.find().sort({ order: 1, createdAt: -1 });
     res.json({ success: true, count: list.length, data: list });

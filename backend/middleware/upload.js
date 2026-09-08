@@ -35,12 +35,12 @@ const storage = multer.diskStorage({
 
 // File filters
 const galleryFilter = (req, file, cb) => {
-  const allowedTypes = ['.png', '.jpg', '.jpeg'];
+  const allowedTypes = ['.png', '.jpg', '.jpeg', '.webp', '.avif', '.svg', '.gif', '.bmp', '.jfif'];
   const ext = path.extname(file.originalname).toLowerCase();
-  if (allowedTypes.includes(ext)) {
+  if (allowedTypes.includes(ext) || file.mimetype?.startsWith('image/')) {
     cb(null, true);
   } else {
-    cb(new Error('Only JPG, JPEG, and PNG images are allowed for the gallery'), false);
+    cb(new Error('Only image files (JPG, PNG, WEBP, AVIF, SVG, GIF) are allowed'), false);
   }
 };
 
@@ -87,8 +87,24 @@ const materialFilter = (req, file, cb) => {
 export const uploadGallery = multer({
   storage,
   fileFilter: galleryFilter,
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
+
+export const uploadCourse = multer({
+  storage,
+  fileFilter: galleryFilter,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
+
+export const handleCourseUpload = (req, res, next) => {
+  uploadCourse.single('file')(req, res, (err) => {
+    if (err) {
+      console.warn('Course image upload notice:', err.message);
+      req.fileUploadError = err.message;
+    }
+    next();
+  });
+};
 
 export const uploadAdmissions = multer({
   storage: memoryStorage,

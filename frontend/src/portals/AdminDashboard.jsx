@@ -533,6 +533,8 @@ export default function AdminDashboard() {
   const [courseImage, setCourseImage] = useState(null);
   const [courseSchedules, setCourseSchedules] = useState([{ time: '', activity: '' }]);
   const [courses, setCourses] = useState([]);
+  const [isCreatingCourse, setIsCreatingCourse] = useState(false);
+  const [createdCourseBanner, setCreatedCourseBanner] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [modules, setModules] = useState([]);
   const [selectedModule, setSelectedModule] = useState(null);
@@ -675,7 +677,7 @@ export default function AdminDashboard() {
     fetchCertificates();
   }, [activeTab]);
 
-  // Automatically calculate suggested admission fee when selected courses change without resetting user selection
+  // Automatically calculate suggested tuition fee when selected courses change without resetting user selection
   useEffect(() => {
     if (courses && courses.length > 0) {
       const currentSelected = Array.isArray(admSelectedCourses) ? admSelectedCourses : [admStdClass].filter(Boolean);
@@ -687,10 +689,10 @@ export default function AdminDashboard() {
         }
       });
       if (calculatedFee > 0) {
-        setAdmissionFee(String(calculatedFee));
+        setAdmTuitionFee(String(calculatedFee));
       }
     }
-  }, [courses, admSelectedCourses]);
+  }, [courses, admSelectedCourses, admStdClass]);
 
   const fetchFeeStructures = () => {
     fetch('/api/admin/fee-structures', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
@@ -1579,61 +1581,106 @@ export default function AdminDashboard() {
 
   // ===== Course management =====
   const fetchCourses = () => {
-    fetch('/api/admin/courses', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
-      .then(res => res.json())
-      .then(data => { if (data.success) setCourses(data.data); })
-      .catch(err => console.error(err));
+    const token = localStorage.getItem('token');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    fetch('/api/admin/courses', { headers })
+      .then(res => {
+        if (!res.ok) throw new Error('Admin courses request failed, falling back to public');
+        return res.json();
+      })
+      .then(data => {
+        if (data.success && Array.isArray(data.data)) {
+          setCourses(data.data);
+        } else {
+          return fetch('/api/public/courses')
+            .then(r => r.json())
+            .then(d => { if (d.success && Array.isArray(d.data)) setCourses(d.data); });
+        }
+      })
+      .catch(() => {
+        fetch('/api/public/courses')
+          .then(res => res.json())
+          .then(data => { if (data.success && Array.isArray(data.data)) setCourses(data.data); })
+          .catch(err => console.error('Failed to load courses:', err));
+      });
   };
 
   const addScheduleRow = () => setCourseSchedules(prev => [...prev, { time: '', activity: '' }]);
   const updateScheduleRow = (idx, field, value) => setCourseSchedules(prev => prev.map((row, i) => i === idx ? { ...row, [field]: value } : row));
   const removeScheduleRow = (idx) => setCourseSchedules(prev => prev.filter((_, i) => i !== idx));
 
-  const handleCreateCourse = (e) => {
+  const handleCreateCourse = async (e) => {
     e.preventDefault();
-    if (!courseTitle.trim() || !courseDescription.trim()) return alert('Course title and description are required');
-    triggerConfirm(
-      "Are you sure you want to submit?",
-      `This will publish the "${courseTitle}" course to the Programs page.`,
-      "submit",
-      async () => {
-        try {
-          const milestones = courseMilestones.split('\n').map(m => m.trim()).filter(Boolean);
-          const cleanSchedule = courseSchedules.filter(r => r.time.trim() || r.activity.trim());
+    if (!courseTitle || !courseTitle.trim()) {
+      return alert('Please enter a course title.');
+    }
 
-          const formData = new FormData();
-          formData.append('title', courseTitle);
-          formData.append('description', courseDescription);
-          formData.append('duration', courseDuration);
-          formData.append('price', coursePrice);
-          formData.append('milestones', JSON.stringify(milestones));
-          formData.append('schedule', JSON.stringify(cleanSchedule));
-          formData.append('category', courseCategory);
-          formData.append('color', courseColor);
-          if (courseImage) formData.append('file', courseImage);
+    const cleanTitle = courseTitle.trim();
+    const cleanDesc = courseDescription.trim() || `${cleanTitle} technical training program & hands-on practical curriculum.`;
 
-          const res = await fetch('/api/admin/courses', {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-            body: formData
-          });
-          const data = await res.json();
-          if (data.success) {
-            alert('Course created successfully!');
-            setCourseTitle(''); setCourseDescription(''); setCourseDuration(''); setCoursePrice('');
-            setCourseMilestones(''); setCourseCategory('development'); setCourseColor('brandMint');
-            setCourseImage(null); setCourseSchedules([{ time: '', activity: '' }]);
-            const fileInput = document.getElementById('course-file-input');
-            if (fileInput) fileInput.value = '';
-            fetchCourses();
-          } else {
-            alert(data.message || 'Failed to create course');
-          }
-        } catch (err) {
-          console.error(err);
-        }
+    setIsCreatingCourse(true);
+    try {
+      const milestones = courseMilestones.split('\n').map(m => m.trim()).filter(Boolean);
+      const cleanSchedule = courseSchedules.filter(r => r.time.trim() || r.activity.trim());
+
+      const formData = new FormData();
+      formData.append('title', cleanTitle);
+      formData.append('description', cleanDesc);
+      formData.append('duration', courseDuration || '1 month - 6 months');
+      formData.append('price', coursePrice || '0');
+      formData.append('milestones', JSON.stringify(milestones));
+      formData.append('schedule', JSON.stringify(cleanSchedule));
+      formData.append('category', courseCategory || 'development');
+      formData.append('color', courseColor || 'brandMint');
+      if (courseImage) formData.append('file', courseImage);
+
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const res = await fetch('/api/admin/courses', {
+        method: 'POST',
+        headers,
+        body: formData
+      });
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        throw new Error(`Server returned status ${res.status}`);
       }
-    );
+
+      if (data.success && data.data) {
+        const newCourse = data.data;
+        // Immediately add to local courses state so it appears everywhere without delay
+        setCourses(prev => [newCourse, ...(prev || []).filter(c => c._id !== newCourse._id && c.title?.toLowerCase() !== newCourse.title?.toLowerCase())]);
+        setCreatedCourseBanner(newCourse);
+        
+        // Reset form fields
+        setCourseTitle(''); 
+        setCourseDescription(''); 
+        setCourseDuration(''); 
+        setCoursePrice('');
+        setCourseMilestones(''); 
+        setCourseCategory('development'); 
+        setCourseColor('brandMint');
+        setCourseImage(null); 
+        setCourseSchedules([{ time: '', activity: '' }]);
+        const fileInput = document.getElementById('course-file-input');
+        if (fileInput) fileInput.value = '';
+
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        fetchCourses();
+      } else {
+        alert(data.message || 'Failed to create course. Please verify your admin session.');
+      }
+    } catch (err) {
+      console.error('Create course error:', err);
+      alert('Error creating course: ' + (err.message || 'Server error'));
+    } finally {
+      setIsCreatingCourse(false);
+    }
   };
 
   const handleDeleteCourse = (id) => {
@@ -3552,51 +3599,84 @@ export default function AdminDashboard() {
                           </div>
                         </div>
 
-                        <div className="space-y-1 sm:col-span-4">
+                        <div className="space-y-1.5 sm:col-span-4">
                           <div className="flex items-center justify-between">
-                            <label className="font-bold text-slate-700 text-xs">
-                              Select Course(s) <span className="text-[11px] text-brandCoral font-normal">(Click multiple to combine, e.g. Java + MERN)</span>
+                            <label className="font-bold text-slate-700 text-xs flex items-center gap-1.5">
+                              <span>Select Course for Admission</span>
+                              <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                                {courseOptions.length} Courses Available
+                              </span>
                             </label>
                             <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-100">
-                              {(admSelectedCourses || []).length} Selected: {admStdClass || 'Java Development'}
+                              Selected: {admStdClass || 'Java Development'}
                             </span>
                           </div>
 
-                          {/* Multi-Select Course Pills */}
-                          <div className="flex flex-wrap gap-1.5 p-2 bg-slate-50 border border-slate-200 rounded-xl mt-1">
-                            {(courseOptions || []).map((course) => {
-                              const isSelected = (admSelectedCourses || []).includes(course);
-                              return (
-                                <button
-                                  key={course}
-                                  type="button"
-                                  onClick={(e) => handleToggleCourse(course, e)}
-                                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
-                                    isSelected
-                                      ? 'bg-[#5B468C] text-white border-[#5B468C] shadow-sm scale-[1.02]'
-                                      : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-100'
-                                  }`}
-                                >
-                                  {isSelected && <Check className="w-3 h-3 text-white" />}
-                                  <span>{course}</span>
-                                </button>
-                              );
-                            })}
+                          {/* Quick Dropdown Selector & Editable Title */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div>
+                              <select
+                                value={admSelectedCourses?.[0] || admStdClass || ''}
+                                onChange={(e) => {
+                                  const selected = e.target.value;
+                                  setAdmStdClass(selected);
+                                  setAdmSelectedCourses([selected]);
+                                  const match = courses?.find(c => c.title && c.title.toLowerCase() === selected.toLowerCase());
+                                  if (match && match.price) {
+                                    setAdmTuitionFee(String(match.price));
+                                  }
+                                }}
+                                className="w-full bg-white border border-slate-300 rounded-xl p-2.5 outline-none font-bold text-slate-800 text-xs shadow-sm focus:border-[#5B468C]"
+                              >
+                                <option value="" disabled>-- Choose a Course --</option>
+                                {(courseOptions || []).map((course) => (
+                                  <option key={course} value={course}>{course}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div>
+                              <input
+                                type="text"
+                                placeholder="Course name or combo (e.g. Java + MERN)..."
+                                value={admStdClass || ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setAdmStdClass(val);
+                                  const parts = val.split('+').map(s => s.trim()).filter(Boolean);
+                                  if (parts.length > 0) setAdmSelectedCourses(parts);
+                                }}
+                                className="w-full bg-white border border-slate-300 rounded-xl p-2.5 outline-none font-semibold text-slate-700 text-xs shadow-sm"
+                              />
+                            </div>
                           </div>
 
-                          {/* Editable Combined Course Title */}
-                          <input
-                            type="text"
-                            placeholder="Selected Course combination..."
-                            value={admStdClass || ''}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setAdmStdClass(val);
-                              const parts = val.split('+').map(s => s.trim()).filter(Boolean);
-                              if (parts.length > 0) setAdmSelectedCourses(parts);
-                            }}
-                            className="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-700 text-xs mt-1"
-                          />
+                          {/* Multi-Select Course Quick Pills */}
+                          <div>
+                            <span className="text-[11px] text-slate-500 font-medium block mb-1">
+                              Or click course badges to select / combine multiple (Ctrl/Shift-click):
+                            </span>
+                            <div className="flex flex-wrap gap-1.5 p-2 bg-slate-50 border border-slate-200 rounded-xl">
+                              {(courseOptions || []).map((course) => {
+                                const isSelected = (admSelectedCourses || []).includes(course);
+                                return (
+                                  <button
+                                    key={course}
+                                    type="button"
+                                    onClick={(e) => handleToggleCourse(course, e)}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                                      isSelected
+                                        ? 'bg-[#5B468C] text-white border-[#5B468C] shadow-sm scale-[1.02]'
+                                        : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-100'
+                                    }`}
+                                  >
+                                    {isSelected && <Check className="w-3 h-3 text-white" />}
+                                    <span>{course}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -5349,19 +5429,77 @@ export default function AdminDashboard() {
                   </div>
 
                   <div className="space-y-1 text-xs">
-                    <label className="font-bold text-slate-600">Course Image (optional, JPG/JPEG/PNG)</label>
+                    <label className="font-bold text-slate-600">Course Image (optional, JPG/JPEG/PNG/WEBP/SVG)</label>
                     <input
                       id="course-file-input"
-                      type="file" accept=".jpg,.jpeg,.png"
+                      type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.avif,.svg"
                       onChange={e => setCourseImage(e.target.files?.[0] || null)}
                       className="w-full p-3 bg-white border border-orange-100 outline-none rounded-xl"
                     />
                   </div>
 
-                  <button type="submit" className="w-full bg-slate-900 text-white font-quicksand font-bold text-xs py-2.5 rounded-xl transition-all shadow">
-                    PUBLISH COURSE
+                  <button
+                    type="submit"
+                    disabled={isCreatingCourse}
+                    className={`w-full bg-slate-900 hover:bg-slate-800 text-white font-quicksand font-bold text-xs py-3 rounded-xl transition-all shadow flex items-center justify-center gap-2 cursor-pointer ${isCreatingCourse ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  >
+                    {isCreatingCourse ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>PUBLISHING COURSE...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>PUBLISH NEW COURSE</span>
+                      </>
+                    )}
                   </button>
                 </form>
+
+                {/* Created Course Instant Action Banner */}
+                {createdCourseBanner && (
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold shrink-0">
+                        ✓
+                      </div>
+                      <div>
+                        <h5 className="font-bold text-emerald-900">
+                          Course "{createdCourseBanner.title}" Published Successfully!
+                        </h5>
+                        <p className="text-emerald-700 text-[11px]">
+                          Available now in Admissions, Programs, and LMS. Tuition Fee: ₹{Number(createdCourseBanner.price || 0).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTab('admissions');
+                          setAdmissionsSubTab('new');
+                          setAdmStdClass(createdCourseBanner.title);
+                          setAdmSelectedCourses([createdCourseBanner.title]);
+                          if (createdCourseBanner.price) {
+                            setAdmTuitionFee(String(createdCourseBanner.price));
+                          }
+                        }}
+                        className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm transition-all cursor-pointer text-xs flex items-center gap-1.5"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Create Admission For This Course</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCreatedCourseBanner(null)}
+                        className="text-slate-400 hover:text-slate-600 p-1"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Existing Courses List */}
                 <div className="space-y-4">
