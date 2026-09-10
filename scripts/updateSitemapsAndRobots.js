@@ -102,7 +102,7 @@ let sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
   </url>
 
   <!-- ========================================================= -->
-  <!-- 100 GHAZIABAD TECH & SOFTWARE DEVELOPMENT COURSES         -->
+  <!-- 150 GHAZIABAD TECH & SOFTWARE DEVELOPMENT COURSES         -->
   <!-- ========================================================= -->
 `;
 
@@ -204,3 +204,24 @@ robotsPaths.forEach(p => {
   fs.writeFileSync(p, robotsTxt.trim(), 'utf-8');
 });
 console.log('Saved robots.txt to all paths successfully!');
+
+// Generate robots.xml for Google Search Console / bots checking robots.xml
+const robotsXml = `<?xml version="1.0" encoding="UTF-8"?>
+<robots>
+  <sitemap>https://programmingwala.com/sitemap.xml</sitemap>
+  <sitemap>https://www.afshaenterprises.com/sitemap.xml</sitemap>
+</robots>
+`;
+
+const robotsXmlPaths = [
+  path.join(__dirname, '../dist/robots.xml'),
+  path.join(__dirname, '../frontend/public/robots.xml'),
+  path.join(__dirname, '../frontend/dist/robots.xml')
+];
+
+robotsXmlPaths.forEach(p => {
+  const dir = path.dirname(p);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(p, robotsXml.trim(), 'utf-8');
+});
+console.log('Saved robots.xml to all paths successfully!');

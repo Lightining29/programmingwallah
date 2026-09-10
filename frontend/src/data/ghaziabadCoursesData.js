@@ -8418,5 +8418,4255 @@ export const GHAZIABAD_COURSES = {
     ],
     "thumbnailImage": "https://programmingwala.com/assets/images/courses/computer-centre-near-me-ghaziabad.png",
     "svgThumbnail": "https://programmingwala.com/assets/images/courses/computer-centre-near-me-ghaziabad.svg"
+  },
+  "java-training-institute-in-ghaziabad": {
+    "slug": "java-training-institute-in-ghaziabad",
+    "courseName": "Top Java Training Institute in Ghaziabad RDC",
+    "shortTitle": "Java Training Institute",
+    "category": "Java",
+    "badgeText": "JAVA TRAINING INSTITUTE",
+    "themeColor": "#EA580C",
+    "seoTitle": "Top Java Training Institute in Ghaziabad RDC | Top Placement Institute (2026)",
+    "metaDesc": "Premier Java training institute in RDC Raj Nagar Ghaziabad with corporate lab facilities and 100% placement. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "java training institute in ghaziabad, java training institute coaching centre, best java training institute classes near me, java training institute training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Top Java Training Institute in Ghaziabad RDC",
+    "tagline": "🏆 Master Java Training Institute with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Premier Java training institute in RDC Raj Nagar Ghaziabad with corporate lab facilities and 100% placement. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Java Training Institute in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/java-training-institute-in-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/java-training-institute-in-ghaziabad.svg"
+  },
+  "core-java-course-in-rdc-raj-nagar-ghaziabad": {
+    "slug": "core-java-course-in-rdc-raj-nagar-ghaziabad",
+    "courseName": "Core Java Course in RDC Raj Nagar Ghaziabad",
+    "shortTitle": "Core Java RDC",
+    "category": "Java",
+    "badgeText": "CORE JAVA RDC",
+    "themeColor": "#C2410C",
+    "seoTitle": "Core Java Course in RDC Raj Nagar Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Master Core Java, JVM internals, multithreading, and OOP in our high-tech RDC Raj Nagar classroom lab. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "core java rdc in ghaziabad, core java rdc coaching centre, best core java rdc classes near me, core java rdc training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Core Java Course in RDC Raj Nagar Ghaziabad",
+    "tagline": "🏆 Master Core Java RDC with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Master Core Java, JVM internals, multithreading, and OOP in our high-tech RDC Raj Nagar classroom lab. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Core Java RDC in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/core-java-course-in-rdc-raj-nagar-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/core-java-course-in-rdc-raj-nagar-ghaziabad.svg"
+  },
+  "advance-java-corporate-training-ghaziabad": {
+    "slug": "advance-java-corporate-training-ghaziabad",
+    "courseName": "Advance Java Corporate Training in Ghaziabad",
+    "shortTitle": "Advance Java Corporate",
+    "category": "Java",
+    "badgeText": "ADVANCE JAVA CORPORATE",
+    "themeColor": "#9A3412",
+    "seoTitle": "Advance Java Corporate Training in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Advance Java enterprise training covering JDBC, Servlets, JSP, Spring Boot, and enterprise microservices. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "advance java corporate in ghaziabad, advance java corporate coaching centre, best advance java corporate classes near me, advance java corporate training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Advance Java Corporate Training in Ghaziabad",
+    "tagline": "🏆 Master Advance Java Corporate with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Advance Java enterprise training covering JDBC, Servlets, JSP, Spring Boot, and enterprise microservices. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Advance Java Corporate in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/advance-java-corporate-training-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/advance-java-corporate-training-ghaziabad.svg"
+  },
+  "java-coaching-classes-near-me-ghaziabad": {
+    "slug": "java-coaching-classes-near-me-ghaziabad",
+    "courseName": "Best Java Coaching Classes Near Me in Ghaziabad",
+    "shortTitle": "Java Coaching Near Me",
+    "category": "Java",
+    "badgeText": "JAVA COACHING NEAR ME",
+    "themeColor": "#EA580C",
+    "seoTitle": "Best Java Coaching Classes Near Me in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Find the highest-rated Java coaching classes near you in Ghaziabad with daily offline lab sessions. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "java coaching near me in ghaziabad, java coaching near me coaching centre, best java coaching near me classes near me, java coaching near me training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Best Java Coaching Classes Near Me in Ghaziabad",
+    "tagline": "🏆 Master Java Coaching Near Me with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Find the highest-rated Java coaching classes near you in Ghaziabad with daily offline lab sessions. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Java Coaching Near Me in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/java-coaching-classes-near-me-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/java-coaching-classes-near-me-ghaziabad.svg"
+  },
+  "java-course-with-placement-ghaziabad": {
+    "slug": "java-course-with-placement-ghaziabad",
+    "courseName": "Java Course with 100% Placement in Ghaziabad",
+    "shortTitle": "Java Placement Guarantee",
+    "category": "Java",
+    "badgeText": "JAVA PLACEMENT GUARANTEE",
+    "themeColor": "#B45309",
+    "seoTitle": "Java Course with 100% Placement in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Job-guaranteed Java training program with 50+ hiring partners in Noida, Delhi NCR, and Gurgaon. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "java placement guarantee in ghaziabad, java placement guarantee coaching centre, best java placement guarantee classes near me, java placement guarantee training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Java Course with 100% Placement in Ghaziabad",
+    "tagline": "🏆 Master Java Placement Guarantee with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Job-guaranteed Java training program with 50+ hiring partners in Noida, Delhi NCR, and Gurgaon. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Java Placement Guarantee in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/java-course-with-placement-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/java-course-with-placement-ghaziabad.svg"
+  },
+  "java-for-college-students-ghaziabad": {
+    "slug": "java-for-college-students-ghaziabad",
+    "courseName": "Java Programming for College Students in Ghaziabad",
+    "shortTitle": "Java College Track",
+    "category": "Java",
+    "badgeText": "JAVA COLLEGE TRACK",
+    "themeColor": "#7C2D12",
+    "seoTitle": "Java Programming for College Students in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Specialized Java semester and placement training for AKGEC, ABES, KIET, IMS, and RKGIT students. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "java college track in ghaziabad, java college track coaching centre, best java college track classes near me, java college track training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Java Programming for College Students in Ghaziabad",
+    "tagline": "🏆 Master Java College Track with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Specialized Java semester and placement training for AKGEC, ABES, KIET, IMS, and RKGIT students. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Java College Track in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/java-for-college-students-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/java-for-college-students-ghaziabad.svg"
+  },
+  "weekend-java-classes-in-ghaziabad": {
+    "slug": "weekend-java-classes-in-ghaziabad",
+    "courseName": "Weekend Java Classes in Ghaziabad for Working Professionals",
+    "shortTitle": "Weekend Java Classes",
+    "category": "Java",
+    "badgeText": "WEEKEND JAVA CLASSES",
+    "themeColor": "#C2410C",
+    "seoTitle": "Weekend Java Classes in Ghaziabad for Working Professionals | Top Placement Institute (2026)",
+    "metaDesc": "Executive Saturday & Sunday Java batches in RDC Ghaziabad designed for working professionals. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "weekend java classes in ghaziabad, weekend java classes coaching centre, best weekend java classes classes near me, weekend java classes training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Weekend Java Classes in Ghaziabad for Working Professionals",
+    "tagline": "🏆 Master Weekend Java Classes with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Executive Saturday & Sunday Java batches in RDC Ghaziabad designed for working professionals. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Weekend Java Classes in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/weekend-java-classes-in-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/weekend-java-classes-in-ghaziabad.svg"
+  },
+  "java-spring-boot-react-classes-ghaziabad": {
+    "slug": "java-spring-boot-react-classes-ghaziabad",
+    "courseName": "Java Spring Boot & React Full Stack Classes in Ghaziabad",
+    "shortTitle": "Spring Boot React Stack",
+    "category": "Java",
+    "badgeText": "SPRING BOOT REACT STACK",
+    "themeColor": "#15803D",
+    "seoTitle": "Java Spring Boot & React Full Stack Classes in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Build modern enterprise web applications with Spring Boot 3, REST APIs, and React 18 frontend. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "spring boot react stack in ghaziabad, spring boot react stack coaching centre, best spring boot react stack classes near me, spring boot react stack training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Java Spring Boot & React Full Stack Classes in Ghaziabad",
+    "tagline": "🏆 Master Spring Boot React Stack with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Build modern enterprise web applications with Spring Boot 3, REST APIs, and React 18 frontend. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Spring Boot React Stack in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/java-spring-boot-react-classes-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/java-spring-boot-react-classes-ghaziabad.svg"
+  },
+  "java-interview-preparation-course-ghaziabad": {
+    "slug": "java-interview-preparation-course-ghaziabad",
+    "courseName": "Java Technical Interview Preparation in Ghaziabad",
+    "shortTitle": "Java Interview Prep",
+    "category": "Java",
+    "badgeText": "JAVA INTERVIEW PREP",
+    "themeColor": "#7C3AED",
+    "seoTitle": "Java Technical Interview Preparation in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Crack technical interviews at top MNCs with 300+ Java coding questions, system design, and mock rounds. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "java interview prep in ghaziabad, java interview prep coaching centre, best java interview prep classes near me, java interview prep training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Java Technical Interview Preparation in Ghaziabad",
+    "tagline": "🏆 Master Java Interview Prep with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Crack technical interviews at top MNCs with 300+ Java coding questions, system design, and mock rounds. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Java Interview Prep in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/java-interview-preparation-course-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/java-interview-preparation-course-ghaziabad.svg"
+  },
+  "java-backend-development-course-ghaziabad": {
+    "slug": "java-backend-development-course-ghaziabad",
+    "courseName": "Java Enterprise Backend Development Course in Ghaziabad",
+    "shortTitle": "Java Backend Dev",
+    "category": "Java",
+    "badgeText": "JAVA BACKEND DEV",
+    "themeColor": "#1E40AF",
+    "seoTitle": "Java Enterprise Backend Development Course in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Design and deploy robust backend APIs, connection pooling, and microservices with Java and MySQL. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "java backend dev in ghaziabad, java backend dev coaching centre, best java backend dev classes near me, java backend dev training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Java Enterprise Backend Development Course in Ghaziabad",
+    "tagline": "🏆 Master Java Backend Dev with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Design and deploy robust backend APIs, connection pooling, and microservices with Java and MySQL. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Java Backend Dev in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/java-backend-development-course-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/java-backend-development-course-ghaziabad.svg"
+  },
+  "python-training-institute-in-ghaziabad": {
+    "slug": "python-training-institute-in-ghaziabad",
+    "courseName": "Top Python Training Institute in Ghaziabad RDC",
+    "shortTitle": "Python Training Institute",
+    "category": "Python",
+    "badgeText": "PYTHON TRAINING INSTITUTE",
+    "themeColor": "#0284C7",
+    "seoTitle": "Top Python Training Institute in Ghaziabad RDC | Top Placement Institute (2026)",
+    "metaDesc": "Premier Python training academy in RDC Raj Nagar Ghaziabad with modern labs and placement cell. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "python training institute in ghaziabad, python training institute coaching centre, best python training institute classes near me, python training institute training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Top Python Training Institute in Ghaziabad RDC",
+    "tagline": "🏆 Master Python Training Institute with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Premier Python training academy in RDC Raj Nagar Ghaziabad with modern labs and placement cell. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Python Training Institute in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/python-training-institute-in-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/python-training-institute-in-ghaziabad.svg"
+  },
+  "python-coaching-near-me-ghaziabad": {
+    "slug": "python-coaching-near-me-ghaziabad",
+    "courseName": "Best Python Coaching Near Me in Ghaziabad",
+    "shortTitle": "Python Coaching Near Me",
+    "category": "Python",
+    "badgeText": "PYTHON COACHING NEAR ME",
+    "themeColor": "#0369A1",
+    "seoTitle": "Best Python Coaching Near Me in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Search for the top Python coaching classes near you in Ghaziabad. Offline labs and personalized mentorship. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "python coaching near me in ghaziabad, python coaching near me coaching centre, best python coaching near me classes near me, python coaching near me training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Best Python Coaching Near Me in Ghaziabad",
+    "tagline": "🏆 Master Python Coaching Near Me with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Search for the top Python coaching classes near you in Ghaziabad. Offline labs and personalized mentorship. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Python Coaching Near Me in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/python-coaching-near-me-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/python-coaching-near-me-ghaziabad.svg"
+  },
+  "python-developer-course-in-ghaziabad": {
+    "slug": "python-developer-course-in-ghaziabad",
+    "courseName": "Professional Python Developer Course in Ghaziabad",
+    "shortTitle": "Python Developer Course",
+    "category": "Python",
+    "badgeText": "PYTHON DEVELOPER COURSE",
+    "themeColor": "#0E7490",
+    "seoTitle": "Professional Python Developer Course in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Become a certified Python software developer with hands-on projects, Git, APIs, and databases. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "python developer course in ghaziabad, python developer course coaching centre, best python developer course classes near me, python developer course training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Professional Python Developer Course in Ghaziabad",
+    "tagline": "🏆 Master Python Developer Course with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Become a certified Python software developer with hands-on projects, Git, APIs, and databases. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Python Developer Course in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/python-developer-course-in-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/python-developer-course-in-ghaziabad.svg"
+  },
+  "python-course-with-job-guarantee-ghaziabad": {
+    "slug": "python-course-with-job-guarantee-ghaziabad",
+    "courseName": "Python Course with 100% Placement in Ghaziabad",
+    "shortTitle": "Python Job Guarantee",
+    "category": "Python",
+    "badgeText": "PYTHON JOB GUARANTEE",
+    "themeColor": "#047857",
+    "seoTitle": "Python Course with 100% Placement in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Career-track Python certification program with assured interview calls across Noida and Delhi NCR. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "python job guarantee in ghaziabad, python job guarantee coaching centre, best python job guarantee classes near me, python job guarantee training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Python Course with 100% Placement in Ghaziabad",
+    "tagline": "🏆 Master Python Job Guarantee with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Career-track Python certification program with assured interview calls across Noida and Delhi NCR. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Python Job Guarantee in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/python-course-with-job-guarantee-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/python-course-with-job-guarantee-ghaziabad.svg"
+  },
+  "python-for-freshers-and-beginners-ghaziabad": {
+    "slug": "python-for-freshers-and-beginners-ghaziabad",
+    "courseName": "Python Programming Course for Freshers in Ghaziabad",
+    "shortTitle": "Python for Freshers",
+    "category": "Python",
+    "badgeText": "PYTHON FOR FRESHERS",
+    "themeColor": "#0D9488",
+    "seoTitle": "Python Programming Course for Freshers in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Friendly, beginner-focused Python coding classes tailored for fresh graduates and non-CS students. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "python for freshers in ghaziabad, python for freshers coaching centre, best python for freshers classes near me, python for freshers training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Python Programming Course for Freshers in Ghaziabad",
+    "tagline": "🏆 Master Python for Freshers with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Friendly, beginner-focused Python coding classes tailored for fresh graduates and non-CS students. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Python for Freshers in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/python-for-freshers-and-beginners-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/python-for-freshers-and-beginners-ghaziabad.svg"
+  },
+  "weekend-python-batches-in-ghaziabad": {
+    "slug": "weekend-python-batches-in-ghaziabad",
+    "courseName": "Weekend Python Coding Batches in RDC Ghaziabad",
+    "shortTitle": "Weekend Python Batches",
+    "category": "Python",
+    "badgeText": "WEEKEND PYTHON BATCHES",
+    "themeColor": "#0284C7",
+    "seoTitle": "Weekend Python Coding Batches in RDC Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Flexible weekend Python classes in RDC Raj Nagar for college students and IT working professionals. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "weekend python batches in ghaziabad, weekend python batches coaching centre, best weekend python batches classes near me, weekend python batches training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Weekend Python Coding Batches in RDC Ghaziabad",
+    "tagline": "🏆 Master Weekend Python Batches with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Flexible weekend Python classes in RDC Raj Nagar for college students and IT working professionals. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Weekend Python Batches in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/weekend-python-batches-in-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/weekend-python-batches-in-ghaziabad.svg"
+  },
+  "python-django-web-development-ghaziabad": {
+    "slug": "python-django-web-development-ghaziabad",
+    "courseName": "Python Django Web Development Course in Ghaziabad",
+    "shortTitle": "Python Django Dev",
+    "category": "Python",
+    "badgeText": "PYTHON DJANGO DEV",
+    "themeColor": "#065F46",
+    "seoTitle": "Python Django Web Development Course in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Master Django MVT, Django ORM, authentication, and REST APIs with live deployment. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "python django dev in ghaziabad, python django dev coaching centre, best python django dev classes near me, python django dev training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Python Django Web Development Course in Ghaziabad",
+    "tagline": "🏆 Master Python Django Dev with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Master Django MVT, Django ORM, authentication, and REST APIs with live deployment. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Python Django Dev in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/python-django-web-development-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/python-django-web-development-ghaziabad.svg"
+  },
+  "python-fastapi-backend-course-ghaziabad": {
+    "slug": "python-fastapi-backend-course-ghaziabad",
+    "courseName": "Python FastAPI Backend & Microservices Course in Ghaziabad",
+    "shortTitle": "FastAPI Backend",
+    "category": "Python",
+    "badgeText": "FASTAPI BACKEND",
+    "themeColor": "#0891B2",
+    "seoTitle": "Python FastAPI Backend & Microservices Course in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Build ultra-fast async APIs and AI backends with FastAPI, Pydantic, and PostgreSQL. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "fastapi backend in ghaziabad, fastapi backend coaching centre, best fastapi backend classes near me, fastapi backend training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Python FastAPI Backend & Microservices Course in Ghaziabad",
+    "tagline": "🏆 Master FastAPI Backend with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Build ultra-fast async APIs and AI backends with FastAPI, Pydantic, and PostgreSQL. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for FastAPI Backend in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/python-fastapi-backend-course-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/python-fastapi-backend-course-ghaziabad.svg"
+  },
+  "python-automation-scripting-course-ghaziabad": {
+    "slug": "python-automation-scripting-course-ghaziabad",
+    "courseName": "Python Automation & Web Scraping Course in Ghaziabad",
+    "shortTitle": "Python Automation",
+    "category": "Python",
+    "badgeText": "PYTHON AUTOMATION",
+    "themeColor": "#155E75",
+    "seoTitle": "Python Automation & Web Scraping Course in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Automate spreadsheets, OS tasks, and scrape dynamic websites with Python Selenium and BeautifulSoup. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "python automation in ghaziabad, python automation coaching centre, best python automation classes near me, python automation training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Python Automation & Web Scraping Course in Ghaziabad",
+    "tagline": "🏆 Master Python Automation with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Automate spreadsheets, OS tasks, and scrape dynamic websites with Python Selenium and BeautifulSoup. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Python Automation in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/python-automation-scripting-course-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/python-automation-scripting-course-ghaziabad.svg"
+  },
+  "data-science-training-institute-in-ghaziabad": {
+    "slug": "data-science-training-institute-in-ghaziabad",
+    "courseName": "Premier Data Science Training Institute in Ghaziabad",
+    "shortTitle": "Data Science Institute",
+    "category": "Data Science",
+    "badgeText": "DATA SCIENCE INSTITUTE",
+    "themeColor": "#4F46E5",
+    "seoTitle": "Premier Data Science Training Institute in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Ghaziabad top-rated data science institute with live project labs, Pandas, ML, and Power BI. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "data science institute in ghaziabad, data science institute coaching centre, best data science institute classes near me, data science institute training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Premier Data Science Training Institute in Ghaziabad",
+    "tagline": "🏆 Master Data Science Institute with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Ghaziabad top-rated data science institute with live project labs, Pandas, ML, and Power BI. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Data Science Institute in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/data-science-training-institute-in-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/data-science-training-institute-in-ghaziabad.svg"
+  },
+  "data-science-coaching-near-me-ghaziabad": {
+    "slug": "data-science-coaching-near-me-ghaziabad",
+    "courseName": "Best Data Science Coaching Near Me in Ghaziabad",
+    "shortTitle": "Data Science Near Me",
+    "category": "Data Science",
+    "badgeText": "DATA SCIENCE NEAR ME",
+    "themeColor": "#4338CA",
+    "seoTitle": "Best Data Science Coaching Near Me in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Find premier Data Science coaching classes near you in Ghaziabad with industry case studies. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "data science near me in ghaziabad, data science near me coaching centre, best data science near me classes near me, data science near me training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Best Data Science Coaching Near Me in Ghaziabad",
+    "tagline": "🏆 Master Data Science Near Me with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Find premier Data Science coaching classes near you in Ghaziabad with industry case studies. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Data Science Near Me in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/data-science-coaching-near-me-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/data-science-coaching-near-me-ghaziabad.svg"
+  },
+  "data-science-course-with-placement-ghaziabad": {
+    "slug": "data-science-course-with-placement-ghaziabad",
+    "courseName": "Data Science Course with 100% Placement in Ghaziabad",
+    "shortTitle": "Data Science Placement",
+    "category": "Data Science",
+    "badgeText": "DATA SCIENCE PLACEMENT",
+    "themeColor": "#312E81",
+    "seoTitle": "Data Science Course with 100% Placement in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Master machine learning, statistics, and business predictive modeling with job assurance. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "data science placement in ghaziabad, data science placement coaching centre, best data science placement classes near me, data science placement training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Data Science Course with 100% Placement in Ghaziabad",
+    "tagline": "🏆 Master Data Science Placement with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Master machine learning, statistics, and business predictive modeling with job assurance. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Data Science Placement in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/data-science-course-with-placement-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/data-science-course-with-placement-ghaziabad.svg"
+  },
+  "python-machine-learning-bootcamp-ghaziabad": {
+    "slug": "python-machine-learning-bootcamp-ghaziabad",
+    "courseName": "Python Machine Learning Intensive Bootcamp in Ghaziabad",
+    "shortTitle": "Python ML Bootcamp",
+    "category": "Data Science",
+    "badgeText": "PYTHON ML BOOTCAMP",
+    "themeColor": "#7C3AED",
+    "seoTitle": "Python Machine Learning Intensive Bootcamp in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Hands-on bootcamp covering regression, classification, clustering, XGBoost, and Scikit-Learn. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "python ml bootcamp in ghaziabad, python ml bootcamp coaching centre, best python ml bootcamp classes near me, python ml bootcamp training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Python Machine Learning Intensive Bootcamp in Ghaziabad",
+    "tagline": "🏆 Master Python ML Bootcamp with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Hands-on bootcamp covering regression, classification, clustering, XGBoost, and Scikit-Learn. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Python ML Bootcamp in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/python-machine-learning-bootcamp-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/python-machine-learning-bootcamp-ghaziabad.svg"
+  },
+  "artificial-intelligence-institute-ghaziabad": {
+    "slug": "artificial-intelligence-institute-ghaziabad",
+    "courseName": "Premier AI & Deep Learning Institute in RDC Ghaziabad",
+    "shortTitle": "AI Training Institute",
+    "category": "Data Science",
+    "badgeText": "AI TRAINING INSTITUTE",
+    "themeColor": "#9333EA",
+    "seoTitle": "Premier AI & Deep Learning Institute in RDC Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Learn Neural Networks, PyTorch, Computer Vision, and Generative AI at AppleTree Infotech RDC. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "ai training institute in ghaziabad, ai training institute coaching centre, best ai training institute classes near me, ai training institute training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Premier AI & Deep Learning Institute in RDC Ghaziabad",
+    "tagline": "🏆 Master AI Training Institute with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Learn Neural Networks, PyTorch, Computer Vision, and Generative AI at AppleTree Infotech RDC. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for AI Training Institute in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/artificial-intelligence-institute-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/artificial-intelligence-institute-ghaziabad.svg"
+  },
+  "data-analytics-training-institute-ghaziabad": {
+    "slug": "data-analytics-training-institute-ghaziabad",
+    "courseName": "Top Data Analytics Training Institute in Ghaziabad",
+    "shortTitle": "Data Analytics Institute",
+    "category": "Data Science",
+    "badgeText": "DATA ANALYTICS INSTITUTE",
+    "themeColor": "#D97706",
+    "seoTitle": "Top Data Analytics Training Institute in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Master Advanced Excel, SQL queries, Python data analysis, and Power BI executive dashboards. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "data analytics institute in ghaziabad, data analytics institute coaching centre, best data analytics institute classes near me, data analytics institute training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Top Data Analytics Training Institute in Ghaziabad",
+    "tagline": "🏆 Master Data Analytics Institute with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Master Advanced Excel, SQL queries, Python data analysis, and Power BI executive dashboards. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Data Analytics Institute in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/data-analytics-training-institute-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/data-analytics-training-institute-ghaziabad.svg"
+  },
+  "mern-stack-training-institute-ghaziabad": {
+    "slug": "mern-stack-training-institute-ghaziabad",
+    "courseName": "Top MERN Stack Training Institute in Ghaziabad RDC",
+    "shortTitle": "MERN Training Institute",
+    "category": "Web",
+    "badgeText": "MERN TRAINING INSTITUTE",
+    "themeColor": "#0D9488",
+    "seoTitle": "Top MERN Stack Training Institute in Ghaziabad RDC | Top Placement Institute (2026)",
+    "metaDesc": "Best MERN stack development institute in RDC Raj Nagar Ghaziabad with 100% placement. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "mern training institute in ghaziabad, mern training institute coaching centre, best mern training institute classes near me, mern training institute training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Top MERN Stack Training Institute in Ghaziabad RDC",
+    "tagline": "🏆 Master MERN Training Institute with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Best MERN stack development institute in RDC Raj Nagar Ghaziabad with 100% placement. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for MERN Training Institute in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/mern-stack-training-institute-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/mern-stack-training-institute-ghaziabad.svg"
+  },
+  "mern-stack-coaching-near-me-ghaziabad": {
+    "slug": "mern-stack-coaching-near-me-ghaziabad",
+    "courseName": "Best MERN Stack Coaching Near Me in Ghaziabad",
+    "shortTitle": "MERN Coaching Near Me",
+    "category": "Web",
+    "badgeText": "MERN COACHING NEAR ME",
+    "themeColor": "#0F766E",
+    "seoTitle": "Best MERN Stack Coaching Near Me in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Find the top MERN stack coding centre near you in Ghaziabad with live project development. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "mern coaching near me in ghaziabad, mern coaching near me coaching centre, best mern coaching near me classes near me, mern coaching near me training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Best MERN Stack Coaching Near Me in Ghaziabad",
+    "tagline": "🏆 Master MERN Coaching Near Me with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Find the top MERN stack coding centre near you in Ghaziabad with live project development. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for MERN Coaching Near Me in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/mern-stack-coaching-near-me-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/mern-stack-coaching-near-me-ghaziabad.svg"
+  },
+  "full-stack-web-development-institute-ghaziabad": {
+    "slug": "full-stack-web-development-institute-ghaziabad",
+    "courseName": "Full Stack Web Development Training Institute Ghaziabad",
+    "shortTitle": "Full Stack Institute",
+    "category": "Web",
+    "badgeText": "FULL STACK INSTITUTE",
+    "themeColor": "#059669",
+    "seoTitle": "Full Stack Web Development Training Institute Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Leading software training institute for Full Stack Web Engineering in RDC Raj Nagar. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "full stack institute in ghaziabad, full stack institute coaching centre, best full stack institute classes near me, full stack institute training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Full Stack Web Development Training Institute Ghaziabad",
+    "tagline": "🏆 Master Full Stack Institute with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Leading software training institute for Full Stack Web Engineering in RDC Raj Nagar. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Full Stack Institute in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/full-stack-web-development-institute-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/full-stack-web-development-institute-ghaziabad.svg"
+  },
+  "full-stack-developer-course-near-me-ghaziabad": {
+    "slug": "full-stack-developer-course-near-me-ghaziabad",
+    "courseName": "Best Full Stack Developer Course Near Me in Ghaziabad",
+    "shortTitle": "Full Stack Near Me",
+    "category": "Web",
+    "badgeText": "FULL STACK NEAR ME",
+    "themeColor": "#047857",
+    "seoTitle": "Best Full Stack Developer Course Near Me in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Enroll in the premier full stack developer course near you in Ghaziabad with AC lab facilities. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "full stack near me in ghaziabad, full stack near me coaching centre, best full stack near me classes near me, full stack near me training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Best Full Stack Developer Course Near Me in Ghaziabad",
+    "tagline": "🏆 Master Full Stack Near Me with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Enroll in the premier full stack developer course near you in Ghaziabad with AC lab facilities. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Full Stack Near Me in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/full-stack-developer-course-near-me-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/full-stack-developer-course-near-me-ghaziabad.svg"
+  },
+  "react-js-training-institute-in-ghaziabad": {
+    "slug": "react-js-training-institute-in-ghaziabad",
+    "courseName": "Top React.js Training Institute in RDC Ghaziabad",
+    "shortTitle": "React Training Institute",
+    "category": "Web",
+    "badgeText": "REACT TRAINING INSTITUTE",
+    "themeColor": "#0284C7",
+    "seoTitle": "Top React.js Training Institute in RDC Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Master React 18, Vite, Redux Toolkit, Tailwind CSS, and REST API integration in Ghaziabad. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "react training institute in ghaziabad, react training institute coaching centre, best react training institute classes near me, react training institute training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Top React.js Training Institute in RDC Ghaziabad",
+    "tagline": "🏆 Master React Training Institute with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Master React 18, Vite, Redux Toolkit, Tailwind CSS, and REST API integration in Ghaziabad. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for React Training Institute in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/react-js-training-institute-in-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/react-js-training-institute-in-ghaziabad.svg"
+  },
+  "react-js-coaching-near-me-ghaziabad": {
+    "slug": "react-js-coaching-near-me-ghaziabad",
+    "courseName": "Best React JS Coaching Classes Near Me in Ghaziabad",
+    "shortTitle": "React Coaching Near Me",
+    "category": "Web",
+    "badgeText": "REACT COACHING NEAR ME",
+    "themeColor": "#0369A1",
+    "seoTitle": "Best React JS Coaching Classes Near Me in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Find top React.js frontend coaching near you in Ghaziabad with hands-on live project labs. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "react coaching near me in ghaziabad, react coaching near me coaching centre, best react coaching near me classes near me, react coaching near me training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Best React JS Coaching Classes Near Me in Ghaziabad",
+    "tagline": "🏆 Master React Coaching Near Me with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Find top React.js frontend coaching near you in Ghaziabad with hands-on live project labs. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for React Coaching Near Me in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/react-js-coaching-near-me-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/react-js-coaching-near-me-ghaziabad.svg"
+  },
+  "nodejs-backend-training-in-ghaziabad": {
+    "slug": "nodejs-backend-training-in-ghaziabad",
+    "courseName": "Node.js & Express Backend Development Training in Ghaziabad",
+    "shortTitle": "Node.js Backend Training",
+    "category": "Web",
+    "badgeText": "NODE.JS BACKEND TRAINING",
+    "themeColor": "#16A34A",
+    "seoTitle": "Node.js & Express Backend Development Training in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Build scalable asynchronous REST APIs, authentication with JWT, and MongoDB with Node.js. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "node.js backend training in ghaziabad, node.js backend training coaching centre, best node.js backend training classes near me, node.js backend training training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Node.js & Express Backend Development Training in Ghaziabad",
+    "tagline": "🏆 Master Node.js Backend Training with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Build scalable asynchronous REST APIs, authentication with JWT, and MongoDB with Node.js. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Node.js Backend Training in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/nodejs-backend-training-in-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/nodejs-backend-training-in-ghaziabad.svg"
+  },
+  "full-stack-javascript-course-ghaziabad": {
+    "slug": "full-stack-javascript-course-ghaziabad",
+    "courseName": "Full Stack JavaScript (ES6+ & TypeScript) Course Ghaziabad",
+    "shortTitle": "Full Stack JavaScript",
+    "category": "Web",
+    "badgeText": "FULL STACK JAVASCRIPT",
+    "themeColor": "#CA8A04",
+    "seoTitle": "Full Stack JavaScript (ES6+ & TypeScript) Course Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Complete JavaScript to TypeScript full stack training: Frontend React + Backend Node.js. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "full stack javascript in ghaziabad, full stack javascript coaching centre, best full stack javascript classes near me, full stack javascript training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Full Stack JavaScript (ES6+ & TypeScript) Course Ghaziabad",
+    "tagline": "🏆 Master Full Stack JavaScript with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Complete JavaScript to TypeScript full stack training: Frontend React + Backend Node.js. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Full Stack JavaScript in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/full-stack-javascript-course-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/full-stack-javascript-course-ghaziabad.svg"
+  },
+  "nextjs-full-stack-developer-course-ghaziabad": {
+    "slug": "nextjs-full-stack-developer-course-ghaziabad",
+    "courseName": "Next.js 15 Full Stack Web Development Course Ghaziabad",
+    "shortTitle": "Next.js Full Stack",
+    "category": "Web",
+    "badgeText": "NEXT.JS FULL STACK",
+    "themeColor": "#111827",
+    "seoTitle": "Next.js 15 Full Stack Web Development Course Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Master Server-Side Rendering, Server Actions, App Router, and cloud hosting with Next.js. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "next.js full stack in ghaziabad, next.js full stack coaching centre, best next.js full stack classes near me, next.js full stack training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Next.js 15 Full Stack Web Development Course Ghaziabad",
+    "tagline": "🏆 Master Next.js Full Stack with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Master Server-Side Rendering, Server Actions, App Router, and cloud hosting with Next.js. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Next.js Full Stack in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/nextjs-full-stack-developer-course-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/nextjs-full-stack-developer-course-ghaziabad.svg"
+  },
+  "mern-stack-course-with-placement-ghaziabad": {
+    "slug": "mern-stack-course-with-placement-ghaziabad",
+    "courseName": "MERN Stack Course with 100% Placement in Ghaziabad",
+    "shortTitle": "MERN Placement Guarantee",
+    "category": "Web",
+    "badgeText": "MERN PLACEMENT GUARANTEE",
+    "themeColor": "#059669",
+    "seoTitle": "MERN Stack Course with 100% Placement in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Job-guaranteed MERN stack training program with resume building and direct referrals in NCR. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "mern placement guarantee in ghaziabad, mern placement guarantee coaching centre, best mern placement guarantee classes near me, mern placement guarantee training rdc raj nagar, coding institute ghaziabad",
+    "h1": "MERN Stack Course with 100% Placement in Ghaziabad",
+    "tagline": "🏆 Master MERN Placement Guarantee with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Job-guaranteed MERN stack training program with resume building and direct referrals in NCR. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for MERN Placement Guarantee in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/mern-stack-course-with-placement-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/mern-stack-course-with-placement-ghaziabad.svg"
+  },
+  "frontend-developer-course-in-ghaziabad": {
+    "slug": "frontend-developer-course-in-ghaziabad",
+    "courseName": "Modern Frontend Developer Course with React in Ghaziabad",
+    "shortTitle": "Frontend Developer",
+    "category": "Web",
+    "badgeText": "FRONTEND DEVELOPER",
+    "themeColor": "#EA580C",
+    "seoTitle": "Modern Frontend Developer Course with React in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Learn HTML5, CSS3, JavaScript, React, Tailwind, and build modern responsive web apps. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "frontend developer in ghaziabad, frontend developer coaching centre, best frontend developer classes near me, frontend developer training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Modern Frontend Developer Course with React in Ghaziabad",
+    "tagline": "🏆 Master Frontend Developer with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Learn HTML5, CSS3, JavaScript, React, Tailwind, and build modern responsive web apps. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Frontend Developer in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/frontend-developer-course-in-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/frontend-developer-course-in-ghaziabad.svg"
+  },
+  "backend-developer-course-in-ghaziabad": {
+    "slug": "backend-developer-course-in-ghaziabad",
+    "courseName": "Enterprise Backend Developer Course with Node.js in Ghaziabad",
+    "shortTitle": "Backend Developer",
+    "category": "Web",
+    "badgeText": "BACKEND DEVELOPER",
+    "themeColor": "#374151",
+    "seoTitle": "Enterprise Backend Developer Course with Node.js in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Master server architectures, database modeling, RESTful microservices, and Docker hosting. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "backend developer in ghaziabad, backend developer coaching centre, best backend developer classes near me, backend developer training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Enterprise Backend Developer Course with Node.js in Ghaziabad",
+    "tagline": "🏆 Master Backend Developer with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Master server architectures, database modeling, RESTful microservices, and Docker hosting. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Backend Developer in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/backend-developer-course-in-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/backend-developer-course-in-ghaziabad.svg"
+  },
+  "web-development-internship-in-ghaziabad": {
+    "slug": "web-development-internship-in-ghaziabad",
+    "courseName": "Web Development Live Project & Internship in Ghaziabad",
+    "shortTitle": "Web Dev Internship",
+    "category": "Web",
+    "badgeText": "WEB DEV INTERNSHIP",
+    "themeColor": "#4F46E5",
+    "seoTitle": "Web Development Live Project & Internship in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Gain authentic industrial experience with our live project web development internship program. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "web dev internship in ghaziabad, web dev internship coaching centre, best web dev internship classes near me, web dev internship training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Web Development Live Project & Internship in Ghaziabad",
+    "tagline": "🏆 Master Web Dev Internship with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Gain authentic industrial experience with our live project web development internship program. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Web Dev Internship in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/web-development-internship-in-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/web-development-internship-in-ghaziabad.svg"
+  },
+  "full-stack-bootcamp-in-rdc-ghaziabad": {
+    "slug": "full-stack-bootcamp-in-rdc-ghaziabad",
+    "courseName": "Full Stack Web Development Bootcamp in RDC Raj Nagar",
+    "shortTitle": "Full Stack Bootcamp RDC",
+    "category": "Web",
+    "badgeText": "FULL STACK BOOTCAMP RDC",
+    "themeColor": "#2563EB",
+    "seoTitle": "Full Stack Web Development Bootcamp in RDC Raj Nagar | Top Placement Institute (2026)",
+    "metaDesc": "Intensive 4-month bootcamp in RDC Ghaziabad taking you from beginner to hired developer. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "full stack bootcamp rdc in ghaziabad, full stack bootcamp rdc coaching centre, best full stack bootcamp rdc classes near me, full stack bootcamp rdc training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Full Stack Web Development Bootcamp in RDC Raj Nagar",
+    "tagline": "🏆 Master Full Stack Bootcamp RDC with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Intensive 4-month bootcamp in RDC Ghaziabad taking you from beginner to hired developer. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Full Stack Bootcamp RDC in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/full-stack-bootcamp-in-rdc-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/full-stack-bootcamp-in-rdc-ghaziabad.svg"
+  },
+  "web-development-classes-near-me-ghaziabad": {
+    "slug": "web-development-classes-near-me-ghaziabad",
+    "courseName": "Top Web Development Classes Near Me in Ghaziabad",
+    "shortTitle": "Web Classes Near Me",
+    "category": "Web",
+    "badgeText": "WEB CLASSES NEAR ME",
+    "themeColor": "#0891B2",
+    "seoTitle": "Top Web Development Classes Near Me in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Find the top web development and coding institute near you in Ghaziabad with AC lab rooms. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "web classes near me in ghaziabad, web classes near me coaching centre, best web classes near me classes near me, web classes near me training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Top Web Development Classes Near Me in Ghaziabad",
+    "tagline": "🏆 Master Web Classes Near Me with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Find the top web development and coding institute near you in Ghaziabad with AC lab rooms. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Web Classes Near Me in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/web-development-classes-near-me-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/web-development-classes-near-me-ghaziabad.svg"
+  },
+  "best-software-courses-in-ghaziabad": {
+    "slug": "best-software-courses-in-ghaziabad",
+    "courseName": "Top Rated Software Courses & Certifications in Ghaziabad",
+    "shortTitle": "Best Software Courses",
+    "category": "Locality",
+    "badgeText": "BEST SOFTWARE COURSES",
+    "themeColor": "#2563EB",
+    "seoTitle": "Top Rated Software Courses & Certifications in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Explore the highest-paying software courses: Java, Python, DevOps, and MERN in Ghaziabad. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "best software courses in ghaziabad, best software courses coaching centre, best best software courses classes near me, best software courses training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Top Rated Software Courses & Certifications in Ghaziabad",
+    "tagline": "🏆 Master Best Software Courses with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Explore the highest-paying software courses: Java, Python, DevOps, and MERN in Ghaziabad. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Best Software Courses in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/best-software-courses-in-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/best-software-courses-in-ghaziabad.svg"
+  },
+  "computer-programming-institute-in-ghaziabad": {
+    "slug": "computer-programming-institute-in-ghaziabad",
+    "courseName": "Computer Programming Institute in RDC Ghaziabad",
+    "shortTitle": "Programming Institute",
+    "category": "Locality",
+    "badgeText": "PROGRAMMING INSTITUTE",
+    "themeColor": "#1D4ED8",
+    "seoTitle": "Computer Programming Institute in RDC Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Master C++, Java, Python, and Full Stack development in Ghaziabad most reputed IT institute. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "programming institute in ghaziabad, programming institute coaching centre, best programming institute classes near me, programming institute training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Computer Programming Institute in RDC Ghaziabad",
+    "tagline": "🏆 Master Programming Institute with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Master C++, Java, Python, and Full Stack development in Ghaziabad most reputed IT institute. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Programming Institute in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/computer-programming-institute-in-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/computer-programming-institute-in-ghaziabad.svg"
+  },
+  "it-training-institute-in-rdc-ghaziabad": {
+    "slug": "it-training-institute-in-rdc-ghaziabad",
+    "courseName": "Premier IT Training Institute in RDC Raj Nagar Ghaziabad",
+    "shortTitle": "IT Institute RDC",
+    "category": "Locality",
+    "badgeText": "IT INSTITUTE RDC",
+    "themeColor": "#0284C7",
+    "seoTitle": "Premier IT Training Institute in RDC Raj Nagar Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "C-60 R.K. Tower RDC Ghaziabad premier IT training destination for college students and freshers. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "it institute rdc in ghaziabad, it institute rdc coaching centre, best it institute rdc classes near me, it institute rdc training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Premier IT Training Institute in RDC Raj Nagar Ghaziabad",
+    "tagline": "🏆 Master IT Institute RDC with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "C-60 R.K. Tower RDC Ghaziabad premier IT training destination for college students and freshers. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for IT Institute RDC in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/it-training-institute-in-rdc-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/it-training-institute-in-rdc-ghaziabad.svg"
+  },
+  "software-engineer-placement-bootcamp-ghaziabad": {
+    "slug": "software-engineer-placement-bootcamp-ghaziabad",
+    "courseName": "Software Engineer Placement Bootcamp in Ghaziabad",
+    "shortTitle": "Software Placement Bootcamp",
+    "category": "Locality",
+    "badgeText": "SOFTWARE PLACEMENT BOOTCAMP",
+    "themeColor": "#059669",
+    "seoTitle": "Software Engineer Placement Bootcamp in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Job-oriented software engineering bootcamp with DSA, Full Stack, and mock interviews. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "software placement bootcamp in ghaziabad, software placement bootcamp coaching centre, best software placement bootcamp classes near me, software placement bootcamp training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Software Engineer Placement Bootcamp in Ghaziabad",
+    "tagline": "🏆 Master Software Placement Bootcamp with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Job-oriented software engineering bootcamp with DSA, Full Stack, and mock interviews. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Software Placement Bootcamp in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/software-engineer-placement-bootcamp-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/software-engineer-placement-bootcamp-ghaziabad.svg"
+  },
+  "coding-classes-for-btech-students-ghaziabad": {
+    "slug": "coding-classes-for-btech-students-ghaziabad",
+    "courseName": "Coding Classes for B.Tech & BCA Students in Ghaziabad",
+    "shortTitle": "Coding for B.Tech BCA",
+    "category": "Locality",
+    "badgeText": "CODING FOR B.TECH BCA",
+    "themeColor": "#7C3AED",
+    "seoTitle": "Coding Classes for B.Tech & BCA Students in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Semester syllabus, practical labs, and campus placement prep for AKGEC, ABES, KIET students. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "coding for b.tech bca in ghaziabad, coding for b.tech bca coaching centre, best coding for b.tech bca classes near me, coding for b.tech bca training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Coding Classes for B.Tech & BCA Students in Ghaziabad",
+    "tagline": "🏆 Master Coding for B.Tech BCA with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Semester syllabus, practical labs, and campus placement prep for AKGEC, ABES, KIET students. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Coding for B.Tech BCA in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/coding-classes-for-btech-students-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/coding-classes-for-btech-students-ghaziabad.svg"
+  },
+  "top-coding-institute-near-shaheed-sthal-metro": {
+    "slug": "top-coding-institute-near-shaheed-sthal-metro",
+    "courseName": "Top Coding Institute Near Shaheed Sthal Metro Ghaziabad",
+    "shortTitle": "Metro Connected Institute",
+    "category": "Locality",
+    "badgeText": "METRO CONNECTED INSTITUTE",
+    "themeColor": "#0891B2",
+    "seoTitle": "Top Coding Institute Near Shaheed Sthal Metro Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Just 5 minutes from Shaheed Sthal New Bus Adda Metro Station, located in RDC Raj Nagar. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "metro connected institute in ghaziabad, metro connected institute coaching centre, best metro connected institute classes near me, metro connected institute training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Top Coding Institute Near Shaheed Sthal Metro Ghaziabad",
+    "tagline": "🏆 Master Metro Connected Institute with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Just 5 minutes from Shaheed Sthal New Bus Adda Metro Station, located in RDC Raj Nagar. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Metro Connected Institute in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/top-coding-institute-near-shaheed-sthal-metro.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/top-coding-institute-near-shaheed-sthal-metro.svg"
+  },
+  "best-computer-centre-in-raj-nagar-ghaziabad": {
+    "slug": "best-computer-centre-in-raj-nagar-ghaziabad",
+    "courseName": "Best Computer Centre in Raj Nagar Ghaziabad",
+    "shortTitle": "Computer Centre Raj Nagar",
+    "category": "Locality",
+    "badgeText": "COMPUTER CENTRE RAJ NAGAR",
+    "themeColor": "#2563EB",
+    "seoTitle": "Best Computer Centre in Raj Nagar Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Reputed computer training center in Raj Nagar offering Java, Python, C++, and Web Design. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "computer centre raj nagar in ghaziabad, computer centre raj nagar coaching centre, best computer centre raj nagar classes near me, computer centre raj nagar training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Best Computer Centre in Raj Nagar Ghaziabad",
+    "tagline": "🏆 Master Computer Centre Raj Nagar with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Reputed computer training center in Raj Nagar offering Java, Python, C++, and Web Design. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Computer Centre Raj Nagar in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/best-computer-centre-in-raj-nagar-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/best-computer-centre-in-raj-nagar-ghaziabad.svg"
+  },
+  "python-java-mern-classes-in-ghaziabad": {
+    "slug": "python-java-mern-classes-in-ghaziabad",
+    "courseName": "Python, Java & MERN Full Stack Classes in Ghaziabad",
+    "shortTitle": "Python Java MERN Combo",
+    "category": "Locality",
+    "badgeText": "PYTHON JAVA MERN COMBO",
+    "themeColor": "#EA580C",
+    "seoTitle": "Python, Java & MERN Full Stack Classes in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Comprehensive all-in-one programming mastery in RDC Ghaziabad with placement assurance. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "python java mern combo in ghaziabad, python java mern combo coaching centre, best python java mern combo classes near me, python java mern combo training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Python, Java & MERN Full Stack Classes in Ghaziabad",
+    "tagline": "🏆 Master Python Java MERN Combo with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Comprehensive all-in-one programming mastery in RDC Ghaziabad with placement assurance. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Python Java MERN Combo in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/python-java-mern-classes-in-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/python-java-mern-classes-in-ghaziabad.svg"
+  },
+  "corporate-it-training-in-ghaziabad": {
+    "slug": "corporate-it-training-in-ghaziabad",
+    "courseName": "Corporate IT & Corporate Software Training in Ghaziabad",
+    "shortTitle": "Corporate IT Training",
+    "category": "Locality",
+    "badgeText": "CORPORATE IT TRAINING",
+    "themeColor": "#374151",
+    "seoTitle": "Corporate IT & Corporate Software Training in Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "Upskill your engineering workforce with custom Java, Cloud AWS, Python, and DevOps training. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "corporate it training in ghaziabad, corporate it training coaching centre, best corporate it training classes near me, corporate it training training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Corporate IT & Corporate Software Training in Ghaziabad",
+    "tagline": "🏆 Master Corporate IT Training with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "Upskill your engineering workforce with custom Java, Cloud AWS, Python, and DevOps training. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Corporate IT Training in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/corporate-it-training-in-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/corporate-it-training-in-ghaziabad.svg"
+  },
+  "job-oriented-software-courses-in-ghaziabad": {
+    "slug": "job-oriented-software-courses-in-ghaziabad",
+    "courseName": "Job Oriented Software Courses with 100% Placement Ghaziabad",
+    "shortTitle": "Job Oriented Courses",
+    "category": "Locality",
+    "badgeText": "JOB ORIENTED COURSES",
+    "themeColor": "#16A34A",
+    "seoTitle": "Job Oriented Software Courses with 100% Placement Ghaziabad | Top Placement Institute (2026)",
+    "metaDesc": "High-ROI software engineering diplomas designed for immediate recruitment across Delhi NCR. Join AppleTree Infotech in RDC Raj Nagar Ghaziabad for 100% practical lab training, ISO certificates & job placement.",
+    "keywords": "job oriented courses in ghaziabad, job oriented courses coaching centre, best job oriented courses classes near me, job oriented courses training rdc raj nagar, coding institute ghaziabad",
+    "h1": "Job Oriented Software Courses with 100% Placement Ghaziabad",
+    "tagline": "🏆 Master Job Oriented Courses with 100% Practical Labs & Enterprise Placement in Ghaziabad",
+    "rating": "4.9 ★★★★★ (450+ Reviews)",
+    "batchTypes": "Weekdays & Weekend Executive Batches Available",
+    "fees": "₹3,500 / month onwards (Flexible EMI Options)",
+    "duration": "3 to 4 Months (With Live Projects & ISO Certification)",
+    "address": "C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001",
+    "metroNearby": "Nearest Metro: Shaheed Sthal (New Bus Adda) & Hindon River Metro (Red Line)",
+    "landmark": "Opposite RDC Central Park / Near Raj Nagar RDC Plaza",
+    "overview": "High-ROI software engineering diplomas designed for immediate recruitment across Delhi NCR. AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad provides comprehensive, industry-aligned training with real-world capstone projects, personalized mentorship, and direct placement assistance for students and working professionals.",
+    "highlights": [
+      "100% Practical hands-on training in state-of-the-art air-conditioned lab in RDC Ghaziabad.",
+      "Comprehensive syllabus aligned with latest 2026 industry standards and corporate requirements.",
+      "Live project development, code reviews, and GitHub portfolio creation.",
+      "ISO 9001:2015 & MSME Government Recognized Verifiable Certificate.",
+      "Dedicated placement assistance with mock interviews and direct company referrals across Delhi NCR."
+    ],
+    "curriculumTracks": [
+      {
+        "name": "Module 1: Foundations & Core Architecture",
+        "duration": "3 Weeks",
+        "desc": "In-depth coverage of fundamental concepts, syntax, environment setup, and architectural best practices."
+      },
+      {
+        "name": "Module 2: Advanced Concepts & Industrial Tools",
+        "duration": "3 Weeks",
+        "desc": "Mastering advanced techniques, performance optimization, error handling, and industrial workflow tools."
+      },
+      {
+        "name": "Module 3: Real-World Project Implementation",
+        "duration": "4 Weeks",
+        "desc": "Building complex end-to-end applications solving authentic business and technical challenges."
+      },
+      {
+        "name": "Module 4: Testing, Deployment & Interview Prep",
+        "duration": "2 Weeks",
+        "desc": "Code testing, cloud hosting, CI/CD deployment, resume polishing, and technical mock interviews."
+      }
+    ],
+    "nearbyLocations": [
+      "RDC (Raj Nagar District Centre)",
+      "Raj Nagar Extension",
+      "Kavi Nagar",
+      "Shastri Nagar",
+      "Sanjay Nagar",
+      "Govindpuram",
+      "Crossing Republik",
+      "Vasundhara",
+      "Indirapuram",
+      "Vaishali",
+      "Mohan Nagar",
+      "Noida Sector 62",
+      "Ghaziabad Railway Station",
+      "AKGEC College",
+      "ABES Engineering College",
+      "KIET Ghaziabad",
+      "IMS Ghaziabad"
+    ],
+    "faqs": [
+      {
+        "q": "Why choose AppleTree Infotech for Job Oriented Courses in Ghaziabad?",
+        "a": "We provide practical lab training in RDC Raj Nagar Ghaziabad with modern workstations, certified expert mentors, ISO certification, and proven placement record in Noida and Delhi NCR."
+      },
+      {
+        "q": "Where is the coaching institute located?",
+        "a": "Our campus is located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, UP 201001, right near Shaheed Sthal Metro Station."
+      },
+      {
+        "q": "Can I attend a free demo class?",
+        "a": "Yes, we offer 2 free trial classes so you can experience our practical teaching methods and modern lab facilities firsthand."
+      }
+    ],
+    "thumbnailImage": "https://programmingwala.com/assets/images/courses/job-oriented-software-courses-in-ghaziabad.png",
+    "svgThumbnail": "https://programmingwala.com/assets/images/courses/job-oriented-software-courses-in-ghaziabad.svg"
   }
 };

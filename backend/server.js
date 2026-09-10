@@ -148,6 +148,8 @@ Allow: /manish-kumar
 Allow: /profile/manish-kumar
 Allow: /manish
 Allow: /manish/*
+Allow: /assets/images/courses/
+Allow: /assets/images/courses/*
 Allow: /careers
 Allow: /careers/*
 Allow: /tutorials
@@ -156,6 +158,31 @@ Allow: /verify-certificate/*
 
 Sitemap: https://programmingwala.com/sitemap.xml
 Sitemap: https://www.afshaenterprises.com/sitemap.xml`);
+});
+
+// Robots.xml Handler (for search console & bots requesting XML format)
+app.get('/robots.xml', (req, res) => {
+  res.header('Content-Type', 'application/xml; charset=utf-8');
+  res.header('Cache-Control', 'public, max-age=86400');
+
+  const possibleRobotsXmlPaths = [
+    path.join(__dirname, '../dist/robots.xml'),
+    path.join(__dirname, '../frontend/dist/robots.xml'),
+    path.join(__dirname, '../frontend/public/robots.xml'),
+    path.join(process.cwd(), 'dist/robots.xml')
+  ];
+
+  for (const p of possibleRobotsXmlPaths) {
+    if (fs.existsSync(p)) {
+      return res.sendFile(p);
+    }
+  }
+
+  res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<robots>
+  <sitemap>https://programmingwala.com/sitemap.xml</sitemap>
+  <sitemap>https://www.afshaenterprises.com/sitemap.xml</sitemap>
+</robots>`);
 });
 
 // Candidate directories for built frontend assets
@@ -177,18 +204,10 @@ for (const cand of distCandidates) {
 
 if (resolvedDistPath) {
   console.log(`\x1b[32m✔ Serving frontend production build from: ${resolvedDistPath}\x1b[0m`);
-  app.use(express.static(resolvedDistPath, {
-    maxAge: '1d',
-    setHeaders: (res, filePath) => {
-      // Never cache index.html so frontend updates deploy instantly
-      if (filePath.endsWith('index.html')) {
-        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      }
-    }
-  }));
 
   // Direct Prerendered HTML delivery for Course Pages (100% SEO, Googlebot & Crawler Ready)
-  app.get('/courses/:slug', (req, res, next) => {
+  // Must be registered BEFORE express.static to prevent trailing-slash folder 301 redirects
+  app.get(['/courses/:slug', '/courses/:slug/'], (req, res, next) => {
     const slug = req.params.slug;
     const searchDirs = [
       path.join(resolvedDistPath, 'courses'),
@@ -201,14 +220,26 @@ if (resolvedDistPath) {
       const directHtml = path.join(sDir, `${slug}.html`);
       const subDirHtml = path.join(sDir, slug, 'index.html');
       if (fs.existsSync(directHtml)) {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
         return res.sendFile(directHtml);
       }
       if (fs.existsSync(subDirHtml)) {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
         return res.sendFile(subDirHtml);
       }
     }
     next();
   });
+
+  app.use(express.static(resolvedDistPath, {
+    maxAge: '1d',
+    setHeaders: (res, filePath) => {
+      // Never cache index.html so frontend updates deploy instantly
+      if (filePath.endsWith('index.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      }
+    }
+  }));
   
   app.get('*', (req, res, next) => {
     // Avoid intercepting API routes or uploads

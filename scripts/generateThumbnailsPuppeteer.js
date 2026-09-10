@@ -212,7 +212,7 @@ function buildHtml(course) {
 }
 
 async function run() {
-  console.log('Launching browser to render 100 high-res thumbnails...');
+  console.log(`Launching browser to render ${courses.length} high-res thumbnails...`);
   const browser = await puppeteer.launch({
     headless: 'new',
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
@@ -231,13 +231,13 @@ async function run() {
       fs.writeFileSync(path.join(dir, `${course.slug}.png`), pngBuffer);
     }
     completed++;
-    if (completed % 20 === 0 || completed === courses.length) {
+    if (completed % 25 === 0 || completed === courses.length) {
       console.log(`Rendered ${completed}/${courses.length} course thumbnails...`);
     }
   }
 
   await browser.close();
-  console.log('All 100 course thumbnails successfully generated and saved!');
+  console.log(`All ${courses.length} course thumbnails successfully generated and saved!`);
 }
 
 run().catch(err => {
