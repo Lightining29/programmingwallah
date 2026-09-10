@@ -1,10 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   MapPin, Star, Phone, Mail, Clock, CheckCircle2, Navigation, 
   Sparkles, Award, ArrowRight, ShieldCheck, HelpCircle, Code2, 
-  Server, Cloud, Terminal, Compass, MessageCircle, ExternalLink
+  Server, Cloud, Terminal, Compass, MessageCircle, ExternalLink, Search
 } from 'lucide-react';
 import { GHAZIABAD_COURSES } from '../../data/ghaziabadCoursesData.js';
 import { useTheme } from '../../context/ThemeContext.jsx';
@@ -12,6 +12,8 @@ import { useTheme } from '../../context/ThemeContext.jsx';
 export default function GhaziabadCourseHub() {
   const { isDark } = useTheme();
   const courses = Object.values(GHAZIABAD_COURSES);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCat, setSelectedCat] = useState('All');
 
   useEffect(() => {
     document.title = 'Best Tech & Coding Coaching in RDC Ghaziabad | Top Placement Institute (2026)';
@@ -216,70 +218,157 @@ export default function GhaziabadCourseHub() {
 
         {/* COURSES OFFERED AT RDC GHAZIABAD */}
         <section aria-labelledby="courses-heading" className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <Code2 className="w-5 h-5 text-pink-400" />
                 <h2 id="courses-heading" className="text-2xl sm:text-3xl font-black text-white">
-                  Trending Software Courses at RDC Ghaziabad Campus
+                  100 Verified Tech &amp; Coding Courses in Ghaziabad
                 </h2>
               </div>
               <p className="text-xs sm:text-sm text-slate-400 mt-1">
-                Practical, classroom-led courses designed for college students, freshers, and working professionals.
+                Practical, classroom-led courses with live labs, ISO certificates &amp; 100% placement support in RDC Raj Nagar.
               </p>
+            </div>
+
+            {/* Search Input */}
+            <div className="relative w-full sm:w-72">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search Python, Java, C++..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-full bg-slate-900 border border-slate-800 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-pink-500"
+              />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses.filter(c => c.slug !== 'best-tech-coaching-rdc-ghaziabad').map((course) => (
-              <motion.div
-                key={course.slug}
-                whileHover={{ y: -6 }}
-                transition={{ duration: 0.2 }}
-                className="flex flex-col justify-between p-6 rounded-3xl bg-slate-900/90 border border-slate-800 hover:border-pink-500/40 shadow-xl space-y-4"
+          {/* Category Filter Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+            {[
+              { id: 'All', label: 'All (100)' },
+              { id: 'Java', label: '☕ Java (5)' },
+              { id: 'Python', label: '🐍 Python (10)' },
+              { id: 'Data Science', label: '📊 Data Science & AI (14)' },
+              { id: 'C++', label: '⚙️ C & C++ (6)' },
+              { id: 'Web', label: '⚛️ Web & Full Stack (24)' },
+              { id: 'DevOps', label: '🚀 Cloud & DevOps (15)' },
+              { id: 'Security', label: '🛡️ Cyber Security (8)' },
+              { id: 'Mobile', label: '📱 Mobile & QA (10)' },
+              { id: 'Locality', label: '📍 Ghaziabad Hubs (8)' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setSelectedCat(tab.id)}
+                className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                  selectedCat === tab.id
+                    ? 'bg-pink-500 text-white shadow-lg shadow-pink-500/25'
+                    : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
+                }`}
               >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20">
-                      Offline & Online
-                    </span>
-                    <span className="text-[11px] font-bold text-amber-300 font-mono">
-                      {course.duration}
-                    </span>
-                  </div>
-
-                  <h3 className="text-lg font-black text-white">
-                    {course.courseName}
-                  </h3>
-
-                  <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">
-                    {course.overview}
-                  </p>
-
-                  <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1 text-xs">
-                    <div className="flex items-center justify-between text-slate-300">
-                      <span>Monthly Fee:</span>
-                      <strong className="text-emerald-400 font-bold">{course.fees}</strong>
-                    </div>
-                    <div className="flex items-center justify-between text-slate-400">
-                      <span>Batch Timings:</span>
-                      <span className="text-white font-semibold">Morning & Evening</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-2">
-                  <Link
-                    to={"/courses/" + course.slug}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-slate-800 hover:bg-gradient-to-r hover:from-pink-500 hover:to-rose-500 text-white text-xs font-black transition-all shadow-md"
-                  >
-                    <span>View Syllabus & Lab Schedule</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </div>
-              </motion.div>
+                {tab.label}
+              </button>
             ))}
           </div>
+
+          {/* Filtered Courses Grid */}
+          {(() => {
+            const filtered = courses.filter(course => {
+              if (course.slug === 'best-tech-coaching-rdc-ghaziabad' && selectedCat !== 'All' && selectedCat !== 'Locality') return false;
+              const matchesCat = selectedCat === 'All' || 
+                (selectedCat === 'Mobile' ? (course.category === 'Mobile' || course.category === 'Testing' || course.category === 'Design') : course.category === selectedCat);
+              const matchesSearch = !searchTerm || 
+                course.courseName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                course.keywords.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                course.slug.toLowerCase().includes(searchTerm.toLowerCase());
+              return matchesCat && matchesSearch;
+            });
+
+            return (
+              <>
+                <div className="flex items-center justify-between text-xs text-slate-400">
+                  <span>Showing <strong>{filtered.length}</strong> of <strong>100</strong> Courses in Ghaziabad</span>
+                  {selectedCat !== 'All' && (
+                    <button 
+                      onClick={() => { setSelectedCat('All'); setSearchTerm(''); }}
+                      className="text-pink-400 hover:underline font-bold"
+                    >
+                      Clear Filters
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filtered.map((course) => (
+                    <motion.div
+                      key={course.slug}
+                      whileHover={{ y: -6 }}
+                      transition={{ duration: 0.2 }}
+                      className="flex flex-col justify-between p-5 rounded-3xl bg-slate-900/90 border border-slate-800 hover:border-pink-500/40 shadow-xl space-y-4"
+                    >
+                      <div className="space-y-3">
+                        {/* Course Thumbnail Image */}
+                        <div className="relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 aspect-[4/3] flex items-center justify-center">
+                          <img 
+                            src={`/assets/images/courses/${course.slug}.png`}
+                            alt={`${course.courseName} Ghaziabad`}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = '/logo.png';
+                            }}
+                          />
+                          <span className="absolute top-2.5 right-2.5 text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-slate-900/90 text-pink-400 border border-pink-500/30 backdrop-blur-sm">
+                            {course.category || 'Tech'}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            Practical Lab
+                          </span>
+                          <span className="text-[11px] font-bold text-amber-300 font-mono">
+                            {course.duration}
+                          </span>
+                        </div>
+
+                        <h3 className="text-base font-black text-white line-clamp-2">
+                          {course.courseName}
+                        </h3>
+
+                        <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+                          {course.overview}
+                        </p>
+
+                        <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1 text-xs">
+                          <div className="flex items-center justify-between text-slate-300">
+                            <span>Fee:</span>
+                            <strong className="text-emerald-400 font-bold">{course.fees.split(' ')[0]} /mo</strong>
+                          </div>
+                          <div className="flex items-center justify-between text-slate-400">
+                            <span>Batches:</span>
+                            <span className="text-white font-semibold">Morning &amp; Evening</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-2">
+                        <Link
+                          to={"/courses/" + course.slug}
+                          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-slate-800 hover:bg-gradient-to-r hover:from-pink-500 hover:to-rose-500 text-white text-xs font-black transition-all shadow-md"
+                        >
+                          <span>View Course &amp; Syllabus</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </Link>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
         </section>
 
         {/* GOOGLE MAP EMBED & CAMPUS LOCATION IN RDC GHAZIABAD */}

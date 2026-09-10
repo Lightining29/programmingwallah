@@ -16,7 +16,7 @@ export default function GhaziabadCourseDetail() {
   const courseKey = slug || 'java-coaching-in-ghaziabad';
   const course = GHAZIABAD_COURSES[courseKey] || GHAZIABAD_COURSES['java-coaching-in-ghaziabad'];
 
-  const courseImage = 'https://programmingwala.com/manish/manish_3.jpg';
+  const courseImage = course.thumbnailImage || `https://programmingwala.com/assets/images/courses/${course.slug}.png`;
 
   useEffect(() => {
     document.title = course.seoTitle;
@@ -236,19 +236,40 @@ export default function GhaziabadCourseDetail() {
             </span>
           </div>
 
-          <div className="space-y-2">
-            <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">
-              {course.h1}
-            </h1>
-            <p className="text-xs sm:text-sm font-semibold text-rose-600 flex items-center gap-1.5">
-              <MapPin className="w-4 h-4" />
-              <span>{course.address}</span>
-            </p>
-          </div>
+          <div className="flex flex-col md:flex-row gap-6 items-start justify-between">
+            <div className="space-y-4 flex-1">
+              <div className="space-y-2">
+                <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">
+                  {course.h1}
+                </h1>
+                <p className="text-xs sm:text-sm font-semibold text-rose-600 flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4" />
+                  <span>{course.address}</span>
+                </p>
+              </div>
 
-          <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-            {course.overview}
-          </p>
+              <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+                {course.overview}
+              </p>
+            </div>
+
+            <div className="w-full md:w-56 flex-shrink-0 flex justify-center">
+              <div className="rounded-3xl overflow-hidden border-2 border-slate-200 shadow-xl bg-slate-900 max-w-[220px]">
+                <img 
+                  src={`/assets/images/courses/${course.slug}.png`}
+                  alt={`${course.courseName} in Ghaziabad`}
+                  className="w-full h-auto object-cover"
+                  width="220"
+                  height="220"
+                  loading="eager"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/logo.png';
+                  }}
+                />
+              </div>
+            </div>
+          </div>
 
           {/* Quick Metrics */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">

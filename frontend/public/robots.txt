@@ -1,15 +1,18 @@
 User-agent: *
 Allow: /
-Allow: /courses-in-ghaziabad
+Allow: /courses/
 Allow: /courses/*
-Allow: /coaching/*
-Allow: /careers
-Allow: /careers/*
-Allow: /jobs/*
+Allow: /courses-in-ghaziabad
 Allow: /manish-kumar
 Allow: /profile/manish-kumar
 Allow: /manish
 Allow: /manish/*
+Allow: /assets/images/courses/
+Allow: /assets/images/courses/*
+Allow: /careers
+Allow: /careers/*
+Allow: /tutorials
+Allow: /practice
 Allow: /verify-certificate/*
 
 Sitemap: https://programmingwala.com/sitemap.xml

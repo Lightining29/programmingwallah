@@ -104,194 +104,54 @@ app.use('/api/music', musicRoutes);
 app.get('/sitemap.xml', (req, res) => {
   res.header('Content-Type', 'application/xml; charset=utf-8');
   res.header('Cache-Control', 'public, max-age=86400');
-  const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
-  <!-- ========================================================= -->
-  <!-- PRIMARY PROFILE: MANISH KUMAR (TOP PRIORITY 1.0)           -->
-  <!-- ========================================================= -->
-  <url>
-    <loc>https://programmingwala.com/manish-kumar</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-    <image:image>
-      <image:loc>https://programmingwala.com/manish/manish_3.jpg</image:loc>
-      <image:title>Manish Kumar - Best Java Full Stack Developer &amp; AWS DevOps Engineer</image:title>
-      <image:caption>Manish Kumar holding the Best Performer of the Institution Award Trophy</image:caption>
-    </image:image>
-    <image:image>
-      <image:loc>https://programmingwala.com/manish/manish_1.jpg</image:loc>
-      <image:title>Manish Kumar - Senior Software Engineer &amp; System Architect</image:title>
-      <image:caption>Manish Kumar - Java Spring Boot &amp; React Full Stack Architect</image:caption>
-    </image:image>
-    <image:image>
-      <image:loc>https://programmingwala.com/manish/manish_2.jpg</image:loc>
-      <image:title>Manish Kumar - AWS DevOps &amp; Cloud Infrastructure Specialist</image:title>
-      <image:caption>Manish Kumar - Docker, Kubernetes &amp; AWS Cloud Infrastructure Engineer</image:caption>
-    </image:image>
-  </url>
+  
+  const possibleSitemapPaths = [
+    path.join(__dirname, '../dist/sitemap.xml'),
+    path.join(__dirname, '../frontend/dist/sitemap.xml'),
+    path.join(__dirname, '../frontend/public/sitemap.xml'),
+    path.join(process.cwd(), 'dist/sitemap.xml')
+  ];
 
-  <url>
-    <loc>https://programmingwala.com/profile/manish-kumar</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-    <image:image>
-      <image:loc>https://programmingwala.com/manish/manish_3.jpg</image:loc>
-      <image:title>Manish Kumar Portfolio - Best Performer Award</image:title>
-      <image:caption>Manish Kumar Java Full Stack &amp; AWS DevOps Engineering Portfolio</image:caption>
-    </image:image>
-  </url>
+  for (const p of possibleSitemapPaths) {
+    if (fs.existsSync(p)) {
+      return res.sendFile(p);
+    }
+  }
 
-  <url>
-    <loc>https://programmingwala.com/manish</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-    <image:image>
-      <image:loc>https://programmingwala.com/manish/manish_3.jpg</image:loc>
-      <image:title>Manish Kumar - Lead Software Architect</image:title>
-      <image:caption>Manish Kumar Official Profile</image:caption>
-    </image:image>
-  </url>
-
-  <url>
-    <loc>https://www.afshaenterprises.com/manish-kumar</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-    <image:image>
-      <image:loc>https://www.afshaenterprises.com/manish/manish_3.jpg</image:loc>
-      <image:title>Manish Kumar - Best Java Full Stack Developer &amp; AWS DevOps Engineer</image:title>
-      <image:caption>Manish Kumar holding the Best Performer of the Institution Award Trophy</image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://programmingwala.com/courses-in-ghaziabad</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.98</priority>
-  </url>
-  <url>
-    <loc>https://programmingwala.com/courses/best-tech-coaching-rdc-ghaziabad</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.98</priority>
-  </url>
-  <url>
-    <loc>https://programmingwala.com/courses/java-coaching-in-ghaziabad</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.95</priority>
-  </url>
-  <url>
-    <loc>https://programmingwala.com/courses/aws-devops-training-ghaziabad</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.95</priority>
-  </url>
-  <url>
-    <loc>https://programmingwala.com/courses/python-ai-training-ghaziabad</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.95</priority>
-  </url>
-  <url>
-    <loc>https://programmingwala.com/courses/full-stack-developer-course-ghaziabad</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.95</priority>
-  </url>
-  <url>
-    <loc>https://programmingwala.com/careers</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.95</priority>
-  </url>
-  <url>
-    <loc>https://programmingwala.com/careers/java-full-stack-developer</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.95</priority>
-  </url>
-  <url>
-    <loc>https://programmingwala.com/careers/aws-devops-engineer</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.95</priority>
-  </url>
-  <url>
-    <loc>https://programmingwala.com/careers/python-developer</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.90</priority>
-  </url>
-  <url>
-    <loc>https://programmingwala.com/careers/react-frontend-developer</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.90</priority>
-  </url>
-  <url>
-    <loc>https://programmingwala.com/careers/mern-stack-developer</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.90</priority>
-  </url>
-  <url>
-    <loc>https://programmingwala.com/careers/data-engineer-ai</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.90</priority>
-  </url>
-  <url>
-    <loc>https://programmingwala.com/</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://programmingwala.com/practice</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://programmingwala.com/programs</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://programmingwala.com/tutorials</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.80</priority>
-  </url>
-  <url>
-    <loc>https://programmingwala.com/verify-certificate</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.75</priority>
-  </url>
-</urlset>`;
-  res.send(sitemapXml.trim());
+  res.status(404).send('Sitemap not found');
 });
 
 // Robots.txt Handler
 app.get('/robots.txt', (req, res) => {
   res.header('Content-Type', 'text/plain; charset=utf-8');
   res.header('Cache-Control', 'public, max-age=86400');
+
+  const possibleRobotsPaths = [
+    path.join(__dirname, '../dist/robots.txt'),
+    path.join(__dirname, '../frontend/dist/robots.txt'),
+    path.join(__dirname, '../frontend/public/robots.txt'),
+    path.join(process.cwd(), 'dist/robots.txt')
+  ];
+
+  for (const p of possibleRobotsPaths) {
+    if (fs.existsSync(p)) {
+      return res.sendFile(p);
+    }
+  }
+
   res.send(`User-agent: *
 Allow: /
-Allow: /careers
-Allow: /careers/*
-Allow: /jobs/*
+Allow: /courses/
+Allow: /courses/*
+Allow: /courses-in-ghaziabad
 Allow: /manish-kumar
 Allow: /profile/manish-kumar
 Allow: /manish
 Allow: /manish/*
+Allow: /careers
+Allow: /careers/*
+Allow: /tutorials
+Allow: /practice
 Allow: /verify-certificate/*
 
 Sitemap: https://programmingwala.com/sitemap.xml
@@ -326,6 +186,29 @@ if (resolvedDistPath) {
       }
     }
   }));
+
+  // Direct Prerendered HTML delivery for Course Pages (100% SEO, Googlebot & Crawler Ready)
+  app.get('/courses/:slug', (req, res, next) => {
+    const slug = req.params.slug;
+    const searchDirs = [
+      path.join(resolvedDistPath, 'courses'),
+      path.join(__dirname, '../dist/courses'),
+      path.join(__dirname, '../frontend/dist/courses'),
+      path.join(__dirname, '../frontend/public/courses')
+    ];
+
+    for (const sDir of searchDirs) {
+      const directHtml = path.join(sDir, `${slug}.html`);
+      const subDirHtml = path.join(sDir, slug, 'index.html');
+      if (fs.existsSync(directHtml)) {
+        return res.sendFile(directHtml);
+      }
+      if (fs.existsSync(subDirHtml)) {
+        return res.sendFile(subDirHtml);
+      }
+    }
+    next();
+  });
   
   app.get('*', (req, res, next) => {
     // Avoid intercepting API routes or uploads
