@@ -22,8 +22,12 @@ execSync('node scripts/updateGhaziabadCourseData.js', { cwd: rootDir, stdio: 'in
 console.log('3. Generating 150 Prerendered Static HTML Pages...');
 execSync('node scripts/generateHtmlPages.js', { cwd: rootDir, stdio: 'inherit' });
 
-// 4. Update Sitemaps & Robots
-console.log('4. Updating XML Sitemaps, Robots.txt & Robots.xml...');
+// 4. Generate Core Hub HTML Pages (manish-kumar, courses-in-ghaziabad, careers, tutorials, etc.)
+console.log('4. Generating Core Hub Prerendered HTML Pages...');
+execSync('node scripts/generateHubPages.js', { cwd: rootDir, stdio: 'inherit' });
+
+// 5. Update Sitemaps & Robots
+console.log('5. Updating XML Sitemaps, Robots.txt & Robots.xml...');
 execSync('node scripts/updateSitemapsAndRobots.js', { cwd: rootDir, stdio: 'inherit' });
 
 // 5. Sync static assets from frontend/public to dist if dist exists

@@ -24,7 +24,7 @@ let sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <!-- ========================================================= -->
-  <!-- PRIMARY PROFILE: MANISH KUMAR (TOP PRIORITY 1.0)           -->
+  <!-- PRIMARY PROFILE: MANISH KUMAR (CANONICAL PRIORITY 1.0)     -->
   <!-- ========================================================= -->
   <url>
     <loc>https://programmingwala.com/manish-kumar</loc>
@@ -45,42 +45,6 @@ let sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
       <image:loc>https://programmingwala.com/manish/manish_2.jpg</image:loc>
       <image:title>Manish Kumar - AWS DevOps &amp; Cloud Infrastructure Specialist</image:title>
       <image:caption>Manish Kumar - Docker, Kubernetes &amp; AWS Cloud Infrastructure Engineer</image:caption>
-    </image:image>
-  </url>
-
-  <url>
-    <loc>https://programmingwala.com/profile/manish-kumar</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-    <image:image>
-      <image:loc>https://programmingwala.com/manish/manish_3.jpg</image:loc>
-      <image:title>Manish Kumar Portfolio - Best Performer Award</image:title>
-      <image:caption>Manish Kumar Java Full Stack &amp; AWS DevOps Engineering Portfolio</image:caption>
-    </image:image>
-  </url>
-
-  <url>
-    <loc>https://programmingwala.com/manish</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-    <image:image>
-      <image:loc>https://programmingwala.com/manish/manish_3.jpg</image:loc>
-      <image:title>Manish Kumar - Lead Software Architect</image:title>
-      <image:caption>Manish Kumar Official Profile</image:caption>
-    </image:image>
-  </url>
-
-  <url>
-    <loc>https://www.afshaenterprises.com/manish-kumar</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-    <image:image>
-      <image:loc>https://www.afshaenterprises.com/manish/manish_3.jpg</image:loc>
-      <image:title>Manish Kumar - Best Java Full Stack Developer &amp; AWS DevOps Engineer</image:title>
-      <image:caption>Manish Kumar holding the Best Performer of the Institution Award Trophy</image:caption>
     </image:image>
   </url>
 
@@ -189,7 +153,6 @@ Allow: /practice
 Allow: /verify-certificate/*
 
 Sitemap: https://programmingwala.com/sitemap.xml
-Sitemap: https://www.afshaenterprises.com/sitemap.xml
 `;
 
 const robotsPaths = [
@@ -209,7 +172,6 @@ console.log('Saved robots.txt to all paths successfully!');
 const robotsXml = `<?xml version="1.0" encoding="UTF-8"?>
 <robots>
   <sitemap>https://programmingwala.com/sitemap.xml</sitemap>
-  <sitemap>https://www.afshaenterprises.com/sitemap.xml</sitemap>
 </robots>
 `;
 

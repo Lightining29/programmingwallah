@@ -16,4 +16,3 @@ Allow: /practice
 Allow: /verify-certificate/*
 
 Sitemap: https://programmingwala.com/sitemap.xml
-Sitemap: https://www.afshaenterprises.com/sitemap.xml

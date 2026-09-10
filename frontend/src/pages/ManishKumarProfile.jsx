@@ -298,20 +298,20 @@ export default function ManishKumarProfile() {
       canonical.setAttribute('rel', 'canonical');
       document.head.appendChild(canonical);
     }
-    canonical.setAttribute('href', 'https://www.afshaenterprises.com/manish-kumar');
+    canonical.setAttribute('href', 'https://programmingwala.com/manish-kumar');
 
     const structuredData = {
       '@context': 'https://schema.org',
       '@graph': [
         {
           '@type': 'Person',
-          '@id': 'https://www.afshaenterprises.com/manish-kumar#person',
+          '@id': 'https://programmingwala.com/manish-kumar#person',
           'name': 'Manish Kumar',
           'alternateName': ['Manish Kumar Java Developer', 'Manish Kumar AWS Engineer', 'Manish Kumar Software Architect'],
           'jobTitle': 'Senior Java Full Stack Developer & AWS DevOps Engineer',
           'description': 'Manish Kumar is an award-winning Java Full Stack Developer and AWS DevOps Engineer specializing in Java Spring Boot microservices, React web applications, Docker, Kubernetes, and AWS Cloud Architecture.',
-          'image': window.location.origin + '/manish/manish_3.jpg',
-          'url': 'https://www.afshaenterprises.com/manish-kumar',
+          'image': 'https://programmingwala.com/manish/manish_3.jpg',
+          'url': 'https://programmingwala.com/manish-kumar',
           'gender': 'https://schema.org/Male',
           'nationality': 'Indian',
           'address': {

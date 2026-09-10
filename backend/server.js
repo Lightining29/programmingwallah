@@ -156,8 +156,7 @@ Allow: /tutorials
 Allow: /practice
 Allow: /verify-certificate/*
 
-Sitemap: https://programmingwala.com/sitemap.xml
-Sitemap: https://www.afshaenterprises.com/sitemap.xml`);
+Sitemap: https://programmingwala.com/sitemap.xml`);
 });
 
 // Robots.xml Handler (for search console & bots requesting XML format)
@@ -181,7 +180,6 @@ app.get('/robots.xml', (req, res) => {
   res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <robots>
   <sitemap>https://programmingwala.com/sitemap.xml</sitemap>
-  <sitemap>https://www.afshaenterprises.com/sitemap.xml</sitemap>
 </robots>`);
 });
 
@@ -205,8 +203,57 @@ for (const cand of distCandidates) {
 if (resolvedDistPath) {
   console.log(`\x1b[32m✔ Serving frontend production build from: ${resolvedDistPath}\x1b[0m`);
 
-  // Direct Prerendered HTML delivery for Course Pages (100% SEO, Googlebot & Crawler Ready)
-  // Must be registered BEFORE express.static to prevent trailing-slash folder 301 redirects
+  // 1. Explicit 301 Permanent Redirects for alias URLs (Eliminates GSC Duplicate & Redirect warnings)
+  app.get(['/profile/manish-kumar', '/profile/manish-kumar/', '/manish', '/manish/'], (req, res) => {
+    res.redirect(301, 'https://programmingwala.com/manish-kumar');
+  });
+
+  app.get(['/coaching-in-rdc-ghaziabad', '/coaching-in-rdc-ghaziabad/'], (req, res) => {
+    res.redirect(301, 'https://programmingwala.com/courses-in-ghaziabad');
+  });
+
+  app.get(['/job-roles', '/job-roles/', '/trending-tech-jobs', '/trending-tech-jobs/'], (req, res) => {
+    res.redirect(301, 'https://programmingwala.com/careers');
+  });
+
+  // 2. Direct Prerendered HTML delivery for Core Hub Pages (Zero 301, 100% Crawlable)
+  const coreHubs = [
+    'manish-kumar',
+    'courses-in-ghaziabad',
+    'careers',
+    'tutorials',
+    'practice',
+    'verify-certificate'
+  ];
+
+  coreHubs.forEach(hub => {
+    app.get([`/${hub}`, `/${hub}/`], (req, res, next) => {
+      const searchDirs = [
+        resolvedDistPath,
+        path.join(__dirname, '../dist'),
+        path.join(__dirname, '../frontend/dist'),
+        path.join(__dirname, '../frontend/public')
+      ];
+
+      for (const sDir of searchDirs) {
+        const directHtml = path.join(sDir, `${hub}.html`);
+        const subDirHtml = path.join(sDir, hub, 'index.html');
+        if (fs.existsSync(directHtml)) {
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          res.setHeader('Link', `<https://programmingwala.com/${hub}>; rel="canonical"`);
+          return res.sendFile(directHtml);
+        }
+        if (fs.existsSync(subDirHtml)) {
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          res.setHeader('Link', `<https://programmingwala.com/${hub}>; rel="canonical"`);
+          return res.sendFile(subDirHtml);
+        }
+      }
+      next();
+    });
+  });
+
+  // 3. Direct Prerendered HTML delivery for 150 Course Pages (100% SEO, Googlebot & Crawler Ready)
   app.get(['/courses/:slug', '/courses/:slug/'], (req, res, next) => {
     const slug = req.params.slug;
     const searchDirs = [
@@ -221,10 +268,12 @@ if (resolvedDistPath) {
       const subDirHtml = path.join(sDir, slug, 'index.html');
       if (fs.existsSync(directHtml)) {
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Link', `<https://programmingwala.com/courses/${slug}>; rel="canonical"`);
         return res.sendFile(directHtml);
       }
       if (fs.existsSync(subDirHtml)) {
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Link', `<https://programmingwala.com/courses/${slug}>; rel="canonical"`);
         return res.sendFile(subDirHtml);
       }
     }
@@ -241,12 +290,27 @@ if (resolvedDistPath) {
     }
   }));
   
+  // 4. Dynamic Canonical SPA Fallback (Guarantees every page has a matching self-referential canonical)
   app.get('*', (req, res, next) => {
-    // Avoid intercepting API routes or uploads
     if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
       return next();
     }
-    res.sendFile(path.join(resolvedDistPath, 'index.html'));
+    const cleanPath = req.path.replace(/\/+$/, '') || '';
+    const canonicalUrl = `https://programmingwala.com${cleanPath}`;
+    res.setHeader('Link', `<${canonicalUrl}>; rel="canonical"`);
+
+    const indexPath = path.join(resolvedDistPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      let html = fs.readFileSync(indexPath, 'utf-8');
+      if (html.includes('<link rel="canonical"')) {
+        html = html.replace(/<link rel="canonical" href="[^"]*"/, `<link rel="canonical" href="${canonicalUrl}"`);
+      } else {
+        html = html.replace('</head>', `  <link rel="canonical" href="${canonicalUrl}" />\n</head>`);
+      }
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.send(html);
+    }
+    res.sendFile(indexPath);
   });
 } else {
   // Root Route fallback
