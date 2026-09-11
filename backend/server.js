@@ -17,8 +17,6 @@ import razorpayRoutes from './routes/razorpay.js';
 import http from 'http';
 import lmsRoutes from './routes/lms.js';
 import paymentRoutes from './routes/payment.js';
-import musicRoutes from './routes/music.js';
-import { setupGameSocket } from './socket/gameSocket.js';
 
 // Load environment variables from multiple possible locations (root .env and backend/.env)
 dotenv.config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), '../.env') });
@@ -98,7 +96,6 @@ app.use('/api/admission-payment', admissionPaymentRoutes);
 app.use('/api/razorpay', razorpayRoutes);
 app.use('/api/lms', lmsRoutes);
 app.use('/api', paymentRoutes);
-app.use('/api/music', musicRoutes);
 
 // Dynamic Sitemap for Search Engines & AI Crawlers
 app.get('/sitemap.xml', (req, res) => {
@@ -342,14 +339,6 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 const httpServer = http.createServer(app);
-
-// Initialize Real-time Multiplayer Gaming Socket Hub
-try {
-  setupGameSocket(httpServer);
-  console.log(`\x1b[35m✔ Real-time Multiplayer Gaming Socket Server initialized\x1b[0m`);
-} catch (socketErr) {
-  console.warn('Socket initialization notice:', socketErr.message);
-}
 
 const server = httpServer.listen(PORT, async () => {
   console.log(`\x1b[32m✔ Pranidha School Backend running in ${process.env.NODE_ENV || 'production'} mode on port ${PORT}\x1b[0m`);

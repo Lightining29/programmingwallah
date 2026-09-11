@@ -6,7 +6,7 @@ import { useTheme } from '../context/ThemeContext.jsx';
 import { 
   Menu, X, LogOut, LayoutDashboard, LogIn, UserPlus, BookOpen, 
   Sun, Moon, Home, Info, GraduationCap, Code2, Brain, 
-  Music, Gamepad2, Video, Image, Phone, ChevronRight, Briefcase
+  Video, Image, Phone, ChevronRight, Briefcase
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ConfirmModal from './ConfirmModal.jsx';
@@ -33,8 +33,6 @@ export default function Navbar() {
     { name: 'COURSES', path: '/programs', icon: GraduationCap },
     { name: 'TUTORIALS', path: '/tutorials', icon: Code2 },
     { name: 'PRACTICE', path: '/practice', icon: Brain },
-    { name: 'MUSIC', path: '/music', icon: Music },
-    { name: 'GAMES', path: '/games', icon: Gamepad2 },
     { name: 'LEARNING', path: '/lms', icon: BookOpen },
     { name: 'MEETINGS', path: '/meetings', icon: Video },
     { name: 'GALLERY', path: '/gallery', icon: Image },
