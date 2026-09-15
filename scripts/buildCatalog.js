@@ -8,8 +8,104 @@ const __dirname = path.dirname(__filename);
 
 const rawCourses = [
   // ==========================================
-  // CATEGORY A: JAVA (5 Dedicated Pages)
+  // CATEGORY A: JAVA (Dedicated Pages)
   // ==========================================
+  {
+    slug: 'java-coaching-in-ghaziabad',
+    courseName: 'Best Java Coaching in Ghaziabad | Core & Advanced Java Training Institute in RDC Raj Nagar',
+    shortTitle: 'Java Coaching in Ghaziabad',
+    category: 'Java',
+    badgeText: '#1 JAVA COACHING GHAZIABAD',
+    themeColor: '#EA580C',
+    bgGradient: ['#7C2D12', '#EA580C', '#C2410C'],
+    iconType: 'java',
+    seoTitle: 'Best Java Coaching in Ghaziabad | Top Java Institute & Training Centre Near Me (2026)',
+    metaDesc: 'Join the #1 Java Coaching in Ghaziabad at AppleTree Infotech, C-60 R.K. Tower 3rd Floor RDC Raj Nagar. Master Core Java 21, Advanced Java, Spring Boot 3, Microservices, Collections, Multithreading & JDBC with 100% placement support. Call/WhatsApp 7503962162.',
+    keywords: 'java coaching in ghaziabad, best java coaching in ghaziabad, java classes in ghaziabad, java training institute in ghaziabad, java coaching centre near me, java coaching rdc raj nagar, core java coaching ghaziabad, advanced java classes ghaziabad, java spring boot training ghaziabad, java course near me, java certification coaching ghaziabad, java coaching for beginners ghaziabad, best java training institute rdc, java full stack classes ghaziabad, manish kumar java developer, appletree infotech ghaziabad, coding institute in ghaziabad, java coaching near me with placement',
+    h1: 'Best Java Coaching in Ghaziabad - Core & Advanced Java Training Institute',
+    tagline: '☕ Master Core Java, Advanced Java, Spring Boot 3 & Microservices with 100% Placement Guarantee at RDC Raj Nagar Ghaziabad',
+    rating: '4.9 ★★★★★ (650+ Verified Student Reviews)',
+    batchTypes: 'Daily Regular (Morning & Evening), Fast-Track Bootcamps & Weekend Special Batches for College Students & Working Professionals',
+    fees: '₹3,500 / month (Zero-Interest Monthly Installments & Merit Scholarships Available)',
+    duration: '4 Months (140+ Hours of Practical Lab Sessions + 6 Live Enterprise Projects + 100% Placement Support)',
+    overview: 'Looking for the best Java coaching in Ghaziabad? AppleTree Infotech & ProgrammingWala, situated at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, is widely acknowledged as the premier Java coaching centre and software engineering training institute in Delhi NCR. Tailored for college students from top regional institutions (AKGEC, ABES, KIET, IMS, RKGIT, Galgotias) as well as working professionals aiming for product-based company switches, this comprehensive Java coaching program takes you from fundamental programming logic and JVM architecture to enterprise-grade Spring Boot 3 microservices development. Under the expert guidance of senior industry architects including Manish Kumar (Award-Winning Lead Software Architect & Java Full Stack specialist), students gain hands-on proficiency in Java 21 LTS syntax, Object-Oriented Analysis & Design (OOAD), Java Collections Framework, Concurrent Multithreading, Relational Database Connectivity (JDBC & Hibernate ORM), and RESTful API architecture with real-world enterprise project deployments.',
+    highlights: [
+      'Industry-accredited Java 21 LTS curriculum covering JVM internals, memory management (Heap, Stack, Metaspace), and garbage collection tuning.',
+      'Rigorous Object-Oriented Programming (OOP) foundation: Abstraction, Encapsulation, Polymorphism, Inheritance, SOLID principles, and design patterns.',
+      'Comprehensive mastery of the Java Collections Framework (ArrayList, LinkedList, HashMap internals, HashSet, TreeMap, ConcurrentHashMap, PriorityQueue).',
+      'High-performance multithreading and concurrency: Thread lifecycle, Synchronization, Locks, ExecutorService framework, Callable & Future, and modern Virtual Threads.',
+      'Java 8 to Java 21 modern features: Lambda expressions, Functional Interfaces, Streams API (parallel streams, collectors), Optional class, Records, and Pattern Matching.',
+      'Full database persistence training: JDBC architecture, PreparedStatement, Connection Pooling (HikariCP), ACID transactions, and introduction to Hibernate JPA ORM.',
+      'State-of-the-art classroom facilities in RDC Raj Nagar Ghaziabad with dedicated high-speed PC workstations and individual mentor attention.',
+      '100% placement assurance: Resume optimization, technical mock interviews, GitHub profile architecture, and direct campus recruitment drives in Noida, Gurgaon, and Delhi NCR.'
+    ],
+    curriculumTracks: [
+      {
+        name: 'Module 1: Java Fundamentals, JVM Architecture & Control Flow',
+        duration: '3.5 Weeks',
+        desc: 'Installation of JDK 21, environment variables setup, byte code compilation vs execution. Detailed walkthrough of JVM Architecture: ClassLoader subsystems, Execution Engine (JIT Compiler, Interpreter), JVM Memory structure (Heap, Stack, Method Area/Metaspace, PC Registers). Data types, primitive vs reference types, type casting, operators, bitwise manipulations, control flow statements (if-else, switch expressions, loops), and break/continue labels. Memory allocations and Garbage Collection basics.'
+      },
+      {
+        name: 'Module 2: Object-Oriented Programming (OOP) & Design Architecture',
+        duration: '3.5 Weeks',
+        desc: 'Deep-dive into Class and Object relationships, memory representation in heap, constructor overloading, constructor chaining (this() and super()). The 4 Pillars of OOP: Data Encapsulation and Access Modifiers (private, default, protected, public); Inheritance types, Method Overriding, Runtime Polymorphism, and Dynamic Method Dispatch; Abstract Classes vs Interfaces, Multiple Inheritance using Default and Static Interface Methods; Encapsulation with Java Beans and Immutable Classes. Introduction to SOLID design principles in enterprise software.'
+      },
+      {
+        name: 'Module 3: Java Collections Framework, Generics & Data Structures',
+        duration: '3.5 Weeks',
+        desc: 'Comprehensive study of java.util package hierarchy: Collection interface, List implementations (ArrayList vs LinkedList vs Vector), Set implementations (HashSet, LinkedHashSet, TreeSet with Comparable/Comparator), Queue and Deque (ArrayDeque, PriorityQueue). Map hierarchy: HashMap internal hashing algorithm (bucket arrays, linked list to red-black tree conversion in Java 8+), LinkedHashMap, TreeMap, ConcurrentHashMap for thread-safe operations. Generics: Type parameters, bounded wildcards (? extends T, ? super T), and time complexity (Big-O) analysis of collection operations.'
+      },
+      {
+        name: 'Module 4: Exception Handling, Java I/O & Multithreading Concurrency',
+        duration: '3 Weeks',
+        desc: 'Robust error handling: Throwable hierarchy, Checked vs Unchecked Exceptions, try-catch-finally, try-with-resources (AutoCloseable), custom exception design, and best practices. Java I/O & NIO.2: Byte Streams, Character Streams, Buffered Streams, File reading/writing, and Object Serialization. Multithreading: Thread class, Runnable interface, thread states, race conditions, synchronized blocks, wait/notify inter-thread communication, ReentrantLock, ExecutorService thread pools, Callable, Future, and modern Java Virtual Threads.'
+      },
+      {
+        name: 'Module 5: Java 8 to Java 21 Functional Features & Stream API',
+        duration: '2.5 Weeks',
+        desc: 'Functional programming paradigm in Java: Lambda expressions, Built-in Functional Interfaces (Predicate, Function, Consumer, Supplier, BiFunction). Stream API in depth: Intermediate operations (filter, map, flatMap, distinct, sorted, limit, skip) and Terminal operations (collect, forEach, reduce, min, max, anyMatch). Collectors utility class, groupingBy, partitioningBy. Optional class for null-safety, modern Date-Time API (java.time), Text Blocks, Switch Pattern Matching, Sealed Classes, and Records.'
+      },
+      {
+        name: 'Module 6: Database Integration (JDBC), Hibernate JPA & Spring Boot Intro',
+        duration: '3 Weeks',
+        desc: 'Relational database connectivity with MySQL: JDBC Driver types, DriverManager, Connection, Statement vs PreparedStatement, CallableStatement, ResultSet metadata. Transaction management, commit, rollback, and savepoints. Connection pooling using HikariCP. Introduction to Object-Relational Mapping (ORM) with Hibernate: Entity mapping, annotations, session factory, HQL queries. Introduction to Spring Boot 3: Inversion of Control (IoC), Dependency Injection (DI), Spring Initializr, building and testing production-ready RESTful endpoints.'
+      }
+    ],
+    faqs: [
+      {
+        q: 'Why is AppleTree Infotech considered the best Java coaching in Ghaziabad?',
+        a: 'AppleTree Infotech & ProgrammingWala in RDC Raj Nagar Ghaziabad has trained over 5,000+ successful software engineers. We offer 100% hands-on classroom lab training with senior instructors who have built enterprise banking and cloud systems, 1-on-1 personalized mentorship, ISO 9001:2015 recognized certification, and an active placement cell with hiring partners in Noida, Greater Noida, Gurgaon, and Delhi.'
+      },
+      {
+        q: 'Where is the Java coaching centre located in Ghaziabad?',
+        a: 'Our physical training centre is centrally located at C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, Uttar Pradesh 201001. We are situated near RDC Central Park and just 5 minutes away from the Shaheed Sthal (New Bus Adda) Red Line Metro Station, making it easily accessible from all parts of Ghaziabad, Meerut, and East Delhi.'
+      },
+      {
+        q: 'What are the fees and payment options for Java classes in Ghaziabad?',
+        a: 'Our Java coaching fee is designed to be affordable and student-friendly, starting at ₹3,500 per month. We provide zero-cost installment payment options, early-bird group discounts, and merit-based scholarship fee waivers for college students from AKGEC, ABES, KIET, IMS, and RKGIT.'
+      },
+      {
+        q: 'Do you offer 100% placement assistance with the Java coaching?',
+        a: 'Yes, every student enrolled in our Java coaching receives complete placement support. This includes technical resume preparation, live GitHub code portfolio setup, 50+ technical mock interview rounds, competitive coding practice on LeetCode/HackerRank, and direct interview scheduling with top IT companies and software service startups across Delhi NCR.'
+      },
+      {
+        q: 'What is the background and experience of the Java instructor?',
+        a: 'The program is spearheaded by Manish Kumar, award-winning Lead Software Architect and Senior Java Full Stack Developer, alongside a dedicated team of senior technical mentors with over 10+ years of corporate engineering experience in enterprise Spring Boot microservices, high-scale architectures, and cloud systems.'
+      },
+      {
+        q: 'Can non-technical students or beginners join this Java coaching?',
+        a: 'Absolutely! Our Java coaching starts from absolute scratch, covering programming fundamentals, logic development, and problem-solving before transitioning to advanced object-oriented architectures. It is ideal for freshers, BCA/MCA, B.Sc, B.Tech students from any engineering branch, and non-IT professionals wanting to build a software career.'
+      },
+      {
+        q: 'Are weekend batches available for working professionals and college students?',
+        a: 'Yes! In addition to our regular weekday morning and evening batches, we conduct dedicated Saturday-Sunday intensive weekend batches tailored for working professionals and college students with busy weekday schedules.'
+      },
+      {
+        q: 'What real-world projects will I build during the Java coaching?',
+        a: 'You will build 6 real-world capstone projects including: 1) Core Banking Transaction Engine with Concurrency & Multithreading, 2) E-Commerce Product Catalog Management with Java Collections, 3) Hospital Patient Records Database via JDBC & HikariCP, 4) Multi-Threaded High-Speed Web Scraper & File Downloader, 5) Student Academic Management System with Hibernate JPA, and 6) Secure RESTful API Backend with Spring Boot & JWT Authentication.'
+      }
+    ]
+  },
   {
     slug: 'java-course-in-ghaziabad',
     courseName: 'Core & Advanced Java Programming Course in Ghaziabad',
