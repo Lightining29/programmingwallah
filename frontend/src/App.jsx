@@ -74,6 +74,26 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   return children;
 };
 
+// Global Canonical & SEO Manager (Guarantees every page has an exact self-referential canonical URL)
+function CanonicalManager() {
+  const location = useLocation();
+
+  React.useEffect(() => {
+    const cleanPath = location.pathname.replace(/\/+$/, '') || '';
+    const canonicalUrl = cleanPath === '' ? 'https://programmingwala.com/' : `https://programmingwala.com${cleanPath}`;
+
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', canonicalUrl);
+  }, [location.pathname]);
+
+  return null;
+}
+
 // Inner layout — must be inside <Router> so useLocation works
 function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
   const location = useLocation();
@@ -86,6 +106,7 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
         isDark ? 'bg-slate-950 text-white' : 'bg-brandCream text-slate-800'
       }`}
     >
+      <CanonicalManager />
       <motion.div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 z-0 opacity-80"
@@ -111,7 +132,7 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
-          <Route path="/admissions" element={<Navigate to="/" replace />} />
+          <Route path="/admissions" element={<Admissions />} />
           <Route path="/programs" element={<Programs />} />
           <Route path="/facilities" element={<Facilities />} />
           <Route path="/gallery" element={<Gallery />} />
@@ -130,22 +151,22 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
           <Route path="/verify-certificate" element={<VerifyCertificate />} />
           <Route path="/verify-certificate/:certNumber" element={<VerifyCertificate />} />
           <Route path="/manish-kumar" element={<ManishKumarProfile />} />
-          <Route path="/profile/manish-kumar" element={<ManishKumarProfile />} />
-          <Route path="/manish" element={<ManishKumarProfile />} />
+          <Route path="/profile/manish-kumar" element={<Navigate to="/manish-kumar" replace />} />
+          <Route path="/manish" element={<Navigate to="/manish-kumar" replace />} />
           
           {/* High-Impact SEO Tech Career Tracks */}
           <Route path="/careers" element={<CareerTrackHub />} />
-          <Route path="/job-roles" element={<CareerTrackHub />} />
-          <Route path="/trending-tech-jobs" element={<CareerTrackHub />} />
+          <Route path="/job-roles" element={<Navigate to="/careers" replace />} />
+          <Route path="/trending-tech-jobs" element={<Navigate to="/careers" replace />} />
           <Route path="/careers/:slug" element={<CareerTrackDetail />} />
-          <Route path="/jobs/:slug" element={<CareerTrackDetail />} />
+          <Route path="/jobs/:slug" element={<Navigate to="/careers" replace />} />
 
           {/* Local SEO: Best Tech Coaching in RDC Ghaziabad */}
           <Route path="/courses-in-ghaziabad" element={<GhaziabadCourseHub />} />
-          <Route path="/coaching-in-rdc-ghaziabad" element={<GhaziabadCourseHub />} />
-          <Route path="/courses/best-tech-coaching-rdc-ghaziabad" element={<GhaziabadCourseHub />} />
+          <Route path="/coaching-in-rdc-ghaziabad" element={<Navigate to="/courses-in-ghaziabad" replace />} />
+          <Route path="/courses/best-tech-coaching-rdc-ghaziabad" element={<Navigate to="/courses-in-ghaziabad" replace />} />
           <Route path="/courses/:slug" element={<GhaziabadCourseDetail />} />
-          <Route path="/coaching/:slug" element={<GhaziabadCourseDetail />} />
+          <Route path="/coaching/:slug" element={<Navigate to="/courses-in-ghaziabad" replace />} />
 
           {/* LMS & Student Portal Routes */}
           <Route path="/lms" element={<LMS />} />

@@ -117,6 +117,46 @@ sitemapXml += `  <!-- ========================================================= 
     <changefreq>monthly</changefreq>
     <priority>0.80</priority>
   </url>
+
+  <!-- ========================================================= -->
+  <!-- INSTITUTION & ADMISSION PAGES                             -->
+  <!-- ========================================================= -->
+  <url>
+    <loc>https://programmingwala.com/about</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://programmingwala.com/contact</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://programmingwala.com/programs</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://programmingwala.com/gallery</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://programmingwala.com/fees</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://programmingwala.com/admissions</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
 </urlset>
 `;
 
@@ -132,7 +172,7 @@ sitemapPaths.forEach(p => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(p, sitemapXml.trim(), 'utf-8');
 });
-console.log(`Saved updated sitemap.xml with ${courses.length} courses + Manish Kumar profile to all paths!`);
+console.log(`Saved updated sitemap.xml with ${courses.length} courses, hubs, and institutional pages to all paths!`);
 
 // Generate robots.txt
 const robotsTxt = `User-agent: *
@@ -141,16 +181,30 @@ Allow: /courses/
 Allow: /courses/*
 Allow: /courses-in-ghaziabad
 Allow: /manish-kumar
-Allow: /profile/manish-kumar
-Allow: /manish
-Allow: /manish/*
 Allow: /assets/images/courses/
 Allow: /assets/images/courses/*
 Allow: /careers
 Allow: /careers/*
 Allow: /tutorials
 Allow: /practice
+Allow: /verify-certificate
 Allow: /verify-certificate/*
+Allow: /about
+Allow: /contact
+Allow: /programs
+Allow: /gallery
+Allow: /fees
+Allow: /admissions
+
+# Disallow private, administrative, and authenticated endpoints
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /portal/
+Disallow: /login
+Disallow: /payment-demo
+Disallow: /lms/learn/
+Disallow: /lms/dashboard/
+Disallow: /student
 
 Sitemap: https://programmingwala.com/sitemap.xml
 `;

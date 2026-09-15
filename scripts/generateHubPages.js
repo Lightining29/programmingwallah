@@ -21,11 +21,13 @@ const courses = JSON.parse(fs.readFileSync(path.join(__dirname, 'coursesCatalog.
 function savePage(name, html) {
   targetDirs.forEach(baseDir => {
     fs.writeFileSync(path.join(baseDir, `${name}.html`), html, 'utf-8');
+    // Remove any leftover subdirectories from prior builds so Apache/Nginx never forces a trailing-slash redirect
     const subDir = path.join(baseDir, name);
-    if (!fs.existsSync(subDir)) fs.mkdirSync(subDir, { recursive: true });
-    fs.writeFileSync(path.join(subDir, 'index.html'), html, 'utf-8');
+    if (fs.existsSync(subDir) && fs.statSync(subDir).isDirectory()) {
+      fs.rmSync(subDir, { recursive: true, force: true });
+    }
   });
-  console.log(`Saved prerendered static page: /${name} (${name}.html & /${name}/index.html)`);
+  console.log(`Saved prerendered static page: /${name} (${name}.html)`);
 }
 
 // -------------------------------------------------------------
@@ -762,4 +764,592 @@ const verifyHtml = `<!DOCTYPE html>
 
 savePage('verify-certificate', verifyHtml);
 
-console.log('Finished generating all hub pages successfully!');
+// -------------------------------------------------------------
+// 7. ABOUT US (/about)
+// -------------------------------------------------------------
+const aboutHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>About Us | AppleTree Infotech &amp; ProgrammingWala - Premier Tech Institute Ghaziabad</title>
+  <meta name="description" content="Learn about AppleTree Infotech &amp; ProgrammingWala, leading IT coaching institute in RDC Ghaziabad. Industry-focused curriculum in Java, Spring Boot, React, Python, and AWS DevOps.">
+  <meta name="keywords" content="About AppleTree Infotech, ProgrammingWala Ghaziabad, Best Computer Institute RDC, Manish Kumar Java Developer, Tech Coaching Faculty">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <link rel="canonical" href="https://programmingwala.com/about">
+  <meta name="thumbnail" content="https://programmingwala.com/logo.png">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://programmingwala.com/about">
+  <meta property="og:title" content="About Us | AppleTree Infotech &amp; ProgrammingWala">
+  <meta property="og:description" content="Empowering developers with real-world enterprise engineering skills in RDC Raj Nagar, Ghaziabad.">
+  <meta property="og:image" content="https://programmingwala.com/logo.png">
+
+  <link rel="icon" type="image/png" href="/logo.png">
+
+  <style>
+    :root { --bg: #090d16; --card-bg: #0f172a; --text: #e2e8f0; --text-muted: #94a3b8; --primary: #38bdf8; }
+    * { margin:0; padding:0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); line-height: 1.6; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+    header.navbar { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 16px 0; position: sticky; top: 0; z-index: 100; }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 1.25rem; color: #fff; text-decoration: none; }
+    .brand span { color: #f43f5e; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 600; margin-left: 20px; }
+    .hero { padding: 50px 0 30px; text-align: center; }
+    h1 { font-size: 2.6rem; font-weight: 900; color: #fff; margin-bottom: 16px; }
+    .content-box { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 32px; margin: 24px 0; }
+    .faculty-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-top: 24px; }
+    .faculty-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 20px; text-align: center; }
+    .faculty-name { font-size: 1.15rem; font-weight: 800; color: #fff; margin-top: 10px; }
+    .faculty-role { font-size: 0.85rem; color: #38bdf8; font-weight: 600; }
+    footer { border-top: 1px solid rgba(255,255,255,0.08); padding: 40px 0; text-align: center; color: #64748b; font-size: 0.9rem; margin-top: 60px; }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="/" class="brand">
+        <img src="/logo.png" alt="ProgrammingWala Logo" width="36" height="36">
+        <div>Programming<span>Wala</span></div>
+      </a>
+      <nav class="nav-links">
+        <a href="/courses-in-ghaziabad">All Courses</a>
+        <a href="/manish-kumar">Manish Kumar</a>
+        <a href="/about" style="color:#fff; font-weight:bold;">About</a>
+        <a href="/contact">Contact</a>
+        <a href="https://wa.me/917503962162" style="background:#22c55e; color:#fff; padding:8px 16px; border-radius:8px;">WhatsApp: 7503962162</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="hero">
+      <h1>About AppleTree Infotech &amp; ProgrammingWala</h1>
+      <p style="color:#94a3b8; max-width:750px; margin:0 auto;">Premier software engineering training academy located in RDC Raj Nagar, Ghaziabad. Bridging the gap between college education and industry tech stacks.</p>
+    </div>
+
+    <div class="content-box">
+      <h2 style="font-size:1.5rem; font-weight:800; color:#fff; margin-bottom:12px;">Our Mission &amp; Vision</h2>
+      <p style="color:#cbd5e1; font-size:0.95rem; line-height:1.8;">
+        AppleTree Infotech &amp; ProgrammingWala provides job-oriented classroom and live blended coaching in Java Full Stack Development, AWS DevOps, Python Data Science, and MERN Stack. With state-of-the-art offline computer labs in RDC Ghaziabad, our curriculum includes real-world projects, live coding practice, ISO 9001:2015 certification, and 100% placement support.
+      </p>
+
+      <h2 style="font-size:1.5rem; font-weight:800; color:#fff; margin-top:32px; margin-bottom:12px;">Distinguished Leadership &amp; Mentors</h2>
+      <div class="faculty-grid">
+        <div class="faculty-card">
+          <div class="faculty-name">Mr. Umesh Chandra</div>
+          <div class="faculty-role">Director &amp; Chief Academic Officer</div>
+          <p style="color:#94a3b8; font-size:0.8rem; margin-top:6px;">B.Tech in Computer Science</p>
+        </div>
+        <div class="faculty-card">
+          <div class="faculty-name">Manish Kumar</div>
+          <div class="faculty-role">Lead Software Architect &amp; Best Performer Award Winner</div>
+          <p style="color:#94a3b8; font-size:0.8rem; margin-top:6px;">Java Spring Boot &amp; AWS DevOps Lead</p>
+          <a href="/manish-kumar" style="display:inline-block; margin-top:8px; color:#38bdf8; font-size:0.8rem; font-weight:700;">View Profile →</a>
+        </div>
+        <div class="faculty-card">
+          <div class="faculty-name">Mr. Vishal</div>
+          <div class="faculty-role">Senior MERN Stack Instructor</div>
+          <p style="color:#94a3b8; font-size:0.8rem; margin-top:6px;">React, Node.js &amp; MongoDB Specialist</p>
+        </div>
+        <div class="faculty-card">
+          <div class="faculty-name">Aslam Saifi</div>
+          <div class="faculty-role">Enterprise ERP &amp; ABAP Specialist</div>
+          <p style="color:#94a3b8; font-size:0.8rem; margin-top:6px;">Corporate Software Consultant</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>© 2026 AppleTree Infotech &amp; ProgrammingWala. C-60, R.K. Tower, 3rd Floor, RDC Raj Nagar, Ghaziabad, UP 201001 • Contact: +91 7503962162</p>
+    </div>
+  </footer>
+</body>
+</html>`;
+
+savePage('about', aboutHtml);
+
+// -------------------------------------------------------------
+// 8. CONTACT US (/contact)
+// -------------------------------------------------------------
+const contactHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Contact Us | AppleTree Infotech &amp; ProgrammingWala Admissions Desk</title>
+  <meta name="description" content="Contact AppleTree Infotech &amp; ProgrammingWala admissions desk in RDC Ghaziabad. Call/WhatsApp +91 7503962162 or visit C-60, R.K. Tower, 3rd Floor, RDC Raj Nagar, Ghaziabad.">
+  <meta name="keywords" content="Contact ProgrammingWala, AppleTree Infotech Phone Number, RDC Ghaziabad Coaching Address, Java Training Enquiry Ghaziabad">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <link rel="canonical" href="https://programmingwala.com/contact">
+  <meta name="thumbnail" content="https://programmingwala.com/logo.png">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://programmingwala.com/contact">
+  <meta property="og:title" content="Contact Us | AppleTree Infotech &amp; ProgrammingWala">
+  <meta property="og:description" content="Direct phone, WhatsApp and address details for admission and queries in RDC Ghaziabad.">
+  <meta property="og:image" content="https://programmingwala.com/logo.png">
+
+  <link rel="icon" type="image/png" href="/logo.png">
+
+  <style>
+    :root { --bg: #090d16; --card-bg: #0f172a; --text: #e2e8f0; --text-muted: #94a3b8; --primary: #22c55e; }
+    * { margin:0; padding:0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); line-height: 1.6; }
+    .container { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
+    header.navbar { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 16px 0; position: sticky; top: 0; z-index: 100; }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 1.25rem; color: #fff; text-decoration: none; }
+    .brand span { color: #f43f5e; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 600; margin-left: 20px; }
+    .hero { padding: 50px 0 30px; text-align: center; }
+    h1 { font-size: 2.6rem; font-weight: 900; color: #fff; margin-bottom: 16px; }
+    .contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin: 30px 0; }
+    .contact-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 28px; text-align: center; }
+    .contact-icon { font-size: 2.2rem; margin-bottom: 12px; }
+    .contact-title { font-size: 1.2rem; font-weight: 800; color: #fff; margin-bottom: 8px; }
+    footer { border-top: 1px solid rgba(255,255,255,0.08); padding: 40px 0; text-align: center; color: #64748b; font-size: 0.9rem; margin-top: 60px; }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="/" class="brand">
+        <img src="/logo.png" alt="ProgrammingWala Logo" width="36" height="36">
+        <div>Programming<span>Wala</span></div>
+      </a>
+      <nav class="nav-links">
+        <a href="/courses-in-ghaziabad">All Courses</a>
+        <a href="/manish-kumar">Manish Kumar</a>
+        <a href="/about">About</a>
+        <a href="/contact" style="color:#fff; font-weight:bold;">Contact</a>
+        <a href="https://wa.me/917503962162" style="background:#22c55e; color:#fff; padding:8px 16px; border-radius:8px;">WhatsApp: 7503962162</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="hero">
+      <h1>Contact Our Admissions &amp; Career Desk</h1>
+      <p style="color:#94a3b8; max-width:700px; margin:0 auto;">Reach out directly to schedule a campus demo, course counseling session, or discuss placement batches.</p>
+    </div>
+
+    <div class="contact-grid">
+      <div class="contact-card">
+        <div class="contact-icon">📍</div>
+        <div class="contact-title">Campus Address</div>
+        <p style="color:#cbd5e1; font-size:0.95rem;">C-60, R.K. Tower, 3rd Floor, RDC (Raj Nagar District Centre), Ghaziabad, Uttar Pradesh - 201001</p>
+      </div>
+
+      <div class="contact-card">
+        <div class="contact-icon">📞</div>
+        <div class="contact-title">Call &amp; WhatsApp</div>
+        <p style="color:#cbd5e1; font-size:0.95rem; margin-bottom:12px;">Direct Mentorship Helpline:</p>
+        <a href="tel:+917503962162" style="display:inline-block; color:#38bdf8; font-weight:800; font-size:1.1rem; text-decoration:none;">+91 7503962162</a>
+        <div style="margin-top:10px;">
+          <a href="https://wa.me/917503962162" style="display:inline-block; background:#22c55e; color:#fff; padding:8px 18px; border-radius:8px; font-weight:700; text-decoration:none;">Chat on WhatsApp</a>
+        </div>
+      </div>
+
+      <div class="contact-card">
+        <div class="contact-icon">✉️</div>
+        <div class="contact-title">Email Desk</div>
+        <p style="color:#cbd5e1; font-size:0.95rem;">Official admissions and student support email:</p>
+        <a href="mailto:info@programmingwala.com" style="display:inline-block; margin-top:8px; color:#38bdf8; font-weight:700; text-decoration:none;">info@programmingwala.com</a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>© 2026 AppleTree Infotech &amp; ProgrammingWala. C-60, R.K. Tower, 3rd Floor, RDC Raj Nagar, Ghaziabad, UP 201001 • Contact: +91 7503962162</p>
+    </div>
+  </footer>
+</body>
+</html>`;
+
+savePage('contact', contactHtml);
+
+// -------------------------------------------------------------
+// 9. PROGRAMS & COURSES HUB (/programs)
+// -------------------------------------------------------------
+const programsHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Training Programs &amp; Professional Certifications | ProgrammingWala</title>
+  <meta name="description" content="Explore comprehensive IT training programs in Java Full Stack, AWS DevOps, Python AI, and Web Development with ISO certification and job guarantee in Ghaziabad.">
+  <meta name="keywords" content="IT Programs Ghaziabad, Java Course Syllabus, DevOps Certification, MERN Stack Curriculum, ProgrammingWala Courses">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <link rel="canonical" href="https://programmingwala.com/programs">
+  <meta name="thumbnail" content="https://programmingwala.com/logo.png">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://programmingwala.com/programs">
+  <meta property="og:title" content="Training Programs | ProgrammingWala">
+  <meta property="og:description" content="150 industry-vetted tech training programs with 100% practical lab practice in RDC Ghaziabad.">
+  <meta property="og:image" content="https://programmingwala.com/logo.png">
+
+  <link rel="icon" type="image/png" href="/logo.png">
+
+  <style>
+    :root { --bg: #090d16; --card-bg: #0f172a; --text: #e2e8f0; --text-muted: #94a3b8; }
+    * { margin:0; padding:0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); line-height: 1.6; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+    header.navbar { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 16px 0; position: sticky; top: 0; z-index: 100; }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 1.25rem; color: #fff; text-decoration: none; }
+    .brand span { color: #f43f5e; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 600; margin-left: 20px; }
+    .hero { padding: 50px 0 30px; text-align: center; }
+    h1 { font-size: 2.6rem; font-weight: 900; color: #fff; margin-bottom: 16px; }
+    .programs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin: 30px 0; }
+    .program-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 28px; }
+    .program-title { font-size: 1.3rem; font-weight: 800; color: #fff; margin-bottom: 10px; }
+    footer { border-top: 1px solid rgba(255,255,255,0.08); padding: 40px 0; text-align: center; color: #64748b; font-size: 0.9rem; margin-top: 60px; }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="/" class="brand">
+        <img src="/logo.png" alt="ProgrammingWala Logo" width="36" height="36">
+        <div>Programming<span>Wala</span></div>
+      </a>
+      <nav class="nav-links">
+        <a href="/courses-in-ghaziabad">All Courses</a>
+        <a href="/programs" style="color:#fff; font-weight:bold;">Programs</a>
+        <a href="/manish-kumar">Manish Kumar</a>
+        <a href="/contact">Contact</a>
+        <a href="https://wa.me/917503962162" style="background:#22c55e; color:#fff; padding:8px 16px; border-radius:8px;">WhatsApp: 7503962162</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="hero">
+      <h1>Software Engineering Training Programs</h1>
+      <p style="color:#94a3b8; max-width:700px; margin:0 auto;">Choose from industry-certified career bootcamps with 100% practical lab practice and guaranteed placement support in Ghaziabad.</p>
+    </div>
+
+    <div class="programs-grid">
+      <div class="program-card">
+        <div class="program-title">☕ Java Full Stack Development</div>
+        <p style="color:#94a3b8; font-size:0.9rem; margin-bottom:16px;">Core Java, OOPs, Collections, Spring Boot 3, Microservices, Hibernate, React.js, and MySQL.</p>
+        <a href="/courses/java-full-stack-developer-course-ghaziabad" style="color:#38bdf8; font-weight:700; text-decoration:none;">View Full Syllabus →</a>
+      </div>
+
+      <div class="program-card">
+        <div class="program-title">☁️ AWS Cloud &amp; DevOps Engineering</div>
+        <p style="color:#94a3b8; font-size:0.9rem; margin-bottom:16px;">AWS EC2, S3, RDS, Docker Containers, Kubernetes (K8s), Jenkins CI/CD, and Linux Automation.</p>
+        <a href="/courses/aws-devops-training-ghaziabad" style="color:#38bdf8; font-weight:700; text-decoration:none;">View Full Syllabus →</a>
+      </div>
+
+      <div class="program-card">
+        <div class="program-title">📊 Python &amp; Data Science AI</div>
+        <p style="color:#94a3b8; font-size:0.9rem; margin-bottom:16px;">Python programming, Pandas, NumPy, Machine Learning, Deep Learning, and AI model deployments.</p>
+        <a href="/courses/data-science-course-in-ghaziabad" style="color:#38bdf8; font-weight:700; text-decoration:none;">View Full Syllabus →</a>
+      </div>
+
+      <div class="program-card">
+        <div class="program-title">⚛️ Full Stack MERN Development</div>
+        <p style="color:#94a3b8; font-size:0.9rem; margin-bottom:16px;">MongoDB, Express, React.js, Node.js, Next.js, Redux Toolkit, and production deployment.</p>
+        <a href="/courses/mern-stack-development-ghaziabad" style="color:#38bdf8; font-weight:700; text-decoration:none;">View Full Syllabus →</a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>© 2026 AppleTree Infotech &amp; ProgrammingWala. C-60, R.K. Tower, 3rd Floor, RDC Raj Nagar, Ghaziabad, UP 201001 • Contact: +91 7503962162</p>
+    </div>
+  </footer>
+</body>
+</html>`;
+
+savePage('programs', programsHtml);
+
+// -------------------------------------------------------------
+// 10. GALLERY (/gallery)
+// -------------------------------------------------------------
+const galleryHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Campus &amp; Lab Gallery | AppleTree Infotech &amp; ProgrammingWala</title>
+  <meta name="description" content="View classroom sessions, coding labs, student project showcases, and award ceremonies at AppleTree Infotech RDC Ghaziabad.">
+  <meta name="keywords" content="ProgrammingWala Gallery, Campus Photos RDC Ghaziabad, Coding Lab Photos, Manish Kumar Award Photos">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <link rel="canonical" href="https://programmingwala.com/gallery">
+  <meta name="thumbnail" content="https://programmingwala.com/logo.png">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://programmingwala.com/gallery">
+  <meta property="og:title" content="Campus &amp; Lab Gallery | ProgrammingWala">
+  <meta property="og:description" content="High-tech classroom labs, interactive student workshops, and award celebrations at RDC Ghaziabad.">
+  <meta property="og:image" content="https://programmingwala.com/logo.png">
+
+  <link rel="icon" type="image/png" href="/logo.png">
+
+  <style>
+    :root { --bg: #090d16; --card-bg: #0f172a; --text: #e2e8f0; --text-muted: #94a3b8; }
+    * { margin:0; padding:0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); line-height: 1.6; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+    header.navbar { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 16px 0; position: sticky; top: 0; z-index: 100; }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 1.25rem; color: #fff; text-decoration: none; }
+    .brand span { color: #f43f5e; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 600; margin-left: 20px; }
+    .hero { padding: 50px 0 30px; text-align: center; }
+    h1 { font-size: 2.6rem; font-weight: 900; color: #fff; margin-bottom: 16px; }
+    .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin: 30px 0; }
+    .photo-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; overflow: hidden; }
+    .photo-card img { width: 100%; height: 220px; object-fit: cover; }
+    .photo-caption { padding: 16px; font-size: 0.95rem; font-weight: 700; color: #fff; }
+    footer { border-top: 1px solid rgba(255,255,255,0.08); padding: 40px 0; text-align: center; color: #64748b; font-size: 0.9rem; margin-top: 60px; }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="/" class="brand">
+        <img src="/logo.png" alt="ProgrammingWala Logo" width="36" height="36">
+        <div>Programming<span>Wala</span></div>
+      </a>
+      <nav class="nav-links">
+        <a href="/courses-in-ghaziabad">All Courses</a>
+        <a href="/gallery" style="color:#fff; font-weight:bold;">Gallery</a>
+        <a href="/manish-kumar">Manish Kumar</a>
+        <a href="/contact">Contact</a>
+        <a href="https://wa.me/917503962162" style="background:#22c55e; color:#fff; padding:8px 16px; border-radius:8px;">WhatsApp: 7503962162</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="hero">
+      <h1>Campus Life &amp; Achievement Gallery</h1>
+      <p style="color:#94a3b8; max-width:700px; margin:0 auto;">Take a tour of our high-speed coding labs, classroom discussions, and award moments at RDC Ghaziabad.</p>
+    </div>
+
+    <div class="gallery-grid">
+      <div class="photo-card">
+        <img src="/manish/manish_3.jpg" alt="Manish Kumar Best Performer Award" loading="lazy">
+        <div class="photo-caption">🏆 Best Performer Award Winner - Manish Kumar</div>
+      </div>
+      <div class="photo-card">
+        <img src="/manish/manish_1.jpg" alt="Software Engineering Mentoring" loading="lazy">
+        <div class="photo-caption">💻 Enterprise Code Review &amp; Architecture Lab</div>
+      </div>
+      <div class="photo-card">
+        <img src="/manish/manish_2.jpg" alt="AWS DevOps Architecture" loading="lazy">
+        <div class="photo-caption">☁️ Cloud Infrastructure &amp; DevOps Workshop</div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>© 2026 AppleTree Infotech &amp; ProgrammingWala. C-60, R.K. Tower, 3rd Floor, RDC Raj Nagar, Ghaziabad, UP 201001 • Contact: +91 7503962162</p>
+    </div>
+  </footer>
+</body>
+</html>`;
+
+savePage('gallery', galleryHtml);
+
+// -------------------------------------------------------------
+// 11. FEES & SCHOLARSHIPS (/fees)
+// -------------------------------------------------------------
+const feesHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Fee Structure &amp; Installment Options | ProgrammingWala Ghaziabad</title>
+  <meta name="description" content="Affordable and transparent fee structure for Java Full Stack, AWS DevOps, Python AI, and Web Development in Ghaziabad with easy zero-cost EMI plans.">
+  <meta name="keywords" content="Java Course Fee Ghaziabad, DevOps Course Cost, ProgrammingWala Fee Structure, Coding Classes Fees RDC">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <link rel="canonical" href="https://programmingwala.com/fees">
+  <meta name="thumbnail" content="https://programmingwala.com/logo.png">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://programmingwala.com/fees">
+  <meta property="og:title" content="Fee Structure | ProgrammingWala">
+  <meta property="og:description" content="Transparent and affordable course fee plans with EMI options and scholarship discounts.">
+  <meta property="og:image" content="https://programmingwala.com/logo.png">
+
+  <link rel="icon" type="image/png" href="/logo.png">
+
+  <style>
+    :root { --bg: #090d16; --card-bg: #0f172a; --text: #e2e8f0; --text-muted: #94a3b8; }
+    * { margin:0; padding:0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); line-height: 1.6; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+    header.navbar { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 16px 0; position: sticky; top: 0; z-index: 100; }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 1.25rem; color: #fff; text-decoration: none; }
+    .brand span { color: #f43f5e; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 600; margin-left: 20px; }
+    .hero { padding: 50px 0 30px; text-align: center; }
+    h1 { font-size: 2.6rem; font-weight: 900; color: #fff; margin-bottom: 16px; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin: 30px 0; }
+    .price-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 28px; text-align: center; }
+    .price-card h3 { font-size: 1.3rem; font-weight: 800; color: #fff; margin-bottom: 8px; }
+    .price-tag { font-size: 1.8rem; font-weight: 900; color: #22c55e; margin: 14px 0; }
+    footer { border-top: 1px solid rgba(255,255,255,0.08); padding: 40px 0; text-align: center; color: #64748b; font-size: 0.9rem; margin-top: 60px; }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="/" class="brand">
+        <img src="/logo.png" alt="ProgrammingWala Logo" width="36" height="36">
+        <div>Programming<span>Wala</span></div>
+      </a>
+      <nav class="nav-links">
+        <a href="/courses-in-ghaziabad">All Courses</a>
+        <a href="/fees" style="color:#fff; font-weight:bold;">Fee Structure</a>
+        <a href="/manish-kumar">Manish Kumar</a>
+        <a href="/contact">Contact</a>
+        <a href="https://wa.me/917503962162" style="background:#22c55e; color:#fff; padding:8px 16px; border-radius:8px;">WhatsApp: 7503962162</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="hero">
+      <h1>Transparent &amp; Value-Driven Fee Plans</h1>
+      <p style="color:#94a3b8; max-width:700px; margin:0 auto;">All courses include hands-on lab access, ISO-verified certificate, interview preparation, and placement assistance.</p>
+    </div>
+
+    <div class="pricing-grid">
+      <div class="price-card">
+        <h3>☕ Core &amp; Advanced Java</h3>
+        <p style="color:#94a3b8; font-size:0.85rem;">3 Months • Classroom &amp; Live Lab</p>
+        <div class="price-tag">₹4,999 - ₹8,999</div>
+        <p style="color:#cbd5e1; font-size:0.9rem; margin-bottom:16px;">Complete Java, OOPs, Collections &amp; JDBC with real projects.</p>
+        <a href="/contact" style="display:inline-block; background:#2563eb; color:#fff; padding:10px 24px; border-radius:8px; font-weight:700; text-decoration:none;">Inquire for Batch →</a>
+      </div>
+
+      <div class="price-card" style="border: 2px solid #38bdf8;">
+        <span style="background:#38bdf8; color:#090d16; font-size:0.75rem; font-weight:800; padding:4px 12px; border-radius:9999px;">MOST POPULAR</span>
+        <h3 style="margin-top:10px;">☕ Java Full Stack + AWS DevOps</h3>
+        <p style="color:#94a3b8; font-size:0.85rem;">6 Months • Guaranteed Placement</p>
+        <div class="price-tag">₹18,500 - ₹25,000</div>
+        <p style="color:#cbd5e1; font-size:0.9rem; margin-bottom:16px;">Spring Boot, Microservices, React, Docker, Kubernetes &amp; AWS.</p>
+        <a href="/contact" style="display:inline-block; background:#22c55e; color:#fff; padding:10px 24px; border-radius:8px; font-weight:700; text-decoration:none;">Inquire for Batch →</a>
+      </div>
+
+      <div class="price-card">
+        <h3>⚛️ Full Stack MERN Stack</h3>
+        <p style="color:#94a3b8; font-size:0.85rem;">4 Months • Real-World Web Apps</p>
+        <div class="price-tag">₹14,999 - ₹18,500</div>
+        <p style="color:#cbd5e1; font-size:0.9rem; margin-bottom:16px;">MongoDB, Express, React, Node.js, Next.js &amp; Cloud Deployments.</p>
+        <a href="/contact" style="display:inline-block; background:#2563eb; color:#fff; padding:10px 24px; border-radius:8px; font-weight:700; text-decoration:none;">Inquire for Batch →</a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>© 2026 AppleTree Infotech &amp; ProgrammingWala. C-60, R.K. Tower, 3rd Floor, RDC Raj Nagar, Ghaziabad, UP 201001 • Contact: +91 7503962162</p>
+    </div>
+  </footer>
+</body>
+</html>`;
+
+savePage('fees', feesHtml);
+
+// -------------------------------------------------------------
+// 12. ADMISSIONS (/admissions)
+// -------------------------------------------------------------
+const admissionsHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Admissions 2026 | AppleTree Infotech &amp; ProgrammingWala Ghaziabad</title>
+  <meta name="description" content="Apply for upcoming batches in Java Full Stack, AWS DevOps, Python AI, and Web Development at AppleTree Infotech RDC Ghaziabad. Direct admission and batch registration.">
+  <meta name="keywords" content="Admissions 2026 Ghaziabad, Coding Batch Registration, IT Admission RDC Ghaziabad, Learn Java Admission">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <link rel="canonical" href="https://programmingwala.com/admissions">
+  <meta name="thumbnail" content="https://programmingwala.com/logo.png">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://programmingwala.com/admissions">
+  <meta property="og:title" content="Admissions 2026 | ProgrammingWala">
+  <meta property="og:description" content="Secure your seat in upcoming weekend and weekday software engineering batches in RDC Ghaziabad.">
+  <meta property="og:image" content="https://programmingwala.com/logo.png">
+
+  <link rel="icon" type="image/png" href="/logo.png">
+
+  <style>
+    :root { --bg: #090d16; --card-bg: #0f172a; --text: #e2e8f0; --text-muted: #94a3b8; }
+    * { margin:0; padding:0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); line-height: 1.6; }
+    .container { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
+    header.navbar { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 16px 0; position: sticky; top: 0; z-index: 100; }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 1.25rem; color: #fff; text-decoration: none; }
+    .brand span { color: #f43f5e; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 600; margin-left: 20px; }
+    .hero { padding: 50px 0 30px; text-align: center; }
+    h1 { font-size: 2.6rem; font-weight: 900; color: #fff; margin-bottom: 16px; }
+    .admissions-box { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 36px; margin: 30px 0; text-align: center; }
+    footer { border-top: 1px solid rgba(255,255,255,0.08); padding: 40px 0; text-align: center; color: #64748b; font-size: 0.9rem; margin-top: 60px; }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="/" class="brand">
+        <img src="/logo.png" alt="ProgrammingWala Logo" width="36" height="36">
+        <div>Programming<span>Wala</span></div>
+      </a>
+      <nav class="nav-links">
+        <a href="/courses-in-ghaziabad">All Courses</a>
+        <a href="/admissions" style="color:#fff; font-weight:bold;">Admissions</a>
+        <a href="/manish-kumar">Manish Kumar</a>
+        <a href="/contact">Contact</a>
+        <a href="https://wa.me/917503962162" style="background:#22c55e; color:#fff; padding:8px 16px; border-radius:8px;">WhatsApp: 7503962162</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="hero">
+      <h1>New Batch Admissions Open 2026</h1>
+      <p style="color:#94a3b8; max-width:700px; margin:0 auto;">Admissions are now open for Weekday and Weekend offline/online batches at RDC Raj Nagar, Ghaziabad.</p>
+    </div>
+
+    <div class="admissions-box">
+      <h2 style="font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 12px;">Fast-Track Your Admission</h2>
+      <p style="color:#cbd5e1; font-size:0.95rem; margin-bottom:24px;">Connect with an academic counselor on WhatsApp or Call +91 7503962162 to book a free demo session and secure early-bird scholarship discounts.</p>
+      <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap;">
+        <a href="https://wa.me/917503962162?text=Hi%20ProgrammingWala%2C%20I%20want%20to%20register%20for%20admissions" style="background:#22c55e; color:#fff; padding:12px 28px; border-radius:10px; font-weight:800; text-decoration:none;">Apply on WhatsApp →</a>
+        <a href="tel:+917503962162" style="background:#2563eb; color:#fff; padding:12px 28px; border-radius:10px; font-weight:800; text-decoration:none;">Call: +91 7503962162</a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>© 2026 AppleTree Infotech &amp; ProgrammingWala. C-60, R.K. Tower, 3rd Floor, RDC Raj Nagar, Ghaziabad, UP 201001 • Contact: +91 7503962162</p>
+    </div>
+  </footer>
+</body>
+</html>`;
+
+savePage('admissions', admissionsHtml);
+
+console.log('Finished generating all 12 hub and public pages successfully!');
+

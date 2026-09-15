@@ -45,6 +45,32 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }));
 
+// 1. Canonical Domain (non-www) and Trailing-Slash 301 Redirection Middleware
+app.use((req, res, next) => {
+  // Ignore API, uploads, and assets
+  if (req.path.startsWith('/api') || req.path.startsWith('/uploads') || req.path.includes('.')) {
+    return next();
+  }
+
+  const host = req.headers.host || '';
+  const isWww = /^www\./i.test(host);
+
+  // Force non-www domain
+  if (isWww) {
+    const cleanHost = host.replace(/^www\./i, '');
+    return res.redirect(301, `https://${cleanHost}${req.originalUrl}`);
+  }
+
+  // Normalize Trailing Slashes (strip trailing slash from paths like /courses-in-ghaziabad/ -> /courses-in-ghaziabad)
+  if (req.path.length > 1 && req.path.endsWith('/')) {
+    const cleanPath = req.path.replace(/\/+$/, '');
+    const query = req.url.slice(req.path.length);
+    return res.redirect(301, `https://programmingwala.com${cleanPath}${query}`);
+  }
+
+  next();
+});
+
 // Body parsing middleware with expanded limits for document & photo uploads
 app.use(express.json({
   limit: '50mb',
@@ -142,16 +168,29 @@ Allow: /courses/
 Allow: /courses/*
 Allow: /courses-in-ghaziabad
 Allow: /manish-kumar
-Allow: /profile/manish-kumar
-Allow: /manish
-Allow: /manish/*
 Allow: /assets/images/courses/
 Allow: /assets/images/courses/*
 Allow: /careers
 Allow: /careers/*
 Allow: /tutorials
 Allow: /practice
+Allow: /verify-certificate
 Allow: /verify-certificate/*
+Allow: /about
+Allow: /contact
+Allow: /programs
+Allow: /gallery
+Allow: /fees
+Allow: /admissions
+
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /portal/
+Disallow: /login
+Disallow: /payment-demo
+Disallow: /lms/learn/
+Disallow: /lms/dashboard/
+Disallow: /student
 
 Sitemap: https://programmingwala.com/sitemap.xml`);
 });
@@ -201,30 +240,44 @@ if (resolvedDistPath) {
   console.log(`\x1b[32m✔ Serving frontend production build from: ${resolvedDistPath}\x1b[0m`);
 
   // 1. Explicit 301 Permanent Redirects for alias URLs (Eliminates GSC Duplicate & Redirect warnings)
-  app.get(['/profile/manish-kumar', '/profile/manish-kumar/', '/manish', '/manish/'], (req, res) => {
+  app.get(['/profile/manish-kumar', '/manish'], (req, res) => {
     res.redirect(301, 'https://programmingwala.com/manish-kumar');
   });
 
-  app.get(['/coaching-in-rdc-ghaziabad', '/coaching-in-rdc-ghaziabad/'], (req, res) => {
+  app.get(['/coaching-in-rdc-ghaziabad', '/courses/best-tech-coaching-rdc-ghaziabad'], (req, res) => {
     res.redirect(301, 'https://programmingwala.com/courses-in-ghaziabad');
   });
 
-  app.get(['/job-roles', '/job-roles/', '/trending-tech-jobs', '/trending-tech-jobs/'], (req, res) => {
+  app.get(['/job-roles', '/trending-tech-jobs'], (req, res) => {
     res.redirect(301, 'https://programmingwala.com/careers');
   });
 
-  // 2. Direct Prerendered HTML delivery for Core Hub Pages (Zero 301, 100% Crawlable)
+  app.get('/jobs/:slug', (req, res) => {
+    res.redirect(301, 'https://programmingwala.com/careers');
+  });
+
+  app.get('/coaching/:slug', (req, res) => {
+    res.redirect(301, 'https://programmingwala.com/courses-in-ghaziabad');
+  });
+
+  // 2. Direct Prerendered HTML delivery for Core Hub & Institutional Pages (Zero 301, 100% Crawlable)
   const coreHubs = [
     'manish-kumar',
     'courses-in-ghaziabad',
     'careers',
     'tutorials',
     'practice',
-    'verify-certificate'
+    'verify-certificate',
+    'about',
+    'contact',
+    'programs',
+    'gallery',
+    'fees',
+    'admissions'
   ];
 
   coreHubs.forEach(hub => {
-    app.get([`/${hub}`, `/${hub}/`], (req, res, next) => {
+    app.get(`/${hub}`, (req, res, next) => {
       const searchDirs = [
         resolvedDistPath,
         path.join(__dirname, '../dist'),
@@ -234,16 +287,11 @@ if (resolvedDistPath) {
 
       for (const sDir of searchDirs) {
         const directHtml = path.join(sDir, `${hub}.html`);
-        const subDirHtml = path.join(sDir, hub, 'index.html');
         if (fs.existsSync(directHtml)) {
           res.setHeader('Content-Type', 'text/html; charset=utf-8');
           res.setHeader('Link', `<https://programmingwala.com/${hub}>; rel="canonical"`);
+          res.setHeader('Cache-Control', 'public, max-age=3600');
           return res.sendFile(directHtml);
-        }
-        if (fs.existsSync(subDirHtml)) {
-          res.setHeader('Content-Type', 'text/html; charset=utf-8');
-          res.setHeader('Link', `<https://programmingwala.com/${hub}>; rel="canonical"`);
-          return res.sendFile(subDirHtml);
         }
       }
       next();
@@ -251,7 +299,7 @@ if (resolvedDistPath) {
   });
 
   // 3. Direct Prerendered HTML delivery for 150 Course Pages (100% SEO, Googlebot & Crawler Ready)
-  app.get(['/courses/:slug', '/courses/:slug/'], (req, res, next) => {
+  app.get('/courses/:slug', (req, res, next) => {
     const slug = req.params.slug;
     const searchDirs = [
       path.join(resolvedDistPath, 'courses'),
@@ -262,16 +310,11 @@ if (resolvedDistPath) {
 
     for (const sDir of searchDirs) {
       const directHtml = path.join(sDir, `${slug}.html`);
-      const subDirHtml = path.join(sDir, slug, 'index.html');
       if (fs.existsSync(directHtml)) {
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.setHeader('Link', `<https://programmingwala.com/courses/${slug}>; rel="canonical"`);
+        res.setHeader('Cache-Control', 'public, max-age=3600');
         return res.sendFile(directHtml);
-      }
-      if (fs.existsSync(subDirHtml)) {
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.setHeader('Link', `<https://programmingwala.com/courses/${slug}>; rel="canonical"`);
-        return res.sendFile(subDirHtml);
       }
     }
     next();
@@ -293,7 +336,7 @@ if (resolvedDistPath) {
       return next();
     }
     const cleanPath = req.path.replace(/\/+$/, '') || '';
-    const canonicalUrl = `https://programmingwala.com${cleanPath}`;
+    const canonicalUrl = cleanPath === '' ? 'https://programmingwala.com/' : `https://programmingwala.com${cleanPath}`;
     res.setHeader('Link', `<${canonicalUrl}>; rel="canonical"`);
 
     const indexPath = path.join(resolvedDistPath, 'index.html');
