@@ -39,6 +39,14 @@ import ParentDashboard from './portals/ParentDashboard.jsx';
 import TeacherDashboard from './portals/TeacherDashboard.jsx';
 import AdminDashboard from './portals/AdminDashboard.jsx';
 
+// Online Examination System
+import ExamRegister from './pages/exam/ExamRegister.jsx';
+import ExamLogin from './pages/exam/ExamLogin.jsx';
+import ExamDashboard from './pages/exam/ExamDashboard.jsx';
+import ExamTaker from './pages/exam/ExamTaker.jsx';
+import ExamResult from './pages/exam/ExamResult.jsx';
+import AdminExamSuite from './portals/examAdmin/AdminExamSuite.jsx';
+
 // Layout Components
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
@@ -98,6 +106,8 @@ function CanonicalManager() {
 function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
+  const isExamPage = location.pathname.startsWith('/test') || location.pathname.startsWith('/dashboard/admin/tests');
+  const hideHeaderFooter = isLoginPage || isExamPage;
 
   return (
     <div
@@ -126,7 +136,7 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
         className="pointer-events-none fixed bottom-[10%] right-[6%] h-56 w-56 rounded-full bg-indigo-500/10 blur-3xl"
         style={{ y: glowY, x: glowX }}
       />
-      {!isLoginPage && <Navbar />}
+      {!hideHeaderFooter && <Navbar />}
       <main className="relative z-10 flex-grow">
         <Routes>
           {/* Public Routes */}
@@ -187,12 +197,25 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
           <Route path="/dashboard/teacher" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDashboard /></ProtectedRoute>} />
           <Route path="/dashboard/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
 
+          {/* Online Examination / Test Module Routes */}
+          <Route path="/test/register" element={<ExamRegister />} />
+          <Route path="/test/login" element={<ExamLogin />} />
+          <Route path="/test/dashboard" element={<ExamDashboard />} />
+          <Route path="/test/exam/:examId" element={<ExamTaker />} />
+          <Route path="/test/result/:attemptId" element={<ExamResult />} />
+          <Route path="/test/results" element={<ExamDashboard />} />
+          <Route path="/test" element={<Navigate to="/test/login" replace />} />
+
+          {/* Admin Examination Control Suite */}
+          <Route path="/dashboard/admin/tests" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><AdminExamSuite /></ProtectedRoute>} />
+          <Route path="/dashboard/admin/tests/*" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><AdminExamSuite /></ProtectedRoute>} />
+
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      {!isLoginPage && <Footer />}
-      <RoleLoginChatbot />
+      {!hideHeaderFooter && <Footer />}
+      {!hideHeaderFooter && <RoleLoginChatbot />}
     </div>
   );
 }

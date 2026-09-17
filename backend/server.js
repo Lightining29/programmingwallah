@@ -17,6 +17,9 @@ import razorpayRoutes from './routes/razorpay.js';
 import http from 'http';
 import lmsRoutes from './routes/lms.js';
 import paymentRoutes from './routes/payment.js';
+import testStudentRoutes from './routes/testStudent.js';
+import testAdminRoutes from './routes/testAdmin.js';
+import { initExamDatabase } from './models/exam/index.js';
 
 // Load environment variables from multiple possible locations (root .env and backend/.env)
 dotenv.config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), '../.env') });
@@ -122,6 +125,8 @@ app.use('/api/admission-payment', admissionPaymentRoutes);
 app.use('/api/razorpay', razorpayRoutes);
 app.use('/api/lms', lmsRoutes);
 app.use('/api', paymentRoutes);
+app.use('/api/test', testStudentRoutes);
+app.use('/api/admin/test', testAdminRoutes);
 
 // Dynamic Sitemap for Search Engines & AI Crawlers
 app.get('/sitemap.xml', (req, res) => {
@@ -389,6 +394,7 @@ const server = httpServer.listen(PORT, async () => {
   // Connect to Hostinger MySQL Database
   try {
     await connectDB();
+    await initExamDatabase();
   } catch (err) {
     console.error('Database connection notice on startup:', err.message);
   }

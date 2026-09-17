@@ -17,3 +17,7 @@ Thumbs.db
 
 # IDE
 .vscode/
+
+# Local SQLite databases
+*.sqlite
+backend/data/*.sqlite

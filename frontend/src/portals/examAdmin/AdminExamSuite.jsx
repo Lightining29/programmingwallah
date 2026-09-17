@@ -1,0 +1,1018 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Layers,
+  BookOpen,
+  Users,
+  Building2,
+  Award,
+  Plus,
+  Search,
+  Sparkles,
+  KeyRound,
+  Download,
+  Trash2,
+  Edit,
+  Eye,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Clock,
+  Code2,
+  RefreshCw,
+  ExternalLink,
+  Copy,
+  ChevronRight,
+  ShieldCheck,
+  Check
+} from 'lucide-react';
+
+export default function AdminExamSuite() {
+  const [activeTab, setActiveTab] = useState('exams'); // 'exams', 'questions', 'access', 'colleges', 'results'
+  const [loading, setLoading] = useState(false);
+  const [notification, setNotification] = useState({ type: '', message: '' });
+
+  // Data States
+  const [exams, setExams] = useState([]);
+  const [questions, setQuestions] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [colleges, setColleges] = useState([]);
+  const [results, setResults] = useState([]);
+
+  // Modals
+  const [showCreateExamModal, setShowCreateExamModal] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showAddQuestionModal, setShowAddQuestionModal] = useState(false);
+  const [showAddCollegeModal, setShowAddCollegeModal] = useState(false);
+  const [showResultDetailModal, setShowResultDetailModal] = useState(null);
+
+  // Password Generation Results Drawer
+  const [generatedCredentials, setGeneratedCredentials] = useState([]);
+  const [copiedIndex, setCopiedIndex] = useState(null);
+
+  // Forms
+  const [newExam, setNewExam] = useState({
+    title: '',
+    code: '',
+    subject: 'Java Full Stack',
+    duration_minutes: 60,
+    total_marks: 100,
+    passing_marks: 40,
+    instructions: '1. Tab switching strictly prohibited.\n2. Server timer active.',
+    negative_marking: false,
+    negative_marks_per_question: 0,
+    status: 'PUBLISHED'
+  });
+
+  const [aiForm, setAiForm] = useState({
+    topic: 'Spring Boot & Microservices',
+    difficulty: 'MEDIUM',
+    count: 5,
+    question_type: 'MCQ',
+    programming_language: 'Java',
+    subject: 'Backend Development',
+    auto_save: true,
+    exam_id: ''
+  });
+
+  const [assignForm, setAssignForm] = useState({
+    exam_id: '',
+    college_id: '',
+    max_attempts: 1
+  });
+
+  const [newQuestion, setNewQuestion] = useState({
+    type: 'MCQ',
+    question_text: '',
+    code_snippet: '',
+    programming_language: 'Java',
+    marks: 4,
+    negative_marks: 1,
+    difficulty: 'MEDIUM',
+    subject: 'Java',
+    topic: 'Core',
+    options: [
+      { option_text: '', is_correct: true },
+      { option_text: '', is_correct: false },
+      { option_text: '', is_correct: false },
+      { option_text: '', is_correct: false }
+    ],
+    explanation: ''
+  });
+
+  const [newCollege, setNewCollege] = useState({
+    name: '',
+    code: '',
+    city: '',
+    state: '',
+    university: ''
+  });
+
+  const [filterExamId, setFilterExamId] = useState('');
+
+  // Get Admin token from existing session
+  const adminToken = localStorage.getItem('token') || localStorage.getItem('admin_token') || 'dev_admin_session';
+
+  const authHeaders = {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${adminToken}`
+  };
+
+  const showToast = (type, message) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification({ type: '', message: '' }), 4000);
+  };
+
+  // 1. Initial Data Fetching
+  const fetchAllExams = async () => {
+    try {
+      const res = await fetch('/api/admin/test/exams', { headers: authHeaders });
+      const data = await res.json();
+      if (data.success) setExams(data.exams || []);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const fetchAllQuestions = async () => {
+    try {
+      const res = await fetch('/api/admin/test/questions?limit=100', { headers: authHeaders });
+      const data = await res.json();
+      if (data.success) setQuestions(data.questions || []);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const fetchAllStudents = async () => {
+    try {
+      const res = await fetch('/api/admin/test/students?limit=100', { headers: authHeaders });
+      const data = await res.json();
+      if (data.success) setStudents(data.students || []);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const fetchAllColleges = async () => {
+    try {
+      const res = await fetch('/api/admin/test/colleges?limit=100', { headers: authHeaders });
+      const data = await res.json();
+      if (data.success) setColleges(data.colleges || []);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const fetchAllResults = async () => {
+    try {
+      const url = filterExamId ? `/api/admin/test/results?exam_id=${filterExamId}&limit=100` : '/api/admin/test/results?limit=100';
+      const res = await fetch(url, { headers: authHeaders });
+      const data = await res.json();
+      if (data.success) setResults(data.attempts || []);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'exams') fetchAllExams();
+    else if (activeTab === 'questions') fetchAllQuestions();
+    else if (activeTab === 'access') {
+      fetchAllExams();
+      fetchAllColleges();
+      fetchAllStudents();
+    } else if (activeTab === 'colleges') fetchAllColleges();
+    else if (activeTab === 'results') {
+      fetchAllExams();
+      fetchAllResults();
+    }
+  }, [activeTab, filterExamId]);
+
+  // ── 2. Create Exam Handler ──
+  const handleCreateExam = async (e) => {
+    e.preventDefault();
+    if (!newExam.title.trim()) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/test/exams', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify(newExam)
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('success', 'Exam created successfully!');
+        setShowCreateExamModal(false);
+        fetchAllExams();
+      } else {
+        showToast('error', data.message || 'Failed to create exam.');
+      }
+    } catch (err) {
+      showToast('error', 'Network error.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── 3. AI Question Generator Handler (Gemini) ──
+  const handleGenerateAIQuestions = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/test/questions/generate-ai', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify(aiForm)
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        showToast('success', `Generated and added ${data.count} AI questions successfully!`);
+        setShowAiModal(false);
+        fetchAllQuestions();
+      } else {
+        showToast('error', data.message || 'AI generation failed.');
+      }
+    } catch (err) {
+      showToast('error', 'Error generating AI questions.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── 4. Assign Test & Generate Passwords ──
+  const handleAssignTestAccess = async (e) => {
+    e.preventDefault();
+    if (!assignForm.exam_id) {
+      showToast('error', 'Please select an exam.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/test/access/assign', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify(assignForm)
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        showToast('success', data.message);
+        setGeneratedCredentials(data.credentials || []);
+        setShowAssignModal(false);
+      } else {
+        showToast('error', data.message || 'Failed to assign test access.');
+      }
+    } catch (err) {
+      showToast('error', 'Network error while assigning access.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── 5. Single Candidate Password Reset ──
+  const handleResetPassword = async (examId, studentId) => {
+    try {
+      const res = await fetch('/api/admin/test/access/reset-password', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({ exam_id: examId, student_id: studentId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(`New password for ${data.student_name}: ${data.plain_password}`);
+      } else {
+        showToast('error', data.message);
+      }
+    } catch (err) {
+      showToast('error', 'Failed to reset password.');
+    }
+  };
+
+  // Export CSV
+  const exportCredentialsCsv = () => {
+    if (!generatedCredentials.length) return;
+    const headers = 'Candidate Name,Email,Mobile,College,Exam Code,Test Password\n';
+    const rows = generatedCredentials.map(c => 
+      `"${c.student_name}","${c.student_email}","${c.student_phone}","${c.college_name}","${c.exam_code}","${c.plain_password}"`
+    ).join('\n');
+
+    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Test_Credentials_${Date.now()}.csv`;
+    a.click();
+  };
+
+  // Copy plain password to clipboard
+  const copyToClipboard = (text, index) => {
+    navigator.clipboard.writeText(text);
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex(null), 2000);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-4 sm:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Top Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-800 gap-4 mb-8">
+          <div>
+            <div className="flex items-center space-x-2 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-1">
+              <ShieldCheck className="w-4 h-4" />
+              <span>Academic Control Suite</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              Online Examination Management System
+            </h1>
+            <p className="text-xs text-slate-400 mt-1">
+              Configure assessments, generate AI questions, assign test credentials & passwords, and evaluate candidates.
+            </p>
+          </div>
+
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setShowAiModal(true)}
+              className="inline-flex items-center space-x-1.5 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-500/20 transition-all"
+            >
+              <Sparkles className="w-4 h-4 text-amber-300" />
+              <span>AI Question Generator</span>
+            </button>
+
+            <button
+              onClick={() => setShowAssignModal(true)}
+              className="inline-flex items-center space-x-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/20 transition-all"
+            >
+              <KeyRound className="w-4 h-4" />
+              <span>Assign Test & Passwords</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Notification Alert */}
+        {notification.message && (
+          <div className={`mb-6 p-4 rounded-2xl flex items-center space-x-3 text-xs ${
+            notification.type === 'success'
+              ? 'bg-emerald-950/70 border border-emerald-500 text-emerald-200'
+              : 'bg-rose-950/70 border border-rose-500 text-rose-200'
+          }`}>
+            {notification.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+            <span className="font-semibold">{notification.message}</span>
+          </div>
+        )}
+
+        {/* Tab Navigation */}
+        <div className="flex space-x-2 border-b border-slate-800 pb-2 mb-8 overflow-x-auto">
+          {[
+            { id: 'exams', label: 'Examinations', icon: Layers },
+            { id: 'questions', label: 'Question Bank', icon: BookOpen },
+            { id: 'access', label: 'Candidates & Passwords', icon: Users },
+            { id: 'colleges', label: 'Colleges & Institutions', icon: Building2 },
+            { id: 'results', label: 'Results & Evaluation', icon: Award }
+          ].map(tab => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap ${
+                  isActive
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ══════════ TAB 1: EXAMS ══════════ */}
+        {activeTab === 'exams' && (
+          <div>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-base font-bold text-white">Configured Assessments ({exams.length})</h3>
+              <button
+                onClick={() => setShowCreateExamModal(true)}
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold"
+              >
+                <Plus className="w-4 h-4" />
+                <span>New Examination</span>
+              </button>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-950/80 border-b border-slate-800 text-slate-400 uppercase text-[10px] font-semibold tracking-wider">
+                  <tr>
+                    <th className="py-3.5 px-4">Code / Title</th>
+                    <th className="py-3.5 px-4">Subject</th>
+                    <th className="py-3.5 px-4">Duration</th>
+                    <th className="py-3.5 px-4">Marks (Pass / Total)</th>
+                    <th className="py-3.5 px-4">Questions</th>
+                    <th className="py-3.5 px-4">Assigned</th>
+                    <th className="py-3.5 px-4">Status</th>
+                    <th className="py-3.5 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800 text-slate-300">
+                  {exams.map(ex => (
+                    <tr key={ex.id} className="hover:bg-slate-800/40">
+                      <td className="py-3.5 px-4 font-semibold text-white">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-mono text-indigo-400 bg-indigo-950 px-1.5 py-0.5 rounded text-[10px]">
+                            {ex.code || 'TEST'}
+                          </span>
+                          <span>{ex.title || ex.name}</span>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-400">{ex.subject || 'General'}</td>
+                      <td className="py-3.5 px-4">{ex.duration_minutes} mins</td>
+                      <td className="py-3.5 px-4">
+                        <span className="text-emerald-400 font-semibold">{ex.passing_marks}</span> / {ex.total_marks}
+                      </td>
+                      <td className="py-3.5 px-4 font-bold text-white">{ex.question_count || 0}</td>
+                      <td className="py-3.5 px-4">{ex.assigned_students_count || 0}</td>
+                      <td className="py-3.5 px-4">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          ex.status === 'PUBLISHED' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-slate-800 text-slate-400'
+                        }`}>
+                          {ex.status}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <button
+                          onClick={() => {
+                            setAssignForm(prev => ({ ...prev, exam_id: ex.id }));
+                            setShowAssignModal(true);
+                          }}
+                          className="px-2.5 py-1 bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white rounded-lg text-[11px] font-medium transition-colors"
+                        >
+                          Assign
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════ TAB 2: QUESTION BANK ══════════ */}
+        {activeTab === 'questions' && (
+          <div>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-base font-bold text-white">Question Bank ({questions.length} items)</h3>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setShowAiModal(true)}
+                  className="inline-flex items-center space-x-1 px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-semibold"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Generate with AI</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {questions.map((q, idx) => (
+                <div key={q.id || idx} className="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-xs">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-bold text-indigo-400">Q{idx + 1}.</span>
+                      <span className="bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono text-[10px]">
+                        {q.type || q.question_type}
+                      </span>
+                      <span className="text-slate-400">• {q.subject} • {q.difficulty}</span>
+                    </div>
+                    <span className="text-emerald-400 font-semibold">+{q.marks || 1} mark</span>
+                  </div>
+
+                  <p className="text-slate-200 font-medium mb-2">{q.question_text}</p>
+
+                  {(q.code || q.code_snippet) && (
+                    <pre className="p-3 bg-slate-950 rounded-xl font-mono text-emerald-400 text-[11px] mb-2 overflow-x-auto">
+                      <code>{q.code || q.code_snippet}</code>
+                    </pre>
+                  )}
+
+                  {q.options && q.options.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                      {q.options.map((opt, oIdx) => (
+                        <div
+                          key={opt.id || oIdx}
+                          className={`p-2 rounded-lg border text-[11px] ${
+                            opt.is_correct ? 'bg-emerald-950/60 border-emerald-600 text-emerald-300 font-bold' : 'bg-slate-950 border-slate-800 text-slate-400'
+                          }`}
+                        >
+                          {opt.option_text} {opt.is_correct && '✓'}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ══════════ TAB 3: CANDIDATES & PASSWORDS ══════════ */}
+        {activeTab === 'access' && (
+          <div>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-base font-bold text-white">Registered Candidates & Test Access ({students.length})</h3>
+              <button
+                onClick={() => setShowAssignModal(true)}
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold"
+              >
+                <KeyRound className="w-4 h-4" />
+                <span>Assign Access & Passwords</span>
+              </button>
+            </div>
+
+            {/* Generated Credentials Result Box if present */}
+            {generatedCredentials.length > 0 && (
+              <div className="mb-8 p-6 bg-slate-900 border border-emerald-500/50 rounded-3xl shadow-xl">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h4 className="text-emerald-400 font-bold text-sm flex items-center">
+                      <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                      Generated Test Passwords ({generatedCredentials.length} Candidates)
+                    </h4>
+                    <p className="text-xs text-slate-400 mt-0.5">Distribute these test passwords to candidates for their scheduled exam.</p>
+                  </div>
+                  <button
+                    onClick={exportCredentialsCsv}
+                    className="inline-flex items-center space-x-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Export CSV</span>
+                  </button>
+                </div>
+
+                <div className="max-h-60 overflow-y-auto divide-y divide-slate-800 text-xs">
+                  {generatedCredentials.map((c, idx) => (
+                    <div key={idx} className="py-2.5 flex items-center justify-between">
+                      <div>
+                        <span className="font-bold text-white">{c.student_name}</span>
+                        <span className="text-slate-400 ml-2">({c.student_email})</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-mono font-bold text-amber-300 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
+                          {c.plain_password}
+                        </span>
+                        <button
+                          onClick={() => copyToClipboard(c.plain_password, idx)}
+                          className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white"
+                          title="Copy Password"
+                        >
+                          {copiedIndex === idx ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Candidates List */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-950/80 border-b border-slate-800 text-slate-400 uppercase text-[10px] font-semibold tracking-wider">
+                  <tr>
+                    <th className="py-3.5 px-4">Candidate</th>
+                    <th className="py-3.5 px-4">College</th>
+                    <th className="py-3.5 px-4">Mobile</th>
+                    <th className="py-3.5 px-4">Assigned Tests</th>
+                    <th className="py-3.5 px-4 text-right">Password Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800 text-slate-300">
+                  {students.map(st => (
+                    <tr key={st.id} className="hover:bg-slate-800/40">
+                      <td className="py-3.5 px-4">
+                        <div className="font-bold text-white">{st.full_name || st.name}</div>
+                        <div className="text-[11px] text-slate-400">{st.email}</div>
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-300">{st.college?.name || st.college_name || 'N/A'}</td>
+                      <td className="py-3.5 px-4 font-mono text-slate-400">{st.mobile_number || st.phone}</td>
+                      <td className="py-3.5 px-4">
+                        {(st.examAccesses || []).map(acc => (
+                          <span key={acc.id} className="inline-block bg-indigo-950 text-indigo-300 border border-indigo-800 px-2 py-0.5 rounded text-[10px] mr-1.5 mb-1 font-mono">
+                            {acc.exam?.code || 'EXAM'}
+                          </span>
+                        ))}
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        {(st.examAccesses || []).length > 0 && (
+                          <button
+                            onClick={() => handleResetPassword(st.examAccesses[0].exam_id, st.id)}
+                            className="px-2 py-1 bg-amber-600/20 text-amber-300 hover:bg-amber-600 hover:text-white rounded-lg text-[11px] transition-colors"
+                          >
+                            Reset Password
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════ TAB 4: COLLEGES & INSTITUTIONS ══════════ */}
+        {activeTab === 'colleges' && (
+          <div>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-base font-bold text-white">Partner Colleges & Universities ({colleges.length})</h3>
+              <button
+                onClick={() => setShowAddCollegeModal(true)}
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add College</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {colleges.map(c => (
+                <div key={c.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-xs">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-bold text-white text-sm truncate">{c.name}</span>
+                    {c.code && <span className="bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded font-mono text-[10px]">{c.code}</span>}
+                  </div>
+                  <div className="text-slate-400">{c.city}{c.state ? `, ${c.state}` : ''}</div>
+                  {c.university && <div className="text-slate-500 text-[11px] mt-1">Affiliated: {c.university}</div>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ══════════ TAB 5: RESULTS & EVALUATION ══════════ */}
+        {activeTab === 'results' && (
+          <div>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-base font-bold text-white">Candidate Examination Results ({results.length})</h3>
+              <div className="flex items-center space-x-2">
+                <select
+                  value={filterExamId}
+                  onChange={(e) => setFilterExamId(e.target.value)}
+                  className="bg-slate-900 border border-slate-800 text-xs text-white rounded-xl px-3 py-2"
+                >
+                  <option value="">All Examinations</option>
+                  {exams.map(ex => (
+                    <option key={ex.id} value={ex.id}>{ex.title || ex.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-950/80 border-b border-slate-800 text-slate-400 uppercase text-[10px] font-semibold tracking-wider">
+                  <tr>
+                    <th className="py-3.5 px-4">Candidate</th>
+                    <th className="py-3.5 px-4">Exam</th>
+                    <th className="py-3.5 px-4">Score</th>
+                    <th className="py-3.5 px-4">Percentage</th>
+                    <th className="py-3.5 px-4">Proctoring Flags</th>
+                    <th className="py-3.5 px-4">Result</th>
+                    <th className="py-3.5 px-4 text-right">Scorecard</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800 text-slate-300">
+                  {results.map(res => (
+                    <tr key={res.id} className="hover:bg-slate-800/40">
+                      <td className="py-3.5 px-4">
+                        <div className="font-bold text-white">{res.student?.full_name || res.student?.name || 'Student'}</div>
+                        <div className="text-[11px] text-slate-400">{res.student?.email}</div>
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-300">{res.exam?.title || res.exam?.name}</td>
+                      <td className="py-3.5 px-4 font-bold text-white">
+                        {res.total_marks_obtained || 0} / {res.exam?.total_marks || 100}
+                      </td>
+                      <td className="py-3.5 px-4 text-indigo-300 font-semibold">{res.percentage}%</td>
+                      <td className="py-3.5 px-4">
+                        <span className={`text-[11px] ${res.tab_switch_count > 0 ? 'text-rose-400 font-bold' : 'text-slate-400'}`}>
+                          {res.tab_switch_count || 0} tab switches
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          res.result_status === 'PASSED'
+                            ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
+                            : 'bg-rose-950 text-rose-400 border border-rose-800'
+                        }`}>
+                          {res.result_status}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <a
+                          href={`/test/result/${res.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center space-x-1 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px]"
+                        >
+                          <span>Review</span>
+                          <ExternalLink className="w-3 h-3 ml-0.5" />
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════ MODAL: CREATE EXAM ══════════ */}
+        {showCreateExamModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-5">
+                <h3 className="text-lg font-bold text-white">Create Examination Assessment</h3>
+                <button onClick={() => setShowCreateExamModal(false)} className="text-slate-400 hover:text-white">✕</button>
+              </div>
+
+              <form onSubmit={handleCreateExam} className="space-y-4 text-xs">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Title / Exam Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newExam.title}
+                    onChange={(e) => setNewExam({ ...newExam, title: e.target.value })}
+                    placeholder="e.g. Java Full Stack Midterm Assessment"
+                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Subject</label>
+                    <input
+                      type="text"
+                      value={newExam.subject}
+                      onChange={(e) => setNewExam({ ...newExam, subject: e.target.value })}
+                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Duration (Minutes)</label>
+                    <input
+                      type="number"
+                      value={newExam.duration_minutes}
+                      onChange={(e) => setNewExam({ ...newExam, duration_minutes: e.target.value })}
+                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Total Marks</label>
+                    <input
+                      type="number"
+                      value={newExam.total_marks}
+                      onChange={(e) => setNewExam({ ...newExam, total_marks: e.target.value })}
+                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Passing Marks</label>
+                    <input
+                      type="number"
+                      value={newExam.passing_marks}
+                      onChange={(e) => setNewExam({ ...newExam, passing_marks: e.target.value })}
+                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2 pt-2">
+                  <input
+                    type="checkbox"
+                    id="neg_marking"
+                    checked={newExam.negative_marking}
+                    onChange={(e) => setNewExam({ ...newExam, negative_marking: e.target.checked })}
+                    className="rounded bg-slate-950 border-slate-800 text-indigo-600"
+                  />
+                  <label htmlFor="neg_marking" className="text-slate-300">Enable Negative Marking</label>
+                </div>
+
+                <div className="flex justify-end space-x-2 pt-4 border-t border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateExamModal(false)}
+                    className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl"
+                  >
+                    {loading ? 'Creating...' : 'Create Exam'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════ MODAL: GEMINI AI GENERATOR ══════════ */}
+        {showAiModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+            <div className="bg-slate-900 border border-purple-800/60 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-5">
+                <div className="flex items-center space-x-2">
+                  <Sparkles className="w-5 h-5 text-purple-400" />
+                  <h3 className="text-lg font-bold text-white">Gemini AI Question Generator</h3>
+                </div>
+                <button onClick={() => setShowAiModal(false)} className="text-slate-400 hover:text-white">✕</button>
+              </div>
+
+              <form onSubmit={handleGenerateAIQuestions} className="space-y-4 text-xs">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Topic / Technology *</label>
+                  <input
+                    type="text"
+                    required
+                    value={aiForm.topic}
+                    onChange={(e) => setAiForm({ ...aiForm, topic: e.target.value })}
+                    placeholder="e.g. Java Streams, Multithreading, SQL Joins, React Hooks"
+                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Question Type</label>
+                    <select
+                      value={aiForm.question_type}
+                      onChange={(e) => setAiForm({ ...aiForm, question_type: e.target.value })}
+                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                    >
+                      <option value="MIXED">Mixed Variety</option>
+                      <option value="MCQ">Multiple Choice (MCQ)</option>
+                      <option value="CODE_ERROR">Code Error ("Spot the Mistake")</option>
+                      <option value="DESCRIPTIVE">Descriptive / Q&A</option>
+                      <option value="TRUE_FALSE">True / False</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Difficulty</label>
+                    <select
+                      value={aiForm.difficulty}
+                      onChange={(e) => setAiForm({ ...aiForm, difficulty: e.target.value })}
+                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                    >
+                      <option value="EASY">Easy</option>
+                      <option value="MEDIUM">Medium</option>
+                      <option value="HARD">Hard</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Question Count</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={aiForm.count}
+                      onChange={(e) => setAiForm({ ...aiForm, count: e.target.value })}
+                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Language</label>
+                    <input
+                      type="text"
+                      value={aiForm.programming_language}
+                      onChange={(e) => setAiForm({ ...aiForm, programming_language: e.target.value })}
+                      placeholder="e.g. Java, Python, JavaScript"
+                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-2 pt-4 border-t border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setShowAiModal(false)}
+                    className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl flex items-center space-x-1.5"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{loading ? 'Generating with Gemini...' : 'Generate Questions'}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════ MODAL: ASSIGN ACCESS & GENERATE PASSWORDS ══════════ */}
+        {showAssignModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-5">
+                <div className="flex items-center space-x-2">
+                  <KeyRound className="w-5 h-5 text-emerald-400" />
+                  <h3 className="text-lg font-bold text-white">Assign Exam & Generate Passwords</h3>
+                </div>
+                <button onClick={() => setShowAssignModal(false)} className="text-slate-400 hover:text-white">✕</button>
+              </div>
+
+              <form onSubmit={handleAssignTestAccess} className="space-y-4 text-xs">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Select Examination *</label>
+                  <select
+                    required
+                    value={assignForm.exam_id}
+                    onChange={(e) => setAssignForm({ ...assignForm, exam_id: e.target.value })}
+                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs"
+                  >
+                    <option value="">Select Exam to Assign...</option>
+                    {exams.map(ex => (
+                      <option key={ex.id} value={ex.id}>{ex.title || ex.name} ({ex.code})</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">
+                    Assign To Specific College (Optional: Leave empty for all active candidates)
+                  </label>
+                  <select
+                    value={assignForm.college_id}
+                    onChange={(e) => setAssignForm({ ...assignForm, college_id: e.target.value })}
+                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs"
+                  >
+                    <option value="">All Registered Colleges</option>
+                    {colleges.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Max Attempts Permitted</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={assignForm.max_attempts}
+                    onChange={(e) => setAssignForm({ ...assignForm, max_attempts: parseInt(e.target.value) || 1 })}
+                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs"
+                  />
+                </div>
+
+                <div className="p-3.5 bg-indigo-950/40 border border-indigo-800/40 rounded-2xl text-[11px] text-indigo-200">
+                  <span className="font-bold block mb-1">Automatic Password Generation:</span>
+                  <span>A distinct, cryptographically hashed 8-character test password will be created for each candidate and displayed for immediate CSV export.</span>
+                </div>
+
+                <div className="flex justify-end space-x-2 pt-4 border-t border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setShowAssignModal(false)}
+                    className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center space-x-1.5"
+                  >
+                    <KeyRound className="w-3.5 h-3.5" />
+                    <span>{loading ? 'Generating...' : 'Assign & Generate'}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
