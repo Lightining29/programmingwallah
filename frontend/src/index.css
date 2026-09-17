@@ -153,6 +153,32 @@ html:not(.dark) [class*='text-slate-400'] {
   color: #64748b !important;
 }
 
+/* Form inputs, textareas, selects in light mode: ALWAYS dark text, crisp visible border */
+html:not(.dark) input:not([type='checkbox']):not([type='radio']):not([type='submit']):not([type='button']):not([type='reset']),
+html:not(.dark) textarea,
+html:not(.dark) select {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
+html:not(.dark) input:not([type='checkbox']):not([type='radio']):not([type='submit']):not([type='button']):not([type='reset']):focus,
+html:not(.dark) textarea:focus,
+html:not(.dark) select:focus {
+  border-color: #6366f1 !important;
+  outline: 2px solid rgba(99, 102, 241, 0.2) !important;
+}
+
+html:not(.dark) input::placeholder,
+html:not(.dark) textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+html:not(.dark) select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
 /* Admin/Parent dashboard shell: dark radial+slate gradient → light in light mode.
    The dark-mode version is defined later under html.dark. */
 html:not(.dark) .admin-dashboard-shell {

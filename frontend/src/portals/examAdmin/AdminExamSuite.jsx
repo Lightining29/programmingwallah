@@ -707,7 +707,7 @@ export default function AdminExamSuite() {
                 <select
                   value={filterExamId}
                   onChange={(e) => setFilterExamId(e.target.value)}
-                  className="bg-slate-900 border border-slate-800 text-xs text-white rounded-xl px-3 py-2"
+                  className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-xs text-slate-900 dark:text-white rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
                 >
                   <option value="">All Examinations</option>
                   {exams.map(ex => (
@@ -778,63 +778,64 @@ export default function AdminExamSuite() {
         {/* ══════════ MODAL: CREATE EXAM ══════════ */}
         {showCreateExamModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-5">
-                <h3 className="text-lg font-bold text-white">Create Examination Assessment</h3>
-                <button onClick={() => setShowCreateExamModal(false)} className="text-slate-400 hover:text-white">✕</button>
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl text-slate-900 dark:text-white">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 mb-5">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Create Examination Assessment</h3>
+                <button onClick={() => setShowCreateExamModal(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white text-base">✕</button>
               </div>
 
               <form onSubmit={handleCreateExam} className="space-y-4 text-xs">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Title / Exam Name *</label>
+                  <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Title / Exam Name *</label>
                   <input
                     type="text"
                     required
                     value={newExam.title}
                     onChange={(e) => setNewExam({ ...newExam, title: e.target.value })}
                     placeholder="e.g. Java Full Stack Midterm Assessment"
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Subject</label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Subject</label>
                     <input
                       type="text"
                       value={newExam.subject}
                       onChange={(e) => setNewExam({ ...newExam, subject: e.target.value })}
-                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                      placeholder="e.g. Java Full Stack"
+                      className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Duration (Minutes)</label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Duration (Minutes)</label>
                     <input
                       type="number"
                       value={newExam.duration_minutes}
                       onChange={(e) => setNewExam({ ...newExam, duration_minutes: e.target.value })}
-                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                      className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Total Marks</label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Total Marks</label>
                     <input
                       type="number"
                       value={newExam.total_marks}
                       onChange={(e) => setNewExam({ ...newExam, total_marks: e.target.value })}
-                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                      className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Passing Marks</label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Passing Marks</label>
                     <input
                       type="number"
                       value={newExam.passing_marks}
                       onChange={(e) => setNewExam({ ...newExam, passing_marks: e.target.value })}
-                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                      className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
                     />
                   </div>
                 </div>
@@ -845,23 +846,23 @@ export default function AdminExamSuite() {
                     id="neg_marking"
                     checked={newExam.negative_marking}
                     onChange={(e) => setNewExam({ ...newExam, negative_marking: e.target.checked })}
-                    className="rounded bg-slate-950 border-slate-800 text-indigo-600"
+                    className="rounded border-slate-300 dark:border-slate-800 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
                   />
-                  <label htmlFor="neg_marking" className="text-slate-300">Enable Negative Marking</label>
+                  <label htmlFor="neg_marking" className="text-slate-700 dark:text-slate-300 font-medium">Enable Negative Marking</label>
                 </div>
 
-                <div className="flex justify-end space-x-2 pt-4 border-t border-slate-800">
+                <div className="flex justify-end space-x-2 pt-4 border-t border-slate-200 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => setShowCreateExamModal(false)}
-                    className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl"
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium transition"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl"
+                    className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-md shadow-indigo-600/20 transition"
                   >
                     {loading ? 'Creating...' : 'Create Exam'}
                   </button>
@@ -874,35 +875,35 @@ export default function AdminExamSuite() {
         {/* ══════════ MODAL: GEMINI AI GENERATOR ══════════ */}
         {showAiModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-            <div className="bg-slate-900 border border-purple-800/60 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-5">
+            <div className="bg-white dark:bg-slate-900 border border-purple-300 dark:border-purple-800/60 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl text-slate-900 dark:text-white">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 mb-5">
                 <div className="flex items-center space-x-2">
-                  <Sparkles className="w-5 h-5 text-purple-400" />
-                  <h3 className="text-lg font-bold text-white">Gemini AI Question Generator</h3>
+                  <Sparkles className="w-5 h-5 text-purple-500" />
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Gemini AI Question Generator</h3>
                 </div>
-                <button onClick={() => setShowAiModal(false)} className="text-slate-400 hover:text-white">✕</button>
+                <button onClick={() => setShowAiModal(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white text-base">✕</button>
               </div>
 
               <form onSubmit={handleGenerateAIQuestions} className="space-y-4 text-xs">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Topic / Technology *</label>
+                  <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Topic / Technology *</label>
                   <input
                     type="text"
                     required
                     value={aiForm.topic}
                     onChange={(e) => setAiForm({ ...aiForm, topic: e.target.value })}
                     placeholder="e.g. Java Streams, Multithreading, SQL Joins, React Hooks"
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 font-medium"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Question Type</label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Question Type</label>
                     <select
                       value={aiForm.question_type}
                       onChange={(e) => setAiForm({ ...aiForm, question_type: e.target.value })}
-                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                      className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 font-medium"
                     >
                       <option value="MIXED">Mixed Variety</option>
                       <option value="MCQ">Multiple Choice (MCQ)</option>
@@ -913,11 +914,11 @@ export default function AdminExamSuite() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Difficulty</label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Difficulty</label>
                     <select
                       value={aiForm.difficulty}
                       onChange={(e) => setAiForm({ ...aiForm, difficulty: e.target.value })}
-                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                      className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 font-medium"
                     >
                       <option value="EASY">Easy</option>
                       <option value="MEDIUM">Medium</option>
@@ -928,41 +929,41 @@ export default function AdminExamSuite() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Question Count</label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Question Count</label>
                     <input
                       type="number"
                       min={1}
                       max={20}
                       value={aiForm.count}
                       onChange={(e) => setAiForm({ ...aiForm, count: e.target.value })}
-                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                      className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 font-medium"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Language</label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Language</label>
                     <input
                       type="text"
                       value={aiForm.programming_language}
                       onChange={(e) => setAiForm({ ...aiForm, programming_language: e.target.value })}
                       placeholder="e.g. Java, Python, JavaScript"
-                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                      className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 font-medium"
                     />
                   </div>
                 </div>
 
-                <div className="flex justify-end space-x-2 pt-4 border-t border-slate-800">
+                <div className="flex justify-end space-x-2 pt-4 border-t border-slate-200 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => setShowAiModal(false)}
-                    className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl"
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium transition"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl flex items-center space-x-1.5"
+                    className="px-5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl flex items-center space-x-1.5 shadow-md shadow-purple-600/20 transition"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>{loading ? 'Generating with Gemini...' : 'Generate Questions'}</span>
@@ -976,23 +977,23 @@ export default function AdminExamSuite() {
         {/* ══════════ MODAL: ASSIGN ACCESS & GENERATE PASSWORDS ══════════ */}
         {showAssignModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-5">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl text-slate-900 dark:text-white">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 mb-5">
                 <div className="flex items-center space-x-2">
-                  <KeyRound className="w-5 h-5 text-emerald-400" />
-                  <h3 className="text-lg font-bold text-white">Assign Exam & Generate Passwords</h3>
+                  <KeyRound className="w-5 h-5 text-emerald-500" />
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Assign Exam & Generate Passwords</h3>
                 </div>
-                <button onClick={() => setShowAssignModal(false)} className="text-slate-400 hover:text-white">✕</button>
+                <button onClick={() => setShowAssignModal(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white text-base">✕</button>
               </div>
 
               <form onSubmit={handleAssignTestAccess} className="space-y-4 text-xs">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Select Examination *</label>
+                  <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Select Examination *</label>
                   <select
                     required
                     value={assignForm.exam_id}
                     onChange={(e) => setAssignForm({ ...assignForm, exam_id: e.target.value })}
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs"
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 text-xs font-medium"
                   >
                     <option value="">Select Exam to Assign...</option>
                     {exams.map(ex => (
@@ -1002,13 +1003,13 @@ export default function AdminExamSuite() {
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">
+                  <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
                     Assign To Specific College (Optional: Leave empty for all active candidates)
                   </label>
                   <select
                     value={assignForm.college_id}
                     onChange={(e) => setAssignForm({ ...assignForm, college_id: e.target.value })}
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs"
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 text-xs font-medium"
                   >
                     <option value="">All Registered Colleges</option>
                     {colleges.map(c => (
@@ -1018,33 +1019,33 @@ export default function AdminExamSuite() {
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Max Attempts Permitted</label>
+                  <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Max Attempts Permitted</label>
                   <input
                     type="number"
                     min={1}
                     value={assignForm.max_attempts}
                     onChange={(e) => setAssignForm({ ...assignForm, max_attempts: parseInt(e.target.value) || 1 })}
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs"
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 text-xs font-medium"
                   />
                 </div>
 
-                <div className="p-3.5 bg-indigo-950/40 border border-indigo-800/40 rounded-2xl text-[11px] text-indigo-200">
+                <div className="p-3.5 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/40 rounded-2xl text-[11px] text-indigo-900 dark:text-indigo-200">
                   <span className="font-bold block mb-1">Automatic Password Generation:</span>
                   <span>A distinct, cryptographically hashed 8-character test password will be created for each candidate and displayed for immediate CSV export.</span>
                 </div>
 
-                <div className="flex justify-end space-x-2 pt-4 border-t border-slate-800">
+                <div className="flex justify-end space-x-2 pt-4 border-t border-slate-200 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => setShowAssignModal(false)}
-                    className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl"
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium transition"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center space-x-1.5"
+                    className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center space-x-1.5 shadow-md shadow-emerald-600/20 transition"
                   >
                     <KeyRound className="w-3.5 h-3.5" />
                     <span>{loading ? 'Generating...' : 'Assign & Generate'}</span>
@@ -1058,28 +1059,28 @@ export default function AdminExamSuite() {
         {/* ══════════ MODAL: SHARE TEST LINK & DYNAMIC QR CODE ══════════ */}
         {shareExamModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-            <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-2xl p-6 sm:p-8 shadow-2xl relative text-white max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl w-full max-w-2xl p-6 sm:p-8 shadow-2xl relative text-slate-900 dark:text-white max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
               <button
                 type="button"
                 onClick={() => setShareExamModal(null)}
-                className="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition"
+                className="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition"
               >
                 ✕
               </button>
 
               {/* Modal Header */}
-              <div className="flex items-center space-x-3 mb-6 pb-4 border-b border-slate-800">
+              <div className="flex items-center space-x-3 mb-6 pb-4 border-b border-slate-200 dark:border-slate-800">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-400 flex items-center justify-center text-slate-950 shadow-lg shadow-amber-500/20">
                   <QrCode className="w-6 h-6" />
                 </div>
                 <div>
                   <div className="flex items-center space-x-2">
-                    <span className="bg-amber-500/20 text-amber-300 font-mono font-bold text-xs px-2 py-0.5 rounded-full border border-amber-500/30">
+                    <span className="bg-amber-500/20 text-amber-700 dark:text-amber-300 font-mono font-bold text-xs px-2 py-0.5 rounded-full border border-amber-500/30">
                       {shareExamModal.code}
                     </span>
-                    <span className="text-xs text-slate-400 font-medium">• {shareExamModal.subject || 'General'}</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">• {shareExamModal.subject || 'General'}</span>
                   </div>
-                  <h3 className="text-xl font-bold text-white mt-1">
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-1">
                     {shareExamModal.title || shareExamModal.name}
                   </h3>
                 </div>
@@ -1089,12 +1090,12 @@ export default function AdminExamSuite() {
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
                 
                 {/* QR Code Card */}
-                <div className="sm:col-span-5 flex flex-col items-center bg-white rounded-2xl p-5 shadow-lg text-slate-900">
+                <div className="sm:col-span-5 flex flex-col items-center bg-slate-50 dark:bg-white rounded-2xl p-5 shadow-md border border-slate-200 dark:border-transparent text-slate-900">
                   {qrCodeDataUrl ? (
                     <img
                       src={qrCodeDataUrl}
                       alt={`QR Code for ${shareExamModal.code}`}
-                      className="w-48 h-48 object-contain rounded-lg"
+                      className="w-48 h-48 object-contain rounded-lg shadow-sm"
                     />
                   ) : (
                     <div className="w-48 h-48 bg-slate-100 flex items-center justify-center rounded-lg text-slate-400 text-xs">
@@ -1124,33 +1125,33 @@ export default function AdminExamSuite() {
                 {/* Share Links and Quick Actions */}
                 <div className="sm:col-span-7 space-y-4">
                   {/* Exam Specs Snapshot */}
-                  <div className="grid grid-cols-3 gap-2 bg-slate-950/60 border border-slate-800 p-3 rounded-2xl text-center">
+                  <div className="grid grid-cols-3 gap-2 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 p-3 rounded-2xl text-center">
                     <div>
-                      <span className="text-[10px] text-slate-400 block">Duration</span>
-                      <span className="text-xs font-bold text-white">{shareExamModal.duration_minutes || 60} mins</span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Duration</span>
+                      <span className="text-xs font-bold text-slate-900 dark:text-white">{shareExamModal.duration_minutes || 60} mins</span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 block">Pass Marks</span>
-                      <span className="text-xs font-bold text-emerald-400">{shareExamModal.passing_marks || 40}</span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Pass Marks</span>
+                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{shareExamModal.passing_marks || 40}</span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 block">Total Marks</span>
-                      <span className="text-xs font-bold text-amber-400">{shareExamModal.total_marks || 100}</span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Total Marks</span>
+                      <span className="text-xs font-bold text-amber-600 dark:text-amber-400">{shareExamModal.total_marks || 100}</span>
                     </div>
                   </div>
 
                   {/* 1. Candidate Registration Link */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
                       <span>Candidate Registration Link</span>
-                      <span className="text-[10px] text-indigo-400 font-medium">Auto-assigns test</span>
+                      <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium">Auto-assigns test</span>
                     </label>
                     <div className="flex items-center space-x-2">
                       <input
                         type="text"
                         readOnly
                         value={`${typeof window !== 'undefined' ? window.location.origin : 'https://programmingwala.com'}/test/register?exam=${shareExamModal.code}`}
-                        className="w-full py-2 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 font-mono focus:outline-none select-all"
+                        className="w-full py-2 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-slate-300 font-mono focus:outline-none select-all"
                       />
                       <button
                         type="button"
@@ -1160,7 +1161,7 @@ export default function AdminExamSuite() {
                           setCopiedLinkType('register');
                           setTimeout(() => setCopiedLinkType(null), 2000);
                         }}
-                        className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold flex items-center space-x-1 transition flex-shrink-0"
+                        className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold flex items-center space-x-1 transition flex-shrink-0 shadow-sm"
                       >
                         {copiedLinkType === 'register' ? (
                           <>
@@ -1179,7 +1180,7 @@ export default function AdminExamSuite() {
 
                   {/* 2. Direct Candidate Login Link */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                       Candidate Test Login Link
                     </label>
                     <div className="flex items-center space-x-2">
@@ -1187,7 +1188,7 @@ export default function AdminExamSuite() {
                         type="text"
                         readOnly
                         value={`${typeof window !== 'undefined' ? window.location.origin : 'https://programmingwala.com'}/test/login?exam=${shareExamModal.code}`}
-                        className="w-full py-2 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 font-mono focus:outline-none select-all"
+                        className="w-full py-2 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-slate-300 font-mono focus:outline-none select-all"
                       />
                       <button
                         type="button"
@@ -1197,11 +1198,11 @@ export default function AdminExamSuite() {
                           setCopiedLinkType('login');
                           setTimeout(() => setCopiedLinkType(null), 2000);
                         }}
-                        className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 transition flex-shrink-0"
+                        className="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-white rounded-xl text-xs font-bold flex items-center space-x-1 transition flex-shrink-0"
                       >
                         {copiedLinkType === 'login' ? (
                           <>
-                            <Check className="w-3.5 h-3.5 text-emerald-300" />
+                            <Check className="w-3.5 h-3.5 text-emerald-500" />
                             <span>Copied!</span>
                           </>
                         ) : (
@@ -1236,7 +1237,7 @@ export default function AdminExamSuite() {
                         const origin = typeof window !== 'undefined' ? window.location.origin : 'https://programmingwala.com';
                         window.open(`${origin}/test/register?exam=${shareExamModal.code}`, '_blank');
                       }}
-                      className="py-2.5 px-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition"
+                      className="py-2.5 px-3.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                       <span>Test Link</span>
