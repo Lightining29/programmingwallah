@@ -107,6 +107,56 @@ async function syncRelationalMySQL(pool, collectionName, items) {
           ]
         ).catch(() => {});
       }
+    } else if (collectionName === 'assessments') {
+      for (const a of items) {
+        await pool.query(
+          `INSERT INTO assessments (id, title, description, job_title, duration, passing_score, max_attempts, shuffle_questions, shuffle_options, show_result, is_active, questions_json, invited_candidates_json, scheduled_at, expires_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE title=VALUES(title), description=VALUES(description), job_title=VALUES(job_title), duration=VALUES(duration), passing_score=VALUES(passing_score), max_attempts=VALUES(max_attempts), shuffle_questions=VALUES(shuffle_questions), shuffle_options=VALUES(shuffle_options), show_result=VALUES(show_result), is_active=VALUES(is_active), questions_json=VALUES(questions_json), invited_candidates_json=VALUES(invited_candidates_json)`,
+          [
+            a._id || a.id,
+            a.title || '',
+            a.description || '',
+            a.jobTitle || 'General',
+            Number(a.duration) || 30,
+            Number(a.passingScore) || 50,
+            Number(a.maxAttempts) || 1,
+            a.shuffleQuestions !== false ? 1 : 0,
+            a.shuffleOptions !== false ? 1 : 0,
+            a.showResult !== false ? 1 : 0,
+            a.isActive !== false ? 1 : 0,
+            JSON.stringify(a.questions || []),
+            JSON.stringify(a.invitedCandidates || []),
+            a.scheduledAt ? new Date(a.scheduledAt) : null,
+            a.expiresAt ? new Date(a.expiresAt) : null
+          ]
+        ).catch(() => {});
+      }
+    } else if (collectionName === 'attempts') {
+      for (const att of items) {
+        await pool.query(
+          `INSERT INTO assessment_attempts (id, assessment_id, candidate_email, candidate_name, candidate_access_code, answers_json, score, percentage, passed, total_marks, time_taken, status, violations_json, started_at, submitted_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE answers_json=VALUES(answers_json), score=VALUES(score), percentage=VALUES(percentage), passed=VALUES(passed), total_marks=VALUES(total_marks), time_taken=VALUES(time_taken), status=VALUES(status), violations_json=VALUES(violations_json), submitted_at=VALUES(submitted_at)`,
+          [
+            att._id || att.id,
+            att.assessment || att.assessmentId || '',
+            att.candidate?.email || '',
+            att.candidate?.name || 'Candidate',
+            att.candidate?.accessCode || '',
+            JSON.stringify(att.answers || []),
+            Number(att.score) || 0,
+            Number(att.percentage) || 0,
+            att.passed ? 1 : 0,
+            Number(att.totalMarks) || 0,
+            Number(att.timeTaken) || 0,
+            att.status || 'in-progress',
+            JSON.stringify(att.violations || []),
+            att.startedAt ? new Date(att.startedAt) : new Date(),
+            att.submittedAt ? new Date(att.submittedAt) : null
+          ]
+        ).catch(() => {});
+      }
     }
   } catch (e) {}
 }

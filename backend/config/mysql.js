@@ -159,6 +159,52 @@ export const initMySQLTables = async () => {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
+    // Create assessments table in Hostinger MySQL
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS assessments (
+        id VARCHAR(100) PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        job_title VARCHAR(255) DEFAULT 'General',
+        duration INT DEFAULT 30,
+        passing_score INT DEFAULT 50,
+        max_attempts INT DEFAULT 1,
+        shuffle_questions BOOLEAN DEFAULT TRUE,
+        shuffle_options BOOLEAN DEFAULT TRUE,
+        show_result BOOLEAN DEFAULT TRUE,
+        is_active BOOLEAN DEFAULT TRUE,
+        questions_json LONGTEXT,
+        invited_candidates_json LONGTEXT,
+        scheduled_at TIMESTAMP NULL,
+        expires_at TIMESTAMP NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // Create assessment_attempts table in Hostinger MySQL
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS assessment_attempts (
+        id VARCHAR(100) PRIMARY KEY,
+        assessment_id VARCHAR(100) NOT NULL,
+        candidate_email VARCHAR(255) NOT NULL,
+        candidate_name VARCHAR(255) DEFAULT 'Candidate',
+        candidate_access_code VARCHAR(100),
+        answers_json LONGTEXT,
+        score INT DEFAULT 0,
+        percentage INT DEFAULT 0,
+        passed BOOLEAN DEFAULT FALSE,
+        total_marks INT DEFAULT 0,
+        time_taken INT DEFAULT 0,
+        status VARCHAR(50) DEFAULT 'in-progress',
+        violations_json LONGTEXT,
+        started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        submitted_at TIMESTAMP NULL,
+        INDEX idx_assessment (assessment_id),
+        INDEX idx_candidate_email (candidate_email)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
     connection.release();
     return true;
   } catch (error) {
