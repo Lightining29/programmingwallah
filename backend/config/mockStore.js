@@ -825,6 +825,8 @@ const mockStore = {
       createdAt: new Date('2026-01-02T10:00:00Z')
     }
   ],
+  assessments: [],
+  attempts: [],
 
   // In-memory helper methods
   async find(collectionName, filter = {}) {

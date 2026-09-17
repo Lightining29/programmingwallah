@@ -19,6 +19,7 @@ import lmsRoutes from './routes/lms.js';
 import paymentRoutes from './routes/payment.js';
 import testStudentRoutes from './routes/testStudent.js';
 import testAdminRoutes from './routes/testAdmin.js';
+import assessmentRoutes from './routes/assessment.js';
 import { initExamDatabase } from './models/exam/index.js';
 
 // Load environment variables from multiple possible locations (root .env and backend/.env)
@@ -119,6 +120,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/portal', portalRoutes);
+app.use('/api/admin/test', testAdminRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/meetings', meetingsRoutes);
 app.use('/api/admission-payment', admissionPaymentRoutes);
@@ -126,7 +128,7 @@ app.use('/api/razorpay', razorpayRoutes);
 app.use('/api/lms', lmsRoutes);
 app.use('/api', paymentRoutes);
 app.use('/api/test', testStudentRoutes);
-app.use('/api/admin/test', testAdminRoutes);
+app.use('/api/assessment', assessmentRoutes);
 
 // Dynamic Sitemap for Search Engines & AI Crawlers
 app.get('/sitemap.xml', (req, res) => {

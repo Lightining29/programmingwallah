@@ -6,6 +6,7 @@ export default (sequelize) => {
     student_id: { type: DataTypes.INTEGER, allowNull: false },
     exam_id: { type: DataTypes.INTEGER, allowNull: false },
     password_hash: { type: DataTypes.STRING(255), allowNull: false },
+    plain_password: { type: DataTypes.STRING(255), allowNull: true },
     status: { type: DataTypes.ENUM('ACTIVE', 'INACTIVE', 'REVOKED', 'EXPIRED'), defaultValue: 'ACTIVE' },
     assigned_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
     expires_at: { type: DataTypes.DATE, allowNull: true },

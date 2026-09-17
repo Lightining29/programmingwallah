@@ -1,4 +1,4 @@
-import { getSequelize, initSequelize } from '../../config/sequelize.js';
+import { getSequelize, initSequelize, migrateDataFromSqliteToMySQL, switchSequelizeToMySQL } from '../../config/sequelize.js';
 import defineCollege from './College.js';
 import defineExamCourse from './ExamCourse.js';
 import defineExamBatch from './ExamBatch.js';
@@ -13,10 +13,13 @@ import defineStudentAnswer from './StudentAnswer.js';
 
 let db = null;
 
-export const getExamModels = () => {
-  if (db) return db;
+export const resetExamModels = () => {
+  db = null;
+};
 
+export const getExamModels = (force = false) => {
   const sequelize = getSequelize();
+  if (db && !force && db.sequelize === sequelize) return db;
 
   const College = defineCollege(sequelize);
   const ExamCourse = defineExamCourse(sequelize);
@@ -159,10 +162,36 @@ export const seedInitialExamData = async () => {
 export const initExamDatabase = async () => {
   try {
     const sequelize = await initSequelize();
-    const models = getExamModels();
+    resetExamModels();
+    const models = getExamModels(true);
     try {
       await sequelize.sync({ alter: false });
+      
+      // Ensure all backward & forward compatible columns exist
+      const compatibilityPatches = [
+        'ALTER TABLE examstudent ADD COLUMN password_hash VARCHAR(255);',
+        'ALTER TABLE examstudent ADD COLUMN plain_password VARCHAR(255);',
+        'ALTER TABLE exam_student_access ADD COLUMN plain_password VARCHAR(255);',
+        'ALTER TABLE exam_attempts ADD COLUMN total_marks_obtained DECIMAL(10,2);',
+        'ALTER TABLE exam_attempts ADD COLUMN result_status VARCHAR(32);'
+      ];
+      for (const patchSql of compatibilityPatches) {
+        try {
+          await sequelize.query(patchSql);
+        } catch (ignored) {}
+      }
+
       await seedInitialExamData();
+
+      // Automatically migrate any existing local SQLite exams & questions to Hostinger MySQL
+      if (sequelize.getDialect() === 'mysql') {
+        try {
+          await migrateDataFromSqliteToMySQL(sequelize);
+        } catch (mErr) {
+          console.warn('Auto migration note:', mErr.message);
+        }
+      }
+
       console.log('\x1b[32m✔ Online Examination Database Tables & Schema Initialized Successfully!\x1b[0m');
     } catch (syncErr) {
       console.warn('\x1b[33mℹ Exam database schema sync note: ' + syncErr.message + '\x1b[0m');

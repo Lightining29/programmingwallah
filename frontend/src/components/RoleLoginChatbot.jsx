@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { 
   MessageCircle, 
@@ -193,6 +193,15 @@ const COMBO_COURSES = [
 
 export default function RoleLoginChatbot() {
   const { user } = useAuth();
+  const location = useLocation();
+
+  // Hide chatbot on admin dashboard or exam pages
+  const isExcluded = 
+    location.pathname.startsWith('/dashboard/admin') || 
+    location.pathname.startsWith('/portal/admin') || 
+    location.pathname.startsWith('/test');
+
+  if (isExcluded) return null;
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');

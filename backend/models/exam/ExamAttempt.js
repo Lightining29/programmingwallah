@@ -15,6 +15,14 @@ export default (sequelize) => {
       defaultValue: 'IN_PROGRESS'
     },
     score: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0.00 },
+    total_marks_obtained: {
+      type: DataTypes.DECIMAL(10, 2),
+      defaultValue: 0.00,
+      get() {
+        const val = this.getDataValue('total_marks_obtained');
+        return val !== null && val !== undefined ? val : (this.getDataValue('score') ?? 0.00);
+      }
+    },
     percentage: { type: DataTypes.DECIMAL(6, 2), defaultValue: 0.00 },
     total_marks: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0.00 },
     passing_marks: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0.00 },
@@ -23,6 +31,15 @@ export default (sequelize) => {
     wrong_count: { type: DataTypes.INTEGER, defaultValue: 0 },
     unanswered_count: { type: DataTypes.INTEGER, defaultValue: 0 },
     passed: { type: DataTypes.BOOLEAN, defaultValue: false },
+    result_status: {
+      type: DataTypes.STRING(32),
+      defaultValue: 'PENDING',
+      get() {
+        const direct = this.getDataValue('result_status');
+        if (direct && direct !== 'PENDING') return direct;
+        return this.getDataValue('passed') ? 'PASSED' : 'FAILED';
+      }
+    },
     time_taken_seconds: { type: DataTypes.INTEGER, defaultValue: 0 },
     tab_switch_count: { type: DataTypes.INTEGER, defaultValue: 0 },
     blur_count: { type: DataTypes.INTEGER, defaultValue: 0 },

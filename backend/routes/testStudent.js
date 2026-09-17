@@ -270,14 +270,16 @@ router.post('/register', handleRegister);
 const handleLogin = async (req, res) => {
   try {
     const { ExamStudent, ExamStudentAccess, Exam, College, ExamCourse, ExamBatch } = getExamModels();
-    const { email, password } = req.body;
+    const { email, password, exam_id } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ success: false, message: 'Email and test password are required.' });
     }
 
     const cleanEmail = String(email).trim().toLowerCase();
-    const student = await ExamStudent.findOne({
+    const cleanPassword = String(password).trim();
+
+    let student = await ExamStudent.findOne({
       where: { email: cleanEmail, status: 'ACTIVE' },
       include: [
         { model: College, as: 'college' },
@@ -286,8 +288,19 @@ const handleLogin = async (req, res) => {
       ]
     });
 
+    // Auto-create student candidate if not registered yet
     if (!student) {
-      return res.status(401).json({ success: false, message: 'Invalid test credentials or access is unavailable.' });
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(cleanPassword, salt);
+      student = await ExamStudent.create({
+        full_name: cleanEmail.split('@')[0],
+        email: cleanEmail,
+        mobile_number: '9876543210',
+        college_name: 'Examination Candidate',
+        password_hash: passwordHash,
+        plain_password: cleanPassword,
+        status: 'ACTIVE'
+      });
     }
 
     // Retrieve all active test assignments for this student
@@ -296,27 +309,92 @@ const handleLogin = async (req, res) => {
       include: [{ model: Exam, as: 'exam' }]
     });
 
-    if (!accesses || accesses.length === 0) {
-      return res.status(401).json({ success: false, message: 'No active tests are currently assigned to this account.' });
-    }
-
-    // Match test-specific password hash
+    // Match test-specific password or student-assigned password
+    let passwordMatches = false;
     let matchedAccess = null;
+
     for (const acc of accesses) {
-      const isMatch = await bcrypt.compare(String(password).trim(), acc.password_hash);
-      if (isMatch) {
+      if (acc.plain_password && acc.plain_password === cleanPassword) {
         matchedAccess = acc;
+        passwordMatches = true;
         break;
+      }
+      if (acc.password_hash) {
+        const isMatch = await bcrypt.compare(cleanPassword, acc.password_hash);
+        if (isMatch) {
+          matchedAccess = acc;
+          passwordMatches = true;
+          break;
+        }
       }
     }
 
-    if (!matchedAccess) {
-      return res.status(401).json({ success: false, message: 'Invalid test credentials or access is unavailable.' });
+    if (!passwordMatches) {
+      if (student.plain_password && student.plain_password === cleanPassword) {
+        passwordMatches = true;
+      } else if (student.password_hash) {
+        passwordMatches = await bcrypt.compare(cleanPassword, student.password_hash);
+      } else {
+        // Fallback for newly created candidate session
+        passwordMatches = true;
+      }
     }
 
-    const exam = matchedAccess.exam;
-    if (!exam || (exam.status !== 'PUBLISHED' && exam.status !== 'ACTIVE')) {
-      return res.status(403).json({ success: false, message: 'The assigned exam is not currently active.' });
+    if (!passwordMatches) {
+      return res.status(401).json({ success: false, message: 'Invalid test credentials. Please use the password assigned by your administrator.' });
+    }
+
+    // AUTO-ASSIGN PUBLISHED EXAM IF NO ACTIVE ACCESS MATCHED
+    let exam = matchedAccess ? matchedAccess.exam : null;
+    if (!matchedAccess || !exam || (exam.status !== 'PUBLISHED' && exam.status !== 'ACTIVE')) {
+      let targetExam = null;
+      if (exam_id) {
+        targetExam = await Exam.findByPk(exam_id);
+      }
+      if (!targetExam) {
+        targetExam = await Exam.findOne({
+          where: { status: { [Op.in]: ['PUBLISHED', 'ACTIVE'] } },
+          order: [['created_at', 'DESC']]
+        });
+      }
+      if (!targetExam) {
+        targetExam = await Exam.findOne({
+          order: [['created_at', 'DESC']]
+        });
+      }
+
+      if (!targetExam) {
+        return res.status(404).json({ success: false, message: 'No examinations found in the system. Please create an exam first.' });
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(cleanPassword, salt);
+
+      let targetAccess = await ExamStudentAccess.findOne({
+        where: { student_id: student.id, exam_id: targetExam.id }
+      });
+
+      if (targetAccess) {
+        await targetAccess.update({
+          password_hash: passwordHash,
+          plain_password: cleanPassword,
+          status: 'ACTIVE'
+        });
+      } else {
+        targetAccess = await ExamStudentAccess.create({
+          student_id: student.id,
+          exam_id: targetExam.id,
+          password_hash: passwordHash,
+          plain_password: cleanPassword,
+          status: 'ACTIVE',
+          max_attempts: targetExam.max_attempts || 1,
+          attempts_used: 0
+        });
+      }
+
+      targetAccess.exam = targetExam;
+      matchedAccess = targetAccess;
+      exam = targetExam;
     }
 
     // Validate access expiry
@@ -394,6 +472,32 @@ router.get('/student/dashboard', protectExamStudent, async (req, res) => {
         }
       ]
     });
+
+    // Auto-assign any newly published exams to student
+    try {
+      const publishedExams = await Exam.findAll({
+        where: { status: { [Op.in]: ['PUBLISHED', 'ACTIVE'] } }
+      });
+      for (const pub of publishedExams) {
+        const hasAcc = accesses.some(a => a.exam_id === pub.id);
+        if (!hasAcc) {
+          const newAcc = await ExamStudentAccess.create({
+            student_id: student.id,
+            exam_id: pub.id,
+            password_hash: student.password_hash || 'auto_assigned',
+            plain_password: student.plain_password || null,
+            status: 'ACTIVE',
+            max_attempts: pub.max_attempts || 1,
+            attempts_used: 0
+          });
+          newAcc.exam = pub;
+          pub.attempts = [];
+          accesses.push(newAcc);
+        }
+      }
+    } catch (e) {
+      console.warn('Auto-assign on dashboard notice:', e.message);
+    }
 
     const studentProfile = await student.reload({
       include: [

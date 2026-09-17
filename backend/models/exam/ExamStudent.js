@@ -31,6 +31,8 @@ export default (sequelize) => {
     roll_number: { type: DataTypes.STRING(100), allowNull: true },
     date_of_birth: { type: DataTypes.DATEONLY, allowNull: true },
     profile_photo: { type: DataTypes.STRING(500), allowNull: true },
+    password_hash: { type: DataTypes.STRING(255), allowNull: true },
+    plain_password: { type: DataTypes.STRING(255), allowNull: true },
     status: { type: DataTypes.ENUM('ACTIVE', 'INACTIVE', 'BLOCKED'), defaultValue: 'ACTIVE' }
   }, {
     tableName: 'examstudent',

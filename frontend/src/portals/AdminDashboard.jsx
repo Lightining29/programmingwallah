@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { LayoutDashboard, ClipboardList, Users, User, CreditCard, Bell, Image as ImageIcon, MessageCircle, CheckCircle, XCircle, Trash2, Plus, Clock, Search, FileText, Printer, Edit, Download, Contact, X, Sparkles, BookOpen, Video, Wallet, Eye, EyeOff, Upload, AlertCircle, ChevronDown, ChevronUp, Play, Pause, RotateCcw, Award, ShieldCheck, Share2, Check, ExternalLink, Sun, CloudSun, Wind, Radio, Volume2, VolumeX, Send, Globe, SkipBack, SkipForward, CloudRain, Droplets, MapPin, AlertTriangle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import ConfirmModal from '../components/ConfirmModal.jsx';
@@ -7,6 +8,7 @@ import AdmissionPaymentModal from '../components/AdmissionPaymentModal.jsx';
 import CollectPaymentModal from '../components/CollectPaymentModal.jsx';
 import CertificateModal from '../components/CertificateModal.jsx';
 import AdminExamSuite from './examAdmin/AdminExamSuite.jsx';
+import AssessmentAdmin from '../pages/AssessmentAdmin.jsx';
 
 const COURSE_OPTIONS = ['Java Development', 'MERN Developer', 'Python Developer', 'Frontend Developer'];
 
@@ -93,7 +95,24 @@ function AttachmentManager({ attachments = [], onAdd, onDelete }) {
 }
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('stats');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || (() => {
+    try { return localStorage.getItem('admin_active_tab') || 'stats'; } catch (_) { return 'stats'; }
+  })();
+  const [activeTab, setActiveTabState] = useState(initialTab);
+
+  const setActiveTab = (tabId) => {
+    setActiveTabState(tabId);
+    try {
+      localStorage.setItem('admin_active_tab', tabId);
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev);
+        next.set('tab', tabId);
+        return next;
+      }, { replace: true });
+    } catch (_) {}
+  };
+
   const [stats, setStats] = useState(null);
 
   // Dynamic lists
@@ -6668,7 +6687,7 @@ export default function AdminDashboard() {
         {/* ── TESTS & EXAMS TAB ── */}
         {activeTab === 'tests' && (
           <div className="pt-2 animate-in fade-in duration-300">
-            <AdminExamSuite />
+            <AssessmentAdmin />
           </div>
         )}
 

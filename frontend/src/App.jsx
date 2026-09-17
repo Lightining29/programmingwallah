@@ -46,6 +46,8 @@ import ExamDashboard from './pages/exam/ExamDashboard.jsx';
 import ExamTaker from './pages/exam/ExamTaker.jsx';
 import ExamResult from './pages/exam/ExamResult.jsx';
 import AdminExamSuite from './portals/examAdmin/AdminExamSuite.jsx';
+import TakeTest from './pages/exam/TakeTest.jsx';
+import AssessmentAdmin from './pages/AssessmentAdmin.jsx';
 
 // Layout Components
 import Navbar from './components/Navbar.jsx';
@@ -106,8 +108,10 @@ function CanonicalManager() {
 function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
-  const isExamPage = location.pathname.startsWith('/test') || location.pathname.startsWith('/dashboard/admin/tests');
+  const isExamPage = location.pathname.startsWith('/test') || location.pathname.startsWith('/dashboard/admin/tests') || location.pathname.startsWith('/assessment-admin');
+  const isAdminPage = location.pathname.startsWith('/dashboard/admin') || location.pathname.startsWith('/portal/admin');
   const hideHeaderFooter = isLoginPage || isExamPage;
+  const hideChatbot = hideHeaderFooter || isAdminPage;
 
   return (
     <div
@@ -204,7 +208,13 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
           <Route path="/test/exam/:examId" element={<ExamTaker />} />
           <Route path="/test/result/:attemptId" element={<ExamResult />} />
           <Route path="/test/results" element={<ExamDashboard />} />
+          <Route path="/test/:id" element={<TakeTest />} />
           <Route path="/test" element={<Navigate to="/test/login" replace />} />
+
+          {/* Assessment Management Suite */}
+          <Route path="/assessment-admin" element={<AssessmentAdmin />} />
+          <Route path="/assessment-admin/*" element={<AssessmentAdmin />} />
+          <Route path="/dashboard/admin/assessment" element={<AssessmentAdmin />} />
 
           {/* Admin Examination Control Suite */}
           <Route path="/dashboard/admin/tests" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><AdminExamSuite /></ProtectedRoute>} />
@@ -215,7 +225,7 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
         </Routes>
       </main>
       {!hideHeaderFooter && <Footer />}
-      {!hideHeaderFooter && <RoleLoginChatbot />}
+      {!hideChatbot && <RoleLoginChatbot />}
     </div>
   );
 }
