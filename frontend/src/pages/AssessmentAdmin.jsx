@@ -4,8 +4,9 @@ import Swal from 'sweetalert2';
 import {
   Briefcase, Users, Mail, PlusCircle, Trash2, ToggleLeft, ToggleRight,
   LogOut, CheckCircle, AlertCircle, ChevronUp, MapPin, Clock, DollarSign,
-  Edit, FileText, Bell, ClipboardList, UserCheck, Database, Copy, Check, UserPlus
+  Edit, FileText, Bell, ClipboardList, UserCheck, Database, Copy, Check, UserPlus, Award
 } from 'lucide-react';
+import CertificateModal from '../components/CertificateModal.jsx';
 
 const ADMIN_TOKEN = () => {
   return localStorage.getItem('adminToken') || 
@@ -40,6 +41,11 @@ export default function AssessmentAdmin() {
   const [attempts,     setAttempts]    = useState([]);
   const [candidatePool, setCandidatePool] = useState([]);
   const [loading,      setLoading]     = useState(false);
+
+  /* ── certificate preview & issuance ── */
+  const [selectedCert, setSelectedCert] = useState(null);
+  const [showCertModal, setShowCertModal] = useState(false);
+  const [sendingCertId, setSendingCertId] = useState(null);
 
   /* ── UI toggles ── */
   const [showNewTest, setShowNewTest] = useState(false);
@@ -220,6 +226,74 @@ export default function AssessmentAdmin() {
     const data = await r.json();
     setAttempts(Array.isArray(data) ? data : []);
     setTab('reports');
+  };
+
+  /* ── certificate actions ── */
+  const handleSendCertificate = async (attempt) => {
+    setSendingCertId(attempt._id);
+    try {
+      const studentName = attempt.candidate?.name || attempt.candidateName || 'Student';
+      const r = await api('/api/assessment/admin/send-certificate', {
+        method: 'POST',
+        body: JSON.stringify({
+          attemptId: attempt._id,
+          assessmentId: selTest?._id || attempt.assessment,
+          customStudentName: studentName
+        })
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        throw new Error(data.error || 'Failed to issue certificate');
+      }
+
+      // Update attempt in local state
+      setAttempts(prev => prev.map(a => 
+        a._id === attempt._id 
+          ? { ...a, certificateNumber: data.certificate.certificateNumber, certificateIssued: true } 
+          : a
+      ));
+
+      setSelectedCert(data.certificate);
+      setShowCertModal(true);
+
+      Swal.fire({
+        icon: 'success',
+        title: '🎓 Certificate Issued!',
+        html: `
+          <div style="text-align:left; font-size:14px; line-height:1.6;">
+            <p><strong>Candidate:</strong> ${studentName}</p>
+            <p><strong>Certificate No:</strong> <span style="font-family:monospace; color:#1e3a8a;">${data.certificate.certificateNumber}</span></p>
+            <p><strong>Grade:</strong> <span style="color:#10b981; font-weight:bold;">${data.certificate.grade}</span> (${data.certificate.percentage}%)</p>
+            <p style="margin-top:10px; font-size:12.5px; color:#64748b;">${data.emailSent ? '✉️ Email sent to candidate inbox successfully.' : 'Online credential ready for live verification & download.'}</p>
+          </div>
+        `,
+        confirmButtonColor: '#10b981',
+        confirmButtonText: 'View Certificate'
+      });
+    } catch (err) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Issuance Failed',
+        text: err.message
+      });
+    } finally {
+      setSendingCertId(null);
+    }
+  };
+
+  const handleViewCertificate = async (attempt) => {
+    try {
+      const r = await api(`/api/assessment/admin/certificate/${attempt._id}`);
+      const data = await r.json();
+      if (r.ok && data.certificate) {
+        setSelectedCert(data.certificate);
+        setShowCertModal(true);
+      } else {
+        handleSendCertificate(attempt);
+      }
+    } catch (err) {
+      handleSendCertificate(attempt);
+    }
   };
 
   /* ── copy link & credentials ── */
@@ -914,7 +988,7 @@ export default function AssessmentAdmin() {
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
                         <thead>
                           <tr style={{ background: '#f8fafc' }}>
-                            {['#', 'Candidate', 'Email', 'Score', 'Percentage', 'Status', 'Anti-Cheat Violations', 'Time Taken', 'Submitted Date'].map(h => (
+                            {['#', 'Candidate', 'Email', 'Score', 'Percentage', 'Status', 'Anti-Cheat Violations', 'Time Taken', 'Submitted Date', 'Certificate & Actions'].map(h => (
                               <th key={h} style={{ padding: '0.65rem 0.85rem', textAlign: 'left', fontWeight: 700, color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase', borderBottom: '2px solid #e2e8f0', whiteSpace: 'nowrap' }}>{h}</th>
                             ))}
                           </tr>
@@ -923,8 +997,8 @@ export default function AssessmentAdmin() {
                           {attempts.map((a, i) => (
                             <tr key={a._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                               <td style={{ padding: '0.75rem 0.85rem', color: '#94a3b8', fontWeight: 700 }}>{i + 1}</td>
-                              <td style={{ padding: '0.75rem 0.85rem', fontWeight: 700, color: '#0f172a' }}>{a.candidate?.name || 'Candidate'}</td>
-                              <td style={{ padding: '0.75rem 0.85rem', color: '#64748b' }}>{a.candidate?.email}</td>
+                              <td style={{ padding: '0.75rem 0.85rem', fontWeight: 700, color: '#0f172a' }}>{a.candidate?.name || a.candidateName || 'Candidate'}</td>
+                              <td style={{ padding: '0.75rem 0.85rem', color: '#64748b' }}>{a.candidate?.email || a.candidateEmail}</td>
                               <td style={{ padding: '0.75rem 0.85rem', fontWeight: 700 }}>{a.score}/{a.totalMarks}</td>
                               <td style={{ padding: '0.75rem 0.85rem' }}>
                                 <span style={{ fontWeight: 800, color: a.passed ? '#10b981' : '#ef4444' }}>{a.percentage}%</span>
@@ -951,6 +1025,68 @@ export default function AssessmentAdmin() {
                               </td>
                               <td style={{ padding: '0.75rem 0.85rem', color: '#64748b', fontSize: '0.8rem' }}>
                                 {a.submittedAt ? new Date(a.submittedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}
+                              </td>
+                              <td style={{ padding: '0.75rem 0.85rem', whiteSpace: 'nowrap' }}>
+                                {a.passed || a.percentage >= (selTest?.passingScore || 50) ? (
+                                  a.certificateNumber || a.certificate_number ? (
+                                    <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                                      <button
+                                        className="aa-btn aa-btn-success"
+                                        style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem' }}
+                                        onClick={() => handleViewCertificate(a)}
+                                        title="Preview & Print Certificate"
+                                      >
+                                        🎓 View Cert
+                                      </button>
+                                      <button
+                                        className="aa-btn aa-btn-outline"
+                                        style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem' }}
+                                        disabled={sendingCertId === a._id}
+                                        onClick={() => handleSendCertificate(a)}
+                                        title="Re-send certificate email to student"
+                                      >
+                                        {sendingCertId === a._id ? '⏳' : '✉️ Re-send'}
+                                      </button>
+                                      <button
+                                        className="aa-btn aa-btn-outline"
+                                        style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem' }}
+                                        onClick={() => {
+                                          const certNum = a.certificateNumber || a.certificate_number;
+                                          const link = `${window.location.origin}/verify-certificate/${certNum}`;
+                                          navigator.clipboard.writeText(link);
+                                          Swal.fire({
+                                            icon: 'success',
+                                            title: 'Verification Link Copied!',
+                                            text: link,
+                                            timer: 2000,
+                                            showConfirmButton: false
+                                          });
+                                        }}
+                                        title="Copy direct verification link"
+                                      >
+                                        🔗 Link
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      className="aa-btn aa-btn-primary"
+                                      style={{
+                                        padding: '0.4rem 0.85rem',
+                                        fontSize: '0.78rem',
+                                        background: 'linear-gradient(135deg, #10b981, #059669)',
+                                        boxShadow: '0 2px 8px rgba(16,185,129,0.3)'
+                                      }}
+                                      disabled={sendingCertId === a._id}
+                                      onClick={() => handleSendCertificate(a)}
+                                    >
+                                      {sendingCertId === a._id ? '⏳ Issuing…' : '🎓 Send Certificate'}
+                                    </button>
+                                  )
+                                ) : (
+                                  <span style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 600 }}>
+                                    Not Qualified (&lt;{selTest?.passingScore || 50}%)
+                                  </span>
+                                )}
                               </td>
                             </tr>
                           ))}
@@ -1068,6 +1204,13 @@ export default function AssessmentAdmin() {
         )}
 
       </div>
+
+      {/* Official Certificate Document Modal with Print & Verification Links */}
+      <CertificateModal
+        certificate={selectedCert}
+        isOpen={showCertModal}
+        onClose={() => setShowCertModal(false)}
+      />
     </div>
   );
 }

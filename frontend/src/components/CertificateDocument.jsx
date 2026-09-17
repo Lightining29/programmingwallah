@@ -158,6 +158,8 @@ export default function CertificateDocument({ certificate, qrCodeData }) {
     certificateNumber = 'ATI-06-02-ST1002',
     studentName = 'Miss. Sonam Tiwari',
     internshipName = '6-month Front-End Development Course (MERN Stack)',
+    grade,
+    percentage,
     startDate = 'June 2, 2025',
     endDate = 'December 22, 2025',
     issueDate = 'January 2, 2026',
@@ -168,7 +170,9 @@ export default function CertificateDocument({ certificate, qrCodeData }) {
     companyWeb = 'appletreeinfotech.in'
   } = certificate;
 
-  const qr = qrCodeData || certificate.qrCodeData;
+  const verifyHost = typeof window !== 'undefined' ? window.location.origin : 'https://appletreeinfotech.in';
+  const fallbackQr = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${verifyHost}/verify-certificate/${certificateNumber}`)}`;
+  const qr = qrCodeData || certificate.qrCodeData || fallbackQr;
 
   return (
     <div className="certificate-print-root bg-white text-slate-900 font-sans shadow-2xl rounded-sm mx-auto overflow-hidden relative"
@@ -252,9 +256,22 @@ export default function CertificateDocument({ certificate, qrCodeData }) {
             has successfully completed <span className="font-bold text-slate-950">{internshipName}</span>
           </p>
 
-          <p className="text-xs md:text-sm text-slate-800 font-semibold">
-            Course Duration: <span className="font-bold text-slate-950">{startDate} to {endDate}</span>
-          </p>
+          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 text-xs md:text-sm text-slate-800">
+            <p className="font-semibold">
+              Course Duration: <span className="font-bold text-slate-950">{startDate} to {endDate}</span>
+            </p>
+            {grade && (
+              <p className="font-semibold flex items-center gap-1.5">
+                <span>Grade:</span>
+                <span className="font-black text-[#1e3a8a] text-sm bg-blue-50 border border-blue-300 px-2.5 py-0.5 rounded shadow-sm">
+                  {grade}
+                </span>
+                {percentage !== undefined && percentage !== null && (
+                  <span className="text-slate-600 font-medium text-xs">({percentage}%)</span>
+                )}
+              </p>
+            )}
+          </div>
 
           <p className="text-[10px] md:text-xs text-slate-600 max-w-xl mx-auto leading-relaxed italic pt-1">
             {description}

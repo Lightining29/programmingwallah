@@ -188,7 +188,7 @@ export default function VerifyCertificate() {
             </div>
 
             {/* Detailed Metadata Grid (hidden during printing) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 print:hidden">
+            <div className={`grid grid-cols-1 sm:grid-cols-2 ${certificate.grade ? 'md:grid-cols-5' : 'md:grid-cols-4'} gap-4 print:hidden`}>
               <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
                 <div className="flex items-center gap-2 text-slate-400 text-xs mb-1">
                   <User className="w-3.5 h-3.5 text-sky-400" />
@@ -200,12 +200,27 @@ export default function VerifyCertificate() {
               <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
                 <div className="flex items-center gap-2 text-slate-400 text-xs mb-1">
                   <Award className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Internship Program</span>
+                  <span>Certification Course</span>
                 </div>
                 <div className="font-bold text-sm text-white truncate" title={certificate.internshipName}>
                   {certificate.internshipName}
                 </div>
               </div>
+
+              {certificate.grade && (
+                <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
+                  <div className="flex items-center gap-2 text-slate-400 text-xs mb-1">
+                    <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
+                    <span>Grade Achieved</span>
+                  </div>
+                  <div className="font-bold text-sm text-emerald-400 flex items-center gap-1.5">
+                    <span>Grade {certificate.grade}</span>
+                    {certificate.percentage !== undefined && (
+                      <span className="text-slate-400 text-xs font-normal">({certificate.percentage}%)</span>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
                 <div className="flex items-center gap-2 text-slate-400 text-xs mb-1">

@@ -165,6 +165,8 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
           <Route path="/payment-demo" element={<RazorpayTestPage />} />
           <Route path="/verify-certificate" element={<VerifyCertificate />} />
           <Route path="/verify-certificate/:certNumber" element={<VerifyCertificate />} />
+          <Route path="/certificate/:certNumber" element={<VerifyCertificate />} />
+          <Route path="/cert/:certNumber" element={<VerifyCertificate />} />
           <Route path="/manish-kumar" element={<ManishKumarProfile />} />
           <Route path="/profile/manish-kumar" element={<Navigate to="/manish-kumar" replace />} />
           <Route path="/manish" element={<Navigate to="/manish-kumar" replace />} />

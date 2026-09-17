@@ -11,6 +11,7 @@ import Certificate from '../models/Certificate.js';
 import mockStore from '../config/mockStore.js';
 import { uploadAdmissions } from '../middleware/upload.js';
 import QRCode from 'qrcode';
+import { getMySQLPool } from '../config/mysql.js';
 
 const router = express.Router();
 
@@ -541,6 +542,35 @@ router.get('/verify-certificate/:certificateNumber', async (req, res) => {
       certificate = await Certificate.findOne({
         certificateNumber: { $regex: new RegExp(`^${rawNumber}$`, 'i') }
       }).lean();
+    }
+
+    if (!certificate) {
+      try {
+        const pool = getMySQLPool();
+        const [rows] = await pool.query(
+          'SELECT * FROM certificates WHERE LOWER(certificate_number) = LOWER(?) LIMIT 1',
+          [rawNumber]
+        );
+        if (rows && rows.length > 0) {
+          const row = rows[0];
+          certificate = {
+            certificateNumber: row.certificate_number,
+            studentName: row.student_name,
+            candidateEmail: row.candidate_email,
+            internshipName: row.internship_name,
+            grade: row.grade,
+            percentage: row.percentage,
+            score: row.score,
+            totalMarks: row.total_marks,
+            issueDate: row.issue_date,
+            startDate: row.start_date,
+            endDate: row.end_date,
+            description: row.description,
+            qrCodeData: row.qr_code_data,
+            status: row.status
+          };
+        }
+      } catch (sqlErr) {}
     }
 
     if (!certificate) {

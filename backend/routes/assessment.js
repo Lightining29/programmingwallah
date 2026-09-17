@@ -2,8 +2,12 @@ import express from 'express';
 import crypto from 'crypto';
 import mongoose from 'mongoose';
 import { Assessment, Attempt } from '../models/Assessment.js';
+import Certificate from '../models/Certificate.js';
 import mockStore from '../config/mockStore.js';
 import { runSql, checkSqlAnswer } from '../utils/sqlRunner.js';
+import QRCode from 'qrcode';
+import nodemailer from 'nodemailer';
+import { getMySQLPool } from '../config/mysql.js';
 
 const router = express.Router();
 
@@ -518,7 +522,385 @@ router.get('/admin/:id/attempts', adminGuard, async (req, res) => {
       attempts = matchedStore;
     }
 
+    if (attempts.length === 0) {
+      try {
+        const pool = getMySQLPool();
+        const [rows] = await pool.query(
+          'SELECT * FROM assessment_attempts WHERE assessment_id = ? ORDER BY started_at DESC',
+          [req.params.id]
+        );
+        if (rows && rows.length > 0) {
+          attempts = rows.map(r => ({
+            _id: r.id,
+            assessment: r.assessment_id,
+            candidate: {
+              email: r.candidate_email,
+              name: r.candidate_name,
+              accessCode: r.candidate_access_code
+            },
+            candidateEmail: r.candidate_email,
+            candidateName: r.candidate_name,
+            score: r.score,
+            percentage: r.percentage,
+            passed: Boolean(r.passed),
+            totalMarks: r.total_marks,
+            timeTaken: r.time_taken,
+            status: r.status,
+            certificateNumber: r.certificate_number,
+            startedAt: r.started_at,
+            submittedAt: r.submitted_at
+          }));
+        }
+      } catch (sqlErr) {}
+    }
+
     res.json(attempts || []);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── Certificate Management ───────────────────────────────────────────────────
+const calculateGrade = (percentage) => {
+  const pct = Number(percentage) || 0;
+  if (pct >= 90) return 'A+';
+  if (pct >= 80) return 'A';
+  if (pct >= 70) return 'B+';
+  if (pct >= 60) return 'B';
+  if (pct >= 50) return 'C';
+  return 'D';
+};
+
+const createEmailTransporter = () => {
+  const host = process.env.SMTP_HOST || 'smtp.hostinger.com';
+  const port = Number(process.env.SMTP_PORT || 465);
+  const user = process.env.SMTP_USER || process.env.EMAIL_USER;
+  const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
+
+  if (!user || !pass) {
+    return null;
+  }
+
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: { user, pass }
+  });
+};
+
+router.post('/admin/send-certificate', adminGuard, async (req, res) => {
+  try {
+    const { attemptId, assessmentId, customStudentName, customGrade } = req.body;
+    if (!attemptId) {
+      return res.status(400).json({ error: 'attemptId is required.' });
+    }
+
+    // 1. Locate Attempt
+    const storeAttempts = getAttemptsFromStore();
+    let attempt = storeAttempts.find(a => String(a._id) === String(attemptId));
+
+    if (!attempt && mongoose.connection?.readyState === 1) {
+      try {
+        attempt = await Attempt.findById(attemptId).lean();
+      } catch (e) {}
+    }
+
+    if (!attempt) {
+      // Check MySQL
+      try {
+        const pool = getMySQLPool();
+        const [rows] = await pool.query('SELECT * FROM assessment_attempts WHERE id = ? LIMIT 1', [attemptId]);
+        if (rows && rows.length > 0) {
+          const r = rows[0];
+          attempt = {
+            _id: r.id,
+            assessment: r.assessment_id,
+            candidateEmail: r.candidate_email,
+            candidateName: r.candidate_name,
+            score: r.score,
+            percentage: r.percentage,
+            passed: Boolean(r.passed),
+            totalMarks: r.total_marks,
+            certificateNumber: r.certificate_number
+          };
+        }
+      } catch (sqlErr) {}
+    }
+
+    if (!attempt) {
+      return res.status(404).json({ error: 'Assessment attempt record not found.' });
+    }
+
+    // 2. Locate Assessment
+    const targetAssessmentId = assessmentId || attempt.assessment;
+    const storeAssessments = getAssessmentsFromStore();
+    let assessment = storeAssessments.find(a => String(a._id) === String(targetAssessmentId));
+
+    if (!assessment && mongoose.connection?.readyState === 1) {
+      try {
+        assessment = await Assessment.findById(targetAssessmentId).lean();
+      } catch (e) {}
+    }
+
+    // 3. Details calculation
+    const studentName = customStudentName || attempt.candidateName || attempt.candidate?.name || 'Student';
+    const candidateEmail = attempt.candidateEmail || attempt.candidate?.email || '';
+    const percentage = Number(attempt.percentage) || 0;
+    const grade = customGrade || calculateGrade(percentage);
+    const courseTitle = assessment?.title || 'Certification Assessment';
+
+    // 4. Generate or reuse unique Certificate Number
+    // Format: ATI-YY-MM-STxxxx (e.g. ATI-26-09-ST1024)
+    const now = new Date();
+    const yy = String(now.getFullYear()).slice(-2);
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    const certificateNumber = attempt.certificateNumber && attempt.certificateNumber.trim() !== ''
+      ? attempt.certificateNumber
+      : `ATI-${yy}-${mm}-ST${randomSuffix}`;
+
+    // 5. Verification URL & QR code
+    const origin = req.headers.origin || `${req.protocol}://${req.get('host')}`;
+    const verifyUrl = `${origin}/verify-certificate/${certificateNumber}`;
+    let qrCodeData = '';
+    try {
+      qrCodeData = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 140 });
+    } catch (qrErr) {
+      console.warn('QR code generation warning:', qrErr.message);
+    }
+
+    const issueDate = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    const startDate = assessment?.createdAt 
+      ? new Date(assessment.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      : 'August 1, 2026';
+    const endDate = attempt.submittedAt
+      ? new Date(attempt.submittedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      : issueDate;
+
+    // 6. Assemble Certificate Object
+    const certData = {
+      certificateNumber,
+      studentName,
+      candidateEmail,
+      internshipName: courseTitle,
+      grade,
+      percentage,
+      score: attempt.score || 0,
+      totalMarks: attempt.totalMarks || 0,
+      startDate,
+      endDate,
+      issueDate,
+      description: 'This certification is awarded in recognition of the successful completion of the curriculum and mastery of the course content.',
+      companyName: 'APPLE TREE INFOTECH',
+      companyAddress: 'C-60 3rd Floor R.K. Tower RDC, Raj Nagar, Ghaziabad, 201001',
+      companyPhone: '7503962162, 9355343070',
+      companyEmail: 'info@appletreeinfotech.in',
+      companyWeb: 'appletreeinfotech.in',
+      partnerUniversity: 'KALINGA UNIVERSITY',
+      signatoryTitle: 'Partner',
+      qrCodeData,
+      status: 'valid',
+      assessmentId: String(targetAssessmentId),
+      attemptId: String(attempt._id)
+    };
+
+    // 7. Save to mockStore
+    if (!Array.isArray(mockStore.certificates)) mockStore.certificates = [];
+    const existIdx = mockStore.certificates.findIndex(c => c.certificateNumber === certificateNumber);
+    if (existIdx >= 0) {
+      mockStore.certificates[existIdx] = { ...mockStore.certificates[existIdx], ...certData };
+    } else {
+      mockStore.certificates.push(certData);
+    }
+
+    // Update attempt certificateNumber in store
+    if (attempt) {
+      attempt.certificateNumber = certificateNumber;
+      attempt.certificateIssued = true;
+    }
+    saveStore();
+
+    // 8. Save to MongoDB if available
+    if (mongoose.connection?.readyState === 1) {
+      try {
+        await Certificate.findOneAndUpdate(
+          { certificateNumber },
+          { $set: certData },
+          { upsert: true, new: true }
+        );
+        await Attempt.findByIdAndUpdate(attemptId, {
+          certificateNumber,
+          certificateIssued: true
+        });
+      } catch (mErr) {
+        console.warn('MongoDB certificate save warning:', mErr.message);
+      }
+    }
+
+    // 9. Save to Hostinger MySQL
+    try {
+      const pool = getMySQLPool();
+      await pool.query(`
+        INSERT INTO certificates (
+          certificate_number, student_name, candidate_email, internship_name,
+          grade, percentage, score, total_marks, issue_date, start_date, end_date,
+          description, qr_code_data, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          student_name = VALUES(student_name),
+          candidate_email = VALUES(candidate_email),
+          internship_name = VALUES(internship_name),
+          grade = VALUES(grade),
+          percentage = VALUES(percentage),
+          score = VALUES(score),
+          total_marks = VALUES(total_marks),
+          issue_date = VALUES(issue_date),
+          qr_code_data = VALUES(qr_code_data),
+          status = VALUES(status)
+      `, [
+        certificateNumber, studentName, candidateEmail, courseTitle,
+        grade, percentage, attempt.score || 0, attempt.totalMarks || 0, issueDate, startDate, endDate,
+        certData.description, qrCodeData, 'valid'
+      ]);
+
+      await pool.query(
+        'UPDATE assessment_attempts SET certificate_number = ? WHERE id = ?',
+        [certificateNumber, attemptId]
+      ).catch(() => {});
+    } catch (sqlErr) {
+      console.warn('Hostinger MySQL certificate insert warning:', sqlErr.message);
+    }
+
+    // 10. Send Email via nodemailer
+    let emailSent = false;
+    let emailError = null;
+
+    if (candidateEmail) {
+      try {
+        const transporter = createEmailTransporter();
+        if (transporter) {
+          const fromAddr = process.env.EMAIL_FROM || process.env.SMTP_USER || '"Apple Tree Infotech" <info@appletreeinfotech.in>';
+          const emailHtml = `
+            <div style="font-family: Arial, sans-serif; background-color: #f8fafc; padding: 30px 15px; color: #1e293b;">
+              <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                <div style="background: #162d59; padding: 24px; text-align: center; color: #ffffff;">
+                  <h1 style="margin: 0; font-size: 24px; font-weight: bold; letter-spacing: 0.5px;">APPLE TREE INFOTECH</h1>
+                  <p style="margin: 4px 0 0 0; font-size: 13px; color: #93c5fd;">ISO 9001:2015 Certified &bull; In Academic Partnership with Kalinga University</p>
+                </div>
+                <div style="padding: 28px 24px;">
+                  <h2 style="color: #0f172a; margin-top: 0; font-size: 20px;">Congratulations, ${studentName}! 🎓</h2>
+                  <p style="font-size: 15px; line-height: 1.6; color: #334155;">
+                    We are pleased to inform you that you have successfully completed the <strong>${courseTitle}</strong> assessment.
+                  </p>
+                  <div style="background: #f1f5f9; border-left: 4px solid #162d59; padding: 16px; margin: 20px 0; border-radius: 4px;">
+                    <p style="margin: 0 0 6px 0; font-size: 14px;"><strong>Certificate Number:</strong> <span style="font-family: monospace; color: #1e3a8a;">${certificateNumber}</span></p>
+                    <p style="margin: 0 0 6px 0; font-size: 14px;"><strong>Grade Achieved:</strong> <span style="color: #15803d; font-weight: bold;">Grade ${grade}</span> (${percentage}%)</p>
+                    <p style="margin: 0; font-size: 14px;"><strong>Date of Issue:</strong> ${issueDate}</p>
+                  </div>
+                  <p style="font-size: 15px; line-height: 1.6; color: #334155;">
+                    Your authentic certificate is now live and can be viewed, downloaded, printed, or verified anytime on our official website:
+                  </p>
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="${verifyUrl}" style="background-color: #d32f2f; color: #ffffff; padding: 12px 28px; text-decoration: none; font-weight: bold; font-size: 15px; border-radius: 6px; display: inline-block; box-shadow: 0 2px 4px rgba(211,47,47,0.3);">
+                      View &amp; Verify Certificate &rarr;
+                    </a>
+                  </div>
+                  <p style="font-size: 13px; color: #64748b; line-height: 1.5; text-align: center;">
+                    Or verify directly by visiting:<br/>
+                    <a href="${verifyUrl}" style="color: #0284c7; word-break: break-all;">${verifyUrl}</a>
+                  </p>
+                </div>
+                <div style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px 24px; font-size: 12px; color: #94a3b8; text-align: center;">
+                  <p style="margin: 0;">Apple Tree Infotech &bull; C-60 3rd Floor R.K. Tower RDC, Raj Nagar, Ghaziabad, 201001</p>
+                  <p style="margin: 4px 0 0 0;">Helpline: 7503962162, 9355343070 | Web: <a href="https://appletreeinfotech.in" style="color: #0284c7;">appletreeinfotech.in</a></p>
+                </div>
+              </div>
+            </div>
+          `;
+
+          await transporter.sendMail({
+            from: fromAddr,
+            to: candidateEmail,
+            subject: `🎓 Your Certificate of Completion [${certificateNumber}] - Apple Tree Infotech`,
+            html: emailHtml
+          });
+          emailSent = true;
+        } else {
+          emailError = 'SMTP credentials not configured in server environment (.env). Certificate generated for online viewing & verification.';
+        }
+      } catch (mailErr) {
+        console.warn('Mail send failed:', mailErr.message);
+        emailError = mailErr.message;
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: emailSent
+        ? `Certificate issued and emailed to ${candidateEmail} successfully!`
+        : `Certificate generated successfully! (Certificate Number: ${certificateNumber})`,
+      emailSent,
+      emailError,
+      certificate: certData,
+      verifyUrl
+    });
+  } catch (e) {
+    console.error('Send certificate error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// GET certificate details by attempt ID
+router.get('/admin/certificate/:attemptId', adminGuard, async (req, res) => {
+  try {
+    const { attemptId } = req.params;
+    let cert = null;
+
+    if (Array.isArray(mockStore.certificates)) {
+      cert = mockStore.certificates.find(c => String(c.attemptId) === String(attemptId));
+    }
+
+    if (!cert && mongoose.connection?.readyState === 1) {
+      try {
+        cert = await Certificate.findOne({ attemptId }).lean();
+      } catch (e) {}
+    }
+
+    if (!cert) {
+      try {
+        const pool = getMySQLPool();
+        const [rows] = await pool.query(
+          'SELECT c.* FROM certificates c JOIN assessment_attempts a ON c.certificate_number = a.certificate_number WHERE a.id = ? LIMIT 1',
+          [attemptId]
+        );
+        if (rows && rows.length > 0) {
+          const r = rows[0];
+          cert = {
+            certificateNumber: r.certificate_number,
+            studentName: r.student_name,
+            candidateEmail: r.candidate_email,
+            internshipName: r.internship_name,
+            grade: r.grade,
+            percentage: r.percentage,
+            score: r.score,
+            totalMarks: r.total_marks,
+            issueDate: r.issue_date,
+            startDate: r.start_date,
+            endDate: r.end_date,
+            description: r.description,
+            qrCodeData: r.qr_code_data,
+            status: r.status
+          };
+        }
+      } catch (sqlErr) {}
+    }
+
+    if (!cert) {
+      return res.status(404).json({ error: 'Certificate not yet generated for this attempt.' });
+    }
+
+    res.json({ success: true, certificate: cert });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

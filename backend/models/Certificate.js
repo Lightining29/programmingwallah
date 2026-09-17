@@ -75,6 +75,33 @@ const certificateSchema = new mongoose.Schema(
     studentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Student'
+    },
+    candidateEmail: {
+      type: String,
+      trim: true,
+      lowercase: true
+    },
+    grade: {
+      type: String,
+      trim: true
+    },
+    percentage: {
+      type: Number,
+      default: 0
+    },
+    score: {
+      type: Number,
+      default: 0
+    },
+    totalMarks: {
+      type: Number,
+      default: 0
+    },
+    assessmentId: {
+      type: String
+    },
+    attemptId: {
+      type: String
     }
   },
   { timestamps: true }

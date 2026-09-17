@@ -204,10 +204,39 @@ export const initMySQLTables = async () => {
         time_taken INT DEFAULT 0,
         status VARCHAR(50) DEFAULT 'in-progress',
         violations_json LONGTEXT,
+        certificate_number VARCHAR(100) DEFAULT '',
         started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         submitted_at TIMESTAMP NULL,
         INDEX idx_assessment (assessment_id),
         INDEX idx_candidate_email (candidate_email)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    await connection.query(`
+      ALTER TABLE assessment_attempts ADD COLUMN certificate_number VARCHAR(100) DEFAULT '';
+    `).catch(() => {});
+
+    // Create certificates table in Hostinger MySQL
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS certificates (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        certificate_number VARCHAR(100) UNIQUE NOT NULL,
+        student_name VARCHAR(255) NOT NULL,
+        candidate_email VARCHAR(255),
+        internship_name VARCHAR(255),
+        grade VARCHAR(50),
+        percentage INT DEFAULT 0,
+        score INT DEFAULT 0,
+        total_marks INT DEFAULT 0,
+        issue_date VARCHAR(100),
+        start_date VARCHAR(100),
+        end_date VARCHAR(100),
+        description TEXT,
+        qr_code_data LONGTEXT,
+        status VARCHAR(50) DEFAULT 'valid',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_cert_num (certificate_number),
+        INDEX idx_cert_email (candidate_email)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
