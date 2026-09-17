@@ -389,11 +389,16 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
+// Phusion Passenger / Hostinger Application Manager Configuration
+if (typeof PhusionPassenger !== 'undefined') {
+  PhusionPassenger.configure({ autoInstall: false });
+}
+
+const PORT = (typeof PhusionPassenger !== 'undefined') ? 'passenger' : (process.env.PORT || 5000);
 const httpServer = http.createServer(app);
 
 const server = httpServer.listen(PORT, async () => {
-  console.log(`\x1b[32m✔ Pranidha School Backend running in ${process.env.NODE_ENV || 'production'} mode on port ${PORT}\x1b[0m`);
+  console.log(`\x1b[32m✔ Pranidha School Backend running in ${process.env.NODE_ENV || 'production'} mode on ${PORT}\x1b[0m`);
   
   // Connect to Hostinger MySQL Database
   try {

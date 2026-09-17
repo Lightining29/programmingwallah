@@ -2,7 +2,6 @@
   "name": "pranidha-kindergarten-root",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
   "main": "server.js",
   "description": "Root package manager for Pranidha International School Kindergarten website",
   "scripts": {

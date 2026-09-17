@@ -8,13 +8,8 @@
  *  2. Execute candidate's query
  *  3. Compare output to expected result
  */
-let alasql = null;
-try {
-  const mod = await import('alasql');
-  alasql = mod.default || mod;
-} catch (err) {
-  console.warn('[SQLRunner] Notice: alasql loading fallback:', err.message);
-}
+import alasqlModule from 'alasql';
+const alasql = alasqlModule?.default || alasqlModule;
 
 /**
  * Run a SQL query against a temporary in-memory database.
