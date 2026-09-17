@@ -2,6 +2,41 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
+const COLLEGE_LIST = [
+  "Ajay Kumar Garg Engineering College (AKGEC, Ghaziabad)",
+  "ABES Engineering College (ABES EC, Ghaziabad)",
+  "ABES Institute of Technology (ABES IT, Ghaziabad)",
+  "KIET Group of Institutions (KIET, Ghaziabad)",
+  "Krishna Engineering College (KEC, Ghaziabad)",
+  "IMS Engineering College (IMSEC, Ghaziabad)",
+  "Raj Kumar Goel Institute of Technology (RKGIT, Ghaziabad)",
+  "JSS Academy of Technical Education (JSSATE, Noida)",
+  "Galgotias College of Engineering & Technology (GCET)",
+  "Galgotias University (Greater Noida)",
+  "G.L. Bajaj Institute of Technology & Management (GLBITM)",
+  "Noida Institute of Engineering & Technology (NIET)",
+  "Jaypee Institute of Information Technology (JIIT, Noida)",
+  "Amity University (Noida)",
+  "Bennett University (Greater Noida)",
+  "Sharda University (Greater Noida)",
+  "Shiv Nadar University (SNU, Greater Noida)",
+  "Delhi Technological University (DTU, Delhi)",
+  "Netaji Subhas University of Technology (NSUT, Delhi)",
+  "Indraprastha Institute of Information Technology (IIIT Delhi)",
+  "Guru Gobind Singh Indraprastha University (GGSIPU)",
+  "Maharaja Agrasen Institute of Technology (MAIT, Delhi)",
+  "Maharaja Surajmal Institute of Technology (MSIT, Delhi)",
+  "Bharati Vidyapeeth's College of Engineering (BVCOE, Delhi)",
+  "Jamia Millia Islamia (JMI, New Delhi)",
+  "Dr. A.P.J. Abdul Kalam Technical University (AKTU)",
+  "Chaudhary Charan Singh University (CCSU, Meerut)",
+  "University of Delhi (DU)",
+  "Indian Institute of Technology (IIT)",
+  "National Institute of Technology (NIT)",
+  "Indian Institute of Information Technology (IIIT)",
+  "Other / College Not Listed"
+];
+
 export default function StudentRegister() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -14,7 +49,8 @@ export default function StudentRegister() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [college, setCollege] = useState('');
+  const [selectedCollege, setSelectedCollege] = useState('');
+  const [customCollege, setCustomCollege] = useState('');
   const [rollNo, setRollNo] = useState('');
 
   const [submitting, setSubmitting] = useState(false);
@@ -47,6 +83,10 @@ export default function StudentRegister() {
     }
 
     setSubmitting(true);
+    const finalCollege = selectedCollege === 'Other / College Not Listed'
+      ? customCollege.trim()
+      : selectedCollege.trim();
+
     try {
       const res = await fetch(`/api/assessment/${id}/register`, {
         method: 'POST',
@@ -55,7 +95,7 @@ export default function StudentRegister() {
           name: name.trim(),
           email: email.trim().toLowerCase(),
           phone: phone.trim(),
-          college: college.trim(),
+          college: finalCollege,
           rollNo: rollNo.trim()
         })
       });
@@ -283,15 +323,34 @@ export default function StudentRegister() {
                   College / Institute
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-base">🏫</span>
-                  <input
-                    type="text"
-                    value={college}
-                    onChange={e => setCollege(e.target.value)}
-                    placeholder="e.g. AKGEC / ABES"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                  />
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-base pointer-events-none">🏫</span>
+                  <select
+                    value={selectedCollege}
+                    onChange={e => setSelectedCollege(e.target.value)}
+                    className="w-full pl-10 pr-9 py-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all cursor-pointer appearance-none"
+                  >
+                    <option value="">-- Select College / Institute --</option>
+                    {COLLEGE_LIST.map((col) => (
+                      <option key={col} value={col} className="text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-800">
+                        {col}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs">▼</span>
                 </div>
+
+                {selectedCollege === 'Other / College Not Listed' && (
+                  <div className="mt-2.5">
+                    <input
+                      type="text"
+                      required
+                      value={customCollege}
+                      onChange={e => setCustomCollege(e.target.value)}
+                      placeholder="Please enter your College / Institute name"
+                      className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900/60 border border-emerald-400 dark:border-emerald-600 rounded-xl text-slate-800 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
