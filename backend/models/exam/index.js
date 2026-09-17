@@ -157,12 +157,20 @@ export const seedInitialExamData = async () => {
 };
 
 export const initExamDatabase = async () => {
-  const sequelize = await initSequelize();
-  const models = getExamModels();
-  await sequelize.sync({ alter: false });
-  await seedInitialExamData();
-  console.log('\x1b[32m✔ Online Examination Database Tables & Schema Initialized Successfully!\x1b[0m');
-  return models;
+  try {
+    const sequelize = await initSequelize();
+    const models = getExamModels();
+    try {
+      await sequelize.sync({ alter: false });
+      await seedInitialExamData();
+      console.log('\x1b[32m✔ Online Examination Database Tables & Schema Initialized Successfully!\x1b[0m');
+    } catch (syncErr) {
+      console.warn('\x1b[33mℹ Exam database schema sync note: ' + syncErr.message + '\x1b[0m');
+    }
+    return models;
+  } catch (err) {
+    console.warn('initExamDatabase notice:', err.message);
+  }
 };
 
 export default getExamModels;

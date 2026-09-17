@@ -394,9 +394,15 @@ const server = httpServer.listen(PORT, async () => {
   // Connect to Hostinger MySQL Database
   try {
     await connectDB();
+  } catch (err) {
+    console.warn('Database connection notice on startup:', err.message);
+  }
+
+  // Initialize Examination Models and Tables
+  try {
     await initExamDatabase();
   } catch (err) {
-    console.error('Database connection notice on startup:', err.message);
+    console.warn('Exam database initialization notice on startup:', err.message);
   }
 });
 
