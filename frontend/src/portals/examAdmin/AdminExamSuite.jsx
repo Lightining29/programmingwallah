@@ -120,6 +120,11 @@ export default function AdminExamSuite() {
       { option_text: '', is_correct: false },
       { option_text: '', is_correct: false }
     ],
+    true_false_answer: 'True',
+    expected_answer: '',
+    keywords: '',
+    expected_error: '',
+    correct_code: '',
     explanation: ''
   });
 
@@ -393,12 +398,51 @@ export default function AdminExamSuite() {
     }
   };
 
+  // ── Exam Status Quick Updater ──
+  const handleUpdateExamStatus = async (examId, newStatus) => {
+    try {
+      const res = await fetch(`/api/admin/test/exams/${examId}`, {
+        method: 'PUT',
+        headers: authHeaders,
+        body: JSON.stringify({ status: newStatus })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('success', `Exam status updated to ${newStatus}`);
+        setExams(prev => prev.map(ex => ex.id === examId ? { ...ex, status: newStatus } : ex));
+        if (managingQuestionsExam && managingQuestionsExam.id === examId) {
+          setManagingQuestionsExam(prev => ({ ...prev, status: newStatus }));
+        }
+        if (shareExamModal && shareExamModal.id === examId) {
+          setShareExamModal(prev => ({ ...prev, status: newStatus }));
+        }
+      } else {
+        showToast('error', data.message || 'Failed to update status');
+      }
+    } catch (e) {
+      showToast('error', 'Error updating exam status');
+    }
+  };
+
   const handleCreateQuestionDirectly = async (e) => {
     e.preventDefault();
     if (!newQuestion.question_text.trim()) {
       showToast('error', 'Question statement is required.');
       return;
     }
+
+    let payload = {
+      type: newQuestion.type,
+      question_text: newQuestion.question_text.trim(),
+      programming_language: newQuestion.programming_language || 'Java',
+      marks: newQuestion.marks,
+      negative_marks: newQuestion.negative_marks,
+      difficulty: newQuestion.difficulty,
+      subject: newQuestion.subject,
+      topic: newQuestion.topic,
+      explanation: newQuestion.explanation,
+      exam_id: managingQuestionsExam?.id || null
+    };
 
     if (newQuestion.type === 'MCQ') {
       const validOptions = newQuestion.options.filter(o => o.option_text.trim() !== '');
@@ -411,6 +455,31 @@ export default function AdminExamSuite() {
         showToast('error', 'Please select at least one correct option.');
         return;
       }
+      payload.options = validOptions;
+      payload.code_snippet = newQuestion.code_snippet;
+    } else if (newQuestion.type === 'TRUE_FALSE') {
+      payload.options = [
+        { option_text: 'True', is_correct: newQuestion.true_false_answer === 'True', order_index: 1 },
+        { option_text: 'False', is_correct: newQuestion.true_false_answer === 'False', order_index: 2 }
+      ];
+      payload.correct_answer = newQuestion.true_false_answer;
+    } else if (newQuestion.type === 'DESCRIPTIVE' || newQuestion.type === 'QUESTION_ANSWER') {
+      if (!newQuestion.expected_answer?.trim()) {
+        showToast('error', 'Please provide an expected model answer for evaluation.');
+        return;
+      }
+      payload.type = 'DESCRIPTIVE';
+      payload.expected_answer = newQuestion.expected_answer.trim();
+      payload.model_answer = newQuestion.expected_answer.trim();
+      payload.keywords = newQuestion.keywords?.trim() || null;
+    } else if (newQuestion.type === 'CODE_ERROR') {
+      if (!newQuestion.code_snippet?.trim()) {
+        showToast('error', 'Please provide the buggy code snippet.');
+        return;
+      }
+      payload.code_snippet = newQuestion.code_snippet.trim();
+      payload.expected_error = newQuestion.expected_error?.trim() || null;
+      payload.correct_code = newQuestion.correct_code?.trim() || null;
     }
 
     setSubmittingQuestions(true);
@@ -418,23 +487,20 @@ export default function AdminExamSuite() {
       const res = await fetch('/api/admin/test/questions', {
         method: 'POST',
         headers: authHeaders,
-        body: JSON.stringify({
-          ...newQuestion,
-          exam_id: managingQuestionsExam?.id || null
-        })
+        body: JSON.stringify(payload)
       });
 
       const data = await res.json();
       if (data.success) {
         showToast('success', 'Question created and added to exam successfully!');
         setNewQuestion({
-          type: 'MCQ',
+          type: newQuestion.type,
           question_text: '',
           code_snippet: '',
-          programming_language: 'Java',
-          marks: 4,
-          negative_marks: 1,
-          difficulty: 'MEDIUM',
+          programming_language: newQuestion.programming_language || 'Java',
+          marks: newQuestion.marks,
+          negative_marks: newQuestion.negative_marks,
+          difficulty: newQuestion.difficulty,
           subject: managingQuestionsExam?.subject || 'Java',
           topic: 'General',
           options: [
@@ -443,6 +509,11 @@ export default function AdminExamSuite() {
             { option_text: '', is_correct: false },
             { option_text: '', is_correct: false }
           ],
+          true_false_answer: 'True',
+          expected_answer: '',
+          keywords: '',
+          expected_error: '',
+          correct_code: '',
           explanation: ''
         });
         if (managingQuestionsExam?.id) {
@@ -624,7 +695,15 @@ export default function AdminExamSuite() {
             </p>
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3 flex-wrap gap-y-2">
+            <button
+              onClick={() => setShowCreateExamModal(true)}
+              className="inline-flex items-center space-x-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/30 transition-all hover:scale-[1.02]"
+            >
+              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <span>Create Exam</span>
+            </button>
+
             <button
               onClick={() => setShowAiModal(true)}
               className="inline-flex items-center space-x-1.5 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-500/20 transition-all"
@@ -687,13 +766,16 @@ export default function AdminExamSuite() {
         {activeTab === 'exams' && (
           <div>
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-base font-bold text-white">Configured Assessments ({exams.length})</h3>
+              <div>
+                <h3 className="text-base font-bold text-white">Configured Assessments ({exams.length})</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Manage examinations, switch live status, configure questions & share candidate access links</p>
+              </div>
               <button
                 onClick={() => setShowCreateExamModal(true)}
-                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold"
+                className="inline-flex items-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl text-xs font-extrabold shadow-lg shadow-indigo-600/30 transition-all hover:scale-[1.02]"
               >
-                <Plus className="w-4 h-4" />
-                <span>New Examination</span>
+                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <span>Create Examination</span>
               </button>
             </div>
 
@@ -730,11 +812,25 @@ export default function AdminExamSuite() {
                       <td className="py-3.5 px-4 font-bold text-white">{ex.question_count || 0}</td>
                       <td className="py-3.5 px-4">{ex.assigned_students_count || 0}</td>
                       <td className="py-3.5 px-4">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          ex.status === 'PUBLISHED' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-slate-800 text-slate-400'
-                        }`}>
-                          {ex.status}
-                        </span>
+                        <select
+                          value={ex.status || 'DRAFT'}
+                          onChange={(e) => handleUpdateExamStatus(ex.id, e.target.value)}
+                          className={`text-[10px] font-extrabold rounded-lg px-2.5 py-1 border transition-all cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-500 ${
+                            ex.status === 'PUBLISHED'
+                              ? 'bg-emerald-950/80 text-emerald-300 border-emerald-600'
+                              : ex.status === 'CLOSED'
+                              ? 'bg-rose-950/80 text-rose-300 border-rose-600'
+                              : ex.status === 'ARCHIVED'
+                              ? 'bg-slate-900 text-slate-400 border-slate-700'
+                              : 'bg-amber-950/80 text-amber-300 border-amber-600'
+                          }`}
+                          title="Click to change status (Live/Draft)"
+                        >
+                          <option value="DRAFT" className="bg-slate-900 text-amber-300">DRAFT (Hidden)</option>
+                          <option value="PUBLISHED" className="bg-slate-900 text-emerald-300">PUBLISHED (Live)</option>
+                          <option value="CLOSED" className="bg-slate-900 text-rose-300">CLOSED</option>
+                          <option value="ARCHIVED" className="bg-slate-900 text-slate-400">ARCHIVED</option>
+                        </select>
                       </td>
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end space-x-2">
@@ -1407,6 +1503,44 @@ export default function AdminExamSuite() {
                     </div>
                   </div>
 
+                  {/* Status Banner with 1-click Switch */}
+                  <div className={`p-3 rounded-2xl border flex items-center justify-between gap-2 text-xs ${
+                    shareExamModal.status === 'PUBLISHED'
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
+                      : 'bg-amber-500/15 border-amber-500/35 text-amber-800 dark:text-amber-200'
+                  }`}>
+                    <div className="flex items-center space-x-2 min-w-0">
+                      {shareExamModal.status === 'PUBLISHED' ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                      )}
+                      <span className="truncate">
+                        Status: <strong>{shareExamModal.status || 'DRAFT'}</strong>
+                        {shareExamModal.status === 'PUBLISHED' ? ' (Live for candidates)' : ' (Hidden from candidates)'}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-1.5 flex-shrink-0">
+                      {shareExamModal.status === 'PUBLISHED' ? (
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateExamStatus(shareExamModal.id, 'DRAFT')}
+                          className="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-[11px] font-semibold transition"
+                        >
+                          Switch to Draft
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateExamStatus(shareExamModal.id, 'PUBLISHED')}
+                          className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-[11px] shadow-sm transition"
+                        >
+                          Publish Now
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
                   {/* 1. Candidate Registration Link */}
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
@@ -1552,10 +1686,27 @@ export default function AdminExamSuite() {
                       <BookOpen className="w-5 h-5" />
                     </div>
                     <div className="min-w-0">
-                      <div className="flex items-center space-x-2 flex-wrap">
+                      <div className="flex items-center space-x-2 flex-wrap gap-y-1">
                         <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
                           {managingQuestionsExam.code || 'EXAM'}
                         </span>
+
+                        <select
+                          value={managingQuestionsExam.status || 'DRAFT'}
+                          onChange={(e) => handleUpdateExamStatus(managingQuestionsExam.id, e.target.value)}
+                          className={`text-[10px] font-extrabold rounded-full px-2.5 py-0.5 border cursor-pointer focus:outline-none transition-all ${
+                            managingQuestionsExam.status === 'PUBLISHED'
+                              ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/40'
+                              : 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40'
+                          }`}
+                          title="Click to change status (Live/Draft)"
+                        >
+                          <option value="DRAFT" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Status: DRAFT</option>
+                          <option value="PUBLISHED" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Status: PUBLISHED (Live)</option>
+                          <option value="CLOSED" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Status: CLOSED</option>
+                          <option value="ARCHIVED" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Status: ARCHIVED</option>
+                        </select>
+
                         <span className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
                           • {managingQuestionsExam.subject || 'General'}
                         </span>
@@ -1966,70 +2117,221 @@ export default function AdminExamSuite() {
                           </div>
                         </div>
 
-                        <div>
-                          <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
-                            Code Snippet (Optional)
-                          </label>
-                          <textarea
-                            rows={3}
-                            value={newQuestion.code_snippet}
-                            onChange={(e) => setNewQuestion({ ...newQuestion, code_snippet: e.target.value })}
-                            placeholder="public class Test { public static void main(String[] args) { ... } }"
-                            className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                          />
-                        </div>
+                        {/* ────── DYNAMIC FIELDS BASED ON QUESTION TYPE ────── */}
 
-                        {/* MCQ Options Builder */}
+                        {/* 1. MCQ Code Snippet & Options */}
                         {newQuestion.type === 'MCQ' && (
-                          <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-                            <div className="flex items-center justify-between">
-                              <label className="text-slate-700 dark:text-slate-300 font-bold">
-                                Multiple Choice Options (Select radio for correct answer) *
+                          <>
+                            <div>
+                              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
+                                Code Snippet (Optional for MCQ)
                               </label>
-                              {newQuestion.options.length < 6 && (
-                                <button
-                                  type="button"
-                                  onClick={addOptionField}
-                                  className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-bold flex items-center space-x-1"
-                                >
-                                  <Plus className="w-3.5 h-3.5" />
-                                  <span>Add Option</span>
-                                </button>
-                              )}
+                              <textarea
+                                rows={3}
+                                value={newQuestion.code_snippet}
+                                onChange={(e) => setNewQuestion({ ...newQuestion, code_snippet: e.target.value })}
+                                placeholder="public class Test { public static void main(String[] args) { ... } }"
+                                className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                              />
                             </div>
 
-                            <div className="space-y-2">
-                              {newQuestion.options.map((opt, optIndex) => (
-                                <div key={optIndex} className="flex items-center space-x-2">
-                                  <input
-                                    type="radio"
-                                    name="correct_option"
-                                    checked={opt.is_correct}
-                                    onChange={() => selectCorrectOption(optIndex)}
-                                    className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-                                    title="Mark as correct answer"
-                                  />
-                                  <span className="font-mono text-xs font-bold text-slate-500 w-5">
-                                    {String.fromCharCode(65 + optIndex)}.
-                                  </span>
-                                  <input
-                                    type="text"
-                                    value={opt.option_text}
-                                    onChange={(e) => updateOptionText(optIndex, e.target.value)}
-                                    placeholder={`Option ${String.fromCharCode(65 + optIndex)}`}
-                                    className="flex-1 p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-xs"
-                                  />
-                                  {newQuestion.options.length > 2 && (
-                                    <button
-                                      type="button"
-                                      onClick={() => removeOptionField(optIndex)}
-                                      className="text-slate-400 hover:text-rose-500 p-1 text-sm"
-                                    >
-                                      ✕
-                                    </button>
-                                  )}
+                            <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                              <div className="flex items-center justify-between">
+                                <label className="text-slate-700 dark:text-slate-300 font-bold">
+                                  Multiple Choice Options (Select radio for correct answer) *
+                                </label>
+                                {newQuestion.options.length < 6 && (
+                                  <button
+                                    type="button"
+                                    onClick={addOptionField}
+                                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-bold flex items-center space-x-1"
+                                  >
+                                    <Plus className="w-3.5 h-3.5" />
+                                    <span>Add Option</span>
+                                  </button>
+                                )}
+                              </div>
+
+                              <div className="space-y-2">
+                                {newQuestion.options.map((opt, optIndex) => (
+                                  <div key={optIndex} className="flex items-center space-x-2">
+                                    <input
+                                      type="radio"
+                                      name="correct_option"
+                                      checked={opt.is_correct}
+                                      onChange={() => selectCorrectOption(optIndex)}
+                                      className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                                      title="Mark as correct answer"
+                                    />
+                                    <span className="font-mono text-xs font-bold text-slate-500 w-5">
+                                      {String.fromCharCode(65 + optIndex)}.
+                                    </span>
+                                    <input
+                                      type="text"
+                                      value={opt.option_text}
+                                      onChange={(e) => updateOptionText(optIndex, e.target.value)}
+                                      placeholder={`Option ${String.fromCharCode(65 + optIndex)}`}
+                                      className="flex-1 p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-xs"
+                                    />
+                                    {newQuestion.options.length > 2 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => removeOptionField(optIndex)}
+                                        className="text-slate-400 hover:text-rose-500 p-1 text-sm"
+                                      >
+                                        ✕
+                                      </button>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        {/* 2. TRUE / FALSE Selector Cards */}
+                        {newQuestion.type === 'TRUE_FALSE' && (
+                          <div className="p-4 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-3">
+                            <div>
+                              <label className="block text-slate-800 dark:text-slate-200 font-bold mb-0.5">
+                                Select Correct Truth Value *
+                              </label>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                Click either card below to mark whether this statement is True or False as the evaluation answer key.
+                              </p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                              <button
+                                type="button"
+                                onClick={() => setNewQuestion({ ...newQuestion, true_false_answer: 'True' })}
+                                className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center space-y-2 cursor-pointer ${
+                                  newQuestion.true_false_answer === 'True'
+                                    ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400 shadow-md shadow-emerald-500/10'
+                                    : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
+                                }`}
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <CheckCircle2 className={`w-5 h-5 ${newQuestion.true_false_answer === 'True' ? 'text-emerald-500' : 'text-slate-400'}`} />
+                                  <span className="text-base font-black tracking-wide">TRUE</span>
                                 </div>
-                              ))}
+                                {newQuestion.true_false_answer === 'True' && (
+                                  <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-white font-black text-[10px] tracking-wider uppercase shadow-sm">
+                                    Correct Answer
+                                  </span>
+                                )}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => setNewQuestion({ ...newQuestion, true_false_answer: 'False' })}
+                                className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center space-y-2 cursor-pointer ${
+                                  newQuestion.true_false_answer === 'False'
+                                    ? 'bg-rose-500/10 border-rose-500 text-rose-600 dark:text-rose-400 shadow-md shadow-rose-500/10'
+                                    : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
+                                }`}
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <XCircle className={`w-5 h-5 ${newQuestion.true_false_answer === 'False' ? 'text-rose-500' : 'text-slate-400'}`} />
+                                  <span className="text-base font-black tracking-wide">FALSE</span>
+                                </div>
+                                {newQuestion.true_false_answer === 'False' && (
+                                  <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white font-black text-[10px] tracking-wider uppercase shadow-sm">
+                                    Correct Answer
+                                  </span>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 3. DESCRIPTIVE / QUESTION & ANSWER */}
+                        {(newQuestion.type === 'DESCRIPTIVE' || newQuestion.type === 'QUESTION_ANSWER') && (
+                          <div className="p-4 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-3.5">
+                            <div>
+                              <div className="flex items-center justify-between mb-1">
+                                <label className="text-slate-800 dark:text-slate-200 font-bold">
+                                  Ideal Model / Expected Answer *
+                                </label>
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold">
+                                  Benchmark Answer
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2">
+                                Enter the benchmark response, key points, or criteria against which student submissions will be graded.
+                              </p>
+                              <textarea
+                                required
+                                rows={4}
+                                value={newQuestion.expected_answer || ''}
+                                onChange={(e) => setNewQuestion({ ...newQuestion, expected_answer: e.target.value })}
+                                placeholder="e.g. In Java, an interface specifies behavior that implementing classes must provide. Key characteristics include: 1. Multiple inheritance of interface is supported. 2. All methods are implicitly public abstract (or default/static in Java 8+). 3. Variables are public static final..."
+                                className="w-full p-3 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-xs leading-relaxed"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-slate-800 dark:text-slate-200 font-bold mb-1">
+                                Key Grading Keywords / Essential Concepts (Optional)
+                              </label>
+                              <input
+                                type="text"
+                                value={newQuestion.keywords || ''}
+                                onChange={(e) => setNewQuestion({ ...newQuestion, keywords: e.target.value })}
+                                placeholder="e.g. abstraction, multiple inheritance, default methods, contract (comma separated)"
+                                className="w-full p-2.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-xs"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 4. CODE ERROR ("Find the Bug") */}
+                        {newQuestion.type === 'CODE_ERROR' && (
+                          <div className="p-4 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-3.5">
+                            <div>
+                              <div className="flex items-center justify-between mb-1">
+                                <label className="text-slate-800 dark:text-slate-200 font-bold">
+                                  Buggy Code Snippet *
+                                </label>
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold">
+                                  Contains Defect
+                                </span>
+                              </div>
+                              <textarea
+                                required
+                                rows={4}
+                                value={newQuestion.code_snippet || ''}
+                                onChange={(e) => setNewQuestion({ ...newQuestion, code_snippet: e.target.value })}
+                                placeholder="public class BugDemo {&#10;    public static void main(String[] args) {&#10;        String text = null;&#10;        System.out.println(text.length()); // Bug!&#10;    }&#10;}"
+                                className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-amber-300 placeholder:text-slate-600 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 leading-relaxed"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-slate-800 dark:text-slate-200 font-bold mb-1">
+                                Expected Error / Bug Explanation *
+                              </label>
+                              <input
+                                required
+                                type="text"
+                                value={newQuestion.expected_error || ''}
+                                onChange={(e) => setNewQuestion({ ...newQuestion, expected_error: e.target.value })}
+                                placeholder="e.g. NullPointerException on text.length() because text is null"
+                                className="w-full p-2.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-xs"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-slate-800 dark:text-slate-200 font-bold mb-1">
+                                Corrected Code Solution (Optional)
+                              </label>
+                              <textarea
+                                rows={3}
+                                value={newQuestion.correct_code || ''}
+                                onChange={(e) => setNewQuestion({ ...newQuestion, correct_code: e.target.value })}
+                                placeholder="// Solution code snippet:&#10;if (text != null) {&#10;    System.out.println(text.length());&#10;}"
+                                className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-emerald-400 placeholder:text-slate-600 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"
+                              />
                             </div>
                           </div>
                         )}
@@ -2135,13 +2437,15 @@ export default function AdminExamSuite() {
                                   {q.question_text}
                                 </p>
 
+                                {/* Code Snippet if present */}
                                 {q.code_snippet && (
                                   <pre className="p-2.5 bg-slate-900 text-emerald-400 rounded-xl font-mono text-[11px] overflow-x-auto">
                                     <code>{q.code_snippet}</code>
                                   </pre>
                                 )}
 
-                                {q.options && q.options.length > 0 && (
+                                {/* MCQ Options */}
+                                {q.type === 'MCQ' && q.options && q.options.length > 0 && (
                                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1">
                                     {q.options.map((opt, oIdx) => (
                                       <div
@@ -2154,9 +2458,83 @@ export default function AdminExamSuite() {
                                       >
                                         <span className="font-mono mr-1.5 text-slate-400">{String.fromCharCode(65 + oIdx)}.</span>
                                         {opt.option_text}
-                                        {opt.is_correct && <span className="ml-1 text-emerald-500">✓ (Correct)</span>}
+                                        {opt.is_correct && <span className="ml-1 text-emerald-500 font-bold">✓ (Correct)</span>}
                                       </div>
                                     ))}
+                                  </div>
+                                )}
+
+                                {/* TRUE / FALSE Answer Display */}
+                                {q.type === 'TRUE_FALSE' && (
+                                  <div className="flex items-center space-x-2 pt-1">
+                                    {['True', 'False'].map((tfVal) => {
+                                      const isCorrect = q.options?.find(o => o.option_text.toLowerCase() === tfVal.toLowerCase())?.is_correct ??
+                                        (q.correct_answer?.toLowerCase() === tfVal.toLowerCase());
+                                      return (
+                                        <div
+                                          key={tfVal}
+                                          className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center space-x-1.5 ${
+                                            isCorrect
+                                              ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
+                                              : 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400 opacity-60'
+                                          }`}
+                                        >
+                                          {isCorrect ? (
+                                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                                          ) : (
+                                            <XCircle className="w-3.5 h-3.5 text-slate-400" />
+                                          )}
+                                          <span>{tfVal.toUpperCase()}</span>
+                                          {isCorrect && <span className="text-[10px] bg-emerald-500 text-white px-1.5 py-0.2 rounded font-black ml-1">KEY</span>}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+
+                                {/* DESCRIPTIVE / QUESTION ANSWER Expected Model Answer */}
+                                {(q.type === 'DESCRIPTIVE' || q.type === 'QUESTION_ANSWER') && (q.expected_answer || q.model_answer) && (
+                                  <div className="p-3 bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200/70 dark:border-indigo-800/40 rounded-xl space-y-1">
+                                    <div className="text-[10px] font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider">
+                                      Model / Expected Answer:
+                                    </div>
+                                    <p className="text-slate-800 dark:text-slate-200 text-xs leading-relaxed whitespace-pre-wrap">
+                                      {q.expected_answer || q.model_answer}
+                                    </p>
+                                    {q.keywords && (
+                                      <div className="text-[11px] text-slate-500 dark:text-slate-400 pt-1">
+                                        <span className="font-semibold text-slate-700 dark:text-slate-300">Grading Keywords: </span>
+                                        {q.keywords}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* CODE ERROR Target Bug & Correction */}
+                                {q.type === 'CODE_ERROR' && (
+                                  <div className="space-y-2 pt-1">
+                                    {q.expected_error && (
+                                      <div className="p-2.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-xl text-xs text-amber-900 dark:text-amber-200">
+                                        <span className="font-bold">Target Bug / Error: </span>
+                                        {q.expected_error}
+                                      </div>
+                                    )}
+                                    {q.correct_code && (
+                                      <div className="space-y-1">
+                                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                                          Corrected Code Solution:
+                                        </span>
+                                        <pre className="p-2.5 bg-slate-900 text-emerald-400 rounded-xl font-mono text-[11px] overflow-x-auto">
+                                          <code>{q.correct_code}</code>
+                                        </pre>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {q.explanation && (
+                                  <div className="text-[11px] text-slate-500 dark:text-slate-400 italic pt-1">
+                                    <strong>Hint / Explanation:</strong> {q.explanation}
                                   </div>
                                 )}
                               </div>
