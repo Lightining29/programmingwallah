@@ -51,6 +51,7 @@ export default function AssessmentAdmin() {
     title: '', description: '', jobTitle: 'General', duration: 30,
     passingScore: 50, maxAttempts: 1, shuffleQuestions: true,
     shuffleOptions: true, showResult: true, scheduledAt: '', expiresAt: '',
+    accessPassword: ''
   });
 
   /* ── new question form ── */
@@ -222,10 +223,30 @@ export default function AssessmentAdmin() {
   };
 
   /* ── copy link & credentials ── */
+  const copyRegistrationLink = (testId) => {
+    const url = `${window.location.origin}/test/${testId}/register`;
+    navigator.clipboard.writeText(url).then(() =>
+      Swal.fire({
+        icon: 'success',
+        title: '📋 Student Registration Link Copied!',
+        text: `Share this form link with your students:\n${url}\n\nStudents will fill their details (Name, Email, Phone, College) to register before entering the exam.`,
+        confirmButtonColor: '#059669',
+        confirmButtonText: 'Great!'
+      })
+    );
+  };
+
   const copyTestLink = (id) => {
     const url = `${window.location.origin}/test/${id}`;
     navigator.clipboard.writeText(url).then(() =>
-      Swal.fire({ icon: 'success', title: 'Test Link Copied!', text: url, timer: 2000, showConfirmButton: false })
+      Swal.fire({ icon: 'success', title: '🔗 Direct Exam Gate Link Copied!', text: url, timer: 2000, showConfirmButton: false })
+    );
+  };
+
+  const copyPassword = (pwd) => {
+    if (!pwd) return;
+    navigator.clipboard.writeText(pwd).then(() =>
+      Swal.fire({ icon: 'success', title: '🔑 Exam Password Copied!', text: `Password: ${pwd}`, timer: 1500, showConfirmButton: false })
     );
   };
 
@@ -237,7 +258,7 @@ export default function AssessmentAdmin() {
 
   const copyInvitationDetails = (testId, code, email) => {
     const url = `${window.location.origin}/test/${testId}`;
-    const text = `Online Examination Details:\nLink: ${url}\nCandidate Email: ${email}\nAccess Code: ${code}`;
+    const text = `Online Examination Details:\nExam Link: ${url}\nCandidate Email: ${email}\nAccess Code: ${code}`;
     navigator.clipboard.writeText(text).then(() =>
       Swal.fire({ icon: 'success', title: 'Invitation Copied!', text: 'Link and access code copied to clipboard ready to share.', timer: 2000, showConfirmButton: false })
     );
@@ -358,6 +379,32 @@ export default function AssessmentAdmin() {
                       <input className="aa-input" value={tf.jobTitle} onChange={e => setTf(f => ({ ...f, jobTitle: e.target.value }))} placeholder="e.g. Computer Science / Class 10" />
                     </div>
                   </div>
+
+                  {/* Exam Access Password */}
+                  <div style={{ marginBottom: '0.85rem', background: '#f8fafc', padding: '0.85rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                    <label className="aa-label" style={{ color: '#0f172a' }}>
+                      🔑 Exam Access Password * <span style={{ fontWeight: 400, color: '#64748b' }}>(Students enter their registered email & this password to take the test)</span>
+                    </label>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.35rem' }}>
+                      <input
+                        className="aa-input"
+                        required
+                        value={tf.accessPassword}
+                        onChange={e => setTf(f => ({ ...f, accessPassword: e.target.value.toUpperCase() }))}
+                        placeholder="e.g. JAVA@PASS2026"
+                        style={{ fontFamily: 'monospace', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase' }}
+                      />
+                      <button
+                        type="button"
+                        className="aa-btn aa-btn-outline"
+                        style={{ padding: '0 1rem', flexShrink: 0, fontWeight: 700, fontSize: '0.82rem' }}
+                        onClick={() => setTf(f => ({ ...f, accessPassword: `EXAM${Math.floor(1000 + Math.random() * 9000)}` }))}
+                      >
+                        🎲 Auto-Generate
+                      </button>
+                    </div>
+                  </div>
+
                   <div style={{ marginBottom: '0.85rem' }}>
                     <label className="aa-label">Description</label>
                     <textarea className="aa-input" style={{ minHeight: '70px' }} value={tf.description} onChange={e => setTf(f => ({ ...f, description: e.target.value }))} placeholder="Assessment syllabus, instructions, or candidate guidelines..." />
@@ -414,24 +461,50 @@ export default function AssessmentAdmin() {
                           {t.isActive ? '● Active' : '● Inactive'}
                         </span>
                         <span className="aa-badge" style={{ background: 'rgba(14,165,233,0.1)', color: '#0369a1' }}>{t.questions?.length ?? 0} Questions</span>
-                        <span className="aa-badge" style={{ background: 'rgba(139,92,246,0.1)', color: '#7c3aed' }}>{t.invitedCandidates?.length ?? 0} Invited</span>
+                        <span className="aa-badge" style={{ background: 'rgba(139,92,246,0.1)', color: '#7c3aed' }}>{t.invitedCandidates?.length ?? 0} Registered</span>
+
+                        {/* Password Badge with Copy */}
+                        <span
+                          onClick={() => copyPassword(t.accessPassword || 'RANCOM@2026')}
+                          title="Click to copy exam password"
+                          style={{ cursor: 'pointer', background: '#fef3c7', border: '1px solid #fde68a', color: '#92400e', padding: '0.2rem 0.65rem', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                        >
+                          🔑 Pwd: <strong style={{ letterSpacing: '0.05em' }}>{t.accessPassword || 'RANCOM@2026'}</strong> 📋
+                        </span>
                       </div>
                       <div style={{ fontSize: '0.82rem', color: '#64748b' }}>
                         {t.jobTitle || 'General'} · ⏱️ {t.duration} min · 🎯 Pass: {t.passingScore}% · Max attempts: {t.maxAttempts}
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {/* 1. Share Form Link (Sends to Students to Fill Info) */}
+                      <button
+                        className="aa-btn"
+                        style={{ background: '#059669', color: 'white', fontWeight: 800 }}
+                        onClick={() => copyRegistrationLink(t._id)}
+                        title="Copy student registration form link to share on WhatsApp/Telegram"
+                      >
+                        <ClipboardList size={13} /> Share Form
+                      </button>
+
+                      {/* 2. Copy Direct Exam Gate Link */}
+                      <button
+                        className="aa-btn aa-btn-outline"
+                        style={{ borderColor: '#0284c7', color: '#0284c7', fontWeight: 700 }}
+                        onClick={() => copyTestLink(t._id)}
+                        title="Copy direct exam gate link"
+                      >
+                        <Copy size={13} /> Exam Link
+                      </button>
+
                       <button className="aa-btn aa-btn-outline" onClick={() => { setSelTest(t); setTab('questions'); }}>
                         <Edit size={13} /> Questions
                       </button>
                       <button className="aa-btn aa-btn-outline" onClick={() => { setSelTest(t); setTab('candidates'); }}>
-                        <Users size={13} /> Candidates
+                        <Users size={13} /> Candidates ({t.invitedCandidates?.length ?? 0})
                       </button>
                       <button className="aa-btn aa-btn-success" onClick={() => { loadAttempts(t._id); setSelTest(t); }}>
                         <FileText size={13} /> Reports
-                      </button>
-                      <button className="aa-btn aa-btn-outline" onClick={() => copyTestLink(t._id)}>
-                        <Copy size={13} /> Link
                       </button>
                       <button className="aa-btn aa-btn-danger" onClick={() => deleteTest(t._id)}>
                         <Trash2 size={14} />
@@ -670,25 +743,56 @@ export default function AssessmentAdmin() {
               </div>
             ) : (
               <>
-                <div className="aa-card" style={{ marginBottom: '1.25rem', background: 'rgba(14,165,233,0.05)', border: '1px solid rgba(14,165,233,0.2)' }}>
-                  <div style={{ fontWeight: 800, color: '#0369a1', fontSize: '1rem' }}>Selected Assessment: {selTest.title}</div>
-                  <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <span>Candidate Link:</span>
-                    <code style={{ background: '#f1f5f9', padding: '0.2rem 0.5rem', borderRadius: '5px', color: '#0f172a', fontWeight: 700 }}>
-                      {window.location.origin}/test/{selTest._id}
-                    </code>
-                    <button className="aa-btn aa-btn-outline" style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem' }} onClick={() => copyTestLink(selTest._id)}>
-                      <Copy size={12} /> Copy Test Link
-                    </button>
+                <div className="aa-card" style={{ marginBottom: '1.25rem', background: 'linear-gradient(135deg, rgba(14,165,233,0.08), rgba(5,150,105,0.08))', border: '1.5px solid rgba(14,165,233,0.25)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                    <div style={{ fontWeight: 800, color: '#0369a1', fontSize: '1.05rem' }}>Selected Assessment: {selTest.title}</div>
+                    {selTest.accessPassword && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#fef3c7', padding: '0.3rem 0.75rem', borderRadius: '8px', border: '1px solid #fde68a' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#92400e' }}>🔑 Exam Password:</span>
+                        <code style={{ fontWeight: 800, color: '#b45309', fontFamily: 'monospace', letterSpacing: '0.05em' }}>{selTest.accessPassword}</code>
+                        <button className="aa-btn aa-btn-outline" style={{ padding: '0.2rem 0.45rem', fontSize: '0.72rem', height: 'auto', background: 'white' }} onClick={() => copyPassword(selTest.accessPassword)}>
+                          <Copy size={11} /> Copy
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '0.5rem', fontWeight: 600 }}>
-                    ℹ️ Email sending is permanently disabled. Share the candidate link and access code directly with students.
+
+                  {/* Shareable registration form link */}
+                  <div style={{ background: 'white', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid #cbd5e1', marginBottom: '0.65rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <div>
+                        <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span>📝 Student Self-Registration Form Link</span>
+                          <span style={{ background: '#dcfce7', color: '#15803d', fontSize: '0.7rem', padding: '0.15rem 0.45rem', borderRadius: '5px', fontWeight: 800 }}>Share With Students</span>
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.15rem' }}>
+                          Students open this link, enter their details (Name, Email, Phone, College, Roll No), and register.
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button className="aa-btn aa-btn-success" style={{ padding: '0.45rem 0.9rem', fontSize: '0.82rem' }} onClick={() => copyRegistrationLink(selTest._id)}>
+                          <Copy size={14} /> Copy Registration Link
+                        </button>
+                        <button className="aa-btn aa-btn-outline" style={{ padding: '0.45rem 0.8rem', fontSize: '0.82rem' }} onClick={() => copyTestLink(selTest._id)}>
+                          <Copy size={14} /> Copy Exam Gate Link
+                        </button>
+                      </div>
+                    </div>
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <code style={{ background: '#f8fafc', padding: '0.35rem 0.7rem', borderRadius: '6px', color: '#0369a1', fontWeight: 700, fontSize: '0.84rem', wordBreak: 'break-all', display: 'block', border: '1px dashed #cbd5e1' }}>
+                        {window.location.origin}/test/{selTest._id}/register
+                      </code>
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span>✅ No email sending required. Simply share the form link via WhatsApp, Chat, or Classroom.</span>
                   </div>
                 </div>
 
                 {/* Direct Manual Candidate Add Form */}
                 <div className="aa-card" style={{ marginBottom: '1.25rem' }}>
-                  <div className="aa-section-title">➕ Assign New Candidate (Generates Instant Access Code)</div>
+                  <div className="aa-section-title">➕ Or Manually Assign Candidate (Generates Instant Access Code)</div>
                   <form onSubmit={inviteCandidateManual} style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
                     <div style={{ flex: '1 1 200px' }}>
                       <label className="aa-label">Candidate Name</label>
@@ -704,34 +808,46 @@ export default function AssessmentAdmin() {
                   </form>
                 </div>
 
-                {/* Already invited candidates */}
+                {/* Already registered / invited candidates */}
                 {(selTest.invitedCandidates || []).length > 0 && (
                   <div className="aa-card" style={{ marginBottom: '1.25rem' }}>
-                    <div className="aa-section-title">
-                      🔑 Assigned Candidates & Access Codes ({selTest.invitedCandidates.length})
+                    <div className="aa-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>👥 Registered / Assigned Candidates ({selTest.invitedCandidates.length})</span>
+                      <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'none', fontWeight: 600 }}>Email is unique primary key</span>
                     </div>
                     {selTest.invitedCandidates.map(ic => (
-                      <div key={ic.email} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.85rem 1rem', background: '#f8fafc', borderRadius: '10px', marginBottom: '0.5rem', border: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '0.75rem' }}>
+                      <div key={ic.email} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.85rem 1rem', background: '#f8fafc', borderRadius: '10px', marginBottom: '0.65rem', border: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '0.75rem' }}>
                         <div>
-                          <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.92rem' }}>{ic.name || 'Candidate'}</div>
-                          <div style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '0.15rem' }}>
-                            {ic.email} · Access Code:{' '}
-                            <strong style={{ fontFamily: 'monospace', color: '#0369a1', background: '#eff6ff', padding: '0.15rem 0.5rem', borderRadius: '4px', letterSpacing: '0.1em', fontSize: '1rem' }}>
-                              {ic.accessCode}
-                            </strong>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            <span style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.94rem' }}>{ic.name || 'Candidate'}</span>
+                            {ic.registeredAt ? (
+                              <span className="aa-badge" style={{ background: '#dcfce7', color: '#15803d' }}>Self-Registered</span>
+                            ) : (
+                              <span className="aa-badge" style={{ background: '#eff6ff', color: '#1d4ed8' }}>Admin-Assigned</span>
+                            )}
                           </div>
-                          <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.2rem' }}>
-                            Assigned {new Date(ic.invitedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          <div style={{ fontSize: '0.84rem', color: '#334155', marginTop: '0.25rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
+                            <span><strong>Email:</strong> {ic.email}</span>
+                            {ic.phone && <span>· <strong>Phone:</strong> {ic.phone}</span>}
+                            {ic.college && <span>· <strong>College:</strong> {ic.college}</span>}
+                            {ic.rollNo && <span>· <strong>Roll No:</strong> {ic.rollNo}</span>}
+                          </div>
+                          <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.2rem' }}>
+                            Access Code: <strong style={{ fontFamily: 'monospace', color: '#0369a1', background: '#eff6ff', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>{ic.accessCode}</strong>
+                            {' · '}
+                            {ic.registeredAt 
+                              ? `Registered on ${new Date(ic.registeredAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}`
+                              : `Assigned on ${new Date(ic.invitedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`}
                           </div>
                         </div>
                         <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
                           <button className="aa-btn aa-btn-outline" style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem' }}
                             onClick={() => copyCode(ic.accessCode, ic.email)}>
-                            <Copy size={13} /> Copy Code
+                            <Copy size={13} /> Code
                           </button>
                           <button className="aa-btn aa-btn-outline" style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem' }}
                             onClick={() => copyInvitationDetails(selTest._id, ic.accessCode, ic.email)}>
-                            📋 Copy Full Details
+                            📋 Details
                           </button>
                           <button className="aa-btn aa-btn-danger" style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem' }} onClick={() => removeInvite(ic.email)}>
                             Remove

@@ -40,12 +40,17 @@ const AssessmentSchema = new mongoose.Schema({
   shuffleOptions:   { type: Boolean, default: true },
   showResult:       { type: Boolean, default: true },
   isActive:         { type: Boolean, default: true },
+  accessPassword:   { type: String, default: '' },
   invitedCandidates: [{
     registrationId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    email:          { type: String, lowercase: true },
-    name:           { type: String },
+    email:          { type: String, lowercase: true, trim: true },
+    name:           { type: String, default: '' },
+    phone:          { type: String, default: '' },
+    college:        { type: String, default: '' },
+    rollNo:         { type: String, default: '' },
+    registeredAt:   { type: Date, default: Date.now },
     invitedAt:      { type: Date, default: Date.now },
-    accessCode:     { type: String }
+    accessCode:     { type: String, default: '' }
   }],
   scheduledAt: { type: Date },
   expiresAt:   { type: Date },

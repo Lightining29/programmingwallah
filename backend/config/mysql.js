@@ -173,6 +173,7 @@ export const initMySQLTables = async () => {
         shuffle_options BOOLEAN DEFAULT TRUE,
         show_result BOOLEAN DEFAULT TRUE,
         is_active BOOLEAN DEFAULT TRUE,
+        access_password VARCHAR(100) DEFAULT '',
         questions_json LONGTEXT,
         invited_candidates_json LONGTEXT,
         scheduled_at TIMESTAMP NULL,
@@ -181,6 +182,11 @@ export const initMySQLTables = async () => {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
+
+    // Ensure access_password column exists for existing tables
+    await connection.query(`
+      ALTER TABLE assessments ADD COLUMN access_password VARCHAR(100) DEFAULT '';
+    `).catch(() => {});
 
     // Create assessment_attempts table in Hostinger MySQL
     await connection.query(`

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
 /* ─── SQL Question Component ──────────────────────────────────── */
@@ -125,9 +125,16 @@ function SqlQuestion({ question, value, onChange }) {
 
 /* ─── Access Gate ─────────────────────────────────────────────── */
 function AccessGate({ assessmentId, onStart }) {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => {
+    try {
+      return new URLSearchParams(window.location.search).get('email') || '';
+    } catch {
+      return '';
+    }
+  });
   const [code, setCode]   = useState('');
   const [busy, setBusy]   = useState(false);
+  const navigate          = useNavigate();
 
   const verify = async (e) => {
     e.preventDefault();
@@ -135,11 +142,34 @@ function AccessGate({ assessmentId, onStart }) {
     try {
       const res = await fetch('/api/assessment/verify-access', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assessmentId, email: email.trim(), accessCode: code.trim().toUpperCase() })
+        body: JSON.stringify({
+          assessmentId,
+          email: email.trim().toLowerCase(),
+          accessPassword: code.trim().toUpperCase(),
+          accessCode: code.trim().toUpperCase()
+        })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      onStart({ email: email.trim(), accessCode: code.trim().toUpperCase(), meta: data });
+      if (!res.ok) {
+        if (data.notRegistered) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Not Registered',
+            text: data.error || 'Please fill the registration form before taking the exam.',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            confirmButtonText: '📝 Fill Registration Form',
+            cancelButtonText: 'Close'
+          }).then((r) => {
+            if (r.isConfirmed) {
+              navigate(`/test/${assessmentId}/register`);
+            }
+          });
+          return;
+        }
+        throw new Error(data.error);
+      }
+      onStart({ email: email.trim().toLowerCase(), accessCode: code.trim().toUpperCase(), meta: data });
     } catch (err) {
       Swal.fire({ icon: 'error', title: 'Access Denied', text: err.message, confirmButtonColor: '#ef4444' });
     } finally { setBusy(false); }
@@ -147,27 +177,64 @@ function AccessGate({ assessmentId, onStart }) {
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#0f172a,#1e3a5f)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-      <div style={{ maxWidth: '440px', width: '100%', background: 'white', borderRadius: '20px', padding: '2.5rem', boxShadow: '0 25px 70px rgba(0,0,0,0.35)' }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+      <div style={{ maxWidth: '460px', width: '100%', background: 'white', borderRadius: '24px', padding: '2.5rem', boxShadow: '0 25px 70px rgba(0,0,0,0.35)' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>🔐</div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a' }}>Online Examination</h1>
-          <p style={{ color: '#64748b', fontSize: '0.9rem', marginTop: '0.35rem' }}>Enter your email and access code to begin</p>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0f172a' }}>Assessment Gate</h1>
+          <p style={{ color: '#64748b', fontSize: '0.88rem', marginTop: '0.35rem' }}>
+            Enter your registered email and the assessment password provided by your admin
+          </p>
         </div>
-        <form onSubmit={verify} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+        <form onSubmit={verify} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
           <div>
-            <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#374151', display: 'block', marginBottom: '0.4rem' }}>Candidate Email</label>
-            <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com"
-              style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem 1rem', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '0.95rem', outline: 'none', fontFamily: 'inherit' }} />
+            <label style={{ fontSize: '0.82rem', fontWeight: 800, color: '#374151', display: 'block', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Registered Student Email
+            </label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="e.g. yourname@example.com"
+              style={{ width: '100%', boxSizing: 'border-box', padding: '0.8rem 1rem', border: '1.5px solid #cbd5e1', borderRadius: '12px', fontSize: '0.95rem', outline: 'none', fontFamily: 'inherit' }}
+            />
           </div>
+
           <div>
-            <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#374151', display: 'block', marginBottom: '0.4rem' }}>Access Code</label>
-            <input type="text" required value={code} onChange={e => setCode(e.target.value.toUpperCase())} placeholder="e.g. A3F9C1" maxLength={10}
-              style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem 1rem', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '1.1rem', letterSpacing: '0.2em', fontWeight: 700, textAlign: 'center', outline: 'none', fontFamily: 'inherit' }} />
+            <label style={{ fontSize: '0.82rem', fontWeight: 800, color: '#374151', display: 'block', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Assessment Password
+            </label>
+            <input
+              type="text"
+              required
+              value={code}
+              onChange={e => setCode(e.target.value.toUpperCase())}
+              placeholder="Enter Exam Password"
+              style={{ width: '100%', boxSizing: 'border-box', padding: '0.8rem 1rem', border: '1.5px solid #cbd5e1', borderRadius: '12px', fontSize: '1.05rem', letterSpacing: '0.15em', fontWeight: 800, textAlign: 'center', outline: 'none', fontFamily: 'inherit' }}
+            />
           </div>
-          <button type="submit" disabled={busy} style={{ padding: '0.9rem', borderRadius: '12px', border: 'none', background: 'linear-gradient(135deg,#0ea5e9,#0369a1)', color: 'white', fontSize: '1rem', fontWeight: 800, cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1, fontFamily: 'inherit', marginTop: '0.5rem' }}>
-            {busy ? '⏳ Verifying...' : '🚀 Start Test'}
+
+          <button
+            type="submit"
+            disabled={busy}
+            style={{ padding: '0.95rem', borderRadius: '12px', border: 'none', background: 'linear-gradient(135deg,#0ea5e9,#0369a1)', color: 'white', fontSize: '1rem', fontWeight: 800, cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1, fontFamily: 'inherit', marginTop: '0.25rem', boxShadow: '0 8px 20px rgba(14,165,233,0.3)' }}
+          >
+            {busy ? '⏳ Verifying Credentials...' : '🚀 Verify & Enter Test'}
           </button>
         </form>
+
+        <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid #f1f5f9', textAlign: 'center' }}>
+          <p style={{ fontSize: '0.82rem', color: '#64748b', margin: 0 }}>
+            Haven't registered for this exam yet?
+          </p>
+          <Link
+            to={`/test/${assessmentId}/register`}
+            style={{ display: 'inline-block', marginTop: '0.35rem', color: '#059669', fontWeight: 800, fontSize: '0.88rem', textDecoration: 'none' }}
+          >
+            📝 Fill Student Registration Form →
+          </Link>
+        </div>
       </div>
     </div>
   );

@@ -47,6 +47,7 @@ import ExamTaker from './pages/exam/ExamTaker.jsx';
 import ExamResult from './pages/exam/ExamResult.jsx';
 import AdminExamSuite from './portals/examAdmin/AdminExamSuite.jsx';
 import TakeTest from './pages/exam/TakeTest.jsx';
+import StudentRegister from './pages/exam/StudentRegister.jsx';
 import AssessmentAdmin from './pages/AssessmentAdmin.jsx';
 
 // Layout Components
@@ -208,6 +209,8 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
           <Route path="/test/exam/:examId" element={<ExamTaker />} />
           <Route path="/test/result/:attemptId" element={<ExamResult />} />
           <Route path="/test/results" element={<ExamDashboard />} />
+          <Route path="/test/:id/register" element={<StudentRegister />} />
+          <Route path="/assessment/register/:id" element={<StudentRegister />} />
           <Route path="/test/:id" element={<TakeTest />} />
           <Route path="/test" element={<Navigate to="/test/login" replace />} />
 

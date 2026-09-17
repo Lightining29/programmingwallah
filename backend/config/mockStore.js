@@ -110,9 +110,9 @@ async function syncRelationalMySQL(pool, collectionName, items) {
     } else if (collectionName === 'assessments') {
       for (const a of items) {
         await pool.query(
-          `INSERT INTO assessments (id, title, description, job_title, duration, passing_score, max_attempts, shuffle_questions, shuffle_options, show_result, is_active, questions_json, invited_candidates_json, scheduled_at, expires_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-           ON DUPLICATE KEY UPDATE title=VALUES(title), description=VALUES(description), job_title=VALUES(job_title), duration=VALUES(duration), passing_score=VALUES(passing_score), max_attempts=VALUES(max_attempts), shuffle_questions=VALUES(shuffle_questions), shuffle_options=VALUES(shuffle_options), show_result=VALUES(show_result), is_active=VALUES(is_active), questions_json=VALUES(questions_json), invited_candidates_json=VALUES(invited_candidates_json)`,
+          `INSERT INTO assessments (id, title, description, job_title, duration, passing_score, max_attempts, shuffle_questions, shuffle_options, show_result, is_active, access_password, questions_json, invited_candidates_json, scheduled_at, expires_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE title=VALUES(title), description=VALUES(description), job_title=VALUES(job_title), duration=VALUES(duration), passing_score=VALUES(passing_score), max_attempts=VALUES(max_attempts), shuffle_questions=VALUES(shuffle_questions), shuffle_options=VALUES(shuffle_options), show_result=VALUES(show_result), is_active=VALUES(is_active), access_password=VALUES(access_password), questions_json=VALUES(questions_json), invited_candidates_json=VALUES(invited_candidates_json)`,
           [
             a._id || a.id,
             a.title || '',
@@ -125,6 +125,7 @@ async function syncRelationalMySQL(pool, collectionName, items) {
             a.shuffleOptions !== false ? 1 : 0,
             a.showResult !== false ? 1 : 0,
             a.isActive !== false ? 1 : 0,
+            a.accessPassword || '',
             JSON.stringify(a.questions || []),
             JSON.stringify(a.invitedCandidates || []),
             a.scheduledAt ? new Date(a.scheduledAt) : null,

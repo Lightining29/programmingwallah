@@ -182,10 +182,15 @@ router.post('/admin/create', adminGuard, async (req, res) => {
     const {
       title, description, jobTitle, duration, passingScore,
       maxAttempts, shuffleQuestions, shuffleOptions,
-      showResult, scheduledAt, expiresAt
+      showResult, scheduledAt, expiresAt, accessPassword
     } = req.body;
 
     if (!title) return res.status(400).json({ error: 'Title is required.' });
+
+    // Generate clean access password if not supplied
+    const finalPassword = accessPassword && String(accessPassword).trim()
+      ? String(accessPassword).trim().toUpperCase()
+      : `EXAM${Math.floor(1000 + Math.random() * 9000)}`;
 
     const newDoc = {
       _id: genId(),
@@ -200,6 +205,7 @@ router.post('/admin/create', adminGuard, async (req, res) => {
       shuffleOptions: shuffleOptions !== false,
       showResult: showResult !== false,
       isActive: true,
+      accessPassword: finalPassword,
       invitedCandidates: [],
       scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
       expiresAt: expiresAt ? new Date(expiresAt) : null,
@@ -530,16 +536,149 @@ router.post('/admin/run-sql', adminGuard, (req, res) => {
 // CANDIDATE ENDPOINTS
 // ════════════════════════════════════════════════════════════════════════════
 
-// Verify access code
-router.post('/verify-access', async (req, res) => {
+// Public Assessment Details (for Student Registration Form)
+router.get('/public/:id', async (req, res) => {
   try {
-    const { assessmentId, email, accessCode } = req.body;
-    if (!email || !accessCode) {
-      return res.status(400).json({ error: 'Email and access code are required.' });
+    const store = getAssessmentsFromStore();
+    let a = store.find(x => String(x._id) === String(req.params.id));
+
+    if (!a && mongoose.connection?.readyState === 1) {
+      try {
+        a = await Assessment.findById(req.params.id).lean();
+      } catch (e) {}
     }
 
-    const cleanEmail = email.toLowerCase().trim();
-    const cleanCode = accessCode.toUpperCase().trim();
+    if (!a || a.isActive === false) {
+      return res.status(404).json({ error: 'Assessment not found or currently inactive.' });
+    }
+
+    if (a.expiresAt && new Date() > new Date(a.expiresAt)) {
+      return res.status(410).json({ error: 'Registration closed. This assessment has expired.' });
+    }
+
+    res.json({
+      _id: a._id,
+      title: a.title,
+      description: a.description || '',
+      jobTitle: a.jobTitle || 'General',
+      duration: a.duration || 30,
+      passingScore: a.passingScore || 50,
+      maxAttempts: a.maxAttempts || 1,
+      questionCount: (a.questions || []).length,
+      hasPassword: Boolean(a.accessPassword),
+      expiresAt: a.expiresAt || null
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Student Self-Registration Form Submission
+router.post('/:id/register', async (req, res) => {
+  try {
+    const { name, email, phone, college, rollNo } = req.body;
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Full name and email address are required.' });
+    }
+
+    const cleanEmail = String(email).toLowerCase().trim();
+    const cleanName = String(name).trim();
+    const cleanPhone = String(phone || '').trim();
+    const cleanCollege = String(college || '').trim();
+    const cleanRollNo = String(rollNo || '').trim();
+
+    const store = getAssessmentsFromStore();
+    let a = store.find(x => String(x._id) === String(req.params.id));
+
+    if (!a && mongoose.connection?.readyState === 1) {
+      try {
+        a = await Assessment.findById(req.params.id);
+      } catch (e) {}
+    }
+
+    if (!a || a.isActive === false) {
+      return res.status(404).json({ error: 'Assessment not found or currently inactive.' });
+    }
+    if (a.expiresAt && new Date() > new Date(a.expiresAt)) {
+      return res.status(410).json({ error: 'Registration is closed. This assessment has expired.' });
+    }
+
+    if (!Array.isArray(a.invitedCandidates)) {
+      a.invitedCandidates = [];
+    }
+
+    // Email is Primary Key: check if already registered
+    const existingIdx = a.invitedCandidates.findIndex(
+      c => String(c.email || '').toLowerCase().trim() === cleanEmail
+    );
+
+    const studentRecord = {
+      email: cleanEmail,
+      name: cleanName,
+      phone: cleanPhone,
+      college: cleanCollege,
+      rollNo: cleanRollNo,
+      accessCode: a.accessPassword || 'EXAM',
+      registeredAt: existingIdx !== -1 ? (a.invitedCandidates[existingIdx].registeredAt || new Date()) : new Date(),
+      invitedAt: new Date()
+    };
+
+    if (existingIdx !== -1) {
+      // Update registration record
+      a.invitedCandidates[existingIdx] = {
+        ...a.invitedCandidates[existingIdx],
+        ...studentRecord
+      };
+    } else {
+      // Append new student registration
+      a.invitedCandidates.push(studentRecord);
+    }
+
+    saveStore();
+
+    if (mongoose.connection?.readyState === 1) {
+      try {
+        await Assessment.findByIdAndUpdate(a._id, {
+          invitedCandidates: a.invitedCandidates
+        });
+      } catch (e) {}
+    }
+
+    res.json({
+      success: true,
+      message: existingIdx !== -1 ? 'Registration details updated successfully!' : 'Registration successful!',
+      candidate: {
+        name: cleanName,
+        email: cleanEmail,
+        college: cleanCollege
+      },
+      assessment: {
+        _id: a._id,
+        title: a.title,
+        duration: a.duration,
+        passingScore: a.passingScore
+      },
+      examUrl: `/test/${a._id}?email=${encodeURIComponent(cleanEmail)}`
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Verify Exam Access (Email + Admin Assessment Password)
+router.post('/verify-access', async (req, res) => {
+  try {
+    const { assessmentId, email, accessCode, accessPassword, password } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Registered email is required.' });
+    }
+
+    const inputCode = String(accessPassword || accessCode || password || '').trim().toUpperCase();
+    if (!inputCode) {
+      return res.status(400).json({ error: 'Exam password is required.' });
+    }
+
+    const cleanEmail = String(email).toLowerCase().trim();
 
     const store = getAssessmentsFromStore();
     let a = store.find(x => String(x._id) === String(assessmentId));
@@ -557,15 +696,31 @@ router.post('/verify-access', async (req, res) => {
       return res.status(410).json({ error: 'This assessment has expired.' });
     }
 
-    const invited = (a.invitedCandidates || []).find(
-      ic => ic.email?.toLowerCase().trim() === cleanEmail && ic.accessCode?.toUpperCase().trim() === cleanCode
+    // 1. Verify candidate registration by email
+    const candidateMatch = (a.invitedCandidates || []).find(
+      ic => String(ic.email || '').toLowerCase().trim() === cleanEmail
     );
 
-    // Also check if admin master access code matches
-    const isMasterAdmin = cleanCode === (process.env.ADMIN_PASSWORD || 'RANCOM@2026').toUpperCase();
+    // 2. Verify password (assessment password OR candidate access code OR master admin password)
+    const masterPassword = (process.env.ADMIN_PASSWORD || 'RANCOM@2026').toUpperCase();
+    const isMasterAdmin = inputCode === masterPassword;
 
-    if (!invited && !isMasterAdmin) {
-      return res.status(403).json({ error: 'Invalid email or access code. Please verify credentials with your administrator.' });
+    const isPasswordValid = isMasterAdmin ||
+      (a.accessPassword && inputCode === a.accessPassword.toUpperCase().trim()) ||
+      (candidateMatch && candidateMatch.accessCode && inputCode === candidateMatch.accessCode.toUpperCase().trim());
+
+    if (!isPasswordValid) {
+      return res.status(403).json({
+        error: 'Invalid exam password. Please enter the password provided by your admin/instructor.'
+      });
+    }
+
+    if (!candidateMatch && !isMasterAdmin) {
+      return res.status(403).json({
+        error: 'This email is not registered for this assessment. Please complete the registration form first.',
+        notRegistered: true,
+        registrationUrl: `/test/${assessmentId}/register`
+      });
     }
 
     // Check attempts limit
@@ -573,16 +728,17 @@ router.post('/verify-access', async (req, res) => {
     const prevAttempts = attemptsStore.filter(att =>
       String(att.assessment) === String(assessmentId) &&
       att.candidate?.email?.toLowerCase() === cleanEmail
-    ).length;
-
-    const maxAttempts = a.maxAttempts || 1;
-    if (prevAttempts >= maxAttempts && !isMasterAdmin) {
-      return res.status(409).json({ error: `Maximum ${maxAttempts} attempt(s) allowed.` });
+    );
+    if (prevAttempts.length >= (a.maxAttempts || 1)) {
+      return res.status(403).json({
+        error: `Maximum attempts (${a.maxAttempts || 1}) reached for this test.`
+      });
     }
 
     res.json({
       valid: true,
-      name: invited?.name || 'Candidate',
+      email: cleanEmail,
+      name: candidateMatch?.name || 'Candidate',
       assessmentTitle: a.title,
       duration: a.duration,
       questionCount: (a.questions || []).length,
@@ -596,9 +752,9 @@ router.post('/verify-access', async (req, res) => {
 // Start attempt — return sanitized questions
 router.post('/start', async (req, res) => {
   try {
-    const { assessmentId, email, accessCode } = req.body;
-    const cleanEmail = (email || '').toLowerCase().trim();
-    const cleanCode = (accessCode || '').toUpperCase().trim();
+    const { assessmentId, email, accessCode, accessPassword, password } = req.body;
+    const cleanEmail = String(email || '').toLowerCase().trim();
+    const inputCode = String(accessPassword || accessCode || password || '').trim().toUpperCase();
 
     const store = getAssessmentsFromStore();
     let a = store.find(x => String(x._id) === String(assessmentId));
@@ -611,13 +767,26 @@ router.post('/start', async (req, res) => {
 
     if (!a || a.isActive === false) return res.status(404).json({ error: 'Assessment not found.' });
 
-    const invited = (a.invitedCandidates || []).find(
-      ic => ic.email?.toLowerCase().trim() === cleanEmail && ic.accessCode?.toUpperCase().trim() === cleanCode
+    const candidateMatch = (a.invitedCandidates || []).find(
+      ic => String(ic.email || '').toLowerCase().trim() === cleanEmail
     );
-    const isMasterAdmin = cleanCode === (process.env.ADMIN_PASSWORD || 'RANCOM@2026').toUpperCase();
+    const masterPassword = (process.env.ADMIN_PASSWORD || 'RANCOM@2026').toUpperCase();
+    const isMasterAdmin = inputCode === masterPassword;
 
-    if (!invited && !isMasterAdmin) {
-      return res.status(403).json({ error: 'Access denied.' });
+    const isPasswordValid = isMasterAdmin ||
+      (a.accessPassword && inputCode === a.accessPassword.toUpperCase().trim()) ||
+      (candidateMatch && candidateMatch.accessCode && inputCode === candidateMatch.accessCode.toUpperCase().trim());
+
+    if (!isPasswordValid) {
+      return res.status(403).json({ error: 'Invalid exam password.' });
+    }
+
+    if (!candidateMatch && !isMasterAdmin) {
+      return res.status(403).json({
+        error: 'This email is not registered for this assessment. Please complete registration first.',
+        notRegistered: true,
+        registrationUrl: `/test/${assessmentId}/register`
+      });
     }
 
     const attemptsStore = getAttemptsFromStore();
@@ -648,10 +817,10 @@ router.post('/start', async (req, res) => {
         _id: genId(),
         assessment: assessmentId,
         candidate: {
-          registrationId: invited?.registrationId || null,
+          registrationId: candidateMatch?.registrationId || null,
           email: cleanEmail,
-          name: invited?.name || 'Candidate',
-          accessCode: cleanCode
+          name: candidateMatch?.name || 'Candidate',
+          accessCode: inputCode
         },
         answers: [],
         score: 0,
