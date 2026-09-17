@@ -12,6 +12,7 @@
     "build": "npm run build-frontend"
   },
   "dependencies": {
+    "alasql": "^4.5.3",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.10.0",
     "cors": "^2.8.5",

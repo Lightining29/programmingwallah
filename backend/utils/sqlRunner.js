@@ -8,7 +8,13 @@
  *  2. Execute candidate's query
  *  3. Compare output to expected result
  */
-import alasql from 'alasql';
+let alasql = null;
+try {
+  const mod = await import('alasql');
+  alasql = mod.default || mod;
+} catch (err) {
+  console.warn('[SQLRunner] Notice: alasql loading fallback:', err.message);
+}
 
 /**
  * Run a SQL query against a temporary in-memory database.
@@ -18,6 +24,10 @@ import alasql from 'alasql';
  * @returns {{ rows, error, output }}
  */
 export function runSql(schema, query) {
+  if (!alasql) {
+    return { rows: null, error: 'SQL engine is initializing. Please try again shortly.', output: '' };
+  }
+
   // Create a fresh isolated alasql database for each run
   const dbName = `testdb_${Date.now()}_${Math.random().toString(36).slice(2)}`;
   try {
