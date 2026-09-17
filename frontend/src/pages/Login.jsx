@@ -14,8 +14,6 @@ const PORTALS = [
     name: 'Student LMS',
     icon: GraduationCap,
     role: 'user',
-    email: 'student@pranidha.edu',
-    password: 'student123',
     accentColor: '#f43f5e',
     description: 'Access coding courses, live practice & student portal',
     badge: 'Student LMS'
@@ -25,8 +23,6 @@ const PORTALS = [
     name: 'Parent Portal',
     icon: Users,
     role: 'parent',
-    email: 'parent@pranidha.edu',
-    password: 'parent123',
     accentColor: '#10b981',
     description: 'Track child progress, attendance & fee records',
     badge: 'Parent Portal'
@@ -36,8 +32,6 @@ const PORTALS = [
     name: 'Teacher Portal',
     icon: UserCheck,
     role: 'teacher',
-    email: 'teacher@pranidha.edu',
-    password: 'teacher123',
     accentColor: '#8b5cf6',
     description: 'Manage class schedules, student grading & notices',
     badge: 'Teacher Portal'
@@ -47,8 +41,6 @@ const PORTALS = [
     name: 'Admin Portal',
     icon: ShieldCheck,
     role: 'admin',
-    email: 'admin@pranidha.edu',
-    password: 'admin123',
     accentColor: '#06b6d4',
     description: 'Full institute management, admissions & reports',
     badge: 'Admin Portal'
@@ -63,12 +55,12 @@ export default function Login() {
   const [isRegister, setIsRegister] = useState(searchParams.get('register') === 'true');
   const [selectedPortalId, setSelectedPortalId] = useState('student');
   const [name, setName]         = useState('');
-  const [email, setEmail]       = useState('student@pranidha.edu');
-  const [password, setPassword] = useState('student123');
+  const [email, setEmail]       = useState('');
+  const [password, setPassword] = useState('');
   const [confirm, setConfirm]   = useState('');
   const [valErr, setValErr]     = useState('');
   const [showPw, setShowPw]     = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const selectedPortal = PORTALS.find(p => p.id === selectedPortalId) || PORTALS[0];
 
@@ -82,45 +74,9 @@ export default function Login() {
 
   const handleSelectPortal = (portal) => {
     setSelectedPortalId(portal.id);
-    setEmail(portal.email);
-    setPassword(portal.password);
+    setEmail('');
+    setPassword('');
     setValErr('');
-  };
-
-  const handleQuickLogin = async (portal) => {
-    setValErr('');
-    const res = await login(portal.email, portal.password);
-    if (res.success) {
-      confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
-      if (portal.id === 'student')      navigate('/lms/dashboard');
-      else if (portal.id === 'parent')  navigate('/dashboard/parent');
-      else if (portal.id === 'teacher') navigate('/dashboard/teacher');
-      else if (portal.id === 'admin')   navigate('/dashboard/admin');
-      else navigate('/lms/dashboard');
-    } else {
-      setValErr(res.message || `Login to ${portal.name} failed.`);
-    }
-  };
-
-  const handleQuickStudentSignUp = async () => {
-    setValErr('');
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const quickName = `Student ${randomSuffix}`;
-    const quickEmail = `student_${Date.now().toString().slice(-6)}@pranidha.edu`;
-    const quickPass = 'student123';
-
-    setName(quickName);
-    setEmail(quickEmail);
-    setPassword(quickPass);
-    setConfirm(quickPass);
-
-    const res = await register(quickName, quickEmail, quickPass, 'user');
-    if (res.success) {
-      confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
-      navigate('/lms/dashboard');
-    } else {
-      setValErr(res.message || 'Sign up failed.');
-    }
   };
 
   const handleLogin = async (e) => {
@@ -291,7 +247,12 @@ export default function Login() {
           )}
 
           {/* Form */}
-          <form onSubmit={isRegister ? handleRegister : handleLogin} className="space-y-4">
+          <form 
+            onSubmit={isRegister ? handleRegister : handleLogin} 
+            className="space-y-4"
+            autoComplete="off"
+            noValidate
+          >
 
             {/* Name Input (Register mode only) */}
             {isRegister && (
@@ -301,10 +262,16 @@ export default function Login() {
                 </div>
                 <input
                   type="text"
+                  name="user_display_name"
+                  id="user_display_name"
                   required
                   placeholder="Full Name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                  spellCheck="false"
                   className="w-full bg-[#0c1017] border border-slate-700 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-slate-400 outline-none transition-all"
                 />
               </div>
@@ -317,10 +284,16 @@ export default function Login() {
               </div>
               <input
                 type="email"
+                name="user_email_address"
+                id="user_email_address"
                 required
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck="false"
                 className="w-full bg-[#0c1017] border border-cyan-500/50 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-slate-400 outline-none transition-all shadow-[0_0_10px_rgba(6,182,212,0.15)]"
               />
             </div>
@@ -332,10 +305,16 @@ export default function Login() {
               </div>
               <input
                 type={showPw ? 'text' : 'password'}
+                name="user_access_token"
+                id="user_access_token"
                 required
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck="false"
                 className="w-full bg-[#0c1017] border border-slate-800 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-2xl py-3.5 pl-11 pr-11 text-sm text-white placeholder-slate-400 outline-none transition-all"
               />
               <button
@@ -355,10 +334,16 @@ export default function Login() {
                 </div>
                 <input
                   type={showPw ? 'text' : 'password'}
+                  name="user_confirm_token"
+                  id="user_confirm_token"
                   required
                   placeholder="Confirm Password"
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
+                  autoComplete="new-password"
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                  spellCheck="false"
                   className="w-full bg-[#0c1017] border border-slate-800 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-slate-400 outline-none transition-all"
                 />
               </div>

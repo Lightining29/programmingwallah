@@ -4324,6 +4324,8 @@ export default function AdminDashboard() {
                           <label className="font-bold text-slate-600">Login Password</label>
                           <input
                             type="password" required placeholder="Password"
+                            name="new_teacher_password"
+                            autoComplete="new-password"
                             value={tPassword} onChange={e => setTPassword(e.target.value)}
                             className="w-full bg-white border rounded-xl p-2.5 outline-none"
                           />
