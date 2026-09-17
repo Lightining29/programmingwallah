@@ -232,7 +232,9 @@ const distCandidates = [
   path.join(__dirname, '../dist'),
   path.join(__dirname, 'dist'),
   path.join(process.cwd(), 'frontend/dist'),
-  path.join(process.cwd(), 'dist')
+  path.join(process.cwd(), 'dist'),
+  path.join(__dirname, '..'),
+  process.cwd()
 ];
 
 let resolvedDistPath = null;

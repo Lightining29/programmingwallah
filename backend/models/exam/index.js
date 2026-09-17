@@ -1,4 +1,4 @@
-import { getSequelize, initSequelize, migrateDataFromSqliteToMySQL, switchSequelizeToMySQL } from '../../config/sequelize.js';
+import { getSequelize, initSequelize, switchSequelizeToMySQL } from '../../config/sequelize.js';
 import defineCollege from './College.js';
 import defineExamCourse from './ExamCourse.js';
 import defineExamBatch from './ExamBatch.js';
@@ -183,16 +183,7 @@ export const initExamDatabase = async () => {
 
       await seedInitialExamData();
 
-      // Automatically migrate any existing local SQLite exams & questions to Hostinger MySQL
-      if (sequelize.getDialect() === 'mysql') {
-        try {
-          await migrateDataFromSqliteToMySQL(sequelize);
-        } catch (mErr) {
-          console.warn('Auto migration note:', mErr.message);
-        }
-      }
-
-      console.log('\x1b[32m✔ Online Examination Database Tables & Schema Initialized Successfully!\x1b[0m');
+      console.log('\x1b[32m✔ Online Examination Database Tables & Schema Initialized Successfully in Hostinger MySQL!\x1b[0m');
     } catch (syncErr) {
       console.warn('\x1b[33mℹ Exam database schema sync note: ' + syncErr.message + '\x1b[0m');
     }

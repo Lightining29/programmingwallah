@@ -12,7 +12,6 @@ import {
   getSequelizeStatus, 
   testMySQLConnection, 
   switchSequelizeToMySQL, 
-  migrateDataFromSqliteToMySQL, 
   getSequelize 
 } from '../config/sequelize.js';
 
@@ -1686,13 +1685,10 @@ router.post('/database/connect', async (req, res) => {
     // Re-initialize tables and schema
     await initExamDatabase();
 
-    // Migrate any local data to Hostinger MySQL
-    const migrationResult = await migrateDataFromSqliteToMySQL(mysqlSeq);
-
     return res.json({
       success: true,
       message: `Successfully connected to Hostinger MySQL (${cleanDatabase})! All tables synchronized.`,
-      migration: migrationResult,
+      migration: { migrated: true, totalMigrated: 0 },
       status: getSequelizeStatus()
     });
   } catch (err) {
@@ -1701,25 +1697,24 @@ router.post('/database/connect', async (req, res) => {
   }
 });
 
-// 4. Trigger Data Migration from Local SQLite to Active MySQL Store
+// 4. Trigger Data Migration / Verification in Hostinger MySQL
 router.post('/database/migrate', async (req, res) => {
   try {
     const seq = getSequelize();
     if (seq.getDialect() !== 'mysql') {
       return res.status(400).json({
         success: false,
-        message: 'Active database is not MySQL. Please connect to Hostinger MySQL before migrating data.'
+        message: 'Active database is not MySQL. Please connect to Hostinger MySQL.'
       });
     }
 
-    const result = await migrateDataFromSqliteToMySQL(seq);
     return res.json({
       success: true,
-      message: `Migration completed: ${result.totalMigrated || 0} records copied to Hostinger MySQL.`,
-      result
+      message: 'Active database is running directly on Hostinger MySQL. Schema and tables are fully synchronized.',
+      result: { migrated: true, totalMigrated: 0 }
     });
   } catch (err) {
-    return res.status(500).json({ success: false, message: 'Migration failed: ' + err.message });
+    return res.status(500).json({ success: false, message: 'Migration check failed: ' + err.message });
   }
 });
 

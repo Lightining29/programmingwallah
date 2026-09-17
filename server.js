@@ -2,4 +2,6 @@
 // Root Server Entry Point (for Hostinger Node.js Application Manager & Root Starters)
 // ==============================================================================
 
-import './backend/server.js';
+import app from './backend/server.js';
+
+export default app;
