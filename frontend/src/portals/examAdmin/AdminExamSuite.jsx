@@ -253,6 +253,9 @@ export default function AdminExamSuite() {
       if (data.success) {
         showToast('success', 'Exam created successfully! Choose questions from bank or add new questions.');
         setShowCreateExamModal(false);
+        if (data.exam) {
+          setExams(prev => [data.exam, ...prev.filter(x => x.id !== data.exam.id)]);
+        }
         fetchAllExams();
         fetchAllQuestions();
         // Immediately open Question Studio for this newly created exam!
@@ -678,19 +681,19 @@ export default function AdminExamSuite() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-4 sm:p-8">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans p-3 sm:p-6 transition-colors rounded-3xl">
       <div className="max-w-7xl mx-auto">
         {/* Top Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-800 gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-200 dark:border-slate-800 gap-4 mb-8">
           <div>
-            <div className="flex items-center space-x-2 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-1">
+            <div className="flex items-center space-x-2 text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider mb-1">
               <ShieldCheck className="w-4 h-4" />
               <span>Academic Control Suite</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Online Examination Management System
             </h1>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Configure assessments, generate AI questions, assign test credentials & passwords, and evaluate candidates.
             </p>
           </div>
@@ -726,8 +729,8 @@ export default function AdminExamSuite() {
         {notification.message && (
           <div className={`mb-6 p-4 rounded-2xl flex items-center space-x-3 text-xs ${
             notification.type === 'success'
-              ? 'bg-emerald-950/70 border border-emerald-500 text-emerald-200'
-              : 'bg-rose-950/70 border border-rose-500 text-rose-200'
+              ? 'bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-400 dark:border-emerald-500 text-emerald-800 dark:text-emerald-200'
+              : 'bg-rose-50 dark:bg-rose-950/70 border border-rose-400 dark:border-rose-500 text-rose-800 dark:text-rose-200'
           }`}>
             {notification.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
             <span className="font-semibold">{notification.message}</span>
@@ -735,7 +738,7 @@ export default function AdminExamSuite() {
         )}
 
         {/* Tab Navigation */}
-        <div className="flex space-x-2 border-b border-slate-800 pb-2 mb-8 overflow-x-auto">
+        <div className="flex space-x-2 border-b border-slate-200 dark:border-slate-800 pb-2 mb-8 overflow-x-auto">
           {[
             { id: 'exams', label: 'Examinations', icon: Layers },
             { id: 'questions', label: 'Question Bank', icon: BookOpen },
@@ -752,7 +755,7 @@ export default function AdminExamSuite() {
                 className={`inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap ${
                   isActive
                     ? 'bg-indigo-600 text-white shadow-md'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900'
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -767,8 +770,8 @@ export default function AdminExamSuite() {
           <div>
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h3 className="text-base font-bold text-white">Configured Assessments ({exams.length})</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Manage examinations, switch live status, configure questions & share candidate access links</p>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Configured Assessments ({exams.length})</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Manage examinations, switch live status, configure questions & share candidate access links</p>
               </div>
               <button
                 onClick={() => setShowCreateExamModal(true)}
@@ -779,9 +782,9 @@ export default function AdminExamSuite() {
               </button>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xl">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-950/80 border-b border-slate-800 text-slate-400 uppercase text-[10px] font-semibold tracking-wider">
+                <thead className="bg-slate-50 dark:bg-slate-950/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold tracking-wider">
                   <tr>
                     <th className="py-3.5 px-4">Code / Title</th>
                     <th className="py-3.5 px-4">Subject</th>
@@ -793,76 +796,108 @@ export default function AdminExamSuite() {
                     <th className="py-3.5 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800 text-slate-300">
-                  {exams.map(ex => (
-                    <tr key={ex.id} className="hover:bg-slate-800/40">
-                      <td className="py-3.5 px-4 font-semibold text-white">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-mono text-indigo-400 bg-indigo-950 px-1.5 py-0.5 rounded text-[10px]">
-                            {ex.code || 'TEST'}
-                          </span>
-                          <span>{ex.title || ex.name}</span>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4 text-slate-400">{ex.subject || 'General'}</td>
-                      <td className="py-3.5 px-4">{ex.duration_minutes} mins</td>
-                      <td className="py-3.5 px-4">
-                        <span className="text-emerald-400 font-semibold">{ex.passing_marks}</span> / {ex.total_marks}
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-white">{ex.question_count || 0}</td>
-                      <td className="py-3.5 px-4">{ex.assigned_students_count || 0}</td>
-                      <td className="py-3.5 px-4">
-                        <select
-                          value={ex.status || 'DRAFT'}
-                          onChange={(e) => handleUpdateExamStatus(ex.id, e.target.value)}
-                          className={`text-[10px] font-extrabold rounded-lg px-2.5 py-1 border transition-all cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-500 ${
-                            ex.status === 'PUBLISHED'
-                              ? 'bg-emerald-950/80 text-emerald-300 border-emerald-600'
-                              : ex.status === 'CLOSED'
-                              ? 'bg-rose-950/80 text-rose-300 border-rose-600'
-                              : ex.status === 'ARCHIVED'
-                              ? 'bg-slate-900 text-slate-400 border-slate-700'
-                              : 'bg-amber-950/80 text-amber-300 border-amber-600'
-                          }`}
-                          title="Click to change status (Live/Draft)"
-                        >
-                          <option value="DRAFT" className="bg-slate-900 text-amber-300">DRAFT (Hidden)</option>
-                          <option value="PUBLISHED" className="bg-slate-900 text-emerald-300">PUBLISHED (Live)</option>
-                          <option value="CLOSED" className="bg-slate-900 text-rose-300">CLOSED</option>
-                          <option value="ARCHIVED" className="bg-slate-900 text-slate-400">ARCHIVED</option>
-                        </select>
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
-                        <div className="flex items-center justify-end space-x-2">
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
+                  {exams.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="py-14 px-4 text-center">
+                        <div className="max-w-md mx-auto space-y-3">
+                          <BookOpen className="w-9 h-9 text-slate-400 mx-auto" />
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white">No Examinations Configured Yet</h4>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            Create your first examination assessment, add questions, and publish the test.
+                          </p>
                           <button
-                            onClick={() => openManageQuestionsModal(ex, false)}
-                            className="px-2.5 py-1 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 rounded-lg text-[11px] font-semibold transition-colors flex items-center space-x-1 border border-indigo-500/30"
-                            title="Choose & Add Questions for this Exam"
+                            type="button"
+                            onClick={() => setShowCreateExamModal(true)}
+                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs inline-flex items-center space-x-1.5 shadow-md"
                           >
-                            <BookOpen className="w-3.5 h-3.5" />
-                            <span>Questions ({ex.question_count || 0})</span>
-                          </button>
-                          <button
-                            onClick={() => setShareExamModal(ex)}
-                            className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-[11px] font-semibold transition-colors flex items-center space-x-1"
-                            title="Generate & View Link & QR Code"
-                          >
-                            <QrCode className="w-3.5 h-3.5" />
-                            <span>Link & QR</span>
-                          </button>
-                          <button
-                            onClick={() => {
-                              setAssignForm(prev => ({ ...prev, exam_id: ex.id }));
-                              setShowAssignModal(true);
-                            }}
-                            className="px-2.5 py-1 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded-lg text-[11px] font-medium transition-colors"
-                          >
-                            Assign
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Add Questions / Create Exam</span>
                           </button>
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    exams.map(ex => (
+                      <tr key={ex.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                        <td className="py-3.5 px-4 font-semibold">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-mono text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-800 px-2 py-0.5 rounded text-[10px] font-bold">
+                              {ex.code || 'TEST'}
+                            </span>
+                            <span className="text-slate-900 dark:text-white font-bold">{ex.title || ex.name}</span>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400">{ex.subject || 'General'}</td>
+                        <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300">{ex.duration_minutes} mins</td>
+                        <td className="py-3.5 px-4">
+                          <span className="text-emerald-600 dark:text-emerald-400 font-bold">{ex.passing_marks}</span> / {ex.total_marks}
+                        </td>
+                        <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white">{ex.question_count || 0}</td>
+                        <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300">{ex.assigned_students_count || 0}</td>
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center space-x-1.5">
+                            <select
+                              value={ex.status || 'DRAFT'}
+                              onChange={(e) => handleUpdateExamStatus(ex.id, e.target.value)}
+                              className={`text-[11px] font-extrabold rounded-xl px-2.5 py-1 border transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                                ex.status === 'PUBLISHED'
+                                  ? 'bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-600 shadow-sm'
+                                  : ex.status === 'CLOSED'
+                                  ? 'bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-600'
+                                  : ex.status === 'ARCHIVED'
+                                  ? 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700'
+                                  : 'bg-amber-50 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-600'
+                              }`}
+                              title="Click to switch Test Publish Status"
+                            >
+                              <option value="DRAFT" className="bg-white dark:bg-slate-900 text-amber-700 dark:text-amber-300 font-bold">
+                                ● DRAFT (Hidden)
+                              </option>
+                              <option value="PUBLISHED" className="bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 font-bold">
+                                ● PUBLISHED (Live)
+                              </option>
+                              <option value="CLOSED" className="bg-white dark:bg-slate-900 text-rose-700 dark:text-rose-300 font-bold">
+                                ● CLOSED
+                              </option>
+                              <option value="ARCHIVED" className="bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-400 font-bold">
+                                ● ARCHIVED
+                              </option>
+                            </select>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <div className="flex items-center justify-end space-x-2">
+                            <button
+                              onClick={() => openManageQuestionsModal(ex, false)}
+                              className="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-600/20 hover:bg-indigo-100 dark:hover:bg-indigo-600/30 text-indigo-700 dark:text-indigo-300 rounded-lg text-[11px] font-semibold transition-colors flex items-center space-x-1 border border-indigo-200 dark:border-indigo-500/30"
+                              title="Choose & Add Questions for this Exam"
+                            >
+                              <BookOpen className="w-3.5 h-3.5" />
+                              <span>Questions ({ex.question_count || 0})</span>
+                            </button>
+                            <button
+                              onClick={() => setShareExamModal(ex)}
+                              className="px-2.5 py-1 bg-amber-50 dark:bg-amber-500/20 hover:bg-amber-100 dark:hover:bg-amber-500/30 text-amber-700 dark:text-amber-300 rounded-lg text-[11px] font-semibold transition-colors flex items-center space-x-1 border border-amber-200 dark:border-amber-500/30"
+                              title="Generate & View Link & QR Code"
+                            >
+                              <QrCode className="w-3.5 h-3.5" />
+                              <span>Link & QR</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                setAssignForm(prev => ({ ...prev, exam_id: ex.id }));
+                                setShowAssignModal(true);
+                              }}
+                              className="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-600/30 hover:bg-emerald-100 dark:hover:bg-emerald-600 text-emerald-700 dark:text-emerald-300 rounded-lg text-[11px] font-medium transition-colors border border-emerald-200 dark:border-emerald-600/40"
+                            >
+                              Assign
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -1225,9 +1260,10 @@ export default function AdminExamSuite() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-md shadow-indigo-600/20 transition"
+                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-md shadow-indigo-600/30 transition flex items-center space-x-1.5"
                   >
-                    {loading ? 'Creating...' : 'Create Exam'}
+                    <Plus className="w-4 h-4 stroke-[2.5]" />
+                    <span>{loading ? 'Creating & Adding Questions...' : 'Add Questions'}</span>
                   </button>
                 </div>
               </form>
@@ -1722,6 +1758,29 @@ export default function AdminExamSuite() {
 
                   {/* Header Action Buttons */}
                   <div className="flex items-center space-x-2 flex-shrink-0">
+                    {/* Dedicated Publish Test Button */}
+                    {managingQuestionsExam.status === 'PUBLISHED' ? (
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateExamStatus(managingQuestionsExam.id, 'DRAFT')}
+                        className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 transition shadow-md shadow-emerald-600/30"
+                        title="Test is currently LIVE for candidates. Click to unpublish / switch to Draft"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-200" />
+                        <span>Published (Live)</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateExamStatus(managingQuestionsExam.id, 'PUBLISHED')}
+                        className="px-4 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-black flex items-center space-x-1.5 transition shadow-lg shadow-emerald-600/30 hover:scale-[1.02] animate-pulse"
+                        title="Publish this test now to make it live for students"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                        <span>Publish Test</span>
+                      </button>
+                    )}
+
                     <button
                       type="button"
                       onClick={() => {
