@@ -6,7 +6,17 @@ export default (sequelize) => {
     exam_id: { type: DataTypes.INTEGER, allowNull: false },
     question_id: { type: DataTypes.INTEGER, allowNull: false },
     question_order: { type: DataTypes.INTEGER, defaultValue: 1 },
-    marks_override: { type: DataTypes.DECIMAL(6, 2), allowNull: true }
+    marks_override: { type: DataTypes.DECIMAL(6, 2), allowNull: true },
+    order_index: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('question_order'); },
+      set(v) { this.setDataValue('question_order', v); }
+    },
+    marks: {
+      type: DataTypes.VIRTUAL,
+      get() { return this.getDataValue('marks_override'); },
+      set(v) { this.setDataValue('marks_override', v); }
+    }
   }, {
     tableName: 'exam_questions',
     timestamps: true,

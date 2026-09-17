@@ -28,7 +28,10 @@ import {
   QrCode,
   Share2,
   Printer,
-  MessageCircle
+  MessageCircle,
+  Filter,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 
 export default function AdminExamSuite() {
@@ -53,6 +56,18 @@ export default function AdminExamSuite() {
   const [shareExamModal, setShareExamModal] = useState(null);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
   const [copiedLinkType, setCopiedLinkType] = useState(null);
+
+  // Manage Exam Questions Studio Modal
+  const [managingQuestionsExam, setManagingQuestionsExam] = useState(null);
+  const [examAttachedQuestions, setExamAttachedQuestions] = useState([]);
+  const [loadingExamQuestions, setLoadingExamQuestions] = useState(false);
+  const [submittingQuestions, setSubmittingQuestions] = useState(false);
+  const [examQuestionTab, setExamQuestionTab] = useState('choose'); // 'choose', 'create', 'assigned'
+  const [selectedBankQuestionIds, setSelectedBankQuestionIds] = useState([]);
+  const [bankSearch, setBankSearch] = useState('');
+  const [bankSubjectFilter, setBankSubjectFilter] = useState('');
+  const [bankDifficultyFilter, setBankDifficultyFilter] = useState('');
+  const [isJustCreatedExam, setIsJustCreatedExam] = useState(false);
 
   // Password Generation Results Drawer
   const [generatedCredentials, setGeneratedCredentials] = useState([]);
@@ -231,12 +246,13 @@ export default function AdminExamSuite() {
       });
       const data = await res.json();
       if (data.success) {
-        showToast('success', 'Exam created successfully! Share link & QR code ready.');
+        showToast('success', 'Exam created successfully! Choose questions from bank or add new questions.');
         setShowCreateExamModal(false);
         fetchAllExams();
-        // Immediately open share link & QR modal for the created exam
+        fetchAllQuestions();
+        // Immediately open Question Studio for this newly created exam!
         if (data.exam) {
-          setShareExamModal(data.exam);
+          openManageQuestionsModal(data.exam, true);
         }
       } else {
         showToast('error', data.message || 'Failed to create exam.');
@@ -247,6 +263,249 @@ export default function AdminExamSuite() {
       setLoading(false);
     }
   };
+
+  // ── Question Studio Handlers ──
+  const openManageQuestionsModal = async (exam, justCreated = false) => {
+    setManagingQuestionsExam(exam);
+    setIsJustCreatedExam(justCreated);
+    setExamQuestionTab(justCreated ? 'choose' : 'assigned');
+    setSelectedBankQuestionIds([]);
+    setBankSearch('');
+    setBankSubjectFilter('');
+    setBankDifficultyFilter('');
+    fetchAllQuestions();
+    await fetchExamDetailsAndQuestions(exam.id);
+  };
+
+  const fetchExamDetailsAndQuestions = async (examId) => {
+    try {
+      setLoadingExamQuestions(true);
+      const res = await fetch(`/api/admin/test/exams/${examId}`, { headers: authHeaders });
+      const data = await res.json();
+      if (data.success && data.exam) {
+        setManagingQuestionsExam(data.exam);
+        setExamAttachedQuestions(data.exam.questions || []);
+      }
+    } catch (e) {
+      console.error('Error fetching exam questions:', e);
+    } finally {
+      setLoadingExamQuestions(false);
+    }
+  };
+
+  const isQuestionAlreadyInExam = (questionId) => {
+    return examAttachedQuestions.some(eq => eq.id === questionId);
+  };
+
+  const toggleSelectBankQuestion = (questionId) => {
+    setSelectedBankQuestionIds(prev => {
+      if (prev.includes(questionId)) {
+        return prev.filter(id => id !== questionId);
+      } else {
+        return [...prev, questionId];
+      }
+    });
+  };
+
+  const handleSelectAllAvailable = () => {
+    const unattached = filteredBankQuestions.filter(q => !isQuestionAlreadyInExam(q.id));
+    if (selectedBankQuestionIds.length >= unattached.length && unattached.length > 0) {
+      setSelectedBankQuestionIds([]);
+    } else {
+      setSelectedBankQuestionIds(unattached.map(q => q.id));
+    }
+  };
+
+  const handleAttachSelectedQuestions = async () => {
+    if (!managingQuestionsExam?.id) return;
+    if (selectedBankQuestionIds.length === 0) {
+      showToast('error', 'Please select at least one question to attach.');
+      return;
+    }
+
+    setSubmittingQuestions(true);
+    try {
+      const res = await fetch(`/api/admin/test/exams/${managingQuestionsExam.id}/questions`, {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({ question_ids: selectedBankQuestionIds })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('success', data.message || `Successfully attached ${selectedBankQuestionIds.length} question(s) to exam!`);
+        setSelectedBankQuestionIds([]);
+        await fetchExamDetailsAndQuestions(managingQuestionsExam.id);
+        setExamQuestionTab('assigned');
+        fetchAllExams();
+      } else {
+        showToast('error', data.message || 'Failed to attach questions.');
+      }
+    } catch (e) {
+      showToast('error', 'Network error while attaching questions.');
+    } finally {
+      setSubmittingQuestions(false);
+    }
+  };
+
+  const handleAttachQuestionsToExam = async (questionIdsToAttach) => {
+    if (!managingQuestionsExam?.id || !questionIdsToAttach.length) return;
+
+    setSubmittingQuestions(true);
+    try {
+      const res = await fetch(`/api/admin/test/exams/${managingQuestionsExam.id}/questions`, {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({ question_ids: questionIdsToAttach })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('success', data.message || 'Question attached to exam!');
+        await fetchExamDetailsAndQuestions(managingQuestionsExam.id);
+        fetchAllExams();
+      } else {
+        showToast('error', data.message || 'Failed to attach question.');
+      }
+    } catch (e) {
+      showToast('error', 'Network error while attaching question.');
+    } finally {
+      setSubmittingQuestions(false);
+    }
+  };
+
+  const handleRemoveQuestionFromExam = async (questionId) => {
+    if (!managingQuestionsExam?.id) return;
+
+    try {
+      const res = await fetch(`/api/admin/test/exams/${managingQuestionsExam.id}/questions/${questionId}`, {
+        method: 'DELETE',
+        headers: authHeaders
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('success', 'Question removed from exam.');
+        await fetchExamDetailsAndQuestions(managingQuestionsExam.id);
+        fetchAllExams();
+      } else {
+        showToast('error', data.message || 'Failed to remove question.');
+      }
+    } catch (e) {
+      showToast('error', 'Failed to remove question.');
+    }
+  };
+
+  const handleCreateQuestionDirectly = async (e) => {
+    e.preventDefault();
+    if (!newQuestion.question_text.trim()) {
+      showToast('error', 'Question statement is required.');
+      return;
+    }
+
+    if (newQuestion.type === 'MCQ') {
+      const validOptions = newQuestion.options.filter(o => o.option_text.trim() !== '');
+      if (validOptions.length < 2) {
+        showToast('error', 'Please provide at least 2 options for Multiple Choice Question.');
+        return;
+      }
+      const hasCorrect = validOptions.some(o => o.is_correct);
+      if (!hasCorrect) {
+        showToast('error', 'Please select at least one correct option.');
+        return;
+      }
+    }
+
+    setSubmittingQuestions(true);
+    try {
+      const res = await fetch('/api/admin/test/questions', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          ...newQuestion,
+          exam_id: managingQuestionsExam?.id || null
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        showToast('success', 'Question created and added to exam successfully!');
+        setNewQuestion({
+          type: 'MCQ',
+          question_text: '',
+          code_snippet: '',
+          programming_language: 'Java',
+          marks: 4,
+          negative_marks: 1,
+          difficulty: 'MEDIUM',
+          subject: managingQuestionsExam?.subject || 'Java',
+          topic: 'General',
+          options: [
+            { option_text: '', is_correct: true },
+            { option_text: '', is_correct: false },
+            { option_text: '', is_correct: false },
+            { option_text: '', is_correct: false }
+          ],
+          explanation: ''
+        });
+        if (managingQuestionsExam?.id) {
+          await fetchExamDetailsAndQuestions(managingQuestionsExam.id);
+          setExamQuestionTab('assigned');
+        }
+        fetchAllQuestions();
+        fetchAllExams();
+      } else {
+        showToast('error', data.message || 'Failed to create question.');
+      }
+    } catch (e) {
+      showToast('error', 'Network error while creating question.');
+    } finally {
+      setSubmittingQuestions(false);
+    }
+  };
+
+  const updateOptionText = (idx, text) => {
+    setNewQuestion(prev => {
+      const opts = [...prev.options];
+      opts[idx] = { ...opts[idx], option_text: text };
+      return { ...prev, options: opts };
+    });
+  };
+
+  const selectCorrectOption = (idx) => {
+    setNewQuestion(prev => ({
+      ...prev,
+      options: prev.options.map((o, i) => ({ ...o, is_correct: i === idx }))
+    }));
+  };
+
+  const addOptionField = () => {
+    if (newQuestion.options.length >= 6) return;
+    setNewQuestion(prev => ({
+      ...prev,
+      options: [...prev.options, { option_text: '', is_correct: false }]
+    }));
+  };
+
+  const removeOptionField = (idx) => {
+    if (newQuestion.options.length <= 2) return;
+    setNewQuestion(prev => {
+      const opts = prev.options.filter((_, i) => i !== idx);
+      if (!opts.some(o => o.is_correct) && opts.length > 0) {
+        opts[0].is_correct = true;
+      }
+      return { ...prev, options: opts };
+    });
+  };
+
+  const filteredBankQuestions = questions.filter(q => {
+    const matchesSearch = !bankSearch || 
+      (q.question_text && q.question_text.toLowerCase().includes(bankSearch.toLowerCase())) ||
+      (q.topic && q.topic.toLowerCase().includes(bankSearch.toLowerCase())) ||
+      (q.subject && q.subject.toLowerCase().includes(bankSearch.toLowerCase()));
+    
+    const matchesSubject = !bankSubjectFilter || (q.subject === bankSubjectFilter);
+    const matchesDifficulty = !bankDifficultyFilter || (q.difficulty === bankDifficultyFilter);
+
+    return matchesSearch && matchesSubject && matchesDifficulty;
+  });
 
   // ── 3. AI Question Generator Handler (Gemini) ──
   const handleGenerateAIQuestions = async (e) => {
@@ -480,6 +739,14 @@ export default function AdminExamSuite() {
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end space-x-2">
                           <button
+                            onClick={() => openManageQuestionsModal(ex, false)}
+                            className="px-2.5 py-1 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 rounded-lg text-[11px] font-semibold transition-colors flex items-center space-x-1 border border-indigo-500/30"
+                            title="Choose & Add Questions for this Exam"
+                          >
+                            <BookOpen className="w-3.5 h-3.5" />
+                            <span>Questions ({ex.question_count || 0})</span>
+                          </button>
+                          <button
                             onClick={() => setShareExamModal(ex)}
                             className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-[11px] font-semibold transition-colors flex items-center space-x-1"
                             title="Generate & View Link & QR Code"
@@ -492,7 +759,7 @@ export default function AdminExamSuite() {
                               setAssignForm(prev => ({ ...prev, exam_id: ex.id }));
                               setShowAssignModal(true);
                             }}
-                            className="px-2.5 py-1 bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white rounded-lg text-[11px] font-medium transition-colors"
+                            className="px-2.5 py-1 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded-lg text-[11px] font-medium transition-colors"
                           >
                             Assign
                           </button>
@@ -1242,6 +1509,19 @@ export default function AdminExamSuite() {
                       <ExternalLink className="w-3.5 h-3.5" />
                       <span>Test Link</span>
                     </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const ex = shareExamModal;
+                        setShareExamModal(null);
+                        openManageQuestionsModal(ex, false);
+                      }}
+                      className="py-2.5 px-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition shadow-sm"
+                    >
+                      <BookOpen className="w-3.5 h-3.5" />
+                      <span>Choose / Add Questions</span>
+                    </button>
                   </div>
 
                 </div>
@@ -1253,6 +1533,654 @@ export default function AdminExamSuite() {
                 <p>
                   <strong>How students access via this QR/Link:</strong> Candidates scan the QR code or click the registration link, enter their details, and immediately receive their unique test password on screen to begin the examination.
                 </p>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* ══════════ MODAL: MANAGE EXAM QUESTIONS STUDIO ══════════ */}
+        {managingQuestionsExam && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-5xl h-[92vh] flex flex-col shadow-2xl text-slate-900 dark:text-white overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              
+              {/* 1. Studio Header */}
+              <div className="p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center space-x-3 min-w-0">
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-600/10 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 flex-shrink-0">
+                      <BookOpen className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center space-x-2 flex-wrap">
+                        <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                          {managingQuestionsExam.code || 'EXAM'}
+                        </span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
+                          • {managingQuestionsExam.subject || 'General'}
+                        </span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                          • {managingQuestionsExam.duration_minutes} mins
+                        </span>
+                      </div>
+                      <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white truncate mt-0.5">
+                        {managingQuestionsExam.title || managingQuestionsExam.name}
+                      </h2>
+                    </div>
+                  </div>
+
+                  {/* Header Action Buttons */}
+                  <div className="flex items-center space-x-2 flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShareExamModal(managingQuestionsExam);
+                      }}
+                      className="px-3 py-1.5 bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition border border-amber-500/30"
+                    >
+                      <QrCode className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Link & QR Code</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setManagingQuestionsExam(null)}
+                      className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition text-base"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+
+                {/* Just Created Exam Notice Banner */}
+                {isJustCreatedExam && (
+                  <div className="mt-4 p-3 bg-gradient-to-r from-emerald-950/60 to-indigo-950/60 border border-emerald-500/40 rounded-2xl flex items-center justify-between text-xs text-emerald-200">
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      <span><strong>Exam created successfully!</strong> Now choose questions from the Question Bank or create new questions below to complete your test.</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsJustCreatedExam(false)}
+                      className="text-emerald-400 hover:text-emerald-200 text-xs ml-2 font-bold"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                )}
+
+                {/* Quick Stats Bar */}
+                <div className="grid grid-cols-3 gap-2 mt-4 text-center">
+                  <div className="p-2 bg-slate-50 dark:bg-slate-950/50 rounded-xl border border-slate-200 dark:border-slate-800/80">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Questions in Exam</span>
+                    <span className="text-sm font-extrabold text-indigo-600 dark:text-indigo-400">
+                      {examAttachedQuestions.length}
+                    </span>
+                  </div>
+                  <div className="p-2 bg-slate-50 dark:bg-slate-950/50 rounded-xl border border-slate-200 dark:border-slate-800/80">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Marks Configured</span>
+                    <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
+                      {examAttachedQuestions.reduce((acc, q) => acc + (parseFloat(q.ExamQuestion?.marks_override || q.marks) || 0), 0)} / {managingQuestionsExam.total_marks || 100}
+                    </span>
+                  </div>
+                  <div className="p-2 bg-slate-50 dark:bg-slate-950/50 rounded-xl border border-slate-200 dark:border-slate-800/80">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Passing Criteria</span>
+                    <span className="text-sm font-extrabold text-slate-900 dark:text-slate-200">
+                      {managingQuestionsExam.passing_marks || 40} marks
+                    </span>
+                  </div>
+                </div>
+
+                {/* Sub-Tab Navigation */}
+                <div className="flex space-x-1 mt-4 p-1 bg-slate-100 dark:bg-slate-950 rounded-2xl">
+                  <button
+                    type="button"
+                    onClick={() => setExamQuestionTab('choose')}
+                    className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 ${
+                      examQuestionTab === 'choose'
+                        ? 'bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-sm'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                    <span>Choose from Bank ({questions.length})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setExamQuestionTab('create')}
+                    className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 ${
+                      examQuestionTab === 'create'
+                        ? 'bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-sm'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Create New Question</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setExamQuestionTab('assigned')}
+                    className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 ${
+                      examQuestionTab === 'assigned'
+                        ? 'bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-sm'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <BookOpen className="w-3.5 h-3.5" />
+                    <span>Assigned Questions ({examAttachedQuestions.length})</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 2. Scrollable Studio Body */}
+              <div className="flex-1 overflow-y-auto p-5 sm:p-6">
+                {loadingExamQuestions ? (
+                  <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                    <RefreshCw className="w-8 h-8 animate-spin text-indigo-500 mb-3" />
+                    <p className="text-xs font-semibold">Loading questions for this exam...</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* ────── SUB-TAB 1: CHOOSE FROM QUESTION BANK ────── */}
+                    {examQuestionTab === 'choose' && (
+                      <div className="space-y-4">
+                        {/* Search & Filters */}
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <div className="relative flex-1">
+                            <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                            <input
+                              type="text"
+                              value={bankSearch}
+                              onChange={(e) => setBankSearch(e.target.value)}
+                              placeholder="Search questions by text, topic or subject..."
+                              className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+                            />
+                          </div>
+
+                          <select
+                            value={bankDifficultyFilter}
+                            onChange={(e) => setBankDifficultyFilter(e.target.value)}
+                            className="p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+                          >
+                            <option value="">All Difficulties</option>
+                            <option value="EASY">Easy</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="HARD">Hard</option>
+                          </select>
+
+                          <button
+                            type="button"
+                            onClick={handleSelectAllAvailable}
+                            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 flex-shrink-0"
+                          >
+                            <CheckSquare className="w-3.5 h-3.5" />
+                            <span>Select All Available</span>
+                          </button>
+                        </div>
+
+                        {/* Batch Action Floating Bar when items selected */}
+                        {selectedBankQuestionIds.length > 0 && (
+                          <div className="p-3 bg-indigo-50 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-600 rounded-2xl flex items-center justify-between shadow-lg">
+                            <div className="flex items-center space-x-2 text-xs font-bold text-indigo-900 dark:text-indigo-200">
+                              <CheckCircle2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                              <span>{selectedBankQuestionIds.length} question(s) selected</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedBankQuestionIds([])}
+                                className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white font-semibold"
+                              >
+                                Deselect
+                              </button>
+                              <button
+                                type="button"
+                                disabled={submittingQuestions}
+                                onClick={handleAttachSelectedQuestions}
+                                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl flex items-center space-x-1.5 shadow-md shadow-indigo-600/30 transition disabled:opacity-50"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                                <span>{submittingQuestions ? 'Attaching...' : `Attach to Exam (${selectedBankQuestionIds.length})`}</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Questions List */}
+                        <div className="space-y-3">
+                          {filteredBankQuestions.length === 0 ? (
+                            <div className="text-center py-12 text-slate-400 text-xs">
+                              No questions found matching your search. Try changing filters or create a new question!
+                            </div>
+                          ) : (
+                            filteredBankQuestions.map((q, qIndex) => {
+                              const isAlreadyAttached = isQuestionAlreadyInExam(q.id);
+                              const isSelected = selectedBankQuestionIds.includes(q.id);
+
+                              return (
+                                <div
+                                  key={q.id || qIndex}
+                                  onClick={() => {
+                                    if (!isAlreadyAttached) toggleSelectBankQuestion(q.id);
+                                  }}
+                                  className={`p-4 rounded-2xl border transition-all text-xs ${
+                                    isAlreadyAttached
+                                      ? 'bg-emerald-500/5 border-emerald-500/30 opacity-80 cursor-default'
+                                      : isSelected
+                                      ? 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-500 shadow-md cursor-pointer'
+                                      : 'bg-slate-50 dark:bg-slate-950/70 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer'
+                                  }`}
+                                >
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-start space-x-3 min-w-0 flex-1">
+                                      {/* Checkbox */}
+                                      <div className="mt-0.5 flex-shrink-0">
+                                        {isAlreadyAttached ? (
+                                          <div className="w-4 h-4 rounded bg-emerald-600 text-white flex items-center justify-center">
+                                            <Check className="w-3 h-3 stroke-[3]" />
+                                          </div>
+                                        ) : isSelected ? (
+                                          <div className="w-4 h-4 rounded bg-indigo-600 text-white flex items-center justify-center">
+                                            <Check className="w-3 h-3 stroke-[3]" />
+                                          </div>
+                                        ) : (
+                                          <div className="w-4 h-4 rounded border border-slate-400 dark:border-slate-600 bg-white dark:bg-slate-900" />
+                                        )}
+                                      </div>
+
+                                      {/* Question Content */}
+                                      <div className="min-w-0 flex-1">
+                                        <div className="flex items-center space-x-2 mb-1 flex-wrap gap-y-1">
+                                          <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                            {q.type || q.question_type || 'MCQ'}
+                                          </span>
+                                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                            q.difficulty === 'HARD' ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400' :
+                                            q.difficulty === 'EASY' ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' :
+                                            'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                                          }`}>
+                                            {q.difficulty || 'MEDIUM'}
+                                          </span>
+                                          <span className="text-slate-400 text-[11px]">• {q.subject || 'General'}</span>
+                                          {q.topic && <span className="text-slate-400 text-[11px]">• {q.topic}</span>}
+                                        </div>
+
+                                        <p className="font-semibold text-slate-900 dark:text-white leading-relaxed">
+                                          {q.question_text}
+                                        </p>
+
+                                        {q.code_snippet && (
+                                          <pre className="p-2.5 mt-2 bg-slate-900 text-emerald-400 rounded-xl font-mono text-[11px] overflow-x-auto">
+                                            <code>{q.code_snippet}</code>
+                                          </pre>
+                                        )}
+
+                                        {q.options && q.options.length > 0 && (
+                                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mt-2.5">
+                                            {q.options.map((opt, oIdx) => (
+                                              <div
+                                                key={opt.id || oIdx}
+                                                className={`p-1.5 px-2.5 rounded-lg border text-[11px] ${
+                                                  opt.is_correct
+                                                    ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-400 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 font-semibold'
+                                                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                                                }`}
+                                              >
+                                                <span className="font-mono mr-1.5 text-slate-400">{String.fromCharCode(65 + oIdx)}.</span>
+                                                {opt.option_text}
+                                                {opt.is_correct && <span className="ml-1 text-emerald-500">✓</span>}
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* Badge / Action */}
+                                    <div className="flex flex-col items-end space-y-1 flex-shrink-0">
+                                      <span className="text-emerald-600 dark:text-emerald-400 font-bold text-xs">
+                                        +{q.marks || 1} mark{q.marks > 1 ? 's' : ''}
+                                      </span>
+                                      {isAlreadyAttached ? (
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                                          ✓ Added to Exam
+                                        </span>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleAttachQuestionsToExam([q.id]);
+                                          }}
+                                          className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[10px] font-bold transition flex items-center space-x-1"
+                                        >
+                                          <Plus className="w-3 h-3" />
+                                          <span>Add</span>
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ────── SUB-TAB 2: CREATE NEW QUESTION ────── */}
+                    {examQuestionTab === 'create' && (
+                      <form onSubmit={handleCreateQuestionDirectly} className="space-y-4 text-xs max-w-3xl mx-auto">
+                        <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/40 rounded-2xl text-xs text-indigo-900 dark:text-indigo-200 flex items-center space-x-2">
+                          <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
+                          <span>This new question will be saved into the master Question Bank and immediately attached to <strong>{managingQuestionsExam.title || managingQuestionsExam.name}</strong>.</span>
+                        </div>
+
+                        <div>
+                          <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1">
+                            Question Statement / Problem Prompt *
+                          </label>
+                          <textarea
+                            required
+                            rows={3}
+                            value={newQuestion.question_text}
+                            onChange={(e) => setNewQuestion({ ...newQuestion, question_text: e.target.value })}
+                            placeholder="e.g. Which Java Collection interface does NOT allow duplicate elements?"
+                            className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Question Type</label>
+                            <select
+                              value={newQuestion.type}
+                              onChange={(e) => setNewQuestion({ ...newQuestion, type: e.target.value })}
+                              className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+                            >
+                              <option value="MCQ">Multiple Choice (MCQ)</option>
+                              <option value="CODE_ERROR">Code Error ("Find the Bug")</option>
+                              <option value="DESCRIPTIVE">Descriptive / Q&A</option>
+                              <option value="TRUE_FALSE">True / False</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Difficulty</label>
+                            <select
+                              value={newQuestion.difficulty}
+                              onChange={(e) => setNewQuestion({ ...newQuestion, difficulty: e.target.value })}
+                              className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+                            >
+                              <option value="EASY">Easy</option>
+                              <option value="MEDIUM">Medium</option>
+                              <option value="HARD">Hard</option>
+                            </select>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Marks (+)</label>
+                              <input
+                                type="number"
+                                step="0.5"
+                                value={newQuestion.marks}
+                                onChange={(e) => setNewQuestion({ ...newQuestion, marks: parseFloat(e.target.value) || 1 })}
+                                className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Neg (-)</label>
+                              <input
+                                type="number"
+                                step="0.25"
+                                value={newQuestion.negative_marks}
+                                onChange={(e) => setNewQuestion({ ...newQuestion, negative_marks: parseFloat(e.target.value) || 0 })}
+                                className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Subject</label>
+                            <input
+                              type="text"
+                              value={newQuestion.subject}
+                              onChange={(e) => setNewQuestion({ ...newQuestion, subject: e.target.value })}
+                              placeholder="e.g. Java, Python, React"
+                              className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Topic / Tag</label>
+                            <input
+                              type="text"
+                              value={newQuestion.topic}
+                              onChange={(e) => setNewQuestion({ ...newQuestion, topic: e.target.value })}
+                              placeholder="e.g. Collections, Polymorphism"
+                              className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
+                            Code Snippet (Optional)
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={newQuestion.code_snippet}
+                            onChange={(e) => setNewQuestion({ ...newQuestion, code_snippet: e.target.value })}
+                            placeholder="public class Test { public static void main(String[] args) { ... } }"
+                            className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          />
+                        </div>
+
+                        {/* MCQ Options Builder */}
+                        {newQuestion.type === 'MCQ' && (
+                          <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                            <div className="flex items-center justify-between">
+                              <label className="text-slate-700 dark:text-slate-300 font-bold">
+                                Multiple Choice Options (Select radio for correct answer) *
+                              </label>
+                              {newQuestion.options.length < 6 && (
+                                <button
+                                  type="button"
+                                  onClick={addOptionField}
+                                  className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-bold flex items-center space-x-1"
+                                >
+                                  <Plus className="w-3.5 h-3.5" />
+                                  <span>Add Option</span>
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="space-y-2">
+                              {newQuestion.options.map((opt, optIndex) => (
+                                <div key={optIndex} className="flex items-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    name="correct_option"
+                                    checked={opt.is_correct}
+                                    onChange={() => selectCorrectOption(optIndex)}
+                                    className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                                    title="Mark as correct answer"
+                                  />
+                                  <span className="font-mono text-xs font-bold text-slate-500 w-5">
+                                    {String.fromCharCode(65 + optIndex)}.
+                                  </span>
+                                  <input
+                                    type="text"
+                                    value={opt.option_text}
+                                    onChange={(e) => updateOptionText(optIndex, e.target.value)}
+                                    placeholder={`Option ${String.fromCharCode(65 + optIndex)}`}
+                                    className="flex-1 p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-xs"
+                                  />
+                                  {newQuestion.options.length > 2 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => removeOptionField(optIndex)}
+                                      className="text-slate-400 hover:text-rose-500 p-1 text-sm"
+                                    >
+                                      ✕
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Explanation */}
+                        <div>
+                          <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
+                            Answer Explanation / Solution Hint (Optional)
+                          </label>
+                          <input
+                            type="text"
+                            value={newQuestion.explanation}
+                            onChange={(e) => setNewQuestion({ ...newQuestion, explanation: e.target.value })}
+                            placeholder="Brief rationale for why this answer is correct..."
+                            className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+                          />
+                        </div>
+
+                        <div className="flex justify-end space-x-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+                          <button
+                            type="submit"
+                            disabled={submittingQuestions}
+                            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl flex items-center space-x-2 shadow-lg shadow-indigo-600/30 transition disabled:opacity-50"
+                          >
+                            <Plus className="w-4 h-4" />
+                            <span>{submittingQuestions ? 'Saving Question...' : 'Add Question to Exam'}</span>
+                          </button>
+                        </div>
+                      </form>
+                    )}
+
+                    {/* ────── SUB-TAB 3: ASSIGNED QUESTIONS ────── */}
+                    {examQuestionTab === 'assigned' && (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                            Assigned Questions ({examAttachedQuestions.length})
+                          </h4>
+                          <button
+                            type="button"
+                            onClick={() => setExamQuestionTab('choose')}
+                            className="inline-flex items-center space-x-1 text-xs text-indigo-600 dark:text-indigo-400 font-bold hover:underline"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Add More Questions</span>
+                          </button>
+                        </div>
+
+                        {examAttachedQuestions.length === 0 ? (
+                          <div className="text-center py-16 p-6 border border-dashed border-slate-300 dark:border-slate-800 rounded-3xl">
+                            <BookOpen className="w-10 h-10 text-slate-400 mx-auto mb-3" />
+                            <h5 className="font-bold text-slate-900 dark:text-white text-sm mb-1">No Questions Assigned Yet</h5>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-4">
+                              This exam currently has no questions. Choose questions from the Question Bank or create new questions.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => setExamQuestionTab('choose')}
+                              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs inline-flex items-center space-x-1.5 shadow-md"
+                            >
+                              <Layers className="w-3.5 h-3.5" />
+                              <span>Choose from Question Bank</span>
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {examAttachedQuestions.map((q, qIndex) => (
+                              <div
+                                key={q.id || qIndex}
+                                className="p-4 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs space-y-2"
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex items-center space-x-2">
+                                    <span className="font-bold text-indigo-600 dark:text-indigo-400 font-mono text-xs">
+                                      Q{qIndex + 1}.
+                                    </span>
+                                    <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                      {q.type || q.question_type || 'MCQ'}
+                                    </span>
+                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                      {q.difficulty || 'MEDIUM'}
+                                    </span>
+                                    <span className="text-slate-400 text-[11px]">• {q.subject || 'General'}</span>
+                                  </div>
+
+                                  <div className="flex items-center space-x-2 flex-shrink-0">
+                                    <span className="text-emerald-600 dark:text-emerald-400 font-bold text-xs">
+                                      +{q.ExamQuestion?.marks_override || q.marks || 1} mark{q.marks > 1 ? 's' : ''}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveQuestionFromExam(q.id)}
+                                      className="px-2 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-lg font-semibold text-[11px] flex items-center space-x-1 transition"
+                                      title="Remove question from this exam"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                      <span>Remove</span>
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <p className="font-semibold text-slate-900 dark:text-white leading-relaxed">
+                                  {q.question_text}
+                                </p>
+
+                                {q.code_snippet && (
+                                  <pre className="p-2.5 bg-slate-900 text-emerald-400 rounded-xl font-mono text-[11px] overflow-x-auto">
+                                    <code>{q.code_snippet}</code>
+                                  </pre>
+                                )}
+
+                                {q.options && q.options.length > 0 && (
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1">
+                                    {q.options.map((opt, oIdx) => (
+                                      <div
+                                        key={opt.id || oIdx}
+                                        className={`p-1.5 px-2.5 rounded-lg border text-[11px] ${
+                                          opt.is_correct
+                                            ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-400 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 font-semibold'
+                                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                                        }`}
+                                      >
+                                        <span className="font-mono mr-1.5 text-slate-400">{String.fromCharCode(65 + oIdx)}.</span>
+                                        {opt.option_text}
+                                        {opt.is_correct && <span className="ml-1 text-emerald-500">✓ (Correct)</span>}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* 3. Studio Footer */}
+              <div className="p-4 sm:p-5 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/50 flex-shrink-0">
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  Total Assigned: <strong>{examAttachedQuestions.length} Questions</strong> • Total Marks: <strong>{examAttachedQuestions.reduce((acc, q) => acc + (parseFloat(q.ExamQuestion?.marks_override || q.marks) || 0), 0)} / {managingQuestionsExam.total_marks || 100}</strong>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setManagingQuestionsExam(null)}
+                  className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition"
+                >
+                  Done / Close Studio
+                </button>
               </div>
 
             </div>

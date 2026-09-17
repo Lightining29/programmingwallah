@@ -383,9 +383,8 @@ router.post('/exams', async (req, res) => {
           await ExamQuestion.create({
             exam_id: exam.id,
             question_id: q.id,
-            order_index: i + 1,
-            marks: q.marks || 1,
-            negative_marks: q.negative_marks || 0
+            question_order: i + 1,
+            marks_override: q.marks || 1
           });
         }
       }
@@ -406,7 +405,7 @@ router.get('/exams/:id', async (req, res) => {
         {
           model: Question,
           as: 'questions',
-          through: { attributes: ['order_index', 'marks', 'negative_marks'] },
+          through: { attributes: ['id', 'question_order', 'marks_override'] },
           include: [{ model: QuestionOption, as: 'options' }]
         }
       ]
@@ -419,8 +418,8 @@ router.get('/exams/:id', async (req, res) => {
     const plain = exam.toJSON();
     if (plain.questions) {
       plain.questions.sort((a, b) => {
-        const oA = a.ExamQuestion ? a.ExamQuestion.order_index : 0;
-        const oB = b.ExamQuestion ? b.ExamQuestion.order_index : 0;
+        const oA = a.ExamQuestion ? (a.ExamQuestion.question_order || 0) : 0;
+        const oB = b.ExamQuestion ? (b.ExamQuestion.question_order || 0) : 0;
         return oA - oB;
       });
     }
@@ -531,9 +530,8 @@ router.post('/exams/:id/questions', async (req, res) => {
         await ExamQuestion.create({
           exam_id: exam.id,
           question_id: q.id,
-          order_index: currentCount + added + 1,
-          marks: marks !== undefined ? parseFloat(marks) : (q.marks || 1),
-          negative_marks: negative_marks !== undefined ? parseFloat(negative_marks) : (q.negative_marks || 0)
+          question_order: currentCount + added + 1,
+          marks_override: marks !== undefined ? parseFloat(marks) : (q.marks || 1)
         });
         added++;
       }
@@ -576,9 +574,10 @@ router.put('/exams/:id/questions/order', async (req, res) => {
     }
 
     for (const item of order) {
-      if (item.question_id && item.order_index) {
+      const qOrder = item.question_order || item.order_index;
+      if (item.question_id && qOrder) {
         await ExamQuestion.update(
-          { order_index: item.order_index },
+          { question_order: qOrder },
           { where: { exam_id: req.params.id, question_id: item.question_id } }
         );
       }
@@ -692,6 +691,17 @@ router.post('/questions', async (req, res) => {
           });
         }
       }
+    }
+
+    if (req.body.exam_id) {
+      const { ExamQuestion } = getExamModels();
+      const currentCount = await ExamQuestion.count({ where: { exam_id: req.body.exam_id } });
+      await ExamQuestion.create({
+        exam_id: req.body.exam_id,
+        question_id: question.id,
+        question_order: currentCount + 1,
+        marks_override: qMarks
+      });
     }
 
     const fullQuestion = await Question.findByPk(question.id, {
@@ -864,9 +874,8 @@ router.post('/questions/generate-ai', async (req, res) => {
           await ExamQuestion.create({
             exam_id,
             question_id: createdQ.id,
-            order_index: currentCount + 1,
-            marks: createdQ.marks,
-            negative_marks: createdQ.negative_marks
+            question_order: currentCount + 1,
+            marks_override: createdQ.marks
           });
         }
 
