@@ -545,36 +545,46 @@ function TestEngine({ assessmentId, email, accessCode, onSubmit }) {
   );
 }
 
-/* ─── Result Screen ───────────────────────────────────────────── */
-function ResultScreen({ result, email }) {
-  const pct = result?.percentage ?? 0;
-  const passed = result?.passed;
+/* ─── Thank You / Test Submitted Screen ──────────────────────────── */
+function ResultScreen({ email }) {
   return (
-    <div style={{ minHeight: '100vh', background: passed ? 'linear-gradient(135deg,#ecfdf5,#d1fae5)' : 'linear-gradient(135deg,#fef2f2,#fee2e2)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
-      <div style={{ maxWidth: '540px', width: '100%', background: 'white', borderRadius: '24px', padding: '2.5rem', boxShadow: '0 20px 60px rgba(0,0,0,0.1)', textAlign: 'center' }}>
-        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>{passed ? '🎉' : '😔'}</div>
-        <h1 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.5rem' }}>
-          {passed ? 'Congratulations!' : 'Better Luck Next Time'}
-        </h1>
-        <p style={{ color: '#64748b', marginBottom: '2rem' }}>
-          {passed ? 'You successfully passed the examination.' : 'You did not achieve the required passing score.'}
-        </p>
-        {result?.submitted ? (
-          <div style={{ background: '#f1f5f9', borderRadius: '14px', padding: '1.5rem', color: '#475569' }}>Results are recorded and will be reviewed by the examination committee.</div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-            {[['Score', `${result?.score ?? 0} / ${result?.totalMarks ?? 0}`], ['Percentage', `${pct}%`], ['Passing Score', `${result?.passingScore ?? 0}%`], ['Result', passed ? '✅ PASS' : '❌ FAIL']].map(([l,v]) => (
-              <div key={l} style={{ background: '#f8fafc', borderRadius: '12px', padding: '1rem', border: '1px solid #e2e8f0' }}>
-                <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>{l}</div>
-                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: passed ? '#10b981' : '#ef4444', marginTop: '0.2rem' }}>{v}</div>
-              </div>
-            ))}
-          </div>
-        )}
-        <div style={{ background: '#f1f5f9', borderRadius: '12px', padding: '1rem', marginBottom: '1.5rem', fontSize: '0.85rem', color: '#475569' }}>
-          🎓 Your examination performance has been submitted to the academic records.
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+      <div style={{ maxWidth: '520px', width: '100%', background: 'white', borderRadius: '28px', padding: '3rem 2.5rem', boxShadow: '0 25px 60px rgba(0,0,0,0.35)', textAlign: 'center' }}>
+        <div style={{ width: '88px', height: '88px', background: 'linear-gradient(135deg, #10b981, #059669)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', boxShadow: '0 12px 28px rgba(16,185,129,0.35)', color: 'white', fontSize: '2.75rem', fontWeight: 900 }}>
+          ✓
         </div>
-        <a href="/" style={{ display: 'inline-block', padding: '0.85rem 2rem', background: 'linear-gradient(135deg,#0ea5e9,#0369a1)', color: 'white', borderRadius: '12px', fontWeight: 800, textDecoration: 'none', fontSize: '0.95rem' }}>
+        <span style={{ display: 'inline-block', padding: '0.4rem 1rem', background: '#dcfce7', color: '#15803d', fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', borderRadius: '999px', marginBottom: '1rem' }}>
+          Test Submitted
+        </span>
+        <h1 style={{ fontSize: '2.2rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.65rem' }}>
+          Thank You!
+        </h1>
+        <p style={{ color: '#64748b', fontSize: '1rem', lineHeight: 1.6, marginBottom: '1.75rem' }}>
+          Your responses have been successfully submitted and recorded.
+        </p>
+
+        <div style={{ background: '#f8fafc', borderRadius: '16px', padding: '1.25rem', border: '1px solid #e2e8f0', textAlign: 'left', marginBottom: '1.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.65rem', color: '#334155', fontSize: '0.88rem' }}>
+            <span style={{ fontSize: '1.1rem' }}>📋</span>
+            <span><strong>Status:</strong> Completed & Secured</span>
+          </div>
+          {email && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.65rem', color: '#334155', fontSize: '0.88rem' }}>
+              <span style={{ fontSize: '1.1rem' }}>✉️</span>
+              <span><strong>Candidate Email:</strong> {email}</span>
+            </div>
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', color: '#334155', fontSize: '0.88rem' }}>
+            <span style={{ fontSize: '1.1rem' }}>🕒</span>
+            <span><strong>Submitted At:</strong> {new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</span>
+          </div>
+        </div>
+
+        <div style={{ background: '#eff6ff', borderRadius: '12px', padding: '1rem', marginBottom: '2rem', fontSize: '0.84rem', color: '#1e40af', lineHeight: 1.55 }}>
+          🎓 Your examination performance has been submitted to the academic records. Results and feedback will be reviewed by the examination committee.
+        </div>
+
+        <a href="/" style={{ display: 'inline-block', width: '100%', boxSizing: 'border-box', padding: '0.95rem 2rem', background: 'linear-gradient(135deg,#0ea5e9,#0369a1)', color: 'white', borderRadius: '14px', fontWeight: 800, textDecoration: 'none', fontSize: '1rem', boxShadow: '0 4px 14px rgba(14,165,233,0.3)', transition: 'all 0.2s' }}>
           Back to Home
         </a>
       </div>
