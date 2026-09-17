@@ -1,16 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, ShieldCheck, ArrowRight, AlertCircle, KeyRound, Sparkles } from 'lucide-react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Mail, Lock, Eye, EyeOff, ShieldCheck, ArrowRight, AlertCircle, KeyRound, Sparkles, QrCode } from 'lucide-react';
 
 export default function ExamLogin() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const [searchParams] = useSearchParams();
+  const examParam = (searchParams.get('exam') || searchParams.get('code') || '').trim();
+  const emailParam = (searchParams.get('email') || '').trim();
+
+  const [email, setEmail] = useState(emailParam || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   // Anti-autofill state: input remains readonly until user interacts
   const [isReadOnly, setIsReadOnly] = useState(true);
+
+  // Sync email from search params if passed
+  useEffect(() => {
+    if (emailParam && !email) {
+      setEmail(emailParam);
+    }
+  }, [emailParam]);
 
   // Release readonly state on mount after browser autofill heuristic passes
   useEffect(() => {
@@ -82,6 +93,12 @@ export default function ExamLogin() {
           <p className="mt-2 text-xs text-slate-400">
             Log in with your registered email and the unique test password provided for your scheduled exam.
           </p>
+          {examParam && (
+            <div className="mt-3 inline-flex items-center space-x-2 bg-amber-500/15 border border-amber-500/30 px-3.5 py-1 rounded-full text-amber-300 text-xs font-semibold">
+              <QrCode className="w-3.5 h-3.5" />
+              <span>Target Exam Code: <strong className="font-mono text-white">{examParam}</strong></span>
+            </div>
+          )}
         </div>
 
         {/* Card */}
@@ -205,7 +222,10 @@ export default function ExamLogin() {
           {/* Registration Link */}
           <div className="mt-8 pt-6 border-t border-slate-800 text-center text-xs text-slate-400">
             First time candidate?{' '}
-            <Link to="/test/register" className="text-indigo-400 hover:text-indigo-300 font-semibold underline underline-offset-4">
+            <Link
+              to={examParam ? `/test/register?exam=${encodeURIComponent(examParam)}` : '/test/register'}
+              className="text-indigo-400 hover:text-indigo-300 font-semibold underline underline-offset-4"
+            >
               Register candidate profile
             </Link>
           </div>

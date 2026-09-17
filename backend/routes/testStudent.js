@@ -67,9 +67,64 @@ router.get('/courses', async (req, res) => {
   }
 });
 
+// Helper: Generate secure friendly password for exam access
+const generateTestPassword = () => {
+  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz';
+  let pwd = '';
+  for (let i = 0; i < 8; i++) {
+    pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return pwd;
+};
+
+// ── 2.5 PUBLIC: Get Exam Details by Exam Code (for share links & QR codes) ──
+router.get('/exam-by-code/:code', async (req, res) => {
+  try {
+    const { Exam } = getExamModels();
+    const code = String(req.params.code || '').trim().toUpperCase();
+    if (!code) {
+      return res.status(400).json({ success: false, message: 'Exam code is required.' });
+    }
+
+    const exam = await Exam.findOne({
+      where: {
+        code,
+        status: { [Op.in]: ['PUBLISHED', 'ACTIVE'] }
+      },
+      attributes: [
+        'id', 'name', 'code', 'description', 'subject',
+        'duration_minutes', 'total_marks', 'passing_marks',
+        'negative_marking_enabled', 'negative_marks', 'instructions', 'status'
+      ]
+    });
+
+    if (!exam) {
+      return res.status(404).json({ success: false, message: 'No active examination found with this code.' });
+    }
+
+    return res.json({
+      success: true,
+      exam: {
+        id: exam.id,
+        title: exam.name,
+        code: exam.code,
+        description: exam.description,
+        subject: exam.subject,
+        duration_minutes: exam.duration_minutes,
+        total_marks: exam.total_marks,
+        passing_marks: exam.passing_marks,
+        instructions: exam.instructions
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching exam by code:', err);
+    return res.status(500).json({ success: false, message: 'Failed to look up exam.' });
+  }
+});
+
 const handleRegister = async (req, res) => {
   try {
-    const { ExamStudent, College } = getExamModels();
+    const { ExamStudent, ExamStudentAccess, Exam, College } = getExamModels();
     const {
       fullName,
       email,
@@ -79,7 +134,9 @@ const handleRegister = async (req, res) => {
       courseId,
       batchId,
       dateOfBirth,
-      termsAccepted
+      termsAccepted,
+      examCode,
+      exam_code
     } = req.body;
 
     const fName = (fullName || req.body.full_name || req.body.name || '').trim();
@@ -88,6 +145,7 @@ const handleRegister = async (req, res) => {
     const cId = collegeId || req.body.college_id;
     const cName = collegeName || req.body.college_name;
     const terms = termsAccepted !== undefined ? termsAccepted : (req.body.terms_accepted !== undefined ? req.body.terms_accepted : true);
+    const targetExamCode = String(examCode || exam_code || '').trim().toUpperCase();
 
     if (!terms) {
       return res.status(400).json({ success: false, message: 'You must accept the terms and examination guidelines.' });
@@ -97,42 +155,106 @@ const handleRegister = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Full name, email, and mobile number are required.' });
     }
 
-    const existing = await ExamStudent.findOne({ where: { email: cleanEmail } });
-    if (existing) {
-      return res.status(400).json({
-        success: false,
-        message: 'A student with this email address has already registered. Please contact your coordinator for your test credentials.'
+    // If an exam code is provided, verify exam exists
+    let targetExam = null;
+    if (targetExamCode) {
+      targetExam = await Exam.findOne({
+        where: { code: targetExamCode, status: { [Op.in]: ['PUBLISHED', 'ACTIVE'] } }
+      });
+      if (!targetExam) {
+        return res.status(404).json({ success: false, message: `Exam with code "${targetExamCode}" not found or inactive.` });
+      }
+    }
+
+    let student = await ExamStudent.findOne({ where: { email: cleanEmail } });
+
+    if (student) {
+      // If student exists but no examCode was provided:
+      if (!targetExam) {
+        return res.status(400).json({
+          success: false,
+          message: 'A student with this email address has already registered. Please contact your coordinator for your test credentials.'
+        });
+      }
+      // If student exists and examCode IS provided: update student profile if newer
+      if (fName) student.full_name = fName;
+      if (mNumber) student.mobile_number = mNumber;
+      if (cId) student.college_id = parseInt(cId);
+      if (cName) student.college_name = cName;
+      await student.save();
+    } else {
+      // Resolve college name if ID provided
+      let resolvedCollegeName = cName || '';
+      if (cId) {
+        const col = await College.findByPk(cId);
+        if (col) resolvedCollegeName = col.name;
+      }
+
+      student = await ExamStudent.create({
+        full_name: fName,
+        email: cleanEmail,
+        mobile_number: mNumber,
+        college_id: cId ? parseInt(cId) : null,
+        college_name: resolvedCollegeName,
+        course_id: courseId ? parseInt(courseId) : null,
+        batch_id: batchId ? parseInt(batchId) : null,
+        date_of_birth: dateOfBirth || null,
+        status: 'ACTIVE'
       });
     }
 
-    // Resolve college name if ID provided
-    let resolvedCollegeName = cName || '';
-    if (cId) {
-      const col = await College.findByPk(cId);
-      if (col) resolvedCollegeName = col.name;
-    }
+    // If targetExam is assigned via QR code or link, auto-generate unique test password
+    let assignedExamInfo = null;
+    let generatedPlainPassword = null;
 
-    const newStudent = await ExamStudent.create({
-      full_name: fName,
-      email: cleanEmail,
-      mobile_number: mNumber,
-      college_id: cId ? parseInt(cId) : null,
-      college_name: resolvedCollegeName,
-      course_id: courseId ? parseInt(courseId) : null,
-      batch_id: batchId ? parseInt(batchId) : null,
-      date_of_birth: dateOfBirth || null,
-      status: 'ACTIVE'
-    });
+    if (targetExam) {
+      generatedPlainPassword = generateTestPassword();
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(generatedPlainPassword, salt);
+
+      let access = await ExamStudentAccess.findOne({
+        where: { student_id: student.id, exam_id: targetExam.id }
+      });
+
+      if (access) {
+        await access.update({
+          password_hash: passwordHash,
+          status: 'ACTIVE',
+          max_attempts: targetExam.max_attempts || 1
+        });
+      } else {
+        access = await ExamStudentAccess.create({
+          student_id: student.id,
+          exam_id: targetExam.id,
+          password_hash: passwordHash,
+          status: 'ACTIVE',
+          max_attempts: targetExam.max_attempts || 1,
+          attempts_used: 0
+        });
+      }
+
+      assignedExamInfo = {
+        id: targetExam.id,
+        title: targetExam.name,
+        code: targetExam.code,
+        duration_minutes: targetExam.duration_minutes,
+        total_marks: targetExam.total_marks
+      };
+    }
 
     return res.status(201).json({
       success: true,
-      message: 'Registration completed successfully! Your exam coordinator will assign your test and issue your unique test password.',
+      message: targetExam 
+        ? `Successfully enrolled into "${targetExam.name}"! Your unique test password has been generated.`
+        : 'Registration completed successfully! Your exam coordinator will assign your test and issue your unique test password.',
       student: {
-        id: newStudent.id,
-        fullName: newStudent.full_name,
-        name: newStudent.full_name,
-        email: newStudent.email,
-        college: newStudent.college_name
+        id: student.id,
+        fullName: student.full_name,
+        name: student.full_name,
+        email: student.email,
+        college: student.college_name,
+        testPassword: generatedPlainPassword,
+        assignedExam: assignedExamInfo
       }
     });
   } catch (err) {

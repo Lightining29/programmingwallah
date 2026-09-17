@@ -6,6 +6,7 @@ import FeeStructureMaster from '../components/FeeStructureMaster.jsx';
 import AdmissionPaymentModal from '../components/AdmissionPaymentModal.jsx';
 import CollectPaymentModal from '../components/CollectPaymentModal.jsx';
 import CertificateModal from '../components/CertificateModal.jsx';
+import AdminExamSuite from './examAdmin/AdminExamSuite.jsx';
 
 const COURSE_OPTIONS = ['Java Development', 'MERN Developer', 'Python Developer', 'Frontend Developer'];
 
@@ -2819,6 +2820,7 @@ export default function AdminDashboard() {
               { id: 'admissions', label: 'Admissions' },
               { id: 'users', label: 'People' },
               { id: 'courses', label: 'Courses' },
+              { id: 'tests', label: 'Tests & Exams' },
               { id: 'fees', label: 'Fees & Salary' },
               { id: 'certificates', label: 'Certificates' },
               { id: 'announcements', label: 'Notices' },
@@ -6660,6 +6662,13 @@ export default function AdminDashboard() {
               </div>
             )}
 
+          </div>
+        )}
+
+        {/* ── TESTS & EXAMS TAB ── */}
+        {activeTab === 'tests' && (
+          <div className="pt-2 animate-in fade-in duration-300">
+            <AdminExamSuite />
           </div>
         )}
 
