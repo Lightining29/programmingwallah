@@ -279,12 +279,141 @@ Write a SQL query to report the second highest salary from the Employee table. I
     }
   },
   {
+    id: 'climbing-stairs',
+    title: 'Climbing Stairs',
+    difficulty: 'Easy',
+    topic: 'Dynamic Programming',
+    points: 20,
+    successRate: '92.4%',
+    companies: ['Amazon', 'Google', 'Adobe', 'Apple'],
+    hints: [
+      'To reach the nth step, what could have been your previous step?',
+      'You could have reached either from (n-1)th step or from (n-2)th step. This is Fibonacci!'
+    ],
+    editorial: {
+      timeComplexity: 'O(n)',
+      spaceComplexity: 'O(1)',
+      approach: 'Bottom-up dynamic programming. Base cases: f(1)=1, f(2)=2. For i from 3 to n, f(i) = f(i-1) + f(i-2).'
+    },
+    similarProblems: ['two-sum', 'fizzbuzz-advanced'],
+    description: `You are climbing a staircase. It takes \`n\` steps to reach the top.
+Each time you can either climb 1 or 2 steps. In how many distinct ways can you climb to the top?`,
+    inputFormat: `An integer 'n'.`,
+    outputFormat: `An integer representing the number of distinct ways.`,
+    constraints: ['1 <= n <= 45'],
+    sampleTestCases: [
+      { input: 'n = 2', output: '2', explanation: 'There are two ways: 1. (1 step + 1 step), 2. (2 steps)' },
+      { input: 'n = 3', output: '3', explanation: 'There are three ways: 1. (1+1+1), 2. (1+2), 3. (2+1)' }
+    ],
+    hiddenTestCases: [
+      { input: 'n = 4', output: '5' },
+      { input: 'n = 5', output: '8' }
+    ],
+    starters: {
+      java: `public class Solution {\n    public static int climbStairs(int n) {\n        if (n <= 2) return n;\n        int first = 1, second = 2;\n        for (int i = 3; i <= n; i++) {\n            int third = first + second;\n            first = second;\n            second = third;\n        }\n        return second;\n    }\n}`,
+      javascript: `function climbStairs(n) {\n  if (n <= 2) return n;\n  let a = 1, b = 2;\n  for (let i = 3; i <= n; i++) {\n    const temp = a + b;\n    a = b;\n    b = temp;\n  }\n  return b;\n}`,
+      python: `def climbStairs(n: int) -> int:\n    if n <= 2:\n        return n\n    a, b = 1, 2\n    for _ in range(3, n + 1):\n        a, b = b, a + b\n    return b`
+    }
+  },
+  {
+    id: 'binary-search',
+    title: 'Binary Search',
+    difficulty: 'Easy',
+    topic: 'Algorithms',
+    points: 15,
+    successRate: '95.1%',
+    companies: ['Microsoft', 'Google', 'Meta', 'TCS'],
+    hints: [
+      'Initialize two pointers left = 0 and right = nums.length - 1.',
+      'Check the middle element. If target == nums[mid], return mid. Otherwise adjust boundaries.'
+    ],
+    editorial: {
+      timeComplexity: 'O(log n)',
+      spaceComplexity: 'O(1)',
+      approach: 'Classic divide and conquer search over a sorted integer array.'
+    },
+    similarProblems: ['two-sum', 'longest-substring-without-repeat'],
+    description: `Given an array of integers \`nums\` which is sorted in ascending order, and an integer \`target\`, write a function to search \`target\` in \`nums\`.
+If \`target\` exists, then return its index. Otherwise, return \`-1\`.
+You must write an algorithm with \`O(log n)\` runtime complexity.`,
+    inputFormat: `Line 1: nums = [-1,0,3,5,9,12]\nLine 2: target = 9`,
+    outputFormat: `4`,
+    constraints: [
+      '1 <= nums.length <= 10^4',
+      '-10^4 < nums[i], target < 10^4',
+      'All integers in nums are unique and sorted in ascending order.'
+    ],
+    sampleTestCases: [
+      { input: 'nums = [-1,0,3,5,9,12], target = 9', output: '4', explanation: '9 exists in nums and its index is 4.' },
+      { input: 'nums = [-1,0,3,5,9,12], target = 2', output: '-1', explanation: '2 does not exist in nums so return -1.' }
+    ],
+    hiddenTestCases: [
+      { input: 'nums = [5], target = 5', output: '0' },
+      { input: 'nums = [2,5], target = 0', output: '-1' }
+    ],
+    starters: {
+      java: `public class Solution {\n    public static int search(int[] nums, int target) {\n        int left = 0, right = nums.length - 1;\n        while (left <= right) {\n            int mid = left + (right - left) / 2;\n            if (nums[mid] == target) return mid;\n            else if (nums[mid] < target) left = mid + 1;\n            else right = mid - 1;\n        }\n        return -1;\n    }\n}`,
+      javascript: `function search(nums, target) {\n  let left = 0, right = nums.length - 1;\n  while (left <= right) {\n    const mid = Math.floor((left + right) / 2);\n    if (nums[mid] === target) return mid;\n    if (nums[mid] < target) left = mid + 1;\n    else right = mid - 1;\n  }\n  return -1;\n}`,
+      python: `def search(nums: list[int], target: int) -> int:\n    left, right = 0, len(nums) - 1\n    while left <= right:\n        mid = (left + right) // 2\n        if nums[mid] == target:\n            return mid\n        elif nums[mid] < target:\n            left = mid + 1\n        else:\n            right = mid - 1\n    return -1`
+    }
+  },
+  {
+    id: 'maximum-subarray',
+    title: 'Maximum Subarray (Kadane’s Algorithm)',
+    difficulty: 'Medium',
+    topic: 'Algorithms',
+    points: 30,
+    successRate: '86.7%',
+    companies: ['Amazon', 'Microsoft', 'Apple', 'LinkedIn'],
+    hints: [
+      'Maintain running sum: if current sum becomes negative, reset it to 0.',
+      'Track the maximum sum seen so far.'
+    ],
+    editorial: {
+      timeComplexity: 'O(n)',
+      spaceComplexity: 'O(1)',
+      approach: "Kadane's Algorithm: at each index, decide whether to continue the existing subarray or start a fresh one."
+    },
+    similarProblems: ['two-sum', 'trapping-rain-water'],
+    description: `Given an integer array \`nums\`, find the subarray with the largest sum, and return its sum.
+A subarray is a contiguous non-empty sequence of elements within an array.`,
+    inputFormat: `nums = [-2,1,-3,4,-1,2,1,-5,4]`,
+    outputFormat: `6`,
+    constraints: [
+      '1 <= nums.length <= 10^5',
+      '-10^4 <= nums[i] <= 10^4'
+    ],
+    sampleTestCases: [
+      { input: 'nums = [-2,1,-3,4,-1,2,1,-5,4]', output: '6', explanation: 'The subarray [4,-1,2,1] has the largest sum 6.' },
+      { input: 'nums = [1]', output: '1', explanation: 'The subarray [1] has the largest sum 1.' }
+    ],
+    hiddenTestCases: [
+      { input: 'nums = [5,4,-1,7,8]', output: '23' }
+    ],
+    starters: {
+      java: `public class Solution {\n    public static int maxSubArray(int[] nums) {\n        int maxSoFar = nums[0], currentMax = nums[0];\n        for (int i = 1; i < nums.length; i++) {\n            currentMax = Math.max(nums[i], currentMax + nums[i]);\n            maxSoFar = Math.max(maxSoFar, currentMax);\n        }\n        return maxSoFar;\n    }\n}`,
+      javascript: `function maxSubArray(nums) {\n  let maxSoFar = nums[0], curr = nums[0];\n  for (let i = 1; i < nums.length; i++) {\n    curr = Math.max(nums[i], curr + nums[i]);\n    maxSoFar = Math.max(maxSoFar, curr);\n  }\n  return maxSoFar;\n}`,
+      python: `def maxSubArray(nums: list[int]) -> int:\n    max_so_far = curr = nums[0]\n    for x in nums[1:]:\n        curr = max(x, curr + x)\n        max_so_far = max(max_so_far, curr)\n    return max_so_far`
+    }
+  },
+  {
     id: 'trapping-rain-water',
     title: 'Trapping Rain Water',
     difficulty: 'Hard',
     topic: 'Algorithms',
     points: 50,
     successRate: '68.5%',
+    companies: ['Google', 'Amazon', 'Meta', 'Bloomberg'],
+    hints: [
+      'For any element, how much water can it hold above itself?',
+      'It depends on the minimum of the highest wall to its left and the highest wall to its right minus its own height.'
+    ],
+    editorial: {
+      timeComplexity: 'O(n)',
+      spaceComplexity: 'O(1)',
+      approach: 'Two pointers approach: move from both ends keeping track of leftMax and rightMax.'
+    },
+    similarProblems: ['maximum-subarray', 'two-sum'],
     description: `Given \`n\` non-negative integers representing an elevation map where the width of each bar is 1, compute how much water it can trap after raining.`,
     inputFormat: `height = [0,1,0,2,1,0,1,3,2,1,2,1]`,
     outputFormat: `6`,
@@ -943,6 +1072,24 @@ router.post('/submit', requireArenaAuth, async (req, res) => {
   } catch (err) {
     console.error('Arena submit error:', err);
     res.status(500).json({ error: err.message || 'Submission failed.' });
+  }
+});
+
+// GET /api/arena/submissions: Get user/problem submission history
+router.get('/submissions', (req, res) => {
+  try {
+    const { problemId, email } = req.query;
+    let list = [...(mockStore.arenaSubmissions || [])];
+    if (problemId) {
+      list = list.filter(s => s.problemId === problemId);
+    }
+    if (email) {
+      list = list.filter(s => String(s.studentEmail).toLowerCase() === String(email).toLowerCase());
+    }
+    list.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+    res.json({ success: true, submissions: list.slice(0, 30) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
