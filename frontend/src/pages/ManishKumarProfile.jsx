@@ -399,12 +399,12 @@ export default function ManishKumarProfile() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-800 font-inter antialiased selection:bg-pink-500 selection:text-white">
+    <div className="min-h-screen bg-white text-slate-800 font-inter antialiased selection:bg-pink-500 selection:text-white">
       
       {/* Subtle Warm Glow Backgrounds */}
-      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 opacity-60">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-pink-200/30 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-indigo-200/30 rounded-full blur-3xl" />
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 opacity-40">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-pink-100/40 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-sky-100/40 rounded-full blur-3xl" />
       </div>
 
       {/* Hidden Semantic Headers for AI Crawlers */}
@@ -420,14 +420,14 @@ export default function ManishKumarProfile() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* ========================================================= */}
-          {/* LEFT: MOBILE-FIRST FULL-PAGE IMAGE SLIDER (MATCHING DESIGN 4) */}
+          {/* LEFT: FULL-SCREEN HERO IMAGE SLIDER WITH FADED TEXT BELOW */}
           {/* ========================================================= */}
           <div className="lg:col-span-5 lg:sticky lg:top-6">
             <div className="relative w-full overflow-hidden bg-slate-900 shadow-2xl rounded-b-[36px] md:rounded-[36px] border border-slate-200/80">
               
-              {/* Image Slider Container with Touch Support */}
+              {/* Image Slider Container with Touch Support - Full Screen on Mobile */}
               <div 
-                className="relative w-full h-[65vh] sm:h-[72vh] lg:h-[78vh] select-none touch-pan-y"
+                className="relative w-full h-[88vh] sm:h-[84vh] lg:h-[82vh] select-none touch-pan-y"
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
@@ -456,13 +456,13 @@ export default function ManishKumarProfile() {
                     type="button"
                     onClick={() => navigate(-1)}
                     aria-label="Go Back"
-                    className="w-10 h-10 rounded-full bg-white/80 hover:bg-white text-slate-900 backdrop-blur-md flex items-center justify-center border border-white/60 shadow-lg transition-all active:scale-95 cursor-pointer"
+                    className="w-10 h-10 rounded-full bg-white/85 hover:bg-white text-slate-900 backdrop-blur-md flex items-center justify-center border border-white/60 shadow-lg transition-all active:scale-95 cursor-pointer"
                   >
                     <ArrowLeft className="w-5 h-5" />
                   </button>
 
                   <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 rounded-full bg-white/85 backdrop-blur-md text-[11px] font-bold text-amber-800 border border-amber-300 shadow-sm flex items-center gap-1.5">
+                    <span className="px-3 py-1 rounded-full bg-white/90 backdrop-blur-md text-[11px] font-extrabold text-amber-800 border border-amber-300 shadow-sm flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                       <span>{photos[currentImageIndex].tag}</span>
                     </span>
@@ -471,7 +471,7 @@ export default function ManishKumarProfile() {
                       type="button"
                       onClick={handleCopyProfile}
                       aria-label="Share Profile"
-                      className="w-10 h-10 rounded-full bg-white/80 hover:bg-white text-slate-900 backdrop-blur-md flex items-center justify-center border border-white/60 shadow-lg transition-all active:scale-95 cursor-pointer"
+                      className="w-10 h-10 rounded-full bg-white/85 hover:bg-white text-slate-900 backdrop-blur-md flex items-center justify-center border border-white/60 shadow-lg transition-all active:scale-95 cursor-pointer"
                       title="Copy profile link"
                     >
                       {copiedLink ? <Check className="w-4 h-4 text-emerald-600" /> : <Share2 className="w-4 h-4" />}
@@ -502,28 +502,28 @@ export default function ManishKumarProfile() {
                   {currentImageIndex + 1} / {photos.length}
                 </div>
 
-                {/* Bottom Dark Gradient Scrim for Name & Actions */}
-                <div className="absolute inset-x-0 bottom-0 z-20 pt-24 pb-6 px-6 bg-gradient-to-t from-slate-950 via-slate-950/85 to-transparent flex flex-col justify-end text-white">
+                {/* Bottom Dark Gradient Scrim for Name & Actions (Faded Effect) */}
+                <div className="absolute inset-x-0 bottom-0 z-20 pt-32 pb-7 px-5 sm:px-6 bg-gradient-to-t from-slate-950 via-slate-950/85 via-slate-950/40 to-transparent flex flex-col justify-end text-white">
                   
                   {/* Verified Badge */}
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-extrabold border border-emerald-500/40">
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 text-[11px] font-extrabold border border-emerald-500/40">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                       AVAILABLE FOR HIRE
                     </span>
-                    <span className="text-xs text-slate-200 font-medium flex items-center gap-1">
+                    <span className="text-xs text-amber-300 font-extrabold flex items-center gap-1 bg-amber-500/20 px-2 py-0.5 rounded-full border border-amber-400/30">
                       <Award className="w-3.5 h-3.5 text-amber-400" />
-                      Best Performer
+                      Best Performer Award
                     </span>
                   </div>
 
-                  {/* Main Name Heading */}
-                  <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight drop-shadow-md">
+                  {/* Main Name Heading - Faded onto image bottom */}
+                  <h1 className="text-3xl sm:text-4xl lg:text-4xl font-black text-white tracking-tight drop-shadow-xl">
                     Manish Kumar
                   </h1>
 
                   {/* Location & Title Subheading */}
-                  <p className="text-xs sm:text-sm font-semibold text-slate-200 uppercase tracking-wider mt-1 flex items-center gap-1.5">
+                  <p className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wider mt-1 flex items-center gap-1.5 drop-shadow">
                     <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />
                     <span>GHAZIABAD, INDIA • JAVA & AWS DEVOPS</span>
                   </p>
