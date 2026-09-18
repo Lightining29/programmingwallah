@@ -50,6 +50,8 @@ import AdminExamSuite from './portals/examAdmin/AdminExamSuite.jsx';
 import TakeTest from './pages/exam/TakeTest.jsx';
 import StudentRegister from './pages/exam/StudentRegister.jsx';
 import AssessmentAdmin from './pages/AssessmentAdmin.jsx';
+import ArenaHub from './pages/arena/ArenaHub.jsx';
+import ArenaProblem from './pages/arena/ArenaProblem.jsx';
 
 // Layout Components
 import Navbar from './components/Navbar.jsx';
@@ -112,8 +114,9 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
   const isLoginPage = location.pathname === '/login';
   const isExamPage = location.pathname.startsWith('/test') || location.pathname.startsWith('/dashboard/admin/tests') || location.pathname.startsWith('/assessment-admin');
   const isAdminPage = location.pathname.startsWith('/dashboard/admin') || location.pathname.startsWith('/portal/admin');
-  const hideHeaderFooter = isLoginPage || isExamPage;
-  const hideChatbot = hideHeaderFooter || isAdminPage;
+  const isArenaProblem = location.pathname.startsWith('/arena/problem');
+  const hideHeaderFooter = isLoginPage || isExamPage || isArenaProblem;
+  const hideChatbot = hideHeaderFooter || isAdminPage || isArenaProblem;
 
   return (
     <div
@@ -160,6 +163,10 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/practice" element={<Practice />} />
+          <Route path="/arena" element={<ArenaHub />} />
+          <Route path="/coding-arena" element={<Navigate to="/arena" replace />} />
+          <Route path="/hackerrank" element={<Navigate to="/arena" replace />} />
+          <Route path="/arena/problem/:id" element={<ArenaProblem />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/tutorials" element={<Tutorials />} />
           <Route path="/music" element={<Navigate to="/" replace />} />

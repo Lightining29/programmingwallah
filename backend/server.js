@@ -20,6 +20,7 @@ import paymentRoutes from './routes/payment.js';
 import testStudentRoutes from './routes/testStudent.js';
 import testAdminRoutes from './routes/testAdmin.js';
 import assessmentRoutes from './routes/assessment.js';
+import arenaRoutes from './routes/arena.js';
 import { initExamDatabase } from './models/exam/index.js';
 
 // Load environment variables from multiple possible locations (root .env and backend/.env)
@@ -129,6 +130,7 @@ app.use('/api/lms', lmsRoutes);
 app.use('/api', paymentRoutes);
 app.use('/api/test', testStudentRoutes);
 app.use('/api/assessment', assessmentRoutes);
+app.use('/api/arena', arenaRoutes);
 
 // Dynamic Sitemap for Search Engines & AI Crawlers
 app.get('/sitemap.xml', (req, res) => {

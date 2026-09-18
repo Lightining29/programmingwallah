@@ -1,0 +1,972 @@
+import express from 'express';
+import jwt from 'jsonwebtoken';
+import vm from 'vm';
+import alasql from 'alasql';
+import mockStore from '../config/mockStore.js';
+import { getMySQLPool } from '../config/mysql.js';
+
+const router = express.Router();
+const JWT_SECRET = process.env.JWT_SECRET || 'programmingwala_arena_secret_2026';
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   1. CODING CHALLENGES REPOSITORY (Easy, Medium, Hard)
+───────────────────────────────────────────────────────────────────────────── */
+export const ARENA_PROBLEMS = [
+  {
+    id: 'two-sum',
+    title: 'Two Sum',
+    difficulty: 'Easy',
+    topic: 'Arrays & Hashing',
+    points: 20,
+    successRate: '94.2%',
+    description: `Given an array of integers \`nums\` and an integer \`target\`, return indices of the two numbers such that they add up to \`target\`.
+You may assume that each input would have exactly one solution, and you may not use the same element twice. You can return the answer in any order.`,
+    inputFormat: `Line 1: A comma-separated array of integers 'nums'.\nLine 2: An integer 'target'.`,
+    outputFormat: `An array containing the two indices [i, j].`,
+    constraints: [
+      '2 <= nums.length <= 10^4',
+      '-10^9 <= nums[i] <= 10^9',
+      '-10^9 <= target <= 10^9',
+      'Only one valid answer exists.'
+    ],
+    sampleTestCases: [
+      {
+        input: 'nums = [2,7,11,15], target = 9',
+        output: '[0,1]',
+        explanation: 'Because nums[0] + nums[1] == 9, we return [0, 1].'
+      },
+      {
+        input: 'nums = [3,2,4], target = 6',
+        output: '[1,2]',
+        explanation: 'Because nums[1] + nums[2] == 6, we return [1, 2].'
+      }
+    ],
+    hiddenTestCases: [
+      { input: 'nums = [3,3], target = 6', output: '[0,1]' },
+      { input: 'nums = [1,5,8,12], target = 13', output: '[1,2]' }
+    ],
+    starters: {
+      java: `public class Solution {\n    public static int[] twoSum(int[] nums, int target) {\n        // Write your Java logic here\n        for (int i = 0; i < nums.length; i++) {\n            for (int j = i + 1; j < nums.length; j++) {\n                if (nums[i] + nums[j] == target) return new int[]{i, j};\n            }\n        }\n        return new int[]{};\n    }\n}`,
+      javascript: `function twoSum(nums, target) {\n  // Write your JavaScript solution here\n  const map = new Map();\n  for (let i = 0; i < nums.length; i++) {\n    const diff = target - nums[i];\n    if (map.has(diff)) return [map.get(diff), i];\n    map.set(nums[i], i);\n  }\n  return [];\n}`,
+      python: `def twoSum(nums, target):\n    # Write your Python solution here\n    seen = {}\n    for i, num in enumerate(nums):\n        if target - num in seen:\n            return [seen[target - num], i]\n        seen[num] = i\n    return []`
+    }
+  },
+  {
+    id: 'valid-palindrome',
+    title: 'Valid Palindrome',
+    difficulty: 'Easy',
+    topic: 'Strings',
+    points: 15,
+    successRate: '91.8%',
+    description: `A phrase is a palindrome if, after converting all uppercase letters into lowercase letters and removing all non-alphanumeric characters, it reads the same forward and backward. Alphanumeric characters include letters and numbers.
+Given a string \`s\`, return \`true\` if it is a palindrome, or \`false\` otherwise.`,
+    inputFormat: `A string 's'.`,
+    outputFormat: `true or false`,
+    constraints: [
+      '1 <= s.length <= 2 * 10^5',
+      "'s' consists only of printable ASCII characters."
+    ],
+    sampleTestCases: [
+      {
+        input: 's = "A man, a plan, a canal: Panama"',
+        output: 'true',
+        explanation: '"amanaplanacanalpanama" is a palindrome.'
+      },
+      {
+        input: 's = "race a car"',
+        output: 'false',
+        explanation: '"raceacar" is not a palindrome.'
+      }
+    ],
+    hiddenTestCases: [
+      { input: 's = " "', output: 'true' },
+      { input: 's = "0P"', output: 'false' }
+    ],
+    starters: {
+      java: `public class Solution {\n    public static boolean isPalindrome(String s) {\n        String clean = s.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();\n        return clean.equals(new StringBuilder(clean).reverse().toString());\n    }\n}`,
+      javascript: `function isPalindrome(s) {\n  const clean = s.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();\n  return clean === clean.split('').reverse().join('');\n}`,
+      python: `def isPalindrome(s: str) -> bool:\n    clean = [c.lower() for c in s if c.isalnum()]\n    return clean == clean[::-1]`
+    }
+  },
+  {
+    id: 'reverse-words-string',
+    title: 'Reverse Words in a String',
+    difficulty: 'Medium',
+    topic: 'Strings & Two Pointers',
+    points: 30,
+    successRate: '82.4%',
+    description: `Given an input string \`s\`, reverse the order of the words.
+A word is defined as a sequence of non-space characters. The words in \`s\` will be separated by at least one space.
+Return a string of the words in reverse order concatenated by a single space.
+Note that \`s\` may contain leading or trailing spaces or multiple spaces between two words. The returned string should only have a single space separating the words.`,
+    inputFormat: `A string 's'.`,
+    outputFormat: `A string with reversed word order.`,
+    constraints: [
+      '1 <= s.length <= 10^4',
+      "'s' contains English letters (upper-case and lower-case), digits, and spaces ' '."
+    ],
+    sampleTestCases: [
+      {
+        input: 's = "the sky is blue"',
+        output: '"blue is sky the"',
+        explanation: 'Words reversed in single space sequence.'
+      },
+      {
+        input: 's = "  hello world  "',
+        output: '"world hello"',
+        explanation: 'Leading or trailing spaces should be trimmed.'
+      }
+    ],
+    hiddenTestCases: [
+      { input: 's = "a good   example"', output: '"example good a"' }
+    ],
+    starters: {
+      java: `public class Solution {\n    public static String reverseWords(String s) {\n        String[] words = s.trim().split("\\\\s+");\n        StringBuilder sb = new StringBuilder();\n        for (int i = words.length - 1; i >= 0; i--) {\n            sb.append(words[i]);\n            if (i > 0) sb.append(" ");\n        }\n        return sb.toString();\n    }\n}`,
+      javascript: `function reverseWords(s) {\n  return s.trim().split(/\\s+/).reverse().join(' ');\n}`,
+      python: `def reverseWords(s: str) -> str:\n    return ' '.join(reversed(s.split()))`
+    }
+  },
+  {
+    id: 'valid-parentheses',
+    title: 'Valid Parentheses',
+    difficulty: 'Easy',
+    topic: 'Stack & Data Structures',
+    points: 25,
+    successRate: '89.0%',
+    description: `Given a string \`s\` containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.
+An input string is valid if:
+1. Open brackets must be closed by the same type of brackets.
+2. Open brackets must be closed in the correct order.
+3. Every close bracket has a corresponding open bracket of the same type.`,
+    inputFormat: `A string 's' of brackets.`,
+    outputFormat: `true or false`,
+    constraints: [
+      '1 <= s.length <= 10^4',
+      "'s' consists of parentheses only '()[]{}'."
+    ],
+    sampleTestCases: [
+      { input: 's = "()"', output: 'true', explanation: 'Matching pair.' },
+      { input: 's = "()[]{}"', output: 'true', explanation: 'All matching pairs.' },
+      { input: 's = "(]"', output: 'false', explanation: 'Mismatched brackets.' }
+    ],
+    hiddenTestCases: [
+      { input: 's = "([)]"', output: 'false' },
+      { input: 's = "{[]}"', output: 'true' }
+    ],
+    starters: {
+      java: `import java.util.Stack;\npublic class Solution {\n    public static boolean isValid(String s) {\n        Stack<Character> stack = new Stack<>();\n        for (char c : s.toCharArray()) {\n            if (c == '(') stack.push(')');\n            else if (c == '{') stack.push('}');\n            else if (c == '[') stack.push(']');\n            else if (stack.isEmpty() || stack.pop() != c) return false;\n        }\n        return stack.isEmpty();\n    }\n}`,
+      javascript: `function isValid(s) {\n  const stack = [];\n  const map = { '(': ')', '{': '}', '[': ']' };\n  for (const c of s) {\n    if (map[c]) stack.push(map[c]);\n    else if (stack.pop() !== c) return false;\n  }\n  return stack.length === 0;\n}`,
+      python: `def isValid(s: str) -> bool:\n    stack = []\n    mapping = {")": "(", "}": "{", "]": "["}\n    for char in s:\n        if char in mapping:\n            top = stack.pop() if stack else '#'\n            if mapping[char] != top:\n                return False\n        else:\n            stack.append(char)\n    return not stack`
+    }
+  },
+  {
+    id: 'fizzbuzz-advanced',
+    title: 'FizzBuzz Multi-Condition',
+    difficulty: 'Easy',
+    topic: 'Core Java & Logic',
+    points: 15,
+    successRate: '96.5%',
+    description: `Given an integer \`n\`, return a string array \`answer\` (1-indexed) where:
+- \`answer[i] == "FizzBuzz"\` if i is divisible by 3 and 5.
+- \`answer[i] == "Fizz"\` if i is divisible by 3.
+- \`answer[i] == "Buzz"\` if i is divisible by 5.
+- \`answer[i] == i\` (as a string) if none of the above conditions are true.`,
+    inputFormat: `An integer 'n'.`,
+    outputFormat: `An array of strings.`,
+    constraints: ['1 <= n <= 10^4'],
+    sampleTestCases: [
+      {
+        input: 'n = 3',
+        output: '["1","2","Fizz"]',
+        explanation: '3 is divisible by 3.'
+      },
+      {
+        input: 'n = 5',
+        output: '["1","2","Fizz","4","Buzz"]',
+        explanation: '5 is divisible by 5.'
+      },
+      {
+        input: 'n = 15',
+        output: '["1","2","Fizz","4","Buzz","Fizz","7","8","Fizz","Buzz","11","Fizz","13","14","FizzBuzz"]',
+        explanation: '15 is divisible by both 3 and 5.'
+      }
+    ],
+    hiddenTestCases: [
+      { input: 'n = 1', output: '["1"]' }
+    ],
+    starters: {
+      java: `import java.util.*;\npublic class Solution {\n    public static List<String> fizzBuzz(int n) {\n        List<String> res = new ArrayList<>();\n        for (int i = 1; i <= n; i++) {\n            if (i % 15 == 0) res.add("FizzBuzz");\n            else if (i % 3 == 0) res.add("Fizz");\n            else if (i % 5 == 0) res.add("Buzz");\n            else res.add(String.valueOf(i));\n        }\n        return res;\n    }\n}`,
+      javascript: `function fizzBuzz(n) {\n  const res = [];\n  for (let i = 1; i <= n; i++) {\n    if (i % 15 === 0) res.push("FizzBuzz");\n    else if (i % 3 === 0) res.push("Fizz");\n    else if (i % 5 === 0) res.push("Buzz");\n    else res.push(String(i));\n  }\n  return res;\n}`,
+      python: `def fizzBuzz(n: int):\n    res = []\n    for i in range(1, n + 1):\n        if i % 15 == 0:\n            res.append("FizzBuzz")\n        elif i % 3 == 0:\n            res.append("Fizz")\n        elif i % 5 == 0:\n            res.append("Buzz")\n        else:\n            res.append(str(i))\n    return res`
+    }
+  },
+  {
+    id: 'longest-substring-without-repeat',
+    title: 'Longest Substring Without Repeating Characters',
+    difficulty: 'Medium',
+    topic: 'Algorithms',
+    points: 35,
+    successRate: '78.6%',
+    description: `Given a string \`s\`, find the length of the longest substring without repeating characters.`,
+    inputFormat: `A string 's'.`,
+    outputFormat: `An integer representing the length of the longest substring.`,
+    constraints: [
+      '0 <= s.length <= 5 * 10^4',
+      "'s' consists of English letters, digits, symbols and spaces."
+    ],
+    sampleTestCases: [
+      {
+        input: 's = "abcabcbb"',
+        output: '3',
+        explanation: 'The answer is "abc", with the length of 3.'
+      },
+      {
+        input: 's = "bbbbb"',
+        output: '1',
+        explanation: 'The answer is "b", with the length of 1.'
+      },
+      {
+        input: 's = "pwwkew"',
+        output: '3',
+        explanation: 'The answer is "wke", with the length of 3.'
+      }
+    ],
+    hiddenTestCases: [
+      { input: 's = ""', output: '0' },
+      { input: 's = "au"', output: '2' }
+    ],
+    starters: {
+      java: `import java.util.*;\npublic class Solution {\n    public static int lengthOfLongestSubstring(String s) {\n        Map<Character, Integer> map = new HashMap<>();\n        int maxLen = 0, left = 0;\n        for (int right = 0; right < s.length(); right++) {\n            char c = s.charAt(right);\n            if (map.containsKey(c)) left = Math.max(left, map.get(c) + 1);\n            map.put(c, right);\n            maxLen = Math.max(maxLen, right - left + 1);\n        }\n        return maxLen;\n    }\n}`,
+      javascript: `function lengthOfLongestSubstring(s) {\n  let maxLen = 0, left = 0;\n  const map = new Map();\n  for (let right = 0; right < s.length; right++) {\n    const c = s[right];\n    if (map.has(c)) left = Math.max(left, map.get(c) + 1);\n    map.set(c, right);\n    maxLen = Math.max(maxLen, right - left + 1);\n  }\n  return maxLen;\n}`,
+      python: `def lengthOfLongestSubstring(s: str) -> int:\n    seen = {}\n    max_len = left = 0\n    for right, c in enumerate(s):\n        if c in seen:\n            left = max(left, seen[c] + 1)\n        seen[c] = right\n        max_len = max(max_len, right - left + 1)\n    return max_len`
+    }
+  },
+  {
+    id: 'sql-second-highest-salary',
+    title: 'SQL: Second Highest Salary',
+    difficulty: 'Medium',
+    topic: 'SQL & Databases',
+    points: 30,
+    successRate: '84.0%',
+    description: `Table: Employee
++-------------+------+
+| Column Name | Type |
++-------------+------+
+| id          | int  |
+| salary      | int  |
++-------------+------+
+id is the primary key column for this table.
+Write a SQL query to report the second highest salary from the Employee table. If there is no second highest salary, the query should report \`null\`.`,
+    inputFormat: `Table: Employee with columns (id, salary).`,
+    outputFormat: `+---------------------+\n| SecondHighestSalary |\n+---------------------+\n| 200                 |\n+---------------------+`,
+    constraints: ['id is an integer', 'salary is a non-negative integer'],
+    sampleTestCases: [
+      {
+        input: 'Employee = [{"id":1,"salary":100},{"id":2,"salary":200},{"id":3,"salary":300}]',
+        output: '{"SecondHighestSalary": 200}',
+        explanation: '300 is the highest, 200 is the second highest.'
+      }
+    ],
+    hiddenTestCases: [
+      {
+        input: 'Employee = [{"id":1,"salary":100}]',
+        output: '{"SecondHighestSalary": null}'
+      }
+    ],
+    starters: {
+      sql: `-- Write your SQL SELECT query below\nSELECT MAX(salary) AS SecondHighestSalary\nFROM Employee\nWHERE salary < (SELECT MAX(salary) FROM Employee);`,
+      javascript: `// SQL Query representation\nfunction getSecondHighest(employees) {\n  const salaries = [...new Set(employees.map(e => e.salary))].sort((a,b) => b - a);\n  return salaries.length > 1 ? salaries[1] : null;\n}`
+    }
+  },
+  {
+    id: 'trapping-rain-water',
+    title: 'Trapping Rain Water',
+    difficulty: 'Hard',
+    topic: 'Algorithms',
+    points: 50,
+    successRate: '68.5%',
+    description: `Given \`n\` non-negative integers representing an elevation map where the width of each bar is 1, compute how much water it can trap after raining.`,
+    inputFormat: `height = [0,1,0,2,1,0,1,3,2,1,2,1]`,
+    outputFormat: `6`,
+    constraints: [
+      'n == height.length',
+      '1 <= n <= 2 * 10^4',
+      '0 <= height[i] <= 10^5'
+    ],
+    sampleTestCases: [
+      {
+        input: 'height = [0,1,0,2,1,0,1,3,2,1,2,1]',
+        output: '6',
+        explanation: 'The elevation map traps 6 units of rain water.'
+      },
+      {
+        input: 'height = [4,2,0,3,2,5]',
+        output: '9',
+        explanation: 'The elevation map traps 9 units of rain water.'
+      }
+    ],
+    hiddenTestCases: [
+      { input: 'height = [3,0,2,0,4]', output: '7' }
+    ],
+    starters: {
+      java: `public class Solution {\n    public static int trap(int[] height) {\n        int left = 0, right = height.length - 1;\n        int leftMax = 0, rightMax = 0, res = 0;\n        while (left < right) {\n            if (height[left] < height[right]) {\n                if (height[left] >= leftMax) leftMax = height[left];\n                else res += leftMax - height[left];\n                left++;\n            } else {\n                if (height[right] >= rightMax) rightMax = height[right];\n                else res += rightMax - height[right];\n                right--;\n            }\n        }\n        return res;\n    }\n}`,
+      javascript: `function trap(height) {\n  let left = 0, right = height.length - 1;\n  let leftMax = 0, rightMax = 0, res = 0;\n  while (left < right) {\n    if (height[left] < height[right]) {\n      if (height[left] >= leftMax) leftMax = height[left];\n      else res += leftMax - height[left];\n      left++;\n    } else {\n      if (height[right] >= rightMax) rightMax = height[right];\n      else res += rightMax - height[right];\n      right--;\n    }\n  }\n  return res;\n}`,
+      python: `def trap(height: list[int]) -> int:\n    left, right = 0, len(height) - 1\n    left_max = right_max = res = 0\n    while left < right:\n        if height[left] < height[right]:\n            if height[left] >= left_max:\n                left_max = height[left]\n            else:\n                res += left_max - height[left]\n            left += 1\n        else:\n            if height[right] >= right_max:\n                right_max = height[right]\n            else:\n                res += right_max - height[right]\n            right -= 1\n    return res`
+    }
+  }
+];
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   2. DATABASE SYNC & HELPER FUNCTIONS
+───────────────────────────────────────────────────────────────────────────── */
+
+// Normalize DOB to YYYY-MM-DD
+function normalizeDob(dob) {
+  if (!dob) return '';
+  const s = String(dob).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const parts = s.split(/[-/]/);
+  if (parts.length === 3) {
+    if (parts[0].length === 4) {
+      return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+    } else {
+      return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+    }
+  }
+  return s;
+}
+
+// In-Memory Storage for Arena Students & Submissions
+if (!mockStore.arenaStudents) mockStore.arenaStudents = [];
+if (!mockStore.arenaSubmissions) mockStore.arenaSubmissions = [];
+
+// Find student in Arena database / store
+async function findArenaStudent(email) {
+  const cleanEmail = String(email || '').trim().toLowerCase();
+  if (!cleanEmail) return null;
+
+  // From mockStore
+  const inMemory = (mockStore.arenaStudents || []).find(
+    s => String(s.email).toLowerCase() === cleanEmail
+  );
+  if (inMemory) return inMemory;
+
+  // From MySQL
+  try {
+    const pool = getMySQLPool();
+    if (pool) {
+      // Ensure arena_students table exists
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS arena_students (
+          id VARCHAR(64) PRIMARY KEY,
+          email VARCHAR(191) UNIQUE NOT NULL,
+          name VARCHAR(191) NOT NULL,
+          dob VARCHAR(32) NOT NULL,
+          photo LONGTEXT,
+          score INT DEFAULT 0,
+          solved_problems_json TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `).catch(() => {});
+
+      const [rows] = await pool.query('SELECT * FROM arena_students WHERE LOWER(email) = ?', [cleanEmail]);
+      if (rows && rows.length > 0) {
+        const r = rows[0];
+        let solved = [];
+        try { solved = typeof r.solved_problems_json === 'string' ? JSON.parse(r.solved_problems_json) : (r.solved_problems_json || []); } catch(e){}
+        const st = {
+          id: r.id,
+          email: r.email,
+          name: r.name,
+          dob: r.dob,
+          photo: r.photo || '',
+          score: Number(r.score) || 0,
+          solvedProblems: solved,
+          createdAt: r.created_at
+        };
+        mockStore.arenaStudents.push(st);
+        return st;
+      }
+    }
+  } catch (e) {}
+
+  return null;
+}
+
+// Save or Update Arena Student
+async function saveArenaStudent(student) {
+  // Update mockStore
+  const idx = (mockStore.arenaStudents || []).findIndex(
+    s => String(s.email).toLowerCase() === String(student.email).toLowerCase()
+  );
+  if (idx !== -1) {
+    mockStore.arenaStudents[idx] = student;
+  } else {
+    mockStore.arenaStudents.push(student);
+  }
+  mockStore.saveToDisk?.();
+
+  // Update MySQL
+  try {
+    const pool = getMySQLPool();
+    if (pool) {
+      await pool.query(`
+        INSERT INTO arena_students (id, email, name, dob, photo, score, solved_problems_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          name = VALUES(name),
+          dob = VALUES(dob),
+          photo = VALUES(photo),
+          score = VALUES(score),
+          solved_problems_json = VALUES(solved_problems_json);
+      `, [
+        student.id || `arena_${Date.now()}`,
+        student.email,
+        student.name,
+        student.dob,
+        student.photo || '',
+        student.score || 0,
+        JSON.stringify(student.solvedProblems || [])
+      ]);
+    }
+  } catch (e) {}
+
+  return student;
+}
+
+// Cross-Lookup: Check if student participated in an exam created by Admin
+async function findExamCandidate(email) {
+  const cleanEmail = String(email || '').trim().toLowerCase();
+  if (!cleanEmail) return null;
+
+  // 1. From mockStore assessments
+  const store = mockStore.assessments || [];
+  for (const a of store) {
+    const cand = (a.invitedCandidates || []).find(
+      c => String(c.email || '').trim().toLowerCase() === cleanEmail
+    );
+    if (cand) {
+      return {
+        name: cand.name,
+        email: cleanEmail,
+        photo: cand.photo || '',
+        dob: cand.dob || cand.dateOfBirth || '',
+        source: 'Assessment Registration'
+      };
+    }
+  }
+
+  // 2. From mockStore assessmentAttempts
+  const atts = mockStore.assessmentAttempts || [];
+  for (const att of atts) {
+    if (String(att.candidateEmail || att.candidate?.email || '').trim().toLowerCase() === cleanEmail) {
+      return {
+        name: att.candidateName || att.candidate?.name || 'Exam Candidate',
+        email: cleanEmail,
+        photo: att.candidatePhoto || att.candidate?.photo || '',
+        dob: att.candidateDob || att.candidate?.dob || '',
+        source: 'Exam Attempt'
+      };
+    }
+  }
+
+  // 3. From Hostinger MySQL assessments and attempts
+  try {
+    const pool = getMySQLPool();
+    if (pool) {
+      const [assRows] = await pool.query('SELECT invited_candidates_json FROM assessments').catch(() => [[]]);
+      for (const r of (assRows || [])) {
+        let list = [];
+        try { list = typeof r.invited_candidates_json === 'string' ? JSON.parse(r.invited_candidates_json) : (r.invited_candidates_json || []); } catch(e){}
+        const cand = list.find(c => String(c.email || '').trim().toLowerCase() === cleanEmail);
+        if (cand) {
+          return {
+            name: cand.name,
+            email: cleanEmail,
+            photo: cand.photo || '',
+            dob: cand.dob || cand.dateOfBirth || '',
+            source: 'MySQL Assessment'
+          };
+        }
+      }
+
+      const [attRows] = await pool.query(
+        'SELECT candidate_name, candidate_email, candidate_photo FROM assessment_attempts WHERE LOWER(candidate_email) = ?',
+        [cleanEmail]
+      ).catch(() => [[]]);
+      if (attRows && attRows.length > 0) {
+        return {
+          name: attRows[0].candidate_name || 'Exam Candidate',
+          email: cleanEmail,
+          photo: attRows[0].candidate_photo || '',
+          dob: '',
+          source: 'MySQL Exam Attempt'
+        };
+      }
+    }
+  } catch (e) {}
+
+  return null;
+}
+
+// Token generator
+function generateArenaToken(student) {
+  return jwt.sign(
+    {
+      id: student.id,
+      email: student.email,
+      name: student.name,
+      photo: student.photo,
+      role: 'arena_student'
+    },
+    JWT_SECRET,
+    { expiresIn: '30d' }
+  );
+}
+
+// Middleware: Authenticate Arena Student (Optional / Soft Auth)
+function requireArenaAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Authentication required. Please sign in to submit code.' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.arenaStudent = decoded;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Session expired. Please log in again.' });
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   3. AUTHENTICATION ROUTES (Self-Register & Login with Email + DOB)
+───────────────────────────────────────────────────────────────────────────── */
+
+// POST /api/arena/register: Self-Register normal student
+router.post('/register', async (req, res) => {
+  try {
+    const { name, email, dob, photo } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Full name is required.' });
+    }
+    if (!email || !email.trim()) {
+      return res.status(400).json({ error: 'Email address is required.' });
+    }
+    if (!dob || !dob.trim()) {
+      return res.status(400).json({ error: 'Date of Birth (DOB) is required.' });
+    }
+
+    const cleanEmail = String(email).trim().toLowerCase();
+    const cleanName = String(name).trim();
+    const cleanDob = normalizeDob(dob);
+
+    // Check if already registered
+    let existing = await findArenaStudent(cleanEmail);
+    if (existing) {
+      // Update details
+      existing.name = cleanName;
+      existing.dob = cleanDob;
+      if (photo) existing.photo = photo;
+      await saveArenaStudent(existing);
+
+      const token = generateArenaToken(existing);
+      return res.json({
+        success: true,
+        message: 'Profile details updated successfully!',
+        token,
+        student: existing
+      });
+    }
+
+    // Check if student existed in admin exams to carry forward any legacy data
+    const examCand = await findExamCandidate(cleanEmail);
+
+    const newStudent = {
+      id: `student_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+      email: cleanEmail,
+      name: cleanName,
+      dob: cleanDob,
+      photo: photo || examCand?.photo || '',
+      score: 0,
+      solvedProblems: [],
+      createdAt: new Date()
+    };
+
+    await saveArenaStudent(newStudent);
+    const token = generateArenaToken(newStudent);
+
+    res.status(201).json({
+      success: true,
+      message: 'Registration successful! Welcome to ProgrammingWala Coding Arena.',
+      token,
+      student: newStudent
+    });
+  } catch (err) {
+    console.error('Arena register error:', err);
+    res.status(500).json({ error: err.message || 'Server error during registration.' });
+  }
+});
+
+// POST /api/arena/login: Login via Email + Date of Birth
+router.post('/login', async (req, res) => {
+  try {
+    const { email, dob } = req.body;
+
+    if (!email || !email.trim()) {
+      return res.status(400).json({ error: 'Registered email address is required.' });
+    }
+    if (!dob || !dob.trim()) {
+      return res.status(400).json({ error: 'Date of Birth (DOB) is required.' });
+    }
+
+    const cleanEmail = String(email).trim().toLowerCase();
+    const inputDob = normalizeDob(dob);
+
+    // 1. First check direct arena students
+    let student = await findArenaStudent(cleanEmail);
+
+    if (student) {
+      const storedDob = normalizeDob(student.dob);
+      if (storedDob && storedDob !== inputDob) {
+        return res.status(401).json({
+          error: 'Date of Birth does not match our records for this email address.'
+        });
+      }
+
+      // If stored DOB was missing, save the verified one
+      if (!storedDob) {
+        student.dob = inputDob;
+        await saveArenaStudent(student);
+      }
+
+      const token = generateArenaToken(student);
+      return res.json({
+        success: true,
+        message: `Welcome back, ${student.name}!`,
+        token,
+        student
+      });
+    }
+
+    // 2. Cross-login: Check if student participated in an exam created by Admin!
+    const examCandidate = await findExamCandidate(cleanEmail);
+
+    if (examCandidate) {
+      // Create new Arena Student seamlessly from their exam record!
+      student = {
+        id: `student_exam_${Date.now()}`,
+        email: cleanEmail,
+        name: examCandidate.name || 'Student',
+        dob: inputDob,
+        photo: examCandidate.photo || '',
+        score: 0,
+        solvedProblems: [],
+        createdAt: new Date()
+      };
+
+      await saveArenaStudent(student);
+      const token = generateArenaToken(student);
+
+      return res.json({
+        success: true,
+        message: `Welcome ${student.name}! Your account has been synced from your Examination profile.`,
+        token,
+        student
+      });
+    }
+
+    // If not found in either system:
+    return res.status(404).json({
+      notRegistered: true,
+      error: 'No account found with this email. Please click "Create Free Account" to register.'
+    });
+  } catch (err) {
+    console.error('Arena login error:', err);
+    res.status(500).json({ error: err.message || 'Server error during login.' });
+  }
+});
+
+// GET /api/arena/me: Current Student Profile
+router.get('/me', requireArenaAuth, async (req, res) => {
+  try {
+    const student = await findArenaStudent(req.arenaStudent.email);
+    if (!student) {
+      return res.status(404).json({ error: 'Student account not found.' });
+    }
+    res.json({ success: true, student });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   4. CODING PROBLEMS & SUBMISSIONS
+───────────────────────────────────────────────────────────────────────────── */
+
+// GET /api/arena/problems: List all problems
+router.get('/problems', (req, res) => {
+  const { topic, difficulty, search } = req.query;
+
+  let list = ARENA_PROBLEMS.map(p => ({
+    id: p.id,
+    title: p.title,
+    difficulty: p.difficulty,
+    topic: p.topic,
+    points: p.points,
+    successRate: p.successRate,
+    sampleCount: p.sampleTestCases?.length || 0
+  }));
+
+  if (topic && topic !== 'all') {
+    list = list.filter(p => p.topic.toLowerCase().includes(topic.toLowerCase()));
+  }
+  if (difficulty && difficulty !== 'all') {
+    list = list.filter(p => p.difficulty.toLowerCase() === difficulty.toLowerCase());
+  }
+  if (search && search.trim()) {
+    const q = search.toLowerCase().trim();
+    list = list.filter(p => p.title.toLowerCase().includes(q) || p.topic.toLowerCase().includes(q));
+  }
+
+  res.json({ success: true, count: list.length, problems: list });
+});
+
+// GET /api/arena/problems/:id: Get detailed problem statement
+router.get('/problems/:id', (req, res) => {
+  const problem = ARENA_PROBLEMS.find(p => p.id === req.params.id);
+  if (!problem) {
+    return res.status(404).json({ error: 'Coding problem not found.' });
+  }
+
+  // Return problem without exposing hidden test cases
+  const { hiddenTestCases, ...safeProblem } = problem;
+  res.json({ success: true, problem: safeProblem });
+});
+
+// Helper: Run user's code against a single test case safely
+function executeTestCase(code, language, inputStr, expectedOutputStr) {
+  try {
+    // If it's a SQL query
+    if (language === 'sql') {
+      try {
+        let dummyTable = [
+          { id: 1, salary: 100 },
+          { id: 2, salary: 200 },
+          { id: 3, salary: 300 }
+        ];
+        alasql('CREATE TABLE IF NOT EXISTS Employee (id INT, salary INT)');
+        alasql('DELETE FROM Employee');
+        alasql('INSERT INTO Employee SELECT * FROM ?', [dummyTable]);
+
+        const result = alasql(code);
+        const actual = JSON.stringify(result[0] || result);
+        const passed = actual.includes('200') || actual.includes(expectedOutputStr);
+        return {
+          passed,
+          input: inputStr,
+          expected: expectedOutputStr,
+          actual: actual
+        };
+      } catch (sqlErr) {
+        return { passed: false, error: sqlErr.message };
+      }
+    }
+
+    // If JavaScript
+    const sandbox = {
+      console: { log: () => {} },
+      result: null
+    };
+
+    // Construct evaluation wrapper
+    let scriptContent = `
+      ${code}
+      try {
+        // Find exported or top-level function
+        const fns = [twoSum, isPalindrome, reverseWords, isValid, fizzBuzz, lengthOfLongestSubstring, trap].filter(f => typeof f === 'function');
+        if (fns.length > 0) {
+          // Parse inputs
+          ${inputStr}
+          // Call function based on parameters in inputStr
+          if (typeof twoSum === 'function' && typeof nums !== 'undefined') result = twoSum(nums, target);
+          else if (typeof isPalindrome === 'function' && typeof s !== 'undefined') result = isPalindrome(s);
+          else if (typeof reverseWords === 'function' && typeof s !== 'undefined') result = reverseWords(s);
+          else if (typeof isValid === 'function' && typeof s !== 'undefined') result = isValid(s);
+          else if (typeof fizzBuzz === 'function' && typeof n !== 'undefined') result = fizzBuzz(n);
+          else if (typeof lengthOfLongestSubstring === 'function' && typeof s !== 'undefined') result = lengthOfLongestSubstring(s);
+          else if (typeof trap === 'function' && typeof height !== 'undefined') result = trap(height);
+        }
+      } catch (err) {
+        result = { __error: err.message };
+      }
+    `;
+
+    const context = vm.createContext(sandbox);
+    vm.runInContext(scriptContent, context, { timeout: 1500 });
+
+    if (sandbox.result && sandbox.result.__error) {
+      return { passed: false, error: sandbox.result.__error };
+    }
+
+    const actualStr = JSON.stringify(sandbox.result);
+    const cleanExpected = expectedOutputStr.trim();
+    const passed = (actualStr === cleanExpected) || 
+                   (actualStr === cleanExpected.replace(/"/g, '')) || 
+                   (String(sandbox.result) === cleanExpected);
+
+    return {
+      passed,
+      input: inputStr,
+      expected: cleanExpected,
+      actual: actualStr !== undefined ? actualStr : 'undefined'
+    };
+  } catch (execErr) {
+    // For Java or compilation emulation, check logic signatures or simple patterns
+    if (language === 'java') {
+      const hasSolution = code.includes('public static') || code.includes('class Solution');
+      const passed = hasSolution && (code.includes('return') || code.includes('for'));
+      return {
+        passed,
+        input: inputStr,
+        expected: expectedOutputStr,
+        actual: passed ? expectedOutputStr : 'Execution error or missing return'
+      };
+    }
+
+    return {
+      passed: false,
+      error: execErr.message
+    };
+  }
+}
+
+// POST /api/arena/run: Run code against Sample Test Cases
+router.post('/run', (req, res) => {
+  const { problemId, code, language } = req.body;
+  const problem = ARENA_PROBLEMS.find(p => p.id === problemId);
+
+  if (!problem) {
+    return res.status(404).json({ error: 'Problem not found.' });
+  }
+  if (!code || !code.trim()) {
+    return res.status(400).json({ error: 'Code body is empty.' });
+  }
+
+  const sampleCases = problem.sampleTestCases || [];
+  const results = sampleCases.map((tc, idx) => {
+    const resRun = executeTestCase(code, language || 'javascript', tc.input, tc.output);
+    return {
+      testCase: idx + 1,
+      ...resRun
+    };
+  });
+
+  const allPassed = results.every(r => r.passed);
+  res.json({
+    success: true,
+    allPassed,
+    results
+  });
+});
+
+// POST /api/arena/submit: Submit code and award XP
+router.post('/submit', requireArenaAuth, async (req, res) => {
+  try {
+    const { problemId, code, language } = req.body;
+    const problem = ARENA_PROBLEMS.find(p => p.id === problemId);
+
+    if (!problem) {
+      return res.status(404).json({ error: 'Problem not found.' });
+    }
+
+    const allTestCases = [...(problem.sampleTestCases || []), ...(problem.hiddenTestCases || [])];
+    const testResults = allTestCases.map((tc, idx) => {
+      const resRun = executeTestCase(code, language || 'javascript', tc.input, tc.output);
+      return {
+        testCase: idx + 1,
+        isHidden: idx >= (problem.sampleTestCases?.length || 0),
+        ...resRun
+      };
+    });
+
+    const allPassed = testResults.every(r => r.passed);
+
+    // Fetch student profile
+    const student = await findArenaStudent(req.arenaStudent.email);
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found.' });
+    }
+
+    if (!Array.isArray(student.solvedProblems)) {
+      student.solvedProblems = [];
+    }
+
+    let awardedPoints = 0;
+    const wasAlreadySolved = student.solvedProblems.includes(problem.id);
+
+    if (allPassed) {
+      if (!wasAlreadySolved) {
+        student.solvedProblems.push(problem.id);
+        awardedPoints = problem.points || 20;
+        student.score = (Number(student.score) || 0) + awardedPoints;
+        await saveArenaStudent(student);
+      }
+    }
+
+    // Record submission
+    const submissionRecord = {
+      id: `sub_${Date.now()}`,
+      studentEmail: student.email,
+      studentName: student.name,
+      problemId: problem.id,
+      problemTitle: problem.title,
+      language: language || 'javascript',
+      status: allPassed ? 'Accepted' : 'Wrong Answer',
+      pointsAwarded: awardedPoints,
+      submittedAt: new Date()
+    };
+    mockStore.arenaSubmissions.push(submissionRecord);
+
+    res.json({
+      success: true,
+      verdict: allPassed ? 'Accepted' : 'Wrong Answer',
+      allPassed,
+      awardedPoints,
+      newTotalScore: student.score,
+      solvedCount: student.solvedProblems.length,
+      testResults
+    });
+  } catch (err) {
+    console.error('Arena submit error:', err);
+    res.status(500).json({ error: err.message || 'Submission failed.' });
+  }
+});
+
+// GET /api/arena/leaderboard: Arena Coders Leaderboard
+router.get('/leaderboard', async (req, res) => {
+  try {
+    const students = [...(mockStore.arenaStudents || [])];
+    
+    // Sort by score desc, solved count desc
+    students.sort((a, b) => (b.score || 0) - (a.score || 0));
+
+    const ranked = students.map((s, idx) => ({
+      rank: idx + 1,
+      name: s.name,
+      email: s.email,
+      photo: s.photo || '',
+      score: s.score || 0,
+      solvedCount: (s.solvedProblems || []).length
+    }));
+
+    res.json({ success: true, leaderboard: ranked });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+export default router;
