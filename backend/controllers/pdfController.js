@@ -7,7 +7,7 @@ import Course from '../models/Course.js';
 import CourseEnrollment from '../models/CourseEnrollment.js';
 import Lesson from '../models/Lesson.js';
 import Module from '../models/Module.js';
-import pdf from 'html-pdf-node';
+import { jsPDF } from 'jspdf';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,219 +29,95 @@ export const generateCertificate = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Course not completed or not enrolled', 403));
   }
   
-  const course = enrollment.course;
-  const user = req.user;
-  
-  // Generate certificate HTML
-  const certificateHtml = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>Certificate of Completion</title>
-      <style>
-        body {
-          font-family: 'Arial', sans-serif;
-          margin: 0;
-          padding: 0;
-          background-color: #f5f5f5;
-        }
-        .certificate {
-          width: 800px;
-          height: 600px;
-          margin: 0 auto;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          position: relative;
-          overflow: hidden;
-        }
-        .certificate-content {
-          position: absolute;
-          top: 50px;
-          left: 50px;
-          right: 50px;
-          bottom: 50px;
-          background: white;
-          padding: 40px;
-          border-radius: 20px;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        .header {
-          text-align: center;
-          margin-bottom: 40px;
-        }
-        .header h1 {
-          color: #333;
-          font-size: 36px;
-          margin: 0;
-          font-weight: bold;
-        }
-        .header p {
-          color: #666;
-          font-size: 18px;
-          margin: 10px 0 0 0;
-        }
-        .main-content {
-          text-align: center;
-          margin: 40px 0;
-        }
-        .main-content h2 {
-          color: #333;
-          font-size: 28px;
-          margin: 20px 0;
-          font-weight: normal;
-        }
-        .student-name {
-          font-size: 42px;
-          color: #667eea;
-          font-weight: bold;
-          margin: 20px 0;
-          padding: 10px;
-          border-bottom: 2px solid #667eea;
-          display: inline-block;
-        }
-        .course-title {
-          font-size: 24px;
-          color: #333;
-          margin: 20px 0;
-        }
-        .details {
-          display: flex;
-          justify-content: space-between;
-          margin-top: 40px;
-          padding-top: 20px;
-          border-top: 1px solid #eee;
-        }
-        .detail-item {
-          text-align: center;
-        }
-        .detail-item h3 {
-          color: #666;
-          font-size: 16px;
-          margin: 0 0 10px 0;
-          font-weight: normal;
-        }
-        .detail-item p {
-          color: #333;
-          font-size: 18px;
-          margin: 0;
-          font-weight: bold;
-        }
-        .footer {
-          text-align: center;
-          margin-top: 40px;
-          color: #666;
-          font-size: 14px;
-        }
-        .watermark {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%) rotate(-45deg);
-          font-size: 120px;
-          color: rgba(102, 126, 234, 0.1);
-          font-weight: bold;
-          z-index: 1;
-          white-space: nowrap;
-        }
-        .signature {
-          margin-top: 40px;
-          text-align: center;
-        }
-        .signature-line {
-          width: 300px;
-          height: 1px;
-          background: #333;
-          margin: 20px auto;
-        }
-        .signature-name {
-          font-size: 18px;
-          color: #333;
-          font-weight: bold;
-        }
-        .signature-title {
-          font-size: 14px;
-          color: #666;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="certificate">
-        <div class="watermark">CERTIFICATE</div>
-        <div class="certificate-content">
-          <div class="header">
-            <h1>CERTIFICATE OF COMPLETION</h1>
-            <p>This is to certify that</p>
-          </div>
-          
-          <div class="main-content">
-            <div class="student-name">${req.user.name}</div>
-            <p>has successfully completed the course</p>
-            <div class="course-title">${course.title}</div>
-          </div>
-          
-          <div class="details">
-            <div class="detail-item">
-              <h3>Date of Completion</h3>
-              <p>${new Date(enrollment.completedAt).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}</p>
-            </div>
-            
-            <div class="detail-item">
-              <h3>Certificate ID</h3>
-              <p>${enrollment._id.toString().slice(-8).toUpperCase()}</p>
-            </div>
-            
-            <div class="detail-item">
-              <h3>Issued On</h3>
-              <p>${new Date().toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}</p>
-            </div>
-          </div>
-          
-          <div class="signature">
-            <div class="signature-line"></div>
-            <div class="signature-name">Pranidha International School</div>
-            <div class="signature-title">Kindergarten Learning Platform</div>
-          </div>
-          
-          <div class="footer">
-            <p>This certificate verifies the successful completion of the course as part of our early learning program.</p>
-            <p>Verify this certificate at: learning.pranidha.com/verify/${enrollment._id}</p>
-          </div>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-  
-  // Generate PDF from HTML
-  const options = {
-    format: 'A4',
-    printBackground: true,
-    margin: {
-      top: '20px',
-      right: '20px',
-      bottom: '20px',
-      left: '20px'
-    }
-  };
-  
-  const file = { content: certificateHtml };
+  const course = enrollment.course || {};
+  const user = req.user || {};
   
   try {
-    const pdfBuffer = await pdf.generatePdf(file, options);
-    
-    // Set response headers for PDF download
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    // Width: 297mm, Height: 210mm
+
+    // Background & Borders
+    doc.setFillColor(248, 250, 252);
+    doc.rect(0, 0, 297, 210, 'F');
+
+    doc.setDrawColor(79, 70, 229);
+    doc.setLineWidth(3);
+    doc.rect(10, 10, 277, 190);
+
+    doc.setDrawColor(217, 119, 6);
+    doc.setLineWidth(1);
+    doc.rect(13, 13, 271, 184);
+
+    // Watermark / Header
+    doc.setTextColor(79, 70, 229);
+    doc.setFontSize(26);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CERTIFICATE OF COMPLETION', 148.5, 45, { align: 'center' });
+
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'normal');
+    doc.text('This is proudly presented to', 148.5, 60, { align: 'center' });
+
+    // Student Name
+    doc.setTextColor(30, 41, 59);
+    doc.setFontSize(28);
+    doc.setFont('helvetica', 'bold');
+    doc.text(user.name || 'Student', 148.5, 80, { align: 'center' });
+
+    // Line under name
+    doc.setDrawColor(79, 70, 229);
+    doc.setLineWidth(0.5);
+    doc.line(60, 85, 237, 85);
+
+    // Course completion text
+    doc.setTextColor(71, 85, 105);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'normal');
+    doc.text('for successfully completing the comprehensive course:', 148.5, 98, { align: 'center' });
+
+    // Course Title
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text(course.title || 'Technical Program', 148.5, 115, { align: 'center' });
+
+    // Metadata details
+    const issueDate = new Date(enrollment.completedAt || Date.now()).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    const certId = enrollment._id ? enrollment._id.toString().slice(-8).toUpperCase() : 'PW-CERT';
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+
+    doc.text(`Completion Date: ${issueDate}`, 30, 150);
+    doc.text(`Certificate ID: ${certId}`, 148.5, 150, { align: 'center' });
+    doc.text('Status: Verified & Valid', 267, 150, { align: 'right' });
+
+    // Signatures
+    doc.setDrawColor(148, 163, 184);
+    doc.setLineWidth(0.5);
+    doc.line(30, 175, 90, 175);
+    doc.line(207, 175, 267, 175);
+
+    doc.setFontSize(10);
+    doc.setTextColor(71, 85, 105);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Pranidha & ProgrammingWala', 60, 182, { align: 'center' });
+    doc.text('Director of Academic Learning', 237, 182, { align: 'center' });
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(148, 163, 184);
+    doc.text('Verify online at programmingwala.com/verify-certificate', 148.5, 195, { align: 'center' });
+
+    const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="certificate-${course.title.replace(/\s+/g, '-').toLowerCase()}-${user.name.replace(/\s+/g, '-').toLowerCase()}.pdf"`);
-    
-    // Send the PDF
+    res.setHeader('Content-Disposition', `attachment; filename="certificate-${(course.title || 'course').replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}-${(user.name || 'student').replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}.pdf"`);
     res.send(pdfBuffer);
   } catch (error) {
     console.error('PDF generation error:', error);
@@ -269,215 +145,65 @@ export const generateSyllabus = asyncHandler(async (req, res, next) => {
       match: { isPublished: true },
       options: { sort: { order: 1 } }
     });
-  
-  // Generate syllabus HTML
-  const syllabusHtml = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>${course.title} - Syllabus</title>
-      <style>
-        body {
-          font-family: 'Arial', sans-serif;
-          margin: 0;
-          padding: 40px;
-          background-color: #f5f5f5;
-          color: #333;
-        }
-        .container {
-          max-width: 800px;
-          margin: 0 auto;
-          background: white;
-          padding: 40px;
-          border-radius: 10px;
-          box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        .header {
-          text-align: center;
-          margin-bottom: 40px;
-          padding-bottom: 20px;
-          border-bottom: 2px solid #667eea;
-        }
-        .header h1 {
-          color: #333;
-          font-size: 32px;
-          margin: 0 0 10px 0;
-        }
-        .header .subtitle {
-          color: #666;
-          font-size: 18px;
-          margin: 0;
-        }
-        .course-info {
-          margin-bottom: 30px;
-          padding: 20px;
-          background: #f8f9fa;
-          border-radius: 8px;
-        }
-        .info-item {
-          margin-bottom: 10px;
-        }
-        .info-item strong {
-          color: #667eea;
-        }
-        .modules {
-          margin-top: 40px;
-        }
-        .module {
-          margin-bottom: 30px;
-          padding: 20px;
-          border: 1px solid #e9ecef;
-          border-radius: 8px;
-        }
-        .module-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 15px;
-          padding-bottom: 10px;
-          border-bottom: 1px solid #e9ecef;
-        }
-        .module-title {
-          font-size: 20px;
-          color: #333;
-          margin: 0;
-        }
-        .lessons {
-          margin-left: 20px;
-        }
-        .lesson {
-          margin-bottom: 10px;
-          padding: 10px;
-          background: #f8f9fa;
-          border-radius: 5px;
-        }
-        .lesson-title {
-          font-size: 16px;
-          color: #333;
-          margin: 0 0 5px 0;
-        }
-        .lesson-duration {
-          font-size: 14px;
-          color: #666;
-        }
-        .learning-outcomes {
-          margin-top: 40px;
-          padding: 20px;
-          background: #e8f4f8;
-          border-radius: 8px;
-        }
-        .learning-outcomes h3 {
-          color: #2196f3;
-          margin-top: 0;
-        }
-        .outcome-list {
-          margin-left: 20px;
-        }
-        .outcome-list li {
-          margin-bottom: 8px;
-        }
-        .footer {
-          margin-top: 40px;
-          text-align: center;
-          color: #666;
-          font-size: 14px;
-          padding-top: 20px;
-          border-top: 1px solid #e9ecef;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h1>${course.title}</h1>
-          <p class="subtitle">Course Syllabus</p>
-        </div>
-        
-        <div class="course-info">
-          <div class="info-item">
-            <strong>Instructor:</strong> ${course.instructor?.name || 'TBA'}
-          </div>
-          <div class="info-item">
-            <strong>Course Level:</strong> ${course.level}
-          </div>
-          <div class="info-item">
-            <strong>Total Duration:</strong> ${course.totalDuration || 0} minutes
-          </div>
-          <div class="info-item">
-            <strong>Total Lessons:</strong> ${course.totalLessons || 0}
-          </div>
-          <div class="info-item">
-            <strong>Category:</strong> ${course.category.replace('-', ' ')}
-          </div>
-        </div>
-        
-        <div class="description">
-          <h3>Course Description</h3>
-          <p>${course.detailedDescription || course.description}</p>
-        </div>
-        
-        <div class="modules">
-          <h3>Course Modules</h3>
-          ${modules.map((module, index) => `
-            <div class="module">
-              <div class="module-header">
-                <h4 class="module-title">Module ${index + 1}: ${module.title}</h4>
-                <span>${module.lessons?.length || 0} lessons</span>
-              </div>
-              <div class="lessons">
-                ${module.lessons?.map((lesson, lessonIndex) => `
-                  <div class="lesson">
-                    <h5 class="lesson-title">Lesson ${lessonIndex + 1}: ${lesson.title}</h5>
-                    <p class="lesson-duration">Duration: ${Math.round((lesson.videoDuration || 0) / 60)} minutes</p>
-                    ${lesson.description ? `<p>${lesson.description}</p>` : ''}
-                  </div>
-                `).join('') || '<p>No lessons available in this module.</p>'}
-              </div>
-            </div>
-          `).join('')}
-        </div>
-        
-        ${course.learningOutcomes && course.learningOutcomes.length > 0 ? `
-          <div class="learning-outcomes">
-            <h3>Learning Outcomes</h3>
-            <ul class="outcome-list">
-              ${course.learningOutcomes.map(outcome => `<li>${outcome}</li>`).join('')}
-            </ul>
-          </div>
-        ` : ''}
-        
-        <div class="footer">
-          <p>Pranidha International School Kindergarten Learning Platform</p>
-          <p>© ${new Date().getFullYear()} - All rights reserved</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-  
-  // Generate PDF from HTML
-  const options = {
-    format: 'A4',
-    printBackground: true,
-    margin: {
-      top: '20px',
-      right: '20px',
-      bottom: '20px',
-      left: '20px'
-    }
-  };
-  
-  const file = { content: syllabusHtml };
-  
+
   try {
-    const pdfBuffer = await pdf.generatePdf(file, options);
-    
-    // Set response headers for PDF download
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    // Width: 210mm, Height: 297mm
+
+    doc.setFillColor(79, 70, 229);
+    doc.rect(0, 0, 210, 35, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text(course.title || 'Course Syllabus', 15, 18);
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Course Syllabus & Curriculum Roadmap', 15, 27);
+
+    let y = 48;
+    doc.setTextColor(30, 41, 59);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Instructor: ${course.instructor?.name || 'ProgrammingWala Faculty'}`, 15, y);
+    y += 7;
+    doc.text(`Level: ${course.level || 'All Levels'} | Duration: ${course.totalDuration || 0} mins`, 15, y);
+    y += 12;
+
+    doc.setFontSize(14);
+    doc.setTextColor(79, 70, 229);
+    doc.text('Modules & Curriculum', 15, y);
+    y += 8;
+
+    (modules || []).forEach((mod, mIdx) => {
+      if (y > 270) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(15, 23, 42);
+      doc.text(`Module ${mIdx + 1}: ${mod.title || 'Module'}`, 15, y);
+      y += 6;
+
+      (mod.lessons || []).forEach((les, lIdx) => {
+        if (y > 275) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.setFontSize(9.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(71, 85, 105);
+        doc.text(`  • Lesson ${lIdx + 1}: ${les.title || 'Lesson'}`, 20, y);
+        y += 5;
+      });
+      y += 4;
+    });
+
+    const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="syllabus-${course.title.replace(/\s+/g, '-').toLowerCase()}.pdf"`);
-    
-    // Send the PDF
+    res.setHeader('Content-Disposition', `attachment; filename="syllabus-${(course.title || 'course').replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}.pdf"`);
     res.send(pdfBuffer);
   } catch (error) {
     console.error('PDF generation error:', error);
@@ -491,7 +217,6 @@ export const generateSyllabus = asyncHandler(async (req, res, next) => {
 export const downloadNotesPDF = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
   
-  // Check if enrolled
   const enrollment = await CourseEnrollment.findOne({
     user: req.user.id,
     course: id
@@ -501,145 +226,51 @@ export const downloadNotesPDF = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Not enrolled in this course', 403));
   }
   
-  // Get all notes for this course
-  const Note = (await import('../models/Note.js')).default;
-  const notes = await Note.find({
-    user: req.user.id,
-    course: id
-  }).sort('-createdAt');
-  
-  // Generate notes HTML
-  const notesHtml = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>My Course Notes</title>
-      <style>
-        body {
-          font-family: 'Arial', sans-serif;
-          margin: 0;
-          padding: 40px;
-          background-color: #f5f5f5;
-          color: #333;
-        }
-        .container {
-          max-width: 800px;
-          margin: 0 auto;
-          background: white;
-          padding: 40px;
-          border-radius: 10px;
-          box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        .header {
-          text-align: center;
-          margin-bottom: 40px;
-          padding-bottom: 20px;
-          border-bottom: 2px solid #667eea;
-        }
-        .header h1 {
-          color: #333;
-          font-size: 32px;
-          margin: 0 0 10px 0;
-        }
-        .note {
-          margin-bottom: 30px;
-          padding: 20px;
-          border: 1px solid #e9ecef;
-          border-radius: 8px;
-          page-break-inside: avoid;
-        }
-        .note-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 15px;
-          padding-bottom: 10px;
-          border-bottom: 1px solid #e9ecef;
-        }
-        .note-title {
-          font-size: 18px;
-          color: #333;
-          margin: 0;
-        }
-        .note-meta {
-          font-size: 14px;
-          color: #666;
-        }
-        .note-content {
-          font-size: 16px;
-          line-height: 1.6;
-        }
-        .footer {
-          margin-top: 40px;
-          text-align: center;
-          color: #666;
-          font-size: 14px;
-          padding-top: 20px;
-          border-top: 1px solid #e9ecef;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h1>My Course Notes</h1>
-          <p>Generated on ${new Date().toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          })}</p>
-        </div>
-        
-        ${notes.length > 0 ? notes.map((note, index) => `
-          <div class="note">
-            <div class="note-header">
-              <h3 class="note-title">Note ${index + 1}</h3>
-              <div class="note-meta">
-                ${note.timestamp > 0 ? `Video Time: ${Math.floor(note.timestamp / 60)}:${(note.timestamp % 60).toString().padStart(2, '0')}` : ''}
-              </div>
-            </div>
-            <div class="note-content">
-              ${note.content.split('\n').map(line => `<p>${line}</p>`).join('')}
-            </div>
-          </div>
-        `).join('') : `
-          <div class="note">
-            <p>No notes available for this course.</p>
-          </div>
-        `}
-        
-        <div class="footer">
-          <p>Pranidha International School Kindergarten Learning Platform</p>
-          <p>© ${new Date().getFullYear()} - All rights reserved</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-  
-  // Generate PDF from HTML
-  const options = {
-    format: 'A4',
-    printBackground: true,
-    margin: {
-      top: '20px',
-      right: '20px',
-      bottom: '20px',
-      left: '20px'
-    }
-  };
-  
-  const file = { content: notesHtml };
-  
+  const course = await Course.findById(id);
+  const notes = enrollment.notes || [];
+
   try {
-    const pdfBuffer = await pdf.generatePdf(file, options);
-    
-    // Set response headers for PDF download
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    doc.setFillColor(30, 41, 59);
+    doc.rect(0, 0, 210, 30, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Course Notes: ${course?.title || 'Learning Notes'}`, 15, 16);
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Student: ${req.user.name || 'Student'} | Total Notes: ${notes.length}`, 15, 24);
+
+    let y = 42;
+    if (notes.length === 0) {
+      doc.setTextColor(100, 116, 139);
+      doc.text('No notes recorded yet for this course.', 15, y);
+    } else {
+      notes.forEach((note, idx) => {
+        if (y > 265) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(79, 70, 229);
+        doc.text(`Note #${idx + 1} - ${new Date(note.createdAt || Date.now()).toLocaleDateString()}`, 15, y);
+        y += 6;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(30, 41, 59);
+        const splitText = doc.splitTextToSize(note.content || '', 180);
+        doc.text(splitText, 15, y);
+        y += (splitText.length * 5) + 6;
+      });
+    }
+
+    const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="course-notes-${id}.pdf"`);
-    
-    // Send the PDF
     res.send(pdfBuffer);
   } catch (error) {
     console.error('PDF generation error:', error);
