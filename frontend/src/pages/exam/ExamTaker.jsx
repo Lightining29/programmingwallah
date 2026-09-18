@@ -382,34 +382,27 @@ export default function ExamTaker() {
   const isMarked = reviewMarked.has(currentQ.id);
 
   // Status helper for question palette:
-  // - ANSWERED: green
-  // - NOT_ANSWERED (visited but unanswered): red
-  // - MARKED_FOR_REVIEW: yellow
-  // - NOT_VISITED: white outline
-  const getQuestionStatus = (index) => {
+  // Decoupled from correct/incorrect — only colors attempted questions green,
+  // leaving unattempted questions uncolored/neutral with green border (matching reference image).
+  const isQuestionAttempted = (index) => {
     const q = questions[index];
-    if (!q) return 'NOT_VISITED';
+    if (!q) return false;
     const ans = answers[q.id];
-    const hasAnswer = ans && (
-      (ans.selectedOptionId !== null && ans.selectedOptionId !== undefined) || 
-      (ans.textAnswer && ans.textAnswer.trim() !== '') || 
-      (ans.codeAnswer && ans.codeAnswer.trim() !== '')
+    return !!(
+      ans && (
+        (ans.selectedOptionId !== null && ans.selectedOptionId !== undefined) || 
+        (ans.textAnswer && ans.textAnswer.trim() !== '') || 
+        (ans.codeAnswer && ans.codeAnswer.trim() !== '')
+      )
     );
-    const marked = reviewMarked.has(q.id);
-
-    if (marked) return 'MARKED_FOR_REVIEW';
-    if (hasAnswer) return 'ANSWERED';
-    if (visited.has(index)) return 'NOT_ANSWERED';
-    return 'NOT_VISITED';
   };
 
   // Calculate live counts
   let answeredCount = 0;
   let markedCount = 0;
   questions.forEach((q, idx) => {
-    const st = getQuestionStatus(idx);
-    if (st === 'ANSWERED') answeredCount++;
-    if (st === 'MARKED_FOR_REVIEW') markedCount++;
+    if (isQuestionAttempted(idx)) answeredCount++;
+    if (reviewMarked.has(q.id)) markedCount++;
   });
   const unansweredCount = questions.length - answeredCount;
 
@@ -572,22 +565,23 @@ export default function ExamTaker() {
                   ANSWER STATUS
                 </h3>
 
-                {/* 6-Column Circular Grid of Number Badges */}
+                {/* 6-Column Circular Grid of Number Badges (matching reference image) */}
                 <div className="grid grid-cols-6 gap-2 sm:gap-2.5 my-2">
                   {currentPaletteQuestions.map((q, localIdx) => {
                     const globalIdx = palettePage * PAGE_SIZE + localIdx;
-                    const status = getQuestionStatus(globalIdx);
+                    const attempted = isQuestionAttempted(globalIdx);
                     const isCurrent = currentIndex === globalIdx;
 
-                    let bubbleStyle = 'bg-white border border-slate-300 text-slate-700'; // unvisited
+                    // Reference image styling:
+                    // - Attempted: Solid green circle with crisp white text
+                    // - Unattempted: Clean white circle with light green/emerald outline & dark text
+                    // - Active Current: Dark slate circle with ring indicator
+                    // Strictly NO right/wrong colors
+                    let bubbleStyle = 'bg-white border-2 border-emerald-400/50 text-slate-800 font-bold hover:border-emerald-500'; // unattempted
                     if (isCurrent) {
-                      bubbleStyle = 'bg-[#4a5568] text-white font-black ring-2 ring-slate-400'; // active dark grey
-                    } else if (status === 'ANSWERED') {
-                      bubbleStyle = 'bg-[#48bb78] text-white font-black'; // green
-                    } else if (status === 'MARKED_FOR_REVIEW') {
-                      bubbleStyle = 'bg-[#ecc94b] text-slate-900 font-black'; // yellow
-                    } else if (status === 'NOT_ANSWERED') {
-                      bubbleStyle = 'bg-[#e53e3e] text-white font-black'; // red
+                      bubbleStyle = 'bg-[#4a5568] text-white font-black ring-2 ring-slate-400 shadow-sm'; // active dark grey
+                    } else if (attempted) {
+                      bubbleStyle = 'bg-[#48bb78] text-white font-bold shadow-sm'; // green attempted
                     }
 
                     return (
@@ -596,6 +590,7 @@ export default function ExamTaker() {
                         type="button"
                         onClick={() => goToQuestion(globalIdx)}
                         className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full text-xs font-bold flex items-center justify-center transition cursor-pointer shadow-sm ${bubbleStyle}`}
+                        title={`Question ${globalIdx + 1}: ${attempted ? 'Attempted' : 'Not Attempted'}`}
                       >
                         {globalIdx + 1}
                       </button>
@@ -629,6 +624,18 @@ export default function ExamTaker() {
                     &gt;&gt;
                   </button>
                 )}
+              </div>
+
+              {/* Status Legend (Only Attempted vs Not Attempted - No right/wrong) */}
+              <div className="flex items-center justify-center gap-4 text-[11px] font-semibold text-slate-600 pt-3 border-t border-slate-100 mt-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3.5 h-3.5 rounded-full bg-[#48bb78]" />
+                  <span>Attempted</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3.5 h-3.5 rounded-full bg-white border-2 border-emerald-400/50" />
+                  <span>Not Attempted</span>
+                </div>
               </div>
 
             </div>
