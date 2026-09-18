@@ -48,6 +48,7 @@ export default function StudentRegister() {
   // Form fields
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [dob, setDob] = useState('');
   const [phone, setPhone] = useState('');
   const [selectedCollege, setSelectedCollege] = useState('');
   const [customCollege, setCustomCollege] = useState('');
@@ -139,6 +140,15 @@ export default function StudentRegister() {
       return;
     }
 
+    if (!dob) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Date of Birth Required',
+        text: 'Please select your Date of Birth. This is required for entering exams and your Coding Arena account.'
+      });
+      return;
+    }
+
     if (!photo) {
       setPhotoError('Profile photo is required for your exam admit card and leaderboard rank.');
       Swal.fire({
@@ -161,6 +171,7 @@ export default function StudentRegister() {
         body: JSON.stringify({
           name: name.trim(),
           email: email.trim().toLowerCase(),
+          dob: dob.trim(),
           phone: phone.trim(),
           college: finalCollege,
           rollNo: rollNo.trim(),
@@ -173,7 +184,7 @@ export default function StudentRegister() {
 
       setRegisteredSuccess({
         candidate: data.candidate,
-        examUrl: data.examUrl || `/test/${id}?email=${encodeURIComponent(email.trim().toLowerCase())}`,
+        examUrl: data.examUrl || `/test/${id}?email=${encodeURIComponent(email.trim().toLowerCase())}&dob=${encodeURIComponent(dob.trim())}`,
         message: data.message
       });
 
@@ -437,22 +448,41 @@ export default function StudentRegister() {
               </div>
             </div>
 
-            {/* Email Address */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider flex justify-between">
-                <span>Email Address (Primary Key) <span className="text-rose-500">*</span></span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-normal lowercase">used to enter exam</span>
-              </label>
-              <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-base">✉️</span>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="e.g. manish@example.com"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                />
+            {/* Email Address & Date of Birth Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider flex justify-between">
+                  <span>Email Address <span className="text-rose-500">*</span></span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-normal lowercase">primary key</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-base">✉️</span>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="e.g. manish@example.com"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider flex justify-between">
+                  <span>Date of Birth (DOB) <span className="text-rose-500">*</span></span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-normal lowercase">for exam entry</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-base">📅</span>
+                  <input
+                    type="date"
+                    required
+                    value={dob}
+                    onChange={e => setDob(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all cursor-pointer"
+                  />
+                </div>
               </div>
             </div>
 

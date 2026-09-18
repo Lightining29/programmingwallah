@@ -132,12 +132,29 @@ function AccessGate({ assessmentId, onStart }) {
       return '';
     }
   });
+  const [dob, setDob]     = useState(() => {
+    try {
+      return new URLSearchParams(window.location.search).get('dob') || '';
+    } catch {
+      return '';
+    }
+  });
   const [code, setCode]   = useState('');
   const [busy, setBusy]   = useState(false);
   const navigate          = useNavigate();
 
   const verify = async (e) => {
     e.preventDefault();
+    if (!dob) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Date of Birth Required',
+        text: 'Please enter your registered Date of Birth to enter the exam.',
+        confirmButtonColor: '#0ea5e9'
+      });
+      return;
+    }
+
     setBusy(true);
     try {
       const res = await fetch('/api/assessment/verify-access', {
@@ -145,6 +162,7 @@ function AccessGate({ assessmentId, onStart }) {
         body: JSON.stringify({
           assessmentId,
           email: email.trim().toLowerCase(),
+          dob: dob.trim(),
           accessPassword: code.trim().toUpperCase(),
           accessCode: code.trim().toUpperCase()
         })
@@ -169,7 +187,7 @@ function AccessGate({ assessmentId, onStart }) {
         }
         throw new Error(data.error);
       }
-      onStart({ email: email.trim().toLowerCase(), accessCode: code.trim().toUpperCase(), meta: data });
+      onStart({ email: email.trim().toLowerCase(), dob: dob.trim(), accessCode: code.trim().toUpperCase(), meta: data });
     } catch (err) {
       Swal.fire({ icon: 'error', title: 'Access Denied', text: err.message, confirmButtonColor: '#ef4444' });
     } finally { setBusy(false); }
@@ -182,14 +200,14 @@ function AccessGate({ assessmentId, onStart }) {
           <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>🔐</div>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0f172a' }}>Assessment Gate</h1>
           <p style={{ color: '#64748b', fontSize: '0.88rem', marginTop: '0.35rem' }}>
-            Enter your registered email and the assessment password provided by your admin
+            Enter your registered email, date of birth, and the exam password to enter
           </p>
         </div>
 
         <form onSubmit={verify} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
           <div>
             <label style={{ fontSize: '0.82rem', fontWeight: 800, color: '#374151', display: 'block', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Registered Student Email
+              Registered Student Email <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <input
               type="email"
@@ -203,7 +221,20 @@ function AccessGate({ assessmentId, onStart }) {
 
           <div>
             <label style={{ fontSize: '0.82rem', fontWeight: 800, color: '#374151', display: 'block', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Assessment Password
+              Date of Birth (DOB) <span style={{ color: '#ef4444' }}>*</span>
+            </label>
+            <input
+              type="date"
+              required
+              value={dob}
+              onChange={e => setDob(e.target.value)}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '0.8rem 1rem', border: '1.5px solid #cbd5e1', borderRadius: '12px', fontSize: '0.95rem', outline: 'none', fontFamily: 'inherit', color: '#1e293b', cursor: 'pointer' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.82rem', fontWeight: 800, color: '#374151', display: 'block', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Assessment Password <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <input
               type="text"
@@ -300,7 +331,7 @@ function useTimer(durationMinutes, onExpire) {
 }
 
 /* ─── Main Test Engine ────────────────────────────────────────── */
-function TestEngine({ assessmentId, email, accessCode, onSubmit }) {
+function TestEngine({ assessmentId, email, dob, accessCode, onSubmit }) {
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers]     = useState({});
   const [current, setCurrent]     = useState(0);
@@ -371,7 +402,7 @@ function TestEngine({ assessmentId, email, accessCode, onSubmit }) {
   useEffect(() => {
     fetch('/api/assessment/start', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ assessmentId, email, accessCode })
+      body: JSON.stringify({ assessmentId, email, dob, accessCode })
     }).then(r => r.json()).then(d => {
       if (d.error) { Swal.fire({ icon: 'error', title: 'Error', text: d.error }); return; }
       setAttemptId(d.attemptId);
@@ -379,7 +410,7 @@ function TestEngine({ assessmentId, email, accessCode, onSubmit }) {
       setDuration(d.duration || 30);
       setLoading(false);
     }).catch(() => setLoading(false));
-  }, [assessmentId, email, accessCode]);
+  }, [assessmentId, email, dob, accessCode]);
 
   const submit = useCallback(async () => {
     if (submitting) return;
@@ -753,7 +784,7 @@ export default function TakeTest() {
 
   if (stage === 'gate') return <AccessGate assessmentId={id} onStart={a => { setAccess(a); setStage('instructions'); }} />;
   if (stage === 'instructions') return <Instructions meta={access?.meta} onConfirm={() => setStage('test')} />;
-  if (stage === 'test') return <TestEngine assessmentId={id} email={access?.email} accessCode={access?.accessCode} onSubmit={r => { setResult(r); setStage('result'); }} />;
+  if (stage === 'test') return <TestEngine assessmentId={id} email={access?.email} dob={access?.dob} accessCode={access?.accessCode} onSubmit={r => { setResult(r); setStage('result'); }} />;
   if (stage === 'result') return <ResultScreen result={result} email={access?.email} />;
   return null;
 }

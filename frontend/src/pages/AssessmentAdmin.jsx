@@ -76,6 +76,7 @@ export default function AssessmentAdmin() {
   const [showNewTest, setShowNewTest] = useState(false);
   const [manualName, setManualName]   = useState('');
   const [manualEmail, setManualEmail] = useState('');
+  const [manualDob, setManualDob]     = useState('');
 
   /* ── new test form ── */
   const [tf, setTf] = useState({
@@ -430,7 +431,11 @@ export default function AssessmentAdmin() {
     const r = await api(`/api/assessment/admin/${selTest._id}/invite`, {
       method: 'POST',
       body: JSON.stringify({
-        candidates: [{ name: manualName.trim() || 'Candidate', email: manualEmail.trim() }]
+        candidates: [{
+          name: manualName.trim() || 'Candidate',
+          email: manualEmail.trim(),
+          dob: manualDob.trim()
+        }]
       }),
     });
     const d = await r.json();
@@ -438,6 +443,7 @@ export default function AssessmentAdmin() {
     Swal.fire({ icon: 'success', title: 'Candidate Added!', text: `Access code generated. No email sent.`, timer: 2000, showConfirmButton: false });
     setManualName('');
     setManualEmail('');
+    setManualDob('');
     const updated = await api(`/api/assessment/admin/${selTest._id}`).then(r2 => r2.json());
     setSelTest(updated);
     fetchAll();
@@ -1878,13 +1884,17 @@ export default function AssessmentAdmin() {
                 <div className="aa-card" style={{ marginBottom: '1.25rem' }}>
                   <div className="aa-section-title">➕ Or Manually Assign Candidate (Generates Instant Access Code)</div>
                   <form onSubmit={inviteCandidateManual} style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                    <div style={{ flex: '1 1 200px' }}>
+                    <div style={{ flex: '1 1 180px' }}>
                       <label className="aa-label">Candidate Name</label>
                       <input className="aa-input" value={manualName} onChange={e => setManualName(e.target.value)} placeholder="e.g. John Doe" />
                     </div>
-                    <div style={{ flex: '1 1 250px' }}>
+                    <div style={{ flex: '1 1 200px' }}>
                       <label className="aa-label">Candidate Email *</label>
                       <input type="email" required className="aa-input" value={manualEmail} onChange={e => setManualEmail(e.target.value)} placeholder="student@example.com" />
+                    </div>
+                    <div style={{ flex: '1 1 160px' }}>
+                      <label className="aa-label">Date of Birth (DOB)</label>
+                      <input type="date" className="aa-input" value={manualDob} onChange={e => setManualDob(e.target.value)} />
                     </div>
                     <button type="submit" className="aa-btn aa-btn-primary" style={{ padding: '0.65rem 1.4rem' }}>
                       <UserPlus size={16} /> Assign Candidate
@@ -1912,6 +1922,7 @@ export default function AssessmentAdmin() {
                           </div>
                           <div style={{ fontSize: '0.84rem', color: '#334155', marginTop: '0.25rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
                             <span><strong>Email:</strong> {ic.email}</span>
+                            {(ic.dob || ic.dateOfBirth) && <span>· <strong>DOB:</strong> {ic.dob || ic.dateOfBirth}</span>}
                             {ic.phone && <span>· <strong>Phone:</strong> {ic.phone}</span>}
                             {ic.college && <span>· <strong>College:</strong> {ic.college}</span>}
                             {ic.rollNo && <span>· <strong>Roll No:</strong> {ic.rollNo}</span>}

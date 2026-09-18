@@ -39,6 +39,22 @@ const genCode = () => crypto.randomBytes(3).toString('hex').toUpperCase();
 const genId = () => new mongoose.Types.ObjectId().toString();
 const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
 
+// Normalize DOB to YYYY-MM-DD
+function normalizeDob(dob) {
+  if (!dob) return '';
+  const s = String(dob).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const parts = s.split(/[-/]/);
+  if (parts.length === 3) {
+    if (parts[0].length === 4) {
+      return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+    } else {
+      return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+    }
+  }
+  return s;
+}
+
 // Dual-persistence helpers
 const getAssessmentsFromStore = () => {
   if (!Array.isArray(mockStore.assessments)) mockStore.assessments = [];
@@ -922,9 +938,12 @@ router.post('/admin/:id/invite', adminGuard, async (req, res) => {
         if (cand && cand.email) {
           const email = cand.email.toLowerCase().trim();
           if (!test.invitedCandidates.some(c => c.email?.toLowerCase() === email)) {
+            const candDob = normalizeDob(cand.dob || cand.dateOfBirth);
             test.invitedCandidates.push({
               name: cand.name || 'Candidate',
               email,
+              dob: candDob,
+              dateOfBirth: candDob,
               accessCode: test.accessPassword || genCode(),
               invitedAt: new Date()
             });
@@ -1840,13 +1859,19 @@ router.get('/public/:id', async (req, res) => {
 // Student Self-Registration Form Submission
 router.post('/:id/register', async (req, res) => {
   try {
-    const { name, email, phone, college, rollNo, photo } = req.body;
+    const { name, email, phone, college, rollNo, photo, dob, dateOfBirth } = req.body;
     if (!name || !email) {
       return res.status(400).json({ error: 'Full name and email address are required.' });
     }
 
+    const rawDob = dob || dateOfBirth || '';
+    if (!rawDob || !String(rawDob).trim()) {
+      return res.status(400).json({ error: 'Date of Birth (DOB) is required.' });
+    }
+
     const cleanEmail = String(email).toLowerCase().trim();
     const cleanName = String(name).trim();
+    const cleanDob = normalizeDob(rawDob);
     const cleanPhone = String(phone || '').trim();
     const cleanCollege = String(college || '').trim();
     const cleanRollNo = String(rollNo || '').trim();
@@ -1873,6 +1898,8 @@ router.post('/:id/register', async (req, res) => {
     const studentRecord = {
       email: cleanEmail,
       name: cleanName,
+      dob: cleanDob,
+      dateOfBirth: cleanDob,
       phone: cleanPhone,
       college: cleanCollege,
       rollNo: cleanRollNo,
@@ -1887,7 +1914,9 @@ router.post('/:id/register', async (req, res) => {
       a.invitedCandidates[existingIdx] = {
         ...a.invitedCandidates[existingIdx],
         ...studentRecord,
-        photo: cleanPhoto || a.invitedCandidates[existingIdx].photo || ''
+        photo: cleanPhoto || a.invitedCandidates[existingIdx].photo || '',
+        dob: cleanDob || a.invitedCandidates[existingIdx].dob || a.invitedCandidates[existingIdx].dateOfBirth || '',
+        dateOfBirth: cleanDob || a.invitedCandidates[existingIdx].dateOfBirth || a.invitedCandidates[existingIdx].dob || ''
       };
     } else {
       // Append new student registration
@@ -1903,6 +1932,7 @@ router.post('/:id/register', async (req, res) => {
       candidate: {
         name: cleanName,
         email: cleanEmail,
+        dob: cleanDob,
         college: cleanCollege,
         photo: cleanPhoto || (existingIdx !== -1 ? a.invitedCandidates[existingIdx].photo : '')
       },
@@ -1912,20 +1942,26 @@ router.post('/:id/register', async (req, res) => {
         duration: a.duration,
         passingScore: a.passingScore
       },
-      examUrl: `/test/${a._id}?email=${encodeURIComponent(cleanEmail)}`
+      examUrl: `/test/${a._id}?email=${encodeURIComponent(cleanEmail)}&dob=${encodeURIComponent(cleanDob)}`
     });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
 
-// Verify Exam Access (Email + Admin Assessment Password)
+// Verify Exam Access (Email + Date of Birth + Admin Assessment Password)
 router.post('/verify-access', async (req, res) => {
   try {
-    const { assessmentId, email, accessCode, accessPassword, password } = req.body;
+    const { assessmentId, email, accessCode, accessPassword, password, dob, dateOfBirth } = req.body;
     if (!email) {
       return res.status(400).json({ error: 'Registered email is required.' });
     }
+
+    const rawDob = dob || dateOfBirth || '';
+    if (!rawDob || !String(rawDob).trim()) {
+      return res.status(400).json({ error: 'Date of Birth (DOB) is required to enter the exam.' });
+    }
+    const inputDob = normalizeDob(rawDob);
 
     const inputCode = String(accessPassword || accessCode || password || '').trim().toUpperCase();
     if (!inputCode) {
@@ -1969,6 +2005,22 @@ router.post('/verify-access', async (req, res) => {
       });
     }
 
+    // 3. Verify Date of Birth (DOB)
+    if (candidateMatch) {
+      const storedDob = normalizeDob(candidateMatch.dob || candidateMatch.dateOfBirth);
+      if (storedDob && storedDob !== inputDob) {
+        return res.status(403).json({
+          error: 'Date of Birth does not match your registered records. Please check and try again.'
+        });
+      }
+      // If legacy candidate had no DOB recorded, save and persist this DOB
+      if (!storedDob) {
+        candidateMatch.dob = inputDob;
+        candidateMatch.dateOfBirth = inputDob;
+        await saveAssessmentToDB(a);
+      }
+    }
+
     // Check attempts limit in memory & Hostinger MySQL
     const attemptsStore = getAttemptsFromStore();
     let prevAttempts = attemptsStore.filter(att =>
@@ -1998,6 +2050,7 @@ router.post('/verify-access', async (req, res) => {
     res.json({
       valid: true,
       email: cleanEmail,
+      dob: inputDob,
       name: candidateMatch?.name || 'Candidate',
       assessmentTitle: a.title,
       duration: a.duration,
@@ -2012,9 +2065,11 @@ router.post('/verify-access', async (req, res) => {
 // Start attempt — return sanitized questions
 router.post('/start', async (req, res) => {
   try {
-    const { assessmentId, email, accessCode, accessPassword, password } = req.body;
+    const { assessmentId, email, accessCode, accessPassword, password, dob, dateOfBirth } = req.body;
     const cleanEmail = String(email || '').toLowerCase().trim();
     const inputCode = String(accessPassword || accessCode || password || '').trim().toUpperCase();
+    const rawDob = dob || dateOfBirth || '';
+    const inputDob = normalizeDob(rawDob);
 
     const a = await findAssessmentInDB(assessmentId);
     if (!a || a.isActive === false) return res.status(404).json({ error: 'Assessment not found.' });
@@ -2039,6 +2094,19 @@ router.post('/start', async (req, res) => {
         notRegistered: true,
         registrationUrl: `/test/${assessmentId}/register`
       });
+    }
+
+    // Verify Date of Birth if provided and recorded
+    if (candidateMatch) {
+      const storedDob = normalizeDob(candidateMatch.dob || candidateMatch.dateOfBirth);
+      if (inputDob && storedDob && storedDob !== inputDob) {
+        return res.status(403).json({ error: 'Date of Birth does not match candidate registration records.' });
+      }
+      if (inputDob && !storedDob) {
+        candidateMatch.dob = inputDob;
+        candidateMatch.dateOfBirth = inputDob;
+        await saveAssessmentToDB(a);
+      }
     }
 
     const attemptsStore = getAttemptsFromStore();
@@ -2079,6 +2147,7 @@ router.post('/start', async (req, res) => {
     }));
 
     if (!attempt) {
+      const finalDob = inputDob || (candidateMatch ? normalizeDob(candidateMatch.dob || candidateMatch.dateOfBirth) : '');
       attempt = {
         _id: genId(),
         assessment: assessmentId,
@@ -2087,6 +2156,8 @@ router.post('/start', async (req, res) => {
           email: cleanEmail,
           name: candidateMatch?.name || 'Candidate',
           photo: candidateMatch?.photo || '',
+          dob: finalDob,
+          dateOfBirth: finalDob,
           college: candidateMatch?.college || '',
           rollNo: candidateMatch?.rollNo || '',
           accessCode: inputCode
@@ -2094,6 +2165,7 @@ router.post('/start', async (req, res) => {
         candidateEmail: cleanEmail,
         candidateName: candidateMatch?.name || 'Candidate',
         candidatePhoto: candidateMatch?.photo || '',
+        candidateDob: finalDob,
         candidateCollege: candidateMatch?.college || '',
         answers: [],
         score: 0,
