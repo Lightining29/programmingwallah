@@ -484,6 +484,21 @@ function TestEngine({ assessmentId, email, accessCode, onSubmit }) {
             <div key={oi} className={`test-option ${answers[q._id] === opt ? 'selected' : ''}`}
               onClick={() => setAnswers(a => ({ ...a, [q._id]: opt }))}>
               <div className="test-option-dot" />
+              <span style={{
+                width: '26px',
+                height: '26px',
+                borderRadius: '8px',
+                background: answers[q._id] === opt ? '#0ea5e9' : 'rgba(14,165,233,0.1)',
+                color: answers[q._id] === opt ? '#ffffff' : '#0369a1',
+                fontWeight: 800,
+                fontSize: '0.8rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                {String.fromCharCode(65 + oi)}
+              </span>
               <span style={{ flex:1 }}>{opt}</span>
             </div>
           ))}

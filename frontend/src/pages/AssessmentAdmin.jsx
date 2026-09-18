@@ -46,6 +46,7 @@ export default function AssessmentAdmin() {
   const [selectedCert, setSelectedCert] = useState(null);
   const [showCertModal, setShowCertModal] = useState(false);
   const [sendingCertId, setSendingCertId] = useState(null);
+  const [regrading, setRegrading] = useState(false);
 
   /* ── UI toggles ── */
   const [showNewTest, setShowNewTest] = useState(false);
@@ -226,6 +227,31 @@ export default function AssessmentAdmin() {
     const data = await r.json();
     setAttempts(Array.isArray(data) ? data : []);
     setTab('reports');
+  };
+
+  const handleRegrade = async (testId) => {
+    setRegrading(true);
+    try {
+      const r = await api(`/api/assessment/admin/${testId}/regrade`, { method: 'POST' });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Failed to regrade attempts');
+      Swal.fire({
+        icon: 'success',
+        title: 'Scores Re-Graded & Synchronized!',
+        text: data.message || 'All student scores recalculated and updated in Hostinger MySQL.',
+        timer: 2500,
+        showConfirmButton: false
+      });
+      if (Array.isArray(data.attempts)) {
+        setAttempts(data.attempts);
+      } else {
+        await loadAttempts(testId);
+      }
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Re-Grading Error', text: err.message });
+    } finally {
+      setRegrading(false);
+    }
   };
 
   /* ── certificate actions ── */
@@ -661,16 +687,82 @@ export default function AssessmentAdmin() {
                     {/* MCQ options */}
                     {qf.type === 'mcq' && (
                       <div style={{ marginBottom: '0.85rem' }}>
-                        <label className="aa-label">Answer Options</label>
-                        {qf.options.map((opt, i) => (
-                          <div key={i} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.4rem', alignItems: 'center' }}>
-                            <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: 'rgba(14,165,233,0.1)', color: '#0369a1', fontWeight: 800, fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                              {String.fromCharCode(65 + i)}
-                            </span>
-                            <input className="aa-input" placeholder={`Option ${i + 1}`} value={opt}
-                              onChange={e => { const o = [...qf.options]; o[i] = e.target.value; setQf(f => ({ ...f, options: o })); }} />
-                          </div>
-                        ))}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                          <label className="aa-label" style={{ margin: 0 }}>Answer Options</label>
+                          <span style={{ fontSize: '0.75rem', color: '#0369a1', fontWeight: 600 }}>
+                            💡 Click any letter badge or "Set as Correct" button
+                          </span>
+                        </div>
+                        {qf.options.map((opt, i) => {
+                          const letter = String.fromCharCode(65 + i);
+                          const isSelected = qf.correct && (
+                            qf.correct.trim().toLowerCase() === opt.trim().toLowerCase() ||
+                            qf.correct.trim().toUpperCase() === letter
+                          );
+                          return (
+                            <div key={i} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.4rem', alignItems: 'center' }}>
+                              <button
+                                type="button"
+                                onClick={() => setQf(f => ({ ...f, correct: opt || letter }))}
+                                title={`Click to set Option ${letter} as correct answer`}
+                                style={{
+                                  width: '32px',
+                                  height: '32px',
+                                  borderRadius: '8px',
+                                  border: isSelected ? '2px solid #10b981' : '1.5px solid #cbd5e1',
+                                  background: isSelected ? '#10b981' : '#f8fafc',
+                                  color: isSelected ? '#ffffff' : '#0369a1',
+                                  fontWeight: 900,
+                                  fontSize: '0.82rem',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  flexShrink: 0,
+                                  cursor: 'pointer',
+                                  transition: 'all 0.15s'
+                                }}
+                              >
+                                {isSelected ? '✓' : letter}
+                              </button>
+                              <input
+                                className="aa-input"
+                                placeholder={`Option ${i + 1} (${letter})`}
+                                value={opt}
+                                onChange={e => {
+                                  const o = [...qf.options];
+                                  const oldVal = o[i];
+                                  o[i] = e.target.value;
+                                  setQf(f => ({
+                                    ...f,
+                                    options: o,
+                                    correct: (f.correct === oldVal || f.correct === letter) ? e.target.value : f.correct
+                                  }));
+                                }}
+                                style={{
+                                  borderColor: isSelected ? '#10b981' : undefined,
+                                  background: isSelected ? '#f0fdf4' : undefined
+                                }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setQf(f => ({ ...f, correct: opt || letter }))}
+                                style={{
+                                  padding: '0.35rem 0.65rem',
+                                  borderRadius: '6px',
+                                  border: isSelected ? '1px solid #10b981' : '1px solid #e2e8f0',
+                                  background: isSelected ? '#dcfce7' : '#ffffff',
+                                  color: isSelected ? '#15803d' : '#64748b',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  whiteSpace: 'nowrap'
+                                }}
+                              >
+                                {isSelected ? '✓ Correct Choice' : 'Set as Correct'}
+                              </button>
+                            </div>
+                          );
+                        })}
                         <button type="button" onClick={() => setQf(f => ({ ...f, options: [...f.options, ''] }))}
                           style={{ fontSize: '0.78rem', color: '#0ea5e9', fontWeight: 700, border: 'none', background: 'none', cursor: 'pointer', padding: '0.2rem 0' }}>
                           + Add Option
@@ -681,8 +773,41 @@ export default function AssessmentAdmin() {
                     {/* MCQ correct answer */}
                     {qf.type === 'mcq' && (
                       <div style={{ marginBottom: '0.85rem' }}>
-                        <label className="aa-label">Correct Answer Option <span style={{ color: '#64748b', fontWeight: 400 }}>(Exact text of the correct choice)</span></label>
-                        <input className="aa-input" required value={qf.correct} onChange={e => setQf(f => ({ ...f, correct: e.target.value }))} placeholder="Type or paste the exact correct choice..." />
+                        <label className="aa-label">
+                          Correct Answer Option <span style={{ color: '#10b981', fontWeight: 700 }}>({qf.correct ? `Selected: ${qf.correct}` : 'None selected yet'})</span>
+                        </label>
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                          <input
+                            className="aa-input"
+                            required
+                            style={{ flex: '1 1 200px' }}
+                            value={qf.correct}
+                            onChange={e => setQf(f => ({ ...f, correct: e.target.value }))}
+                            placeholder="Type or select the correct answer..."
+                          />
+                          {qf.options.filter(Boolean).map((opt, i) => {
+                            const letter = String.fromCharCode(65 + i);
+                            const isMatch = qf.correct === opt || qf.correct === letter;
+                            return (
+                              <button
+                                key={i}
+                                type="button"
+                                className="aa-btn aa-btn-outline"
+                                style={{
+                                  padding: '0.4rem 0.75rem',
+                                  fontSize: '0.75rem',
+                                  background: isMatch ? '#dcfce7' : undefined,
+                                  borderColor: isMatch ? '#10b981' : undefined,
+                                  color: isMatch ? '#15803d' : undefined,
+                                  fontWeight: 700
+                                }}
+                                onClick={() => setQf(f => ({ ...f, correct: opt }))}
+                              >
+                                Option {letter}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
 
@@ -979,12 +1104,47 @@ export default function AssessmentAdmin() {
 
             {!selTest
               ? <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>Select an assessment above to view student attempts and scores.</div>
-              : attempts.length === 0
-                ? <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>No examination attempts recorded yet for this assessment.</div>
-                : (
-                  <div className="aa-card">
-                    <div className="aa-section-title">Attempts — {selTest.title}</div>
-                    <div style={{ overflowX: 'auto' }}>
+              : (
+                <div className="aa-card">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                    <div>
+                      <div className="aa-section-title" style={{ margin: 0 }}>Attempts — {selTest.title}</div>
+                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.2rem' }}>
+                        Connected with Hostinger MySQL Database. Re-grade recalculates scores against current question keys.
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <button
+                        className="aa-btn aa-btn-primary"
+                        style={{
+                          padding: '0.45rem 1rem',
+                          fontSize: '0.82rem',
+                          background: 'linear-gradient(135deg, #0ea5e9, #0284c7)'
+                        }}
+                        disabled={regrading}
+                        onClick={() => handleRegrade(selTest._id)}
+                        title="Recalculate all submitted student scores against correct answer options and sync with MySQL"
+                      >
+                        {regrading ? '⏳ Re-Grading...' : '🔄 Re-Grade & Fix Scores'}
+                      </button>
+                      <button
+                        className="aa-btn aa-btn-outline"
+                        style={{ padding: '0.45rem 0.85rem', fontSize: '0.82rem' }}
+                        onClick={() => loadAttempts(selTest._id)}
+                        title="Reload attempts from database"
+                      >
+                        🔃 Refresh
+                      </button>
+                    </div>
+                  </div>
+
+                  {attempts.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '2.5rem', color: '#94a3b8' }}>
+                      No examination attempts recorded yet for this assessment.
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ overflowX: 'auto' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
                         <thead>
                           <tr style={{ background: '#f8fafc' }}>
@@ -1099,9 +1259,10 @@ export default function AssessmentAdmin() {
                       <span>Failed: <strong style={{ color: '#ef4444' }}>{attempts.filter(a => !a.passed && a.status === 'submitted').length}</strong></span>
                       <span>Terminated: <strong style={{ color: '#f59e0b' }}>{attempts.filter(a => a.status === 'terminated').length}</strong></span>
                     </div>
-                  </div>
-                )
-            }
+                  </>
+                )}
+              </div>
+            )}
           </div>
         )}
 

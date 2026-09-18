@@ -49,6 +49,376 @@ const saveStore = () => {
   }
 };
 
+// ── Smart Answer Evaluation & Grader ─────────────────────────────────────────
+export const isMcqCorrect = (q, studentAnswer) => {
+  if (!q || studentAnswer === undefined || studentAnswer === null) return false;
+  const ans = String(studentAnswer).trim().toLowerCase();
+  const rawCorrect = String(q.correct || '').trim().toLowerCase();
+  if (!rawCorrect || !ans) return false;
+
+  // 1. Direct exact match
+  if (ans === rawCorrect) return true;
+
+  // Normalizer: strip leading option prefixes like "A.", "A)", "Option A: ", "1. ", "1) "
+  const normalize = (s) => String(s || '')
+    .replace(/^(?:option\s*)?[a-e1-5][\)\.\:\-\s]+/i, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+
+  const cleanAns = normalize(ans);
+  const cleanCorrect = normalize(rawCorrect);
+
+  if (cleanAns && cleanCorrect && cleanAns === cleanCorrect) return true;
+
+  const options = Array.isArray(q.options) ? q.options : [];
+
+  // 2. If rawCorrect is a letter: A, B, C, D, E (or "option a")
+  const letterMatch = rawCorrect.match(/^(?:option\s*)?([a-e])$/i);
+  if (letterMatch) {
+    const letterIdx = letterMatch[1].toUpperCase().charCodeAt(0) - 65;
+    if (options[letterIdx] !== undefined) {
+      const targetOpt = normalize(options[letterIdx]);
+      if (cleanAns === targetOpt || ans === String(options[letterIdx]).trim().toLowerCase()) return true;
+    }
+  }
+
+  // 3. If rawCorrect is a 1-based number: 1, 2, 3, 4 (or "option 1")
+  const numMatch = rawCorrect.match(/^(?:option\s*)?([1-9])$/i);
+  if (numMatch) {
+    const numIdx = parseInt(numMatch[1], 10) - 1;
+    if (options[numIdx] !== undefined) {
+      const targetOpt = normalize(options[numIdx]);
+      if (cleanAns === targetOpt || ans === String(options[numIdx]).trim().toLowerCase()) return true;
+    }
+  }
+
+  // 4. If rawCorrect is a 0-based index: 0, 1, 2, 3
+  if (/^[0-4]$/.test(rawCorrect)) {
+    const idx = parseInt(rawCorrect, 10);
+    if (options[idx] !== undefined) {
+      const targetOpt = normalize(options[idx]);
+      if (cleanAns === targetOpt || ans === String(options[idx]).trim().toLowerCase()) return true;
+    }
+  }
+
+  // 5. If student submitted a letter: A, B, C, D, E
+  const studentLetterMatch = ans.match(/^(?:option\s*)?([a-e])$/i);
+  if (studentLetterMatch) {
+    const sLetterIdx = studentLetterMatch[1].toUpperCase().charCodeAt(0) - 65;
+    if (options[sLetterIdx] !== undefined) {
+      const sOpt = normalize(options[sLetterIdx]);
+      if (sOpt === cleanCorrect || String(options[sLetterIdx]).trim().toLowerCase() === rawCorrect) return true;
+    }
+  }
+
+  // 6. If student submitted a number: 1, 2, 3, 4
+  const studentNumMatch = ans.match(/^(?:option\s*)?([1-9])$/i);
+  if (studentNumMatch) {
+    const sNumIdx = parseInt(studentNumMatch[1], 10) - 1;
+    if (options[sNumIdx] !== undefined) {
+      const sOpt = normalize(options[sNumIdx]);
+      if (sOpt === cleanCorrect || String(options[sNumIdx]).trim().toLowerCase() === rawCorrect) return true;
+    }
+  }
+
+  // 7. Check if rawCorrect matches one of the options, and student answer also matches that same option
+  const matchedOptIndex = options.findIndex(opt => {
+    const o = normalize(opt);
+    return o === cleanCorrect || String(opt).trim().toLowerCase() === rawCorrect;
+  });
+
+  if (matchedOptIndex !== -1) {
+    const expectedOpt = normalize(options[matchedOptIndex]);
+    if (cleanAns === expectedOpt || ans === String(options[matchedOptIndex]).trim().toLowerCase()) return true;
+  }
+
+  return false;
+};
+
+export const gradeAttempt = (attempt, assessment) => {
+  if (!attempt || !assessment) return attempt;
+  const questions = assessment.questions || [];
+  let earned = 0;
+  let total = 0;
+
+  const rawAnswers = Array.isArray(attempt.answers) ? attempt.answers : [];
+
+  const gradedAnswers = rawAnswers.map(ans => {
+    const q = questions.find(item => String(item._id) === String(ans.questionId));
+    if (!q) return { ...ans, isCorrect: false, marks: 0 };
+
+    const qMarks = Number(q.marks || 1);
+    total += qMarks;
+
+    if (q.type === 'mcq') {
+      const isCorrect = isMcqCorrect(q, ans.answer);
+      if (isCorrect) earned += qMarks;
+      return { ...ans, isCorrect, marks: isCorrect ? qMarks : 0 };
+    }
+
+    if (q.type === 'theory') {
+      earned += qMarks;
+      return { ...ans, isCorrect: true, marks: qMarks };
+    }
+
+    if (q.type === 'sql') {
+      const { passed, error, output } = checkSqlAnswer(q.sqlSchema || '', ans.answer || '', q.sqlExpected || '');
+      const m = passed ? qMarks : 0;
+      earned += m;
+      return { ...ans, isCorrect: passed, marks: m, sqlOutput: output, sqlError: error || '' };
+    }
+
+    return { ...ans, isCorrect: false, marks: 0 };
+  });
+
+  // Count any questions the student did not answer
+  questions.forEach(q => {
+    const answered = rawAnswers.some(ans => String(ans.questionId) === String(q._id));
+    if (!answered) total += Number(q.marks || 1);
+  });
+
+  const percentage = total > 0 ? Math.round((earned / total) * 100) : 0;
+  const passed = percentage >= (assessment.passingScore || 50);
+
+  attempt.answers = gradedAnswers;
+  attempt.score = earned;
+  attempt.totalMarks = total;
+  attempt.percentage = percentage;
+  attempt.passed = passed;
+
+  return attempt;
+};
+
+// ── Hostinger MySQL Database Helpers ─────────────────────────────────────────
+export const findAssessmentInDB = async (id) => {
+  if (!id) return null;
+  const store = getAssessmentsFromStore();
+  let a = store.find(x => String(x._id) === String(id));
+  if (a) return a;
+
+  if (mongoose.connection?.readyState === 1) {
+    try {
+      a = await Assessment.findById(id).lean();
+      if (a) {
+        store.push(a);
+        return a;
+      }
+    } catch (e) {}
+  }
+
+  try {
+    const pool = getMySQLPool();
+    const [rows] = await pool.query('SELECT * FROM assessments WHERE id = ? LIMIT 1', [id]);
+    if (rows && rows.length > 0) {
+      const r = rows[0];
+      let qs = [];
+      let ics = [];
+      try { qs = typeof r.questions_json === 'string' ? JSON.parse(r.questions_json) : (r.questions_json || []); } catch(e){}
+      try { ics = typeof r.invited_candidates_json === 'string' ? JSON.parse(r.invited_candidates_json) : (r.invited_candidates_json || []); } catch(e){}
+      a = {
+        _id: r.id,
+        title: r.title,
+        description: r.description || '',
+        jobTitle: r.job_title || 'General',
+        duration: r.duration || 30,
+        passingScore: r.passing_score || 50,
+        maxAttempts: r.max_attempts || 1,
+        shuffleQuestions: Boolean(r.shuffle_questions),
+        shuffleOptions: Boolean(r.shuffle_options),
+        showResult: Boolean(r.show_result),
+        isActive: Boolean(r.is_active),
+        accessPassword: r.access_password || '',
+        questions: qs,
+        invitedCandidates: ics,
+        scheduledAt: r.scheduled_at,
+        expiresAt: r.expires_at,
+        createdAt: r.created_at
+      };
+      store.push(a);
+      return a;
+    }
+  } catch (err) {
+    console.warn('MySQL findAssessment error:', err.message);
+  }
+
+  return null;
+};
+
+export const saveAssessmentToDB = async (assessment) => {
+  if (!assessment || !assessment._id) return;
+
+  const store = getAssessmentsFromStore();
+  const idx = store.findIndex(x => String(x._id) === String(assessment._id));
+  if (idx >= 0) store[idx] = assessment; else store.unshift(assessment);
+  saveStore();
+
+  if (mongoose.connection?.readyState === 1) {
+    try {
+      await Assessment.findByIdAndUpdate(assessment._id, assessment, { upsert: true });
+    } catch (e) {}
+  }
+
+  try {
+    const pool = getMySQLPool();
+    await pool.query(`
+      INSERT INTO assessments (
+        id, title, description, job_title, duration, passing_score, max_attempts,
+        shuffle_questions, shuffle_options, show_result, is_active, access_password,
+        questions_json, invited_candidates_json, scheduled_at, expires_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        title=VALUES(title),
+        description=VALUES(description),
+        job_title=VALUES(job_title),
+        duration=VALUES(duration),
+        passing_score=VALUES(passing_score),
+        max_attempts=VALUES(max_attempts),
+        shuffle_questions=VALUES(shuffle_questions),
+        shuffle_options=VALUES(shuffle_options),
+        show_result=VALUES(show_result),
+        is_active=VALUES(is_active),
+        access_password=VALUES(access_password),
+        questions_json=VALUES(questions_json),
+        invited_candidates_json=VALUES(invited_candidates_json)
+    `, [
+      assessment._id,
+      assessment.title || '',
+      assessment.description || '',
+      assessment.jobTitle || 'General',
+      Number(assessment.duration) || 30,
+      Number(assessment.passingScore) || 50,
+      Number(assessment.maxAttempts) || 1,
+      assessment.shuffleQuestions !== false ? 1 : 0,
+      assessment.shuffleOptions !== false ? 1 : 0,
+      assessment.showResult !== false ? 1 : 0,
+      assessment.isActive !== false ? 1 : 0,
+      assessment.accessPassword || '',
+      JSON.stringify(assessment.questions || []),
+      JSON.stringify(assessment.invitedCandidates || []),
+      assessment.scheduledAt ? new Date(assessment.scheduledAt) : null,
+      assessment.expiresAt ? new Date(assessment.expiresAt) : null
+    ]);
+  } catch (err) {
+    console.warn('MySQL saveAssessment error:', err.message);
+  }
+};
+
+export const findAttemptInDB = async (attemptId) => {
+  if (!attemptId) return null;
+  const store = getAttemptsFromStore();
+  let att = store.find(x => String(x._id) === String(attemptId));
+  if (att) return att;
+
+  if (mongoose.connection?.readyState === 1) {
+    try {
+      att = await Attempt.findById(attemptId).lean();
+      if (att) {
+        store.push(att);
+        return att;
+      }
+    } catch (e) {}
+  }
+
+  try {
+    const pool = getMySQLPool();
+    const [rows] = await pool.query('SELECT * FROM assessment_attempts WHERE id = ? LIMIT 1', [attemptId]);
+    if (rows && rows.length > 0) {
+      const r = rows[0];
+      let ans = [];
+      let viols = [];
+      try { ans = typeof r.answers_json === 'string' ? JSON.parse(r.answers_json) : (r.answers_json || []); } catch(e){}
+      try { viols = typeof r.violations_json === 'string' ? JSON.parse(r.violations_json) : (r.violations_json || []); } catch(e){}
+      att = {
+        _id: r.id,
+        assessment: r.assessment_id,
+        candidate: {
+          email: r.candidate_email,
+          name: r.candidate_name,
+          accessCode: r.candidate_access_code
+        },
+        candidateEmail: r.candidate_email,
+        candidateName: r.candidate_name,
+        answers: ans,
+        score: r.score,
+        percentage: r.percentage,
+        passed: Boolean(r.passed),
+        totalMarks: r.total_marks,
+        timeTaken: r.time_taken,
+        status: r.status,
+        violations: viols,
+        certificateNumber: r.certificate_number || '',
+        startedAt: r.started_at,
+        submittedAt: r.submitted_at
+      };
+      store.push(att);
+      return att;
+    }
+  } catch (err) {
+    console.warn('MySQL findAttempt error:', err.message);
+  }
+
+  return null;
+};
+
+export const saveAttemptToDB = async (attempt) => {
+  if (!attempt || !attempt._id) return;
+
+  const store = getAttemptsFromStore();
+  const idx = store.findIndex(x => String(x._id) === String(attempt._id));
+  if (idx >= 0) store[idx] = attempt; else store.unshift(attempt);
+  saveStore();
+
+  if (mongoose.connection?.readyState === 1) {
+    try {
+      await Attempt.findByIdAndUpdate(attempt._id, attempt, { upsert: true });
+    } catch (e) {}
+  }
+
+  try {
+    const pool = getMySQLPool();
+    await pool.query(`
+      INSERT INTO assessment_attempts (
+        id, assessment_id, candidate_email, candidate_name, candidate_access_code,
+        answers_json, score, percentage, passed, total_marks, time_taken, status,
+        violations_json, certificate_number, started_at, submitted_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        candidate_name=VALUES(candidate_name),
+        candidate_email=VALUES(candidate_email),
+        answers_json=VALUES(answers_json),
+        score=VALUES(score),
+        percentage=VALUES(percentage),
+        passed=VALUES(passed),
+        total_marks=VALUES(total_marks),
+        time_taken=VALUES(time_taken),
+        status=VALUES(status),
+        violations_json=VALUES(violations_json),
+        certificate_number=VALUES(certificate_number),
+        submitted_at=VALUES(submitted_at)
+    `, [
+      attempt._id,
+      attempt.assessment || attempt.assessmentId || '',
+      attempt.candidateEmail || attempt.candidate?.email || '',
+      attempt.candidateName || attempt.candidate?.name || 'Candidate',
+      attempt.candidate?.accessCode || '',
+      JSON.stringify(attempt.answers || []),
+      Number(attempt.score) || 0,
+      Number(attempt.percentage) || 0,
+      attempt.passed ? 1 : 0,
+      Number(attempt.totalMarks) || 0,
+      Number(attempt.timeTaken) || 0,
+      attempt.status || 'in-progress',
+      JSON.stringify(attempt.violations || []),
+      attempt.certificateNumber || '',
+      attempt.startedAt ? new Date(attempt.startedAt) : new Date(),
+      attempt.submittedAt ? new Date(attempt.submittedAt) : null
+    ]);
+  } catch (err) {
+    console.warn('MySQL saveAttempt error:', err.message);
+  }
+};
+
 // ════════════════════════════════════════════════════════════════════════════
 // ADMIN — CRUD
 // ════════════════════════════════════════════════════════════════════════════
@@ -67,18 +437,57 @@ router.get('/admin/list', adminGuard, async (req, res) => {
     // Merge or fallback to mockStore/MySQL store
     const storeList = getAssessmentsFromStore();
     if (!list || list.length === 0) {
-      list = storeList.map(a => {
-        const copy = JSON.parse(JSON.stringify(a));
-        if (copy.questions) {
-          copy.questions = copy.questions.map(q => {
-            delete q.correct;
-            delete q.modelAnswer;
-            delete q.sqlExpected;
-            return q;
-          });
+      if (storeList && storeList.length > 0) {
+        list = storeList.map(a => {
+          const copy = JSON.parse(JSON.stringify(a));
+          if (copy.questions) {
+            copy.questions = copy.questions.map(q => {
+              delete q.correct;
+              delete q.modelAnswer;
+              delete q.sqlExpected;
+              return q;
+            });
+          }
+          return copy;
+        });
+      } else {
+        // Query Hostinger MySQL
+        try {
+          const pool = getMySQLPool();
+          const [rows] = await pool.query('SELECT * FROM assessments ORDER BY created_at DESC');
+          if (rows && rows.length > 0) {
+            list = rows.map(r => {
+              let qs = [];
+              let ics = [];
+              try { qs = typeof r.questions_json === 'string' ? JSON.parse(r.questions_json) : (r.questions_json || []); } catch(e){}
+              try { ics = typeof r.invited_candidates_json === 'string' ? JSON.parse(r.invited_candidates_json) : (r.invited_candidates_json || []); } catch(e){}
+              return {
+                _id: r.id,
+                title: r.title,
+                description: r.description || '',
+                jobTitle: r.job_title || 'General',
+                duration: r.duration || 30,
+                passingScore: r.passing_score || 50,
+                maxAttempts: r.max_attempts || 1,
+                shuffleQuestions: Boolean(r.shuffle_questions),
+                shuffleOptions: Boolean(r.shuffle_options),
+                showResult: Boolean(r.show_result),
+                isActive: Boolean(r.is_active),
+                accessPassword: r.access_password || '',
+                questions: qs,
+                invitedCandidates: ics,
+                scheduledAt: r.scheduled_at,
+                expiresAt: r.expires_at,
+                createdAt: r.created_at
+              };
+            });
+            mockStore.assessments = list;
+            saveStore();
+          }
+        } catch (mysqlErr) {
+          console.warn('MySQL admin/list query error:', mysqlErr.message);
         }
-        return copy;
-      });
+      }
     }
 
     res.json(list || []);
@@ -162,18 +571,7 @@ router.get('/admin/candidates-pool', adminGuard, async (req, res) => {
 
 router.get('/admin/:id', adminGuard, async (req, res) => {
   try {
-    let a = null;
-    if (mongoose.connection?.readyState === 1) {
-      try {
-        a = await Assessment.findById(req.params.id).lean();
-      } catch (err) {}
-    }
-
-    if (!a) {
-      const storeList = getAssessmentsFromStore();
-      a = storeList.find(x => String(x._id) === String(req.params.id));
-    }
-
+    const a = await findAssessmentInDB(req.params.id);
     if (!a) return res.status(404).json({ error: 'Assessment not found.' });
     res.json(a);
   } catch (e) {
@@ -216,19 +614,8 @@ router.post('/admin/create', adminGuard, async (req, res) => {
       createdAt: new Date()
     };
 
-    // Save in Mongoose if connected
-    if (mongoose.connection?.readyState === 1) {
-      try {
-        const a = new Assessment(newDoc);
-        await a.save();
-        newDoc._id = a._id.toString();
-      } catch (err) {}
-    }
-
-    // Save in mockStore & MySQL
-    const store = getAssessmentsFromStore();
-    store.unshift(newDoc);
-    saveStore();
+    // Save in Hostinger MySQL, Mongoose, & mockStore
+    await saveAssessmentToDB(newDoc);
 
     res.status(201).json({ message: 'Assessment created.', assessment: newDoc });
   } catch (e) {
@@ -238,22 +625,18 @@ router.post('/admin/create', adminGuard, async (req, res) => {
 
 router.put('/admin/:id', adminGuard, async (req, res) => {
   try {
-    let updated = null;
-    if (mongoose.connection?.readyState === 1) {
-      try {
-        updated = await Assessment.findByIdAndUpdate(req.params.id, req.body, { new: true });
-      } catch (err) {}
-    }
+    let existing = await findAssessmentInDB(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Assessment not found.' });
 
-    const store = getAssessmentsFromStore();
-    const idx = store.findIndex(x => String(x._id) === String(req.params.id));
-    if (idx !== -1) {
-      store[idx] = { ...store[idx], ...req.body, updatedAt: new Date() };
-      updated = store[idx];
-      saveStore();
-    }
+    const updated = {
+      ...existing,
+      ...req.body,
+      _id: req.params.id,
+      updatedAt: new Date()
+    };
 
-    if (!updated) return res.status(404).json({ error: 'Assessment not found.' });
+    await saveAssessmentToDB(updated);
+
     res.json({ message: 'Updated.', assessment: updated });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -268,6 +651,12 @@ router.delete('/admin/:id', adminGuard, async (req, res) => {
         await Attempt.deleteMany({ assessment: req.params.id });
       } catch (err) {}
     }
+
+    try {
+      const pool = getMySQLPool();
+      await pool.query('DELETE FROM assessment_attempts WHERE assessment_id = ?', [req.params.id]);
+      await pool.query('DELETE FROM assessments WHERE id = ?', [req.params.id]);
+    } catch (err) {}
 
     const store = getAssessmentsFromStore();
     const idx = store.findIndex(x => String(x._id) === String(req.params.id));
@@ -290,6 +679,9 @@ router.delete('/admin/:id', adminGuard, async (req, res) => {
 // ── Questions ────────────────────────────────────────────────────────────────
 router.post('/admin/:id/question', adminGuard, async (req, res) => {
   try {
+    const test = await findAssessmentInDB(req.params.id);
+    if (!test) return res.status(404).json({ error: 'Assessment not found.' });
+
     const qData = {
       _id: genId(),
       text: req.body.text,
@@ -307,29 +699,12 @@ router.post('/admin/:id/question', adminGuard, async (req, res) => {
       createdAt: new Date()
     };
 
-    let total = 0;
+    if (!Array.isArray(test.questions)) test.questions = [];
+    test.questions.push(qData);
 
-    if (mongoose.connection?.readyState === 1) {
-      try {
-        const a = await Assessment.findById(req.params.id);
-        if (a) {
-          a.questions.push(qData);
-          await a.save();
-          total = a.questions.length;
-        }
-      } catch (err) {}
-    }
+    await saveAssessmentToDB(test);
 
-    const store = getAssessmentsFromStore();
-    const test = store.find(x => String(x._id) === String(req.params.id));
-    if (test) {
-      if (!Array.isArray(test.questions)) test.questions = [];
-      test.questions.push(qData);
-      total = test.questions.length;
-      saveStore();
-    }
-
-    res.json({ message: 'Question added.', total });
+    res.json({ message: 'Question added.', total: test.questions.length });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -337,21 +712,12 @@ router.post('/admin/:id/question', adminGuard, async (req, res) => {
 
 router.delete('/admin/:id/question/:qid', adminGuard, async (req, res) => {
   try {
-    if (mongoose.connection?.readyState === 1) {
-      try {
-        const a = await Assessment.findById(req.params.id);
-        if (a) {
-          a.questions = a.questions.filter(q => q._id.toString() !== req.params.qid);
-          await a.save();
-        }
-      } catch (err) {}
-    }
+    const test = await findAssessmentInDB(req.params.id);
+    if (!test) return res.status(404).json({ error: 'Assessment not found.' });
 
-    const store = getAssessmentsFromStore();
-    const test = store.find(x => String(x._id) === String(req.params.id));
-    if (test && Array.isArray(test.questions)) {
+    if (Array.isArray(test.questions)) {
       test.questions = test.questions.filter(q => String(q._id) !== String(req.params.qid));
-      saveStore();
+      await saveAssessmentToDB(test);
     }
 
     res.json({ message: 'Question removed.' });
@@ -364,84 +730,52 @@ router.delete('/admin/:id/question/:qid', adminGuard, async (req, res) => {
 router.post('/admin/:id/invite', adminGuard, async (req, res) => {
   try {
     const { candidateIds, candidates: directCandidates } = req.body;
-    
-    const store = getAssessmentsFromStore();
-    let test = store.find(x => String(x._id) === String(req.params.id));
-    
-    let aMongo = null;
-    if (mongoose.connection?.readyState === 1) {
-      try {
-        aMongo = await Assessment.findById(req.params.id);
-      } catch (err) {}
-    }
-
-    if (!test && !aMongo) return res.status(404).json({ error: 'Assessment not found.' });
+    const test = await findAssessmentInDB(req.params.id);
+    if (!test) return res.status(404).json({ error: 'Assessment not found.' });
 
     let added = 0;
-    const candidatesToAdd = [];
+    if (!Array.isArray(test.invitedCandidates)) test.invitedCandidates = [];
 
-    // 1. If direct candidate objects provided: [{ name, email }]
-    if (Array.isArray(directCandidates)) {
-      for (const dc of directCandidates) {
-        if (dc.email) {
-          candidatesToAdd.push({
-            registrationId: dc._id || null,
-            email: dc.email.toLowerCase().trim(),
-            name: dc.name || 'Candidate'
-          });
-        }
-      }
-    }
-
-    // 2. If candidateIds provided, search users/admissions pool
+    // From candidate pool
     if (Array.isArray(candidateIds) && candidateIds.length > 0) {
-      const allPool = [
-        ...(Array.isArray(mockStore.users) ? mockStore.users : []),
-        ...(Array.isArray(mockStore.admissions) ? mockStore.admissions : [])
-      ];
-
-      for (const cid of candidateIds) {
-        const found = allPool.find(p => String(p._id || p.id) === String(cid));
-        if (found) {
-          const email = String(found.email || found.parentDetails?.email || '').toLowerCase().trim();
-          const name = found.name || found.studentDetails?.name || found.student_name || 'Candidate';
-          if (email) {
-            candidatesToAdd.push({ registrationId: cid, email, name });
+      const users = Array.isArray(mockStore.users) ? mockStore.users : [];
+      candidateIds.forEach(cid => {
+        const u = users.find(x => String(x._id || x.id) === String(cid));
+        if (u && u.email) {
+          const email = u.email.toLowerCase().trim();
+          if (!test.invitedCandidates.some(c => c.email?.toLowerCase() === email)) {
+            test.invitedCandidates.push({
+              candidateId: u._id || u.id,
+              name: u.name || 'Candidate',
+              email,
+              accessCode: test.accessPassword || genCode(),
+              invitedAt: new Date()
+            });
+            added++;
           }
         }
-      }
+      });
     }
 
-    // Process invitations (NO EMAIL SENT)
-    const invitedList = test?.invitedCandidates || aMongo?.invitedCandidates || [];
-
-    for (const cand of candidatesToAdd) {
-      const already = invitedList.some(ic => ic.email?.toLowerCase() === cand.email.toLowerCase());
-      if (!already) {
-        const code = genCode();
-        const inviteEntry = {
-          registrationId: cand.registrationId || null,
-          email: cand.email,
-          name: cand.name,
-          accessCode: code,
-          invitedAt: new Date()
-        };
-
-        if (test) {
-          if (!Array.isArray(test.invitedCandidates)) test.invitedCandidates = [];
-          test.invitedCandidates.push(inviteEntry);
+    // Direct manual entries
+    if (Array.isArray(directCandidates) && directCandidates.length > 0) {
+      directCandidates.forEach(cand => {
+        if (cand && cand.email) {
+          const email = cand.email.toLowerCase().trim();
+          if (!test.invitedCandidates.some(c => c.email?.toLowerCase() === email)) {
+            test.invitedCandidates.push({
+              name: cand.name || 'Candidate',
+              email,
+              accessCode: test.accessPassword || genCode(),
+              invitedAt: new Date()
+            });
+            added++;
+          }
         }
-        if (aMongo) {
-          aMongo.invitedCandidates.push(inviteEntry);
-        }
-        added++;
-      }
+      });
     }
 
-    if (aMongo) {
-      await aMongo.save();
-    }
-    saveStore();
+    await saveAssessmentToDB(test);
 
     res.json({
       message: `${added} candidate(s) invited with access codes generated. (No emails sent per configuration).`,
@@ -455,24 +789,11 @@ router.post('/admin/:id/invite', adminGuard, async (req, res) => {
 router.delete('/admin/:id/invite/:email', adminGuard, async (req, res) => {
   try {
     const targetEmail = req.params.email.toLowerCase().trim();
-
-    if (mongoose.connection?.readyState === 1) {
-      try {
-        const a = await Assessment.findById(req.params.id);
-        if (a) {
-          a.invitedCandidates = a.invitedCandidates.filter(ic => ic.email !== targetEmail);
-          await a.save();
-        }
-      } catch (err) {}
-    }
-
-    const store = getAssessmentsFromStore();
-    const test = store.find(x => String(x._id) === String(req.params.id));
+    const test = await findAssessmentInDB(req.params.id);
     if (test && Array.isArray(test.invitedCandidates)) {
       test.invitedCandidates = test.invitedCandidates.filter(ic => ic.email?.toLowerCase() !== targetEmail);
-      saveStore();
+      await saveAssessmentToDB(test);
     }
-
     res.json({ message: 'Candidate removed.' });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -483,19 +804,16 @@ router.delete('/admin/:id/invite/:email', adminGuard, async (req, res) => {
 router.post('/admin/:id/resend-invite/:email', adminGuard, async (req, res) => {
   try {
     const targetEmail = req.params.email.toLowerCase().trim();
-    const store = getAssessmentsFromStore();
-    const test = store.find(x => String(x._id) === String(req.params.id));
+    const test = await findAssessmentInDB(req.params.id);
+    if (!test) return res.status(404).json({ error: 'Assessment not found.' });
 
     let ic = test?.invitedCandidates?.find(c => c.email?.toLowerCase() === targetEmail);
-    if (!ic) {
-      return res.status(404).json({ error: 'Candidate not found in invited list.' });
-    }
+    if (!ic) return res.status(404).json({ error: 'Candidate not found in invited list.' });
 
-    // Refresh access code if needed
     if (!ic.accessCode) {
-      ic.accessCode = genCode();
-      saveStore();
+      ic.accessCode = test.accessPassword || genCode();
     }
+    await saveAssessmentToDB(test);
 
     res.json({
       message: `Access code for ${ic.email} is ready.`,
@@ -509,28 +827,45 @@ router.post('/admin/:id/resend-invite/:email', adminGuard, async (req, res) => {
 // ── Reports ──────────────────────────────────────────────────────────────────
 router.get('/admin/:id/attempts', adminGuard, async (req, res) => {
   try {
-    let attempts = [];
+    const assessment = await findAssessmentInDB(req.params.id);
+    const attemptMap = new Map();
+
+    // 1. Check Store
+    const storeAttempts = getAttemptsFromStore();
+    const matchedStore = storeAttempts.filter(a => String(a.assessment) === String(req.params.id));
+    matchedStore.forEach(a => attemptMap.set(String(a._id), { ...a }));
+
+    // 2. Check Mongoose
     if (mongoose.connection?.readyState === 1) {
       try {
-        attempts = await Attempt.find({ assessment: req.params.id }).sort({ startedAt: -1 }).lean();
+        const mongoAtts = await Attempt.find({ assessment: req.params.id }).sort({ startedAt: -1 }).lean();
+        mongoAtts.forEach(a => {
+          const k = String(a._id);
+          if (!attemptMap.has(k)) {
+            attemptMap.set(k, a);
+          } else {
+            const cur = attemptMap.get(k);
+            if ((!cur.answers || cur.answers.length === 0) && a.answers?.length > 0) cur.answers = a.answers;
+          }
+        });
       } catch (err) {}
     }
 
-    const storeAttempts = getAttemptsFromStore();
-    const matchedStore = storeAttempts.filter(a => String(a.assessment) === String(req.params.id));
-    if (attempts.length === 0) {
-      attempts = matchedStore;
-    }
-
-    if (attempts.length === 0) {
-      try {
-        const pool = getMySQLPool();
-        const [rows] = await pool.query(
-          'SELECT * FROM assessment_attempts WHERE assessment_id = ? ORDER BY started_at DESC',
-          [req.params.id]
-        );
-        if (rows && rows.length > 0) {
-          attempts = rows.map(r => ({
+    // 3. Check Hostinger MySQL
+    try {
+      const pool = getMySQLPool();
+      const [rows] = await pool.query(
+        'SELECT * FROM assessment_attempts WHERE assessment_id = ? ORDER BY started_at DESC',
+        [req.params.id]
+      );
+      if (rows && rows.length > 0) {
+        for (const r of rows) {
+          const rowId = String(r.id);
+          let ans = [];
+          let viols = [];
+          try { ans = typeof r.answers_json === 'string' ? JSON.parse(r.answers_json) : (r.answers_json || []); } catch(e){}
+          try { viols = typeof r.violations_json === 'string' ? JSON.parse(r.violations_json) : (r.violations_json || []); } catch(e){}
+          const sqlAtt = {
             _id: r.id,
             assessment: r.assessment_id,
             candidate: {
@@ -540,21 +875,125 @@ router.get('/admin/:id/attempts', adminGuard, async (req, res) => {
             },
             candidateEmail: r.candidate_email,
             candidateName: r.candidate_name,
+            answers: ans,
             score: r.score,
             percentage: r.percentage,
             passed: Boolean(r.passed),
             totalMarks: r.total_marks,
             timeTaken: r.time_taken,
             status: r.status,
-            certificateNumber: r.certificate_number,
+            violations: viols,
+            certificateNumber: r.certificate_number || '',
             startedAt: r.started_at,
             submittedAt: r.submitted_at
-          }));
+          };
+
+          if (!attemptMap.has(rowId)) {
+            attemptMap.set(rowId, sqlAtt);
+          } else {
+            const ex = attemptMap.get(rowId);
+            if ((!ex.answers || ex.answers.length === 0) && ans.length > 0) {
+              ex.answers = ans;
+            }
+            if (r.certificate_number && !ex.certificateNumber) {
+              ex.certificateNumber = r.certificate_number;
+            }
+          }
         }
-      } catch (sqlErr) {}
+      }
+    } catch (sqlErr) {
+      console.warn('MySQL attempts query error:', sqlErr.message);
     }
 
-    res.json(attempts || []);
+    let allAttempts = Array.from(attemptMap.values());
+
+    // AUTO-REGRADE: Check each submitted attempt against smart grading rules and update Hostinger MySQL if needed
+    if (assessment && Array.isArray(assessment.questions) && assessment.questions.length > 0) {
+      for (const att of allAttempts) {
+        if (att.status === 'submitted' && Array.isArray(att.answers) && att.answers.length > 0) {
+          const oldScore = Number(att.score);
+          const oldPassed = Boolean(att.passed);
+          const oldPercentage = Number(att.percentage);
+
+          gradeAttempt(att, assessment);
+
+          if (att.score !== oldScore || att.passed !== oldPassed || att.percentage !== oldPercentage) {
+            await saveAttemptToDB(att);
+          }
+        }
+      }
+    }
+
+    res.json(allAttempts || []);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Explicit Admin Regrade Endpoint
+router.post('/admin/:id/regrade', adminGuard, async (req, res) => {
+  try {
+    const assessment = await findAssessmentInDB(req.params.id);
+    if (!assessment) return res.status(404).json({ error: 'Assessment not found.' });
+
+    const attemptMap = new Map();
+    const storeAttempts = getAttemptsFromStore();
+    storeAttempts.filter(a => String(a.assessment) === String(req.params.id)).forEach(a => attemptMap.set(String(a._id), a));
+
+    if (mongoose.connection?.readyState === 1) {
+      try {
+        const mongoAtts = await Attempt.find({ assessment: req.params.id }).lean();
+        mongoAtts.forEach(a => attemptMap.set(String(a._id), a));
+      } catch (e) {}
+    }
+
+    try {
+      const pool = getMySQLPool();
+      const [rows] = await pool.query('SELECT * FROM assessment_attempts WHERE assessment_id = ?', [req.params.id]);
+      if (rows && rows.length > 0) {
+        for (const r of rows) {
+          let ans = [];
+          try { ans = typeof r.answers_json === 'string' ? JSON.parse(r.answers_json) : (r.answers_json || []); } catch(e){}
+          if (!attemptMap.has(String(r.id))) {
+            attemptMap.set(String(r.id), {
+              _id: r.id,
+              assessment: r.assessment_id,
+              candidate: { email: r.candidate_email, name: r.candidate_name, accessCode: r.candidate_access_code },
+              candidateEmail: r.candidate_email,
+              candidateName: r.candidate_name,
+              answers: ans,
+              score: r.score,
+              percentage: r.percentage,
+              passed: Boolean(r.passed),
+              totalMarks: r.total_marks,
+              timeTaken: r.time_taken,
+              status: r.status,
+              startedAt: r.started_at,
+              submittedAt: r.submitted_at
+            });
+          } else {
+            const ex = attemptMap.get(String(r.id));
+            if ((!ex.answers || ex.answers.length === 0) && ans.length > 0) ex.answers = ans;
+          }
+        }
+      }
+    } catch (e) {}
+
+    let regradedCount = 0;
+    const allAttempts = Array.from(attemptMap.values());
+    for (const att of allAttempts) {
+      if (att.status === 'submitted' && Array.isArray(att.answers) && att.answers.length > 0) {
+        gradeAttempt(att, assessment);
+        await saveAttemptToDB(att);
+        regradedCount++;
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Successfully re-graded ${regradedCount} attempt(s).`,
+      attempts: allAttempts
+    });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -969,14 +1408,7 @@ router.post('/:id/register', async (req, res) => {
     const cleanCollege = String(college || '').trim();
     const cleanRollNo = String(rollNo || '').trim();
 
-    const store = getAssessmentsFromStore();
-    let a = store.find(x => String(x._id) === String(req.params.id));
-
-    if (!a && mongoose.connection?.readyState === 1) {
-      try {
-        a = await Assessment.findById(req.params.id);
-      } catch (e) {}
-    }
+    let a = await findAssessmentInDB(req.params.id);
 
     if (!a || a.isActive === false) {
       return res.status(404).json({ error: 'Assessment not found or currently inactive.' });
@@ -1016,15 +1448,8 @@ router.post('/:id/register', async (req, res) => {
       a.invitedCandidates.push(studentRecord);
     }
 
-    saveStore();
-
-    if (mongoose.connection?.readyState === 1) {
-      try {
-        await Assessment.findByIdAndUpdate(a._id, {
-          invitedCandidates: a.invitedCandidates
-        });
-      } catch (e) {}
-    }
+    // Persist to Hostinger MySQL, Mongo, and store
+    await saveAssessmentToDB(a);
 
     res.json({
       success: true,
@@ -1061,15 +1486,7 @@ router.post('/verify-access', async (req, res) => {
     }
 
     const cleanEmail = String(email).toLowerCase().trim();
-
-    const store = getAssessmentsFromStore();
-    let a = store.find(x => String(x._id) === String(assessmentId));
-
-    if (!a && mongoose.connection?.readyState === 1) {
-      try {
-        a = await Assessment.findById(assessmentId).lean();
-      } catch (e) {}
-    }
+    const a = await findAssessmentInDB(assessmentId);
 
     if (!a || a.isActive === false) {
       return res.status(404).json({ error: 'Assessment not found or inactive.' });
@@ -1105,12 +1522,26 @@ router.post('/verify-access', async (req, res) => {
       });
     }
 
-    // Check attempts limit
+    // Check attempts limit in memory & Hostinger MySQL
     const attemptsStore = getAttemptsFromStore();
-    const prevAttempts = attemptsStore.filter(att =>
+    let prevAttempts = attemptsStore.filter(att =>
       String(att.assessment) === String(assessmentId) &&
-      att.candidate?.email?.toLowerCase() === cleanEmail
+      (att.candidateEmail || att.candidate?.email || '').toLowerCase() === cleanEmail
     );
+
+    if (prevAttempts.length === 0) {
+      try {
+        const pool = getMySQLPool();
+        const [rows] = await pool.query(
+          'SELECT id FROM assessment_attempts WHERE assessment_id = ? AND candidate_email = ?',
+          [assessmentId, cleanEmail]
+        );
+        if (rows && rows.length > 0) {
+          prevAttempts = rows;
+        }
+      } catch (e) {}
+    }
+
     if (prevAttempts.length >= (a.maxAttempts || 1)) {
       return res.status(403).json({
         error: `Maximum attempts (${a.maxAttempts || 1}) reached for this test.`
@@ -1138,15 +1569,7 @@ router.post('/start', async (req, res) => {
     const cleanEmail = String(email || '').toLowerCase().trim();
     const inputCode = String(accessPassword || accessCode || password || '').trim().toUpperCase();
 
-    const store = getAssessmentsFromStore();
-    let a = store.find(x => String(x._id) === String(assessmentId));
-
-    if (!a && mongoose.connection?.readyState === 1) {
-      try {
-        a = await Assessment.findById(assessmentId).lean();
-      } catch (e) {}
-    }
-
+    const a = await findAssessmentInDB(assessmentId);
     if (!a || a.isActive === false) return res.status(404).json({ error: 'Assessment not found.' });
 
     const candidateMatch = (a.invitedCandidates || []).find(
@@ -1174,9 +1597,23 @@ router.post('/start', async (req, res) => {
     const attemptsStore = getAttemptsFromStore();
     let attempt = attemptsStore.find(att =>
       String(att.assessment) === String(assessmentId) &&
-      att.candidate?.email?.toLowerCase() === cleanEmail &&
+      (att.candidateEmail || att.candidate?.email || '').toLowerCase() === cleanEmail &&
       att.status === 'in-progress'
     );
+
+    if (!attempt) {
+      try {
+        const pool = getMySQLPool();
+        const [rows] = await pool.query(
+          'SELECT * FROM assessment_attempts WHERE assessment_id = ? AND candidate_email = ? AND status = "in-progress" LIMIT 1',
+          [assessmentId, cleanEmail]
+        );
+        if (rows && rows.length > 0) {
+          const r = rows[0];
+          attempt = await findAttemptInDB(r.id);
+        }
+      } catch (e) {}
+    }
 
     const rawQuestions = a.questions || [];
     const questions = a.shuffleQuestions ? shuffle(rawQuestions) : [...rawQuestions];
@@ -1204,6 +1641,8 @@ router.post('/start', async (req, res) => {
           name: candidateMatch?.name || 'Candidate',
           accessCode: inputCode
         },
+        candidateEmail: cleanEmail,
+        candidateName: candidateMatch?.name || 'Candidate',
         answers: [],
         score: 0,
         percentage: 0,
@@ -1215,15 +1654,8 @@ router.post('/start', async (req, res) => {
         startedAt: new Date()
       };
 
-      attemptsStore.unshift(attempt);
-      saveStore();
-
-      if (mongoose.connection?.readyState === 1) {
-        try {
-          const mongoAttempt = new Attempt(attempt);
-          await mongoAttempt.save();
-        } catch (err) {}
-      }
+      // Save to Hostinger MySQL, Mongoose, and mockStore
+      await saveAttemptToDB(attempt);
     }
 
     res.json({
@@ -1246,94 +1678,38 @@ router.post('/run-sql', async (req, res) => {
   res.json(result);
 });
 
-// Submit full test
+// Submit full test with Smart Grading & Hostinger MySQL Persistence
 router.post('/submit', async (req, res) => {
   try {
     const { attemptId, answers, timeTaken } = req.body;
-    const attemptsStore = getAttemptsFromStore();
-    const attempt = attemptsStore.find(att => String(att._id) === String(attemptId));
+    let attempt = await findAttemptInDB(attemptId);
 
     if (!attempt) return res.status(404).json({ error: 'Attempt not found.' });
     if (attempt.status !== 'in-progress') return res.status(400).json({ error: 'Already submitted.' });
 
-    const store = getAssessmentsFromStore();
-    let a = store.find(x => String(x._id) === String(attempt.assessment));
-    if (!a && mongoose.connection?.readyState === 1) {
-      try {
-        a = await Assessment.findById(attempt.assessment).lean();
-      } catch (err) {}
-    }
-
+    let a = await findAssessmentInDB(attempt.assessment);
     if (!a) return res.status(404).json({ error: 'Assessment not found.' });
 
-    let earned = 0, total = 0;
-    const questionList = a.questions || [];
-
-    const gradedAnswers = (answers || []).map(ans => {
-      const q = questionList.find(item => String(item._id) === String(ans.questionId));
-      if (!q) return { questionId: ans.questionId, answer: ans.answer, isCorrect: false, marks: 0 };
-      
-      const qMarks = Number(q.marks || 1);
-      total += qMarks;
-
-      if (q.type === 'mcq') {
-        const isCorrect = String(q.correct || '').trim().toLowerCase() === String(ans.answer || '').trim().toLowerCase();
-        if (isCorrect) earned += qMarks;
-        return { questionId: ans.questionId, answer: ans.answer, isCorrect, marks: isCorrect ? qMarks : 0 };
-      }
-
-      if (q.type === 'theory') {
-        earned += qMarks; // Award full marks pending manual review
-        return { questionId: ans.questionId, answer: ans.answer, isCorrect: null, marks: qMarks };
-      }
-
-      if (q.type === 'sql') {
-        const { passed, error, output } = checkSqlAnswer(q.sqlSchema || '', ans.answer || '', q.sqlExpected || '');
-        const m = passed ? qMarks : 0;
-        earned += m;
-        return { questionId: ans.questionId, answer: ans.answer, isCorrect: passed, marks: m, sqlOutput: output, sqlError: error || '' };
-      }
-
-      return { questionId: ans.questionId, answer: ans.answer, isCorrect: false, marks: 0 };
-    });
-
-    // Count unanswered questions
-    questionList.forEach(q => {
-      const done = (answers || []).some(ans => String(ans.questionId) === String(q._id));
-      if (!done) total += Number(q.marks || 1);
-    });
-
-    const percentage = total > 0 ? Math.round((earned / total) * 100) : 0;
-    const passed = percentage >= (a.passingScore || 50);
-
-    attempt.answers = gradedAnswers;
-    attempt.score = earned;
-    attempt.totalMarks = total;
-    attempt.percentage = percentage;
-    attempt.passed = passed;
-    attempt.timeTaken = timeTaken || 0;
+    attempt.answers = answers || [];
+    attempt.timeTaken = Number(timeTaken) || attempt.timeTaken || 0;
     attempt.status = 'submitted';
     attempt.submittedAt = new Date();
 
-    saveStore();
+    // Grade attempt using the comprehensive isMcqCorrect & gradeAttempt engine
+    attempt = gradeAttempt(attempt, a);
 
-    if (mongoose.connection?.readyState === 1) {
-      try {
-        await Attempt.findByIdAndUpdate(attemptId, {
-          answers: gradedAnswers,
-          score: earned,
-          totalMarks: total,
-          percentage,
-          passed,
-          timeTaken: timeTaken || 0,
-          status: 'submitted',
-          submittedAt: new Date()
-        });
-      } catch (err) {}
-    }
+    // Save to Hostinger MySQL, Mongoose, and mockStore
+    await saveAttemptToDB(attempt);
 
     res.json(a.showResult !== false
-      ? { message: 'Submitted successfully.', score: earned, total, percentage, passed, passingScore: a.passingScore || 50 }
+      ? {
+          message: 'Submitted successfully.',
+          score: attempt.score,
+          total: attempt.totalMarks,
+          percentage: attempt.percentage,
+          passed: attempt.passed,
+          passingScore: a.passingScore || 50
+        }
       : { submitted: true }
     );
   } catch (e) {
@@ -1345,8 +1721,7 @@ router.post('/submit', async (req, res) => {
 router.post('/violation', async (req, res) => {
   try {
     const { attemptId, type } = req.body;
-    const attemptsStore = getAttemptsFromStore();
-    const attempt = attemptsStore.find(att => String(att._id) === String(attemptId));
+    let attempt = await findAttemptInDB(attemptId);
 
     if (!attempt || attempt.status !== 'in-progress') {
       return res.status(400).json({ error: 'Invalid or already completed attempt.' });
@@ -1367,17 +1742,7 @@ router.post('/violation', async (req, res) => {
       attempt.submittedAt = new Date();
     }
 
-    saveStore();
-
-    if (mongoose.connection?.readyState === 1) {
-      try {
-        await Attempt.findByIdAndUpdate(attemptId, {
-          violations: attempt.violations,
-          status: attempt.status,
-          submittedAt: attempt.submittedAt
-        });
-      } catch (err) {}
-    }
+    await saveAttemptToDB(attempt);
 
     res.json({ status: attempt.status, violations: attempt.violations });
   } catch (e) {
@@ -1388,23 +1753,18 @@ router.post('/violation', async (req, res) => {
 // View result
 router.get('/result/:attemptId', async (req, res) => {
   try {
-    const attemptsStore = getAttemptsFromStore();
-    let attempt = attemptsStore.find(att => String(att._id) === String(req.params.attemptId));
-
-    if (!attempt && mongoose.connection?.readyState === 1) {
-      try {
-        attempt = await Attempt.findById(req.params.attemptId).lean();
-      } catch (err) {}
-    }
-
+    let attempt = await findAttemptInDB(req.params.attemptId);
     if (!attempt) return res.status(404).json({ error: 'Result not found.' });
 
-    const store = getAssessmentsFromStore();
-    let a = store.find(x => String(x._id) === String(attempt.assessment));
-    if (!a && mongoose.connection?.readyState === 1) {
-      try {
-        a = await Assessment.findById(attempt.assessment).lean();
-      } catch (err) {}
+    let a = await findAssessmentInDB(attempt.assessment);
+
+    // Auto-regrade if submitted
+    if (a && attempt.status === 'submitted' && Array.isArray(attempt.answers)) {
+      const oldScore = attempt.score;
+      gradeAttempt(attempt, a);
+      if (attempt.score !== oldScore) {
+        await saveAttemptToDB(attempt);
+      }
     }
 
     if (a && a.showResult === false) {

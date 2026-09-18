@@ -931,6 +931,14 @@ const mockStore = {
     const deleted = this[collectionName].splice(idx, 1);
     saveToDisk(this);
     return deleted[0];
+  },
+
+  saveToDisk(store) {
+    saveToDisk(store || this);
+  },
+
+  loadFromDisk(store) {
+    loadFromDisk(store || this);
   }
 };
 
