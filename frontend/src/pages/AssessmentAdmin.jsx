@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import {
   Briefcase, Users, Mail, PlusCircle, Trash2, ToggleLeft, ToggleRight,
-  LogOut, CheckCircle, AlertCircle, ChevronUp, MapPin, Clock, DollarSign,
-  Edit, FileText, Bell, ClipboardList, UserCheck, Database, Copy, Check, UserPlus, Award
+  LogOut, CheckCircle, AlertCircle, ChevronUp, ChevronDown, MapPin, Clock, DollarSign,
+  Edit, FileText, Bell, ClipboardList, UserCheck, Database, Copy, Check, UserPlus, Award,
+  BookOpen, Search, Filter, CheckSquare, Square, Sparkles, Layers, ArrowRight, RefreshCw,
+  Sliders, ArrowUpDown
 } from 'lucide-react';
 import CertificateModal from '../components/CertificateModal.jsx';
 
@@ -47,6 +49,28 @@ export default function AssessmentAdmin() {
   const [showCertModal, setShowCertModal] = useState(false);
   const [sendingCertId, setSendingCertId] = useState(null);
   const [regrading, setRegrading] = useState(false);
+
+  /* ── Java Ready-Made Question Bank State ── */
+  const [qbQuestions, setQbQuestions] = useState([]);
+  const [qbTotal, setQbTotal] = useState(0);
+  const [qbPage, setQbPage] = useState(1);
+  const [qbLimit, setQbLimit] = useState(15);
+  const [qbTopic, setQbTopic] = useState('');
+  const [qbDifficulty, setQbDifficulty] = useState('');
+  const [qbSearch, setQbSearch] = useState('');
+  const [qbStats, setQbStats] = useState(null);
+  const [qbTopics, setQbTopics] = useState([]);
+  const [qbLoading, setQbLoading] = useState(false);
+  const [qbSelected, setQbSelected] = useState({}); // { [qid]: questionObj }
+  const [qbTargetTestId, setQbTargetTestId] = useState('');
+  const [qbSubTab, setQbSubTab] = useState('bank'); // 'bank' | 'manager'
+  const [expandedExplanations, setExpandedExplanations] = useState({});
+  const [quickAddCount, setQuickAddCount] = useState(10);
+  const [quickAddTopic, setQuickAddTopic] = useState('');
+  const [quickAddDiff, setQuickAddDiff] = useState('');
+  const [quickAddBusy, setQuickAddBusy] = useState(false);
+  const [newTestPrepopulate, setNewTestPrepopulate] = useState('none');
+  const [testQuestionMode, setTestQuestionMode] = useState('manual'); // 'manual' | 'bank'
 
   /* ── UI toggles ── */
   const [showNewTest, setShowNewTest] = useState(false);
@@ -92,6 +116,32 @@ export default function AssessmentAdmin() {
     }
   };
 
+  /* ── fetch question bank ── */
+  const fetchQuestionBank = async (page = qbPage, topic = qbTopic, diff = qbDifficulty, search = qbSearch) => {
+    setQbLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(qbLimit)
+      });
+      if (topic) params.append('topic', topic);
+      if (diff) params.append('difficulty', diff);
+      if (search && search.trim()) params.append('search', search.trim());
+
+      const r = await api(`/api/assessment/question-bank?${params.toString()}`);
+      const data = await r.json();
+      setQbQuestions(Array.isArray(data.questions) ? data.questions : []);
+      setQbTotal(data.total || 0);
+      setQbPage(data.page || 1);
+      if (data.stats) setQbStats(data.stats);
+      if (data.topics) setQbTopics(data.topics);
+    } catch (err) {
+      console.error('Fetch Question Bank Error:', err);
+    } finally {
+      setQbLoading(false);
+    }
+  };
+
   /* ── fetch everything ── */
   const fetchAll = async () => {
     setLoading(true);
@@ -104,13 +154,18 @@ export default function AssessmentAdmin() {
       const testsData = await tRes.json();
       const statsData = await sRes.json();
       const poolData  = await cRes.json();
-      setTests(Array.isArray(testsData) ? testsData : []);
+      const loadedTests = Array.isArray(testsData) ? testsData : [];
+      setTests(loadedTests);
       setStats(statsData || {});
       setCandidatePool(Array.isArray(poolData) ? poolData : []);
 
+      if (loadedTests.length > 0 && !qbTargetTestId) {
+        setQbTargetTestId(loadedTests[0]._id);
+      }
+
       // If a test is selected, refresh its details
       if (selTest) {
-        const refreshed = (Array.isArray(testsData) ? testsData : []).find(t => t._id === selTest._id);
+        const refreshed = loadedTests.find(t => t._id === selTest._id);
         if (refreshed) setSelTest(refreshed);
       }
     } catch (err) {
@@ -120,17 +175,191 @@ export default function AssessmentAdmin() {
     }
   };
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => {
+    fetchAll();
+    fetchQuestionBank(1);
+  }, []);
+
+  useEffect(() => {
+    if (selTest?._id) {
+      setQbTargetTestId(selTest._id);
+    }
+  }, [selTest]);
+
+  /* ── question bank selection helpers ── */
+  const toggleSelectQuestion = (q) => {
+    const qid = q._id || q.id;
+    setQbSelected(prev => {
+      const next = { ...prev };
+      if (next[qid]) {
+        delete next[qid];
+      } else {
+        next[qid] = q;
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAllCurrentPage = () => {
+    const allSelected = qbQuestions.length > 0 && qbQuestions.every(q => !!qbSelected[q._id || q.id]);
+    if (allSelected) {
+      setQbSelected(prev => {
+        const next = { ...prev };
+        qbQuestions.forEach(q => delete next[q._id || q.id]);
+        return next;
+      });
+    } else {
+      setQbSelected(prev => {
+        const next = { ...prev };
+        qbQuestions.forEach(q => { next[q._id || q.id] = q; });
+        return next;
+      });
+    }
+  };
+
+  /* ── batch add questions to assessment ── */
+  const handleBatchAddToTest = async (targetId, specificQuestions) => {
+    const list = specificQuestions || Object.values(qbSelected);
+    if (!targetId) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Select Assessment Test',
+        text: 'Please choose which assessment exam to add these questions into.'
+      });
+      return;
+    }
+    if (!list || list.length === 0) {
+      Swal.fire({
+        icon: 'info',
+        title: 'No Questions Selected',
+        text: 'Please select one or more questions using the checkboxes.'
+      });
+      return;
+    }
+
+    try {
+      const r = await api(`/api/assessment/admin/${targetId}/questions/batch`, {
+        method: 'POST',
+        body: JSON.stringify({ questions: list })
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Failed to add questions');
+
+      const targetTestObj = tests.find(t => t._id === targetId);
+      const testName = targetTestObj ? targetTestObj.title : 'Assessment';
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Questions Added Successfully!',
+        text: `Added ${data.addedCount} ready-made question(s) to "${testName}". Total test questions: ${data.total}`,
+        timer: 2500,
+        showConfirmButton: true,
+        confirmButtonColor: '#10b981',
+        confirmButtonText: 'View Exam Questions'
+      }).then((result) => {
+        if (result.isConfirmed && targetTestObj) {
+          setSelTest(targetTestObj);
+          setTab('questions');
+          setQbSubTab('manager');
+        }
+      });
+
+      // Clear selection
+      setQbSelected({});
+
+      // Refresh tests
+      const tRes = await api('/api/assessment/admin/list');
+      const testsData = await tRes.json();
+      if (Array.isArray(testsData)) {
+        setTests(testsData);
+        if (selTest && selTest._id === targetId) {
+          const refreshed = testsData.find(t => t._id === targetId);
+          if (refreshed) setSelTest(refreshed);
+        }
+      }
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Error Adding Questions', text: err.message });
+    }
+  };
+
+  /* ── quick add random sample ── */
+  const handleQuickAddSample = async (targetId, count, topic, diff) => {
+    if (!targetId) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Select Assessment Test',
+        text: 'Please choose which assessment exam to add questions into.'
+      });
+      return;
+    }
+    setQuickAddBusy(true);
+    try {
+      const r = await api('/api/assessment/question-bank/sample', {
+        method: 'POST',
+        body: JSON.stringify({ count: Number(count) || 10, topic, difficulty: diff })
+      });
+      const data = await r.json();
+      if (!data.questions || data.questions.length === 0) {
+        Swal.fire({ icon: 'info', title: 'No Questions Found', text: 'No questions matched your filter criteria.' });
+        return;
+      }
+      await handleBatchAddToTest(targetId, data.questions);
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Quick Pick Error', text: err.message });
+    } finally {
+      setQuickAddBusy(false);
+    }
+  };
 
   /* ── create test ── */
   const createTest = async (e) => {
     e.preventDefault();
-    const r = await api('/api/assessment/admin/create', { method: 'POST', body: JSON.stringify(tf) });
+    let initialQuestions = [];
+    if (newTestPrepopulate !== 'none') {
+      try {
+        let sampleReq = { count: 10 };
+        if (newTestPrepopulate === '10-mixed') sampleReq = { count: 10 };
+        else if (newTestPrepopulate === '20-mixed') sampleReq = { count: 20 };
+        else if (newTestPrepopulate === '10-easy') sampleReq = { count: 10, difficulty: 'easy' };
+        else if (newTestPrepopulate === '10-medium') sampleReq = { count: 10, difficulty: 'medium' };
+        else if (newTestPrepopulate === '10-hard') sampleReq = { count: 10, difficulty: 'hard' };
+        else if (newTestPrepopulate === '15-oop') sampleReq = { count: 15, topic: 'OOP Concepts' };
+        else if (newTestPrepopulate === '15-collections') sampleReq = { count: 15, topic: 'Collections Framework' };
+
+        const rSample = await api('/api/assessment/question-bank/sample', {
+          method: 'POST',
+          body: JSON.stringify(sampleReq)
+        });
+        const dSample = await rSample.json();
+        if (Array.isArray(dSample.questions)) {
+          initialQuestions = dSample.questions;
+        }
+      } catch (err) {
+        console.warn('Failed to pre-sample questions:', err);
+      }
+    }
+
+    const payload = { ...tf, questions: initialQuestions };
+    const r = await api('/api/assessment/admin/create', { method: 'POST', body: JSON.stringify(payload) });
     const d = await r.json();
     if (!r.ok) { Swal.fire({ icon: 'error', title: 'Error', text: d.error }); return; }
-    Swal.fire({ icon: 'success', title: 'Test Created!', timer: 1500, showConfirmButton: false });
+    Swal.fire({
+      icon: 'success',
+      title: 'Assessment Created!',
+      text: initialQuestions.length > 0 
+        ? `Created assessment with ${initialQuestions.length} ready-made Java questions loaded!` 
+        : 'Assessment created successfully.',
+      timer: 2000,
+      showConfirmButton: false
+    });
     setShowNewTest(false);
-    setTf({ title: '', description: '', jobTitle: 'General', duration: 30, passingScore: 50, maxAttempts: 1, shuffleQuestions: true, shuffleOptions: true, showResult: true, scheduledAt: '', expiresAt: '' });
+    setNewTestPrepopulate('none');
+    setTf({
+      title: '', description: '', jobTitle: 'General', duration: 30,
+      passingScore: 50, maxAttempts: 1, shuffleQuestions: true,
+      shuffleOptions: true, showResult: true, scheduledAt: '', expiresAt: '',
+      accessPassword: ''
+    });
     fetchAll();
   };
 
@@ -540,6 +769,35 @@ export default function AssessmentAdmin() {
                       </label>
                     ))}
                   </div>
+
+                  {/* ── Ready-Made Questions Quick Pre-Population ── */}
+                  <div style={{ marginBottom: '1.25rem', background: '#f0fdf4', padding: '1rem 1.25rem', borderRadius: '12px', border: '1.5px solid #86efac' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                      <Sparkles size={16} color="#16a34a" />
+                      <label className="aa-label" style={{ color: '#166534', margin: 0, fontSize: '0.86rem' }}>
+                        Ready-Made Questions (Auto-populate from 1,000+ Java Question Bank)
+                      </label>
+                    </div>
+                    <p style={{ fontSize: '0.78rem', color: '#15803d', margin: '0 0 0.6rem 0', lineHeight: 1.4 }}>
+                      Choose whether you want this exam to start with ready-made Java questions automatically, or start empty so you can manually add custom questions / pick questions from the question bank later.
+                    </p>
+                    <select
+                      className="aa-input"
+                      value={newTestPrepopulate}
+                      onChange={e => setNewTestPrepopulate(e.target.value)}
+                      style={{ background: 'white', borderColor: '#86efac', fontWeight: 600, color: '#0f172a' }}
+                    >
+                      <option value="none">✍️ Start with empty test (I will add questions manually or pick from bank later)</option>
+                      <option value="10-mixed">⚡ Auto-Add 10 Random Java MCQs (Mixed Topics & Difficulty)</option>
+                      <option value="20-mixed">⚡ Auto-Add 20 Random Java MCQs (Mixed Topics & Difficulty)</option>
+                      <option value="10-easy">⚡ Auto-Add 10 Easy Java MCQs (Core Java, Basics, OOP)</option>
+                      <option value="10-medium">⚡ Auto-Add 10 Medium Java MCQs (Exceptions, Collections, Streams)</option>
+                      <option value="10-hard">⚡ Auto-Add 10 Hard Java MCQs (Concurrency, Multithreading, JVM Memory)</option>
+                      <option value="15-oop">⚡ Auto-Add 15 Questions on OOP Concepts (Inheritance, Polymorphism, etc.)</option>
+                      <option value="15-collections">⚡ Auto-Add 15 Questions on Java Collections Framework (List, Map, Set)</option>
+                    </select>
+                  </div>
+
                   <button type="submit" className="aa-btn aa-btn-primary">
                     <CheckCircle size={16} /> Save & Create Assessment
                   </button>
@@ -619,307 +877,934 @@ export default function AssessmentAdmin() {
         {/* ══════════════════════════════════════
             QUESTION BANK TAB
         ══════════════════════════════════════ */}
+        {/* ══════════════════════════════════════
+            QUESTION BANK TAB
+        ══════════════════════════════════════ */}
         {tab === 'questions' && (
           <div>
-            {!selTest ? (
-              <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
-                <ClipboardList size={48} style={{ opacity: 0.3, marginBottom: '1rem', margin: '0 auto' }} />
-                <p style={{ fontWeight: 600 }}>Select an assessment below to manage its question bank.</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', marginTop: '1rem' }}>
-                  {tests.map(t => (
-                    <button key={t._id} className="aa-btn aa-btn-outline" onClick={() => setSelTest(t)}>{t.title}</button>
-                  ))}
-                </div>
+            {/* ── Sub-navigation: Question Bank vs Test Question Manager ── */}
+            <div style={{ display: 'flex', gap: '0.65rem', marginBottom: '1.25rem', borderBottom: '2px solid #e2e8f0', paddingBottom: '0.75rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+                <button
+                  className="aa-btn"
+                  style={{
+                    background: qbSubTab === 'bank' ? 'linear-gradient(135deg, #0ea5e9, #0284c7)' : '#f8fafc',
+                    color: qbSubTab === 'bank' ? '#ffffff' : '#334155',
+                    border: '1.5px solid',
+                    borderColor: qbSubTab === 'bank' ? '#0284c7' : '#cbd5e1',
+                    fontWeight: 800,
+                    boxShadow: qbSubTab === 'bank' ? '0 2px 8px rgba(14,165,233,0.3)' : 'none',
+                    padding: '0.55rem 1.1rem'
+                  }}
+                  onClick={() => setQbSubTab('bank')}
+                >
+                  <BookOpen size={16} /> 📚 Java Ready-Made Bank ({qbTotal || '1,090+'} Questions)
+                </button>
+
+                <button
+                  className="aa-btn"
+                  style={{
+                    background: qbSubTab === 'manager' ? 'linear-gradient(135deg, #0f172a, #334155)' : '#f8fafc',
+                    color: qbSubTab === 'manager' ? '#ffffff' : '#334155',
+                    border: '1.5px solid',
+                    borderColor: qbSubTab === 'manager' ? '#0f172a' : '#cbd5e1',
+                    fontWeight: 800,
+                    boxShadow: qbSubTab === 'manager' ? '0 2px 8px rgba(15,23,42,0.2)' : 'none',
+                    padding: '0.55rem 1.1rem'
+                  }}
+                  onClick={() => setQbSubTab('manager')}
+                >
+                  <ClipboardList size={16} /> ⚙️ Exam Questions Manager {selTest ? `(${selTest.title})` : ''}
+                </button>
               </div>
-            ) : (
-              <>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                    <h2 style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.2rem', margin: 0 }}>📝 {selTest.title} — Questions</h2>
-                    <span className="aa-badge" style={{ background: 'rgba(14,165,233,0.1)', color: '#0369a1' }}>{selTest.questions?.length ?? 0} total questions</span>
-                  </div>
-                  <button className="aa-btn aa-btn-outline" onClick={() => setSelTest(null)}>
-                    Change Assessment
+
+              {selTest && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#eff6ff', padding: '0.35rem 0.85rem', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
+                  <span style={{ fontSize: '0.8rem', color: '#1e40af', fontWeight: 700 }}>
+                    Active Exam: <strong>{selTest.title}</strong> ({selTest.questions?.length ?? 0} Qs)
+                  </span>
+                  <button
+                    onClick={() => { setSelTest(null); setQbSubTab('bank'); }}
+                    style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 800 }}
+                  >
+                    ✕ Clear
                   </button>
                 </div>
+              )}
+            </div>
 
-                {/* ── Add Question Form ── */}
-                <div className="aa-card" style={{ marginBottom: '1.5rem' }}>
-                  <div className="aa-section-title">➕ Add Question to {selTest.title}</div>
+            {/* ══════════════════════════════════════════════════════════════
+                SUB-TAB 1: JAVA READY-MADE QUESTION BANK EXPLORER
+            ══════════════════════════════════════════════════════════════ */}
+            {qbSubTab === 'bank' && (
+              <div>
+                {/* ── Banner & Overview ── */}
+                <div className="aa-card" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: 'white', border: 'none', marginBottom: '1.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div style={{ flex: 1, minWidth: '280px' }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(14,165,233,0.2)', color: '#38bdf8', padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.78rem', fontWeight: 800, marginBottom: '0.6rem' }}>
+                        <Sparkles size={13} /> 1,090+ CURATED JAVA MCQs REPOSITORY
+                      </div>
+                      <h2 style={{ fontSize: '1.45rem', fontWeight: 900, margin: '0 0 0.4rem 0', letterSpacing: '-0.02em', color: '#f8fafc' }}>
+                        ☕ Java Ready-Made MCQ Question Bank
+                      </h2>
+                      <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.5, maxWidth: '720px' }}>
+                        Browse, search, and filter from hundreds of ready-to-use MCQs across Core Java, OOP, Collections, Concurrency, Streams, Exception Handling, JVM, and Spring Boot. Select individual questions or auto-pick random sets to add directly into your assessment tests.
+                      </p>
+                    </div>
 
-                  {/* Type selector */}
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-                    {[
-                      { id: 'mcq',    label: '🔘 Multiple Choice (MCQ)', desc: 'Auto-graded choice question' },
-                      { id: 'theory', label: '📝 Theory (Written)',       desc: 'Written long text answer' },
-                      { id: 'sql',    label: '🗄️ SQL Execution',         desc: 'In-memory SQL query validator' },
-                    ].map(t => (
-                      <button key={t.id} type="button"
-                        onClick={() => setQf(f => ({ ...f, type: t.id }))}
-                        style={{
-                          padding: '0.55rem 1rem', borderRadius: '9px', border: '1.5px solid',
-                          borderColor: qf.type === t.id ? '#0ea5e9' : '#e2e8f0',
-                          background: qf.type === t.id ? '#eff6ff' : '#f8fafc',
-                          color: qf.type === t.id ? '#0369a1' : '#64748b',
-                          fontWeight: qf.type === t.id ? 800 : 600, fontSize: '0.85rem',
-                          cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.18s',
-                          textAlign: 'left'
-                        }}>
-                        {t.label}
-                        <div style={{ fontSize: '0.7rem', fontWeight: 500, marginTop: '2px', opacity: 0.75 }}>{t.desc}</div>
-                      </button>
-                    ))}
+                    {/* Stats pills */}
+                    <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+                      <div style={{ background: 'rgba(255,255,255,0.08)', padding: '0.65rem 1rem', borderRadius: '10px', textAlign: 'center', minWidth: '75px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#38bdf8' }}>{qbStats?.total || 1090}</div>
+                        <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase' }}>Total MCQs</div>
+                      </div>
+                      <div style={{ background: 'rgba(16,185,129,0.12)', padding: '0.65rem 1rem', borderRadius: '10px', textAlign: 'center', minWidth: '75px', border: '1px solid rgba(16,185,129,0.3)' }}>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#34d399' }}>{qbStats?.difficulties?.easy || 363}</div>
+                        <div style={{ fontSize: '0.68rem', color: '#a7f3d0', fontWeight: 700, textTransform: 'uppercase' }}>Easy</div>
+                      </div>
+                      <div style={{ background: 'rgba(245,158,11,0.12)', padding: '0.65rem 1rem', borderRadius: '10px', textAlign: 'center', minWidth: '75px', border: '1px solid rgba(245,158,11,0.3)' }}>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#fbbf24' }}>{qbStats?.difficulties?.medium || 470}</div>
+                        <div style={{ fontSize: '0.68rem', color: '#fde68a', fontWeight: 700, textTransform: 'uppercase' }}>Medium</div>
+                      </div>
+                      <div style={{ background: 'rgba(239,68,68,0.12)', padding: '0.65rem 1rem', borderRadius: '10px', textAlign: 'center', minWidth: '75px', border: '1px solid rgba(239,68,68,0.3)' }}>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#f87171' }}>{qbStats?.difficulties?.hard || 261}</div>
+                        <div style={{ fontSize: '0.68rem', color: '#fecaca', fontWeight: 700, textTransform: 'uppercase' }}>Hard</div>
+                      </div>
+                    </div>
                   </div>
-
-                  <form onSubmit={addQuestion}>
-                    {/* Question text */}
-                    <div style={{ marginBottom: '0.85rem' }}>
-                      <label className="aa-label">Question Text *</label>
-                      <textarea className="aa-input" required style={{ minHeight: '75px' }}
-                        value={qf.text} onChange={e => setQf(f => ({ ...f, text: e.target.value }))}
-                        placeholder={
-                          qf.type === 'theory' ? 'e.g. Explain the difference between synchronous and asynchronous execution in Node.js.' :
-                          qf.type === 'sql'    ? 'e.g. Write a SQL query to fetch all employees working in the Engineering department with salary > 80000.' :
-                          'Enter the question text...'
-                        } />
-                    </div>
-
-                    {/* MCQ options */}
-                    {qf.type === 'mcq' && (
-                      <div style={{ marginBottom: '0.85rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                          <label className="aa-label" style={{ margin: 0 }}>Answer Options</label>
-                          <span style={{ fontSize: '0.75rem', color: '#0369a1', fontWeight: 600 }}>
-                            💡 Click any letter badge or "Set as Correct" button
-                          </span>
-                        </div>
-                        {qf.options.map((opt, i) => {
-                          const letter = String.fromCharCode(65 + i);
-                          const isSelected = qf.correct && (
-                            qf.correct.trim().toLowerCase() === opt.trim().toLowerCase() ||
-                            qf.correct.trim().toUpperCase() === letter
-                          );
-                          return (
-                            <div key={i} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.4rem', alignItems: 'center' }}>
-                              <button
-                                type="button"
-                                onClick={() => setQf(f => ({ ...f, correct: opt || letter }))}
-                                title={`Click to set Option ${letter} as correct answer`}
-                                style={{
-                                  width: '32px',
-                                  height: '32px',
-                                  borderRadius: '8px',
-                                  border: isSelected ? '2px solid #10b981' : '1.5px solid #cbd5e1',
-                                  background: isSelected ? '#10b981' : '#f8fafc',
-                                  color: isSelected ? '#ffffff' : '#0369a1',
-                                  fontWeight: 900,
-                                  fontSize: '0.82rem',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  flexShrink: 0,
-                                  cursor: 'pointer',
-                                  transition: 'all 0.15s'
-                                }}
-                              >
-                                {isSelected ? '✓' : letter}
-                              </button>
-                              <input
-                                className="aa-input"
-                                placeholder={`Option ${i + 1} (${letter})`}
-                                value={opt}
-                                onChange={e => {
-                                  const o = [...qf.options];
-                                  const oldVal = o[i];
-                                  o[i] = e.target.value;
-                                  setQf(f => ({
-                                    ...f,
-                                    options: o,
-                                    correct: (f.correct === oldVal || f.correct === letter) ? e.target.value : f.correct
-                                  }));
-                                }}
-                                style={{
-                                  borderColor: isSelected ? '#10b981' : undefined,
-                                  background: isSelected ? '#f0fdf4' : undefined
-                                }}
-                              />
-                              <button
-                                type="button"
-                                onClick={() => setQf(f => ({ ...f, correct: opt || letter }))}
-                                style={{
-                                  padding: '0.35rem 0.65rem',
-                                  borderRadius: '6px',
-                                  border: isSelected ? '1px solid #10b981' : '1px solid #e2e8f0',
-                                  background: isSelected ? '#dcfce7' : '#ffffff',
-                                  color: isSelected ? '#15803d' : '#64748b',
-                                  fontSize: '0.72rem',
-                                  fontWeight: 700,
-                                  cursor: 'pointer',
-                                  whiteSpace: 'nowrap'
-                                }}
-                              >
-                                {isSelected ? '✓ Correct Choice' : 'Set as Correct'}
-                              </button>
-                            </div>
-                          );
-                        })}
-                        <button type="button" onClick={() => setQf(f => ({ ...f, options: [...f.options, ''] }))}
-                          style={{ fontSize: '0.78rem', color: '#0ea5e9', fontWeight: 700, border: 'none', background: 'none', cursor: 'pointer', padding: '0.2rem 0' }}>
-                          + Add Option
-                        </button>
-                      </div>
-                    )}
-
-                    {/* MCQ correct answer */}
-                    {qf.type === 'mcq' && (
-                      <div style={{ marginBottom: '0.85rem' }}>
-                        <label className="aa-label">
-                          Correct Answer Option <span style={{ color: '#10b981', fontWeight: 700 }}>({qf.correct ? `Selected: ${qf.correct}` : 'None selected yet'})</span>
-                        </label>
-                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                          <input
-                            className="aa-input"
-                            required
-                            style={{ flex: '1 1 200px' }}
-                            value={qf.correct}
-                            onChange={e => setQf(f => ({ ...f, correct: e.target.value }))}
-                            placeholder="Type or select the correct answer..."
-                          />
-                          {qf.options.filter(Boolean).map((opt, i) => {
-                            const letter = String.fromCharCode(65 + i);
-                            const isMatch = qf.correct === opt || qf.correct === letter;
-                            return (
-                              <button
-                                key={i}
-                                type="button"
-                                className="aa-btn aa-btn-outline"
-                                style={{
-                                  padding: '0.4rem 0.75rem',
-                                  fontSize: '0.75rem',
-                                  background: isMatch ? '#dcfce7' : undefined,
-                                  borderColor: isMatch ? '#10b981' : undefined,
-                                  color: isMatch ? '#15803d' : undefined,
-                                  fontWeight: 700
-                                }}
-                                onClick={() => setQf(f => ({ ...f, correct: opt }))}
-                              >
-                                Option {letter}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Theory model answer */}
-                    {qf.type === 'theory' && (
-                      <div style={{ marginBottom: '0.85rem', background: 'rgba(180,83,9,0.06)', border: '1px solid rgba(180,83,9,0.2)', borderRadius: '10px', padding: '0.85rem' }}>
-                        <label className="aa-label" style={{ color: '#92400e' }}>Model Answer Reference <span style={{ fontWeight: 400, color: '#b45309' }}>(Admin view only)</span></label>
-                        <textarea className="aa-input" style={{ minHeight: '80px', background: '#fffbeb' }}
-                          value={qf.modelAnswer} onChange={e => setQf(f => ({ ...f, modelAnswer: e.target.value }))}
-                          placeholder="Write the reference key points and answer rubric..." />
-                        <div style={{ fontSize: '0.75rem', color: '#b45309', marginTop: '0.35rem', fontWeight: 600 }}>
-                          Theory questions are manually evaluated or awarded marks pending instructor review.
-                        </div>
-                      </div>
-                    )}
-
-                    {/* SQL fields */}
-                    {qf.type === 'sql' && (
-                      <div style={{ marginBottom: '0.85rem', border: '1.5px solid rgba(5,150,105,0.25)', borderRadius: '12px', padding: '1.25rem', background: 'rgba(5,150,105,0.03)' }}>
-                        <div className="aa-section-title" style={{ color: '#065f46' }}>🗄️ SQL Question Specification</div>
-
-                        <div style={{ marginBottom: '0.85rem' }}>
-                          <label className="aa-label">Database Schema <span style={{ fontWeight: 400, color: '#64748b' }}>(CREATE TABLE + INSERT statements)</span></label>
-                          <textarea
-                            style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #334155', borderRadius: '10px', padding: '0.85rem', fontFamily: 'monospace', fontSize: '0.83rem', lineHeight: 1.65, background: '#0f172a', color: '#e2e8f0', resize: 'vertical', outline: 'none', minHeight: '130px' }}
-                            value={qf.sqlSchema} onChange={e => setQf(f => ({ ...f, sqlSchema: e.target.value }))}
-                            placeholder={"CREATE TABLE employees (\n  id INT,\n  name VARCHAR(50),\n  dept VARCHAR(50)\n);\nINSERT INTO employees VALUES (1,'Alice','Engineering');"} />
-                        </div>
-
-                        <div style={{ marginBottom: '0.85rem' }}>
-                          <label className="aa-label">Expected Output <span style={{ fontWeight: 400, color: '#64748b' }}>(JSON array of expected rows)</span></label>
-                          <textarea
-                            style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #334155', borderRadius: '10px', padding: '0.85rem', fontFamily: 'monospace', fontSize: '0.83rem', lineHeight: 1.65, background: '#0f172a', color: '#86efac', resize: 'vertical', outline: 'none', minHeight: '80px' }}
-                            value={qf.sqlExpected} onChange={e => setQf(f => ({ ...f, sqlExpected: e.target.value }))}
-                            placeholder={'[{"id":1,"name":"Alice","dept":"Engineering"}]'} />
-                        </div>
-
-                        <div>
-                          <label className="aa-label">Hint <span style={{ fontWeight: 400, color: '#64748b' }}>(Optional query hint shown to candidate)</span></label>
-                          <input className="aa-input" value={qf.sqlHint} onChange={e => setQf(f => ({ ...f, sqlHint: e.target.value }))} placeholder="e.g. Remember to filter by dept and order by salary" />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Marks / Difficulty / Topic */}
-                    <div className="aa-grid3" style={{ marginBottom: '0.85rem' }}>
-                      <div>
-                        <label className="aa-label">Marks</label>
-                        <input type="number" className="aa-input" min={1} max={20} value={qf.marks} onChange={e => setQf(f => ({ ...f, marks: +e.target.value }))} />
-                      </div>
-                      <div>
-                        <label className="aa-label">Difficulty</label>
-                        <select className="aa-input" value={qf.difficulty} onChange={e => setQf(f => ({ ...f, difficulty: e.target.value }))}>
-                          <option value="easy">Easy</option>
-                          <option value="medium">Medium</option>
-                          <option value="hard">Hard</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="aa-label">Topic / Subject</label>
-                        <input className="aa-input" value={qf.topic} onChange={e => setQf(f => ({ ...f, topic: e.target.value }))} placeholder="e.g. JavaScript, SQL, Algebra" />
-                      </div>
-                    </div>
-
-                    {/* Explanation */}
-                    <div style={{ marginBottom: '1rem' }}>
-                      <label className="aa-label">Explanation <span style={{ color: '#94a3b8', fontWeight: 400 }}>(Optional solution explanation shown after submission)</span></label>
-                      <textarea className="aa-input" style={{ minHeight: '55px' }} value={qf.explanation}
-                        onChange={e => setQf(f => ({ ...f, explanation: e.target.value }))}
-                        placeholder="Explain why this answer is correct..." />
-                    </div>
-
-                    <button type="submit" className="aa-btn aa-btn-primary" style={{ padding: '0.75rem 2rem' }}>
-                      <CheckCircle size={16} /> Add Question
-                    </button>
-                  </form>
                 </div>
 
-                {/* ── Questions list ── */}
-                {(selTest.questions || []).length === 0 && (
-                  <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>No questions added yet. Fill out the form above to add questions.</div>
-                )}
-                {(selTest.questions || []).map((q, i) => (
-                  <div key={q._id} className="aa-q-item" style={{ flexDirection: 'column', gap: '0.65rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.85rem', width: '100%' }}>
-                      <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(14,165,233,0.1)', color: '#0369a1', fontWeight: 800, fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.92rem', marginBottom: '0.35rem' }}>{q.text}</div>
-                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                          <span className="aa-badge" style={{ background: `${TYPE_COLORS[q.type] || '#6b7280'}18`, color: TYPE_COLORS[q.type] || '#6b7280' }}>
-                            {TYPE_ICONS[q.type] || '❓'} {q.type?.toUpperCase()}
-                          </span>
-                          <span className="aa-badge" style={{ background: 'rgba(0,0,0,0.04)', color: DIFF_COLORS[q.difficulty] || '#6b7280' }}>{q.difficulty}</span>
-                          <span className="aa-badge" style={{ background: '#f1f5f9', color: '#475569' }}>{q.marks} mark{q.marks > 1 ? 's' : ''}</span>
-                          {q.topic && <span className="aa-badge" style={{ background: '#f0f9ff', color: '#0369a1' }}>{q.topic}</span>}
-                          {q.type === 'mcq'    && <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 700 }}>✓ Correct: {q.correct}</span>}
-                          {q.type === 'theory' && <span style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 700, background: '#fef3c7', padding: '0.15rem 0.5rem', borderRadius: '5px' }}>✋ Manual</span>}
-                          {q.type === 'sql'    && <span style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 700, background: '#d1fae5', padding: '0.15rem 0.5rem', borderRadius: '5px' }}>🗄️ In-Memory SQL</span>}
+                {/* ── Target Assessment & Batch Action Control Panel ── */}
+                <div className="aa-card" style={{ background: '#f8fafc', border: '2px solid #0ea5e9', marginBottom: '1.25rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.85rem', marginBottom: '0.85rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flex: 1, minWidth: '260px' }}>
+                      <span style={{ fontSize: '0.86rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap' }}>
+                        🎯 Target Assessment Exam:
+                      </span>
+                      <select
+                        className="aa-input"
+                        value={qbTargetTestId}
+                        onChange={e => setQbTargetTestId(e.target.value)}
+                        style={{ maxWidth: '380px', fontWeight: 700, borderColor: '#0ea5e9', background: 'white' }}
+                      >
+                        <option value="">-- Choose destination assessment --</option>
+                        {tests.map(t => (
+                          <option key={t._id} value={t._id}>
+                            {t.title} ({t.questions?.length ?? 0} questions)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Batch Add Button for Checked Questions */}
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      {Object.keys(qbSelected).length > 0 && (
+                        <>
+                          <button
+                            className="aa-btn aa-btn-success"
+                            onClick={() => handleBatchAddToTest(qbTargetTestId)}
+                            style={{ padding: '0.65rem 1.25rem', fontWeight: 800, boxShadow: '0 3px 10px rgba(16,185,129,0.35)' }}
+                          >
+                            <CheckCircle size={15} /> Add {Object.keys(qbSelected).length} Selected to Exam
+                          </button>
+                          <button
+                            className="aa-btn aa-btn-outline"
+                            onClick={() => setQbSelected({})}
+                            style={{ fontSize: '0.78rem' }}
+                          >
+                            Clear Selection ({Object.keys(qbSelected).length})
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Quick Auto-Pick Generator */}
+                  <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0369a1', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <Sparkles size={14} /> Quick Random Generator:
+                      </span>
+                      <span style={{ fontSize: '0.78rem', color: '#64748b' }}>Pick</span>
+                      <select
+                        className="aa-input"
+                        value={quickAddCount}
+                        onChange={e => setQuickAddCount(Number(e.target.value))}
+                        style={{ width: '80px', padding: '0.35rem 0.5rem', height: '34px', fontSize: '0.8rem' }}
+                      >
+                        <option value={5}>5 Qs</option>
+                        <option value={10}>10 Qs</option>
+                        <option value={15}>15 Qs</option>
+                        <option value={20}>20 Qs</option>
+                        <option value={25}>25 Qs</option>
+                        <option value={30}>30 Qs</option>
+                      </select>
+                      <span style={{ fontSize: '0.78rem', color: '#64748b' }}>from</span>
+                      <span className="aa-badge" style={{ background: '#e0f2fe', color: '#0369a1', fontWeight: 700 }}>
+                        {qbTopic || 'All Topics'}
+                      </span>
+                      <span className="aa-badge" style={{ background: '#fef3c7', color: '#92400e', fontWeight: 700 }}>
+                        {qbDifficulty ? qbDifficulty.toUpperCase() : 'ALL DIFFICULTIES'}
+                      </span>
+                    </div>
+
+                    <button
+                      className="aa-btn aa-btn-primary"
+                      disabled={quickAddBusy || !qbTargetTestId}
+                      onClick={() => handleQuickAddSample(qbTargetTestId, quickAddCount, qbTopic, qbDifficulty)}
+                      style={{ padding: '0.55rem 1.1rem', fontWeight: 800 }}
+                      title={!qbTargetTestId ? 'Please select a target exam first' : 'Auto pick random questions and insert into target exam'}
+                    >
+                      {quickAddBusy ? '⏳ Generating...' : `⚡ Auto-Add ${quickAddCount} Random Qs to Exam`}
+                    </button>
+                  </div>
+                </div>
+
+                {/* ── Search & Filter Controls ── */}
+                <div className="aa-card" style={{ marginBottom: '1.25rem', padding: '1.1rem' }}>
+                  {/* Search bar + Difficulty filters */}
+                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1rem' }}>
+                    <div style={{ flex: '1 1 300px', position: 'relative' }}>
+                      <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                      <input
+                        className="aa-input"
+                        placeholder="Search Java questions, concepts, code keywords (e.g. synchronized, stream, lambda, override)..."
+                        value={qbSearch}
+                        onChange={e => {
+                          setQbSearch(e.target.value);
+                          fetchQuestionBank(1, qbTopic, qbDifficulty, e.target.value);
+                        }}
+                        style={{ paddingLeft: '2.4rem' }}
+                      />
+                      {qbSearch && (
+                        <button
+                          onClick={() => {
+                            setQbSearch('');
+                            fetchQuestionBank(1, qbTopic, qbDifficulty, '');
+                          }}
+                          style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontWeight: 800 }}
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Difficulty selector pills */}
+                    <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                      {[
+                        { id: '', label: 'All Levels', count: qbStats?.total },
+                        { id: 'easy', label: '🟢 Easy', count: qbStats?.difficulties?.easy },
+                        { id: 'medium', label: '🟠 Medium', count: qbStats?.difficulties?.medium },
+                        { id: 'hard', label: '🔴 Hard', count: qbStats?.difficulties?.hard },
+                      ].map(d => {
+                        const active = qbDifficulty === d.id;
+                        return (
+                          <button
+                            key={d.id}
+                            className="aa-btn"
+                            onClick={() => {
+                              setQbDifficulty(d.id);
+                              fetchQuestionBank(1, qbTopic, d.id, qbSearch);
+                            }}
+                            style={{
+                              padding: '0.45rem 0.8rem',
+                              fontSize: '0.8rem',
+                              background: active ? '#0f172a' : '#f1f5f9',
+                              color: active ? '#ffffff' : '#334155',
+                              border: active ? '1px solid #0f172a' : '1px solid #e2e8f0',
+                              fontWeight: active ? 800 : 600
+                            }}
+                          >
+                            {d.label} {d.count ? `(${d.count})` : ''}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Topic Chips */}
+                  <div>
+                    <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Filter size={12} /> Filter by Java Topic:
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                      <button
+                        className="aa-btn"
+                        onClick={() => {
+                          setQbTopic('');
+                          fetchQuestionBank(1, '', qbDifficulty, qbSearch);
+                        }}
+                        style={{
+                          padding: '0.35rem 0.75rem',
+                          fontSize: '0.78rem',
+                          borderRadius: '20px',
+                          background: qbTopic === '' ? '#0ea5e9' : '#f8fafc',
+                          color: qbTopic === '' ? '#ffffff' : '#475569',
+                          border: '1px solid',
+                          borderColor: qbTopic === '' ? '#0284c7' : '#cbd5e1',
+                          fontWeight: qbTopic === '' ? 800 : 600
+                        }}
+                      >
+                        All Topics ({qbStats?.total || 1090})
+                      </button>
+                      {(qbTopics.length > 0 ? qbTopics : [
+                        'Core Java & Basics',
+                        'OOP Concepts',
+                        'Exception Handling',
+                        'Collections Framework',
+                        'Multithreading & Concurrency',
+                        'Java 8+ Streams & Lambdas',
+                        'JVM Architecture & Memory',
+                        'Strings & Immutability',
+                        'Generics & I/O',
+                        'Spring Boot & Microservices'
+                      ]).map(t => {
+                        const active = qbTopic === t;
+                        const count = qbStats?.topics?.[t] ?? '';
+                        return (
+                          <button
+                            key={t}
+                            className="aa-btn"
+                            onClick={() => {
+                              const newTopic = active ? '' : t;
+                              setQbTopic(newTopic);
+                              fetchQuestionBank(1, newTopic, qbDifficulty, qbSearch);
+                            }}
+                            style={{
+                              padding: '0.35rem 0.75rem',
+                              fontSize: '0.78rem',
+                              borderRadius: '20px',
+                              background: active ? '#0284c7' : '#ffffff',
+                              color: active ? '#ffffff' : '#334155',
+                              border: '1px solid',
+                              borderColor: active ? '#0369a1' : '#e2e8f0',
+                              fontWeight: active ? 800 : 600,
+                              boxShadow: active ? '0 2px 6px rgba(2,132,199,0.25)' : 'none'
+                            }}
+                          >
+                            {t} {count ? `(${count})` : ''}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Question Results Header & Page Info ── */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 600 }}>
+                    Showing <strong>{qbQuestions.length === 0 ? 0 : (qbPage - 1) * qbLimit + 1}</strong> – <strong>{Math.min(qbPage * qbLimit, qbTotal)}</strong> of <strong>{qbTotal}</strong> questions
+                    {qbTopic && <span> in <span style={{ color: '#0284c7', fontWeight: 800 }}>"{qbTopic}"</span></span>}
+                    {qbDifficulty && <span> ({qbDifficulty.toUpperCase()})</span>}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <button
+                      className="aa-btn aa-btn-outline"
+                      onClick={toggleSelectAllCurrentPage}
+                      style={{ fontSize: '0.78rem', padding: '0.4rem 0.75rem' }}
+                    >
+                      {qbQuestions.length > 0 && qbQuestions.every(q => !!qbSelected[q._id || q.id]) ? (
+                        <><Square size={13} /> Deselect All on Page</>
+                      ) : (
+                        <><CheckSquare size={13} /> Select All on Page ({qbQuestions.length})</>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* ── Question Cards ── */}
+                {qbLoading ? (
+                  <div style={{ textAlign: 'center', padding: '4rem', color: '#64748b' }}>
+                    <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>⏳</div>
+                    <div style={{ fontWeight: 700 }}>Loading Java questions...</div>
+                  </div>
+                ) : qbQuestions.length === 0 ? (
+                  <div className="aa-card" style={{ textAlign: 'center', padding: '3.5rem', color: '#64748b' }}>
+                    <BookOpen size={44} style={{ opacity: 0.3, margin: '0 auto 1rem' }} />
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.5rem' }}>No Questions Found</h3>
+                    <p style={{ margin: 0, fontSize: '0.85rem' }}>Try clearing your search query or choosing a different topic or difficulty filter.</p>
+                    <button
+                      className="aa-btn aa-btn-primary"
+                      onClick={() => {
+                        setQbSearch('');
+                        setQbTopic('');
+                        setQbDifficulty('');
+                        fetchQuestionBank(1, '', '', '');
+                      }}
+                      style={{ marginTop: '1rem' }}
+                    >
+                      Reset All Filters
+                    </button>
+                  </div>
+                ) : (
+                  qbQuestions.map((q, idx) => {
+                    const qid = q._id || q.id || `q-${idx}`;
+                    const isChecked = !!qbSelected[qid];
+                    const isExplanationOpen = !!expandedExplanations[qid];
+                    const globalIdx = (qbPage - 1) * qbLimit + idx + 1;
+
+                    return (
+                      <div
+                        key={qid}
+                        className="aa-card"
+                        style={{
+                          marginBottom: '0.85rem',
+                          padding: '1.1rem 1.25rem',
+                          border: isChecked ? '2px solid #0ea5e9' : '1px solid #e2e8f0',
+                          background: isChecked ? '#f0f9ff' : 'white',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.85rem' }}>
+                          {/* Checkbox */}
+                          <div style={{ paddingTop: '2px' }}>
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => toggleSelectQuestion(q)}
+                              style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#0ea5e9' }}
+                            />
+                          </div>
+
+                          {/* Content */}
+                          <div style={{ flex: 1 }}>
+                            {/* Badges Bar */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                              <span style={{ fontWeight: 800, fontSize: '0.78rem', color: '#64748b' }}>
+                                #{globalIdx}
+                              </span>
+                              <span className="aa-badge" style={{ background: '#f0f9ff', color: '#0369a1', border: '1px solid #bae6fd' }}>
+                                {q.topic || 'Core Java'}
+                              </span>
+                              <span
+                                className="aa-badge"
+                                style={{
+                                  background: q.difficulty === 'easy' ? 'rgba(16,185,129,0.1)' : q.difficulty === 'hard' ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)',
+                                  color: DIFF_COLORS[q.difficulty] || '#6b7280',
+                                  fontWeight: 800,
+                                  textTransform: 'uppercase'
+                                }}
+                              >
+                                {q.difficulty || 'medium'}
+                              </span>
+                              <span className="aa-badge" style={{ background: '#f8fafc', color: '#475569' }}>
+                                {q.marks || 1} Mark
+                              </span>
+                            </div>
+
+                            {/* Question text */}
+                            <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.96rem', lineHeight: 1.5, marginBottom: '0.75rem', whiteSpace: 'pre-wrap' }}>
+                              {q.text}
+                            </div>
+
+                            {/* Options A, B, C, D */}
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.45rem', marginBottom: '0.75rem' }}>
+                              {(q.options || []).map((opt, oIdx) => {
+                                const letter = String.fromCharCode(65 + oIdx);
+                                const isCorrect = q.correct === opt || q.correct === letter || String(q.correct).toLowerCase() === String(opt).toLowerCase();
+
+                                return (
+                                  <div
+                                    key={oIdx}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '0.5rem',
+                                      padding: '0.5rem 0.75rem',
+                                      borderRadius: '8px',
+                                      border: isCorrect ? '1.5px solid #10b981' : '1px solid #e2e8f0',
+                                      background: isCorrect ? '#ecfdf5' : '#f8fafc',
+                                      fontSize: '0.84rem'
+                                    }}
+                                  >
+                                    <span
+                                      style={{
+                                        width: '24px',
+                                        height: '24px',
+                                        borderRadius: '6px',
+                                        background: isCorrect ? '#10b981' : '#e2e8f0',
+                                        color: isCorrect ? '#ffffff' : '#334155',
+                                        fontWeight: 800,
+                                        fontSize: '0.75rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        flexShrink: 0
+                                      }}
+                                    >
+                                      {letter}
+                                    </span>
+                                    <span style={{ color: isCorrect ? '#065f46' : '#1e293b', fontWeight: isCorrect ? 700 : 500, flex: 1 }}>
+                                      {opt}
+                                    </span>
+                                    {isCorrect && (
+                                      <span style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 800, background: '#d1fae5', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
+                                        ✓ Correct
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {/* Collapsible Explanation */}
+                            {q.explanation && (
+                              <div style={{ marginTop: '0.4rem' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedExplanations(p => ({ ...p, [qid]: !p[qid] }))}
+                                  style={{ background: 'none', border: 'none', color: '#0284c7', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: 0 }}
+                                >
+                                  {isExplanationOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                                  {isExplanationOpen ? 'Hide Explanation' : '💡 View Detailed Explanation & Code Logic'}
+                                </button>
+                                {isExplanationOpen && (
+                                  <div style={{ background: '#f8fafc', borderLeft: '3px solid #0ea5e9', padding: '0.65rem 0.85rem', borderRadius: '0 8px 8px 0', marginTop: '0.4rem', fontSize: '0.82rem', color: '#334155', lineHeight: 1.5 }}>
+                                    <strong>Explanation:</strong> {q.explanation}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Quick Add Single Question Button */}
+                          <div style={{ flexShrink: 0 }}>
+                            <button
+                              className="aa-btn aa-btn-outline"
+                              onClick={() => handleBatchAddToTest(qbTargetTestId, [q])}
+                              style={{ padding: '0.45rem 0.75rem', fontSize: '0.78rem', fontWeight: 700, borderColor: '#0ea5e9', color: '#0369a1', background: 'white' }}
+                              title="Add this single question directly to the target assessment"
+                            >
+                              <PlusCircle size={13} /> Add to Exam
+                            </button>
+                          </div>
                         </div>
                       </div>
-                      <button className="aa-btn aa-btn-danger" style={{ padding: '0.4rem 0.7rem', flexShrink: 0 }} onClick={() => deleteQuestion(q._id)}>
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                    {q.sqlSchema && (
-                      <pre style={{ background: '#0f172a', color: '#94a3b8', borderRadius: '8px', padding: '0.65rem 0.85rem', fontSize: '0.78rem', lineHeight: 1.5, overflowX: 'auto', margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                        {q.sqlSchema.substring(0, 100)}{q.sqlSchema.length > 100 ? '…' : ''}
-                      </pre>
-                    )}
+                    );
+                  })
+                )}
+
+                {/* ── Pagination Controls ── */}
+                {qbTotal > qbLimit && (
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.75rem', marginTop: '1.5rem' }}>
+                    <button
+                      className="aa-btn aa-btn-outline"
+                      disabled={qbPage <= 1}
+                      onClick={() => {
+                        const newP = Math.max(1, qbPage - 1);
+                        fetchQuestionBank(newP, qbTopic, qbDifficulty, qbSearch);
+                        window.scrollTo({ top: 400, behavior: 'smooth' });
+                      }}
+                      style={{ opacity: qbPage <= 1 ? 0.5 : 1 }}
+                    >
+                      ← Previous
+                    </button>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#334155' }}>
+                      Page {qbPage} of {Math.ceil(qbTotal / qbLimit)}
+                    </span>
+                    <button
+                      className="aa-btn aa-btn-outline"
+                      disabled={qbPage >= Math.ceil(qbTotal / qbLimit)}
+                      onClick={() => {
+                        const newP = qbPage + 1;
+                        fetchQuestionBank(newP, qbTopic, qbDifficulty, qbSearch);
+                        window.scrollTo({ top: 400, behavior: 'smooth' });
+                      }}
+                      style={{ opacity: qbPage >= Math.ceil(qbTotal / qbLimit) ? 0.5 : 1 }}
+                    >
+                      Next →
+                    </button>
                   </div>
-                ))}
-              </>
+                )}
+              </div>
+            )}
+
+            {/* ══════════════════════════════════════════════════════════════
+                SUB-TAB 2: EXAM QUESTIONS MANAGER (CUSTOM / PER-TEST)
+            ══════════════════════════════════════════════════════════════ */}
+            {qbSubTab === 'manager' && (
+              <div>
+                {!selTest ? (
+                  <div className="aa-card" style={{ textAlign: 'center', padding: '3.5rem', color: '#64748b' }}>
+                    <ClipboardList size={48} style={{ opacity: 0.3, marginBottom: '1rem', margin: '0 auto' }} />
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.5rem' }}>Select an Assessment Exam</h3>
+                    <p style={{ fontWeight: 500, fontSize: '0.9rem', marginBottom: '1.25rem' }}>
+                      Choose an existing assessment to manage its questions or add questions manually.
+                    </p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem', justifyContent: 'center' }}>
+                      {tests.map(t => (
+                        <button
+                          key={t._id}
+                          className="aa-btn aa-btn-outline"
+                          onClick={() => {
+                            setSelTest(t);
+                            setQbTargetTestId(t._id);
+                          }}
+                          style={{ padding: '0.6rem 1.1rem', fontWeight: 700 }}
+                        >
+                          📋 {t.title} ({t.questions?.length ?? 0} Qs)
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Header bar for selected exam */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.65rem' }}>
+                      <div>
+                        <h2 style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.25rem', margin: 0 }}>
+                          📝 {selTest.title} — Questions
+                        </h2>
+                        <div style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '0.2rem' }}>
+                          {selTest.jobTitle || 'General'} · ⏱️ {selTest.duration} mins · Total Questions: <strong>{selTest.questions?.length ?? 0}</strong>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <button
+                          className="aa-btn aa-btn-primary"
+                          onClick={() => {
+                            setQbTargetTestId(selTest._id);
+                            setQbSubTab('bank');
+                          }}
+                        >
+                          <BookOpen size={14} /> 📚 Pick from Ready-Made Java Bank
+                        </button>
+                        <button className="aa-btn aa-btn-outline" onClick={() => setSelTest(null)}>
+                          Change Assessment
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* ── Mode selector: Manual Question vs Quick Pick ── */}
+                    <div className="aa-card" style={{ marginBottom: '1.5rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
+                        <div className="aa-section-title" style={{ margin: 0, border: 'none', padding: 0 }}>
+                          ➕ Add Questions to {selTest.title}
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.4rem' }}>
+                          <button
+                            type="button"
+                            className="aa-btn"
+                            onClick={() => setTestQuestionMode('manual')}
+                            style={{
+                              padding: '0.4rem 0.8rem',
+                              fontSize: '0.8rem',
+                              fontWeight: 800,
+                              background: testQuestionMode === 'manual' ? '#0f172a' : '#f8fafc',
+                              color: testQuestionMode === 'manual' ? 'white' : '#475569'
+                            }}
+                          >
+                            ✍️ Manual Question Form
+                          </button>
+                          <button
+                            type="button"
+                            className="aa-btn"
+                            onClick={() => {
+                              setQbTargetTestId(selTest._id);
+                              setQbSubTab('bank');
+                            }}
+                            style={{
+                              padding: '0.4rem 0.8rem',
+                              fontSize: '0.8rem',
+                              fontWeight: 800,
+                              background: '#ecfdf5',
+                              color: '#059669',
+                              border: '1px solid #a7f3d0'
+                            }}
+                          >
+                            📚 Browse Ready-Made Bank →
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Manual Form */}
+                      {testQuestionMode === 'manual' && (
+                        <div>
+                          {/* Type selector */}
+                          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+                            {[
+                              { id: 'mcq',    label: '🔘 Multiple Choice (MCQ)', desc: 'Auto-graded choice question' },
+                              { id: 'theory', label: '📝 Theory (Written)',       desc: 'Written long text answer' },
+                              { id: 'sql',    label: '🗄️ SQL Execution',         desc: 'In-memory SQL query validator' },
+                            ].map(t => (
+                              <button key={t.id} type="button"
+                                onClick={() => setQf(f => ({ ...f, type: t.id }))}
+                                style={{
+                                  padding: '0.55rem 1rem', borderRadius: '9px', border: '1.5px solid',
+                                  borderColor: qf.type === t.id ? '#0ea5e9' : '#e2e8f0',
+                                  background: qf.type === t.id ? '#eff6ff' : '#f8fafc',
+                                  color: qf.type === t.id ? '#0369a1' : '#64748b',
+                                  fontWeight: qf.type === t.id ? 800 : 600, fontSize: '0.85rem',
+                                  cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.18s',
+                                  textAlign: 'left'
+                                }}>
+                                {t.label}
+                                <div style={{ fontSize: '0.7rem', fontWeight: 500, marginTop: '2px', opacity: 0.75 }}>{t.desc}</div>
+                              </button>
+                            ))}
+                          </div>
+
+                          <form onSubmit={addQuestion}>
+                            {/* Question text */}
+                            <div style={{ marginBottom: '0.85rem' }}>
+                              <label className="aa-label">Question Text *</label>
+                              <textarea className="aa-input" required style={{ minHeight: '75px' }}
+                                value={qf.text} onChange={e => setQf(f => ({ ...f, text: e.target.value }))}
+                                placeholder={
+                                  qf.type === 'theory' ? 'e.g. Explain the difference between method overloading and overriding in Java.' :
+                                  qf.type === 'sql'    ? 'e.g. Write a SQL query to fetch all employees working in the Engineering department.' :
+                                  'Enter the question text...'
+                                } />
+                            </div>
+
+                            {/* MCQ options */}
+                            {qf.type === 'mcq' && (
+                              <div style={{ marginBottom: '0.85rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                                  <label className="aa-label" style={{ margin: 0 }}>Answer Options</label>
+                                  <span style={{ fontSize: '0.75rem', color: '#0369a1', fontWeight: 600 }}>
+                                    💡 Click any letter badge or "Set as Correct" button
+                                  </span>
+                                </div>
+                                {qf.options.map((opt, i) => {
+                                  const letter = String.fromCharCode(65 + i);
+                                  const isSelected = qf.correct && (
+                                    qf.correct.trim().toLowerCase() === opt.trim().toLowerCase() ||
+                                    qf.correct.trim().toUpperCase() === letter
+                                  );
+                                  return (
+                                    <div key={i} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.4rem', alignItems: 'center' }}>
+                                      <button
+                                        type="button"
+                                        onClick={() => setQf(f => ({ ...f, correct: opt || letter }))}
+                                        title={`Click to set Option ${letter} as correct answer`}
+                                        style={{
+                                          width: '32px',
+                                          height: '32px',
+                                          borderRadius: '8px',
+                                          border: isSelected ? '2px solid #10b981' : '1.5px solid #cbd5e1',
+                                          background: isSelected ? '#10b981' : '#f8fafc',
+                                          color: isSelected ? '#ffffff' : '#0369a1',
+                                          fontWeight: 900,
+                                          fontSize: '0.82rem',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          flexShrink: 0,
+                                          cursor: 'pointer',
+                                          transition: 'all 0.15s'
+                                        }}
+                                      >
+                                        {isSelected ? '✓' : letter}
+                                      </button>
+                                      <input
+                                        className="aa-input"
+                                        placeholder={`Option ${i + 1} (${letter})`}
+                                        value={opt}
+                                        onChange={e => {
+                                          const o = [...qf.options];
+                                          const oldVal = o[i];
+                                          o[i] = e.target.value;
+                                          setQf(f => ({
+                                            ...f,
+                                            options: o,
+                                            correct: (f.correct === oldVal || f.correct === letter) ? e.target.value : f.correct
+                                          }));
+                                        }}
+                                        style={{
+                                          borderColor: isSelected ? '#10b981' : undefined,
+                                          background: isSelected ? '#f0fdf4' : undefined
+                                        }}
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => setQf(f => ({ ...f, correct: opt || letter }))}
+                                        style={{
+                                          padding: '0.35rem 0.65rem',
+                                          borderRadius: '6px',
+                                          border: isSelected ? '1px solid #10b981' : '1px solid #e2e8f0',
+                                          background: isSelected ? '#dcfce7' : '#ffffff',
+                                          color: isSelected ? '#15803d' : '#64748b',
+                                          fontSize: '0.72rem',
+                                          fontWeight: 700,
+                                          cursor: 'pointer',
+                                          whiteSpace: 'nowrap'
+                                        }}
+                                      >
+                                        {isSelected ? '✓ Correct Choice' : 'Set as Correct'}
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                                <button type="button" onClick={() => setQf(f => ({ ...f, options: [...f.options, ''] }))}
+                                  style={{ fontSize: '0.78rem', color: '#0ea5e9', fontWeight: 700, border: 'none', background: 'none', cursor: 'pointer', padding: '0.2rem 0' }}>
+                                  + Add Option
+                                </button>
+                              </div>
+                            )}
+
+                            {/* MCQ correct answer */}
+                            {qf.type === 'mcq' && (
+                              <div style={{ marginBottom: '0.85rem' }}>
+                                <label className="aa-label">
+                                  Correct Answer Option <span style={{ color: '#10b981', fontWeight: 700 }}>({qf.correct ? `Selected: ${qf.correct}` : 'None selected yet'})</span>
+                                </label>
+                                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                                  <input
+                                    className="aa-input"
+                                    required
+                                    style={{ flex: '1 1 200px' }}
+                                    value={qf.correct}
+                                    onChange={e => setQf(f => ({ ...f, correct: e.target.value }))}
+                                    placeholder="Type or select the correct answer..."
+                                  />
+                                  {qf.options.filter(Boolean).map((opt, i) => {
+                                    const letter = String.fromCharCode(65 + i);
+                                    const isMatch = qf.correct === opt || qf.correct === letter;
+                                    return (
+                                      <button
+                                        key={i}
+                                        type="button"
+                                        className="aa-btn aa-btn-outline"
+                                        style={{
+                                          padding: '0.4rem 0.75rem',
+                                          fontSize: '0.75rem',
+                                          background: isMatch ? '#dcfce7' : undefined,
+                                          borderColor: isMatch ? '#10b981' : undefined,
+                                          color: isMatch ? '#15803d' : undefined,
+                                          fontWeight: 700
+                                        }}
+                                        onClick={() => setQf(f => ({ ...f, correct: opt }))}
+                                      >
+                                        Option {letter}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Theory model answer */}
+                            {qf.type === 'theory' && (
+                              <div style={{ marginBottom: '0.85rem', background: 'rgba(180,83,9,0.06)', border: '1px solid rgba(180,83,9,0.2)', borderRadius: '10px', padding: '0.85rem' }}>
+                                <label className="aa-label" style={{ color: '#92400e' }}>Model Answer Reference <span style={{ fontWeight: 400, color: '#b45309' }}>(Admin view only)</span></label>
+                                <textarea className="aa-input" style={{ minHeight: '80px', background: '#fffbeb' }}
+                                  value={qf.modelAnswer} onChange={e => setQf(f => ({ ...f, modelAnswer: e.target.value }))}
+                                  placeholder="Write the reference key points and answer rubric..." />
+                              </div>
+                            )}
+
+                            {/* SQL fields */}
+                            {qf.type === 'sql' && (
+                              <div style={{ marginBottom: '0.85rem', border: '1.5px solid rgba(5,150,105,0.25)', borderRadius: '12px', padding: '1.25rem', background: 'rgba(5,150,105,0.03)' }}>
+                                <div className="aa-section-title" style={{ color: '#065f46' }}>🗄️ SQL Question Specification</div>
+                                <div style={{ marginBottom: '0.85rem' }}>
+                                  <label className="aa-label">Database Schema</label>
+                                  <textarea
+                                    style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #334155', borderRadius: '10px', padding: '0.85rem', fontFamily: 'monospace', fontSize: '0.83rem', lineHeight: 1.65, background: '#0f172a', color: '#e2e8f0', resize: 'vertical', outline: 'none', minHeight: '110px' }}
+                                    value={qf.sqlSchema} onChange={e => setQf(f => ({ ...f, sqlSchema: e.target.value }))}
+                                    placeholder={"CREATE TABLE employees (\n  id INT,\n  name VARCHAR(50)\n);"} />
+                                </div>
+                                <div style={{ marginBottom: '0.85rem' }}>
+                                  <label className="aa-label">Expected Output (JSON array)</label>
+                                  <textarea
+                                    style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #334155', borderRadius: '10px', padding: '0.85rem', fontFamily: 'monospace', fontSize: '0.83rem', lineHeight: 1.65, background: '#0f172a', color: '#86efac', resize: 'vertical', outline: 'none', minHeight: '70px' }}
+                                    value={qf.sqlExpected} onChange={e => setQf(f => ({ ...f, sqlExpected: e.target.value }))}
+                                    placeholder={'[{"id":1,"name":"Alice"}]'} />
+                                </div>
+                                <div>
+                                  <label className="aa-label">Hint (Optional)</label>
+                                  <input className="aa-input" value={qf.sqlHint} onChange={e => setQf(f => ({ ...f, sqlHint: e.target.value }))} placeholder="e.g. Filter by salary > 50000" />
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Marks / Difficulty / Topic */}
+                            <div className="aa-grid3" style={{ marginBottom: '0.85rem' }}>
+                              <div>
+                                <label className="aa-label">Marks</label>
+                                <input type="number" className="aa-input" min={1} max={20} value={qf.marks} onChange={e => setQf(f => ({ ...f, marks: +e.target.value }))} />
+                              </div>
+                              <div>
+                                <label className="aa-label">Difficulty</label>
+                                <select className="aa-input" value={qf.difficulty} onChange={e => setQf(f => ({ ...f, difficulty: e.target.value }))}>
+                                  <option value="easy">Easy</option>
+                                  <option value="medium">Medium</option>
+                                  <option value="hard">Hard</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className="aa-label">Topic / Subject</label>
+                                <input className="aa-input" value={qf.topic} onChange={e => setQf(f => ({ ...f, topic: e.target.value }))} placeholder="e.g. Java, OOP, SQL" />
+                              </div>
+                            </div>
+
+                            {/* Explanation */}
+                            <div style={{ marginBottom: '1rem' }}>
+                              <label className="aa-label">Explanation <span style={{ color: '#94a3b8', fontWeight: 400 }}>(Optional solution explanation)</span></label>
+                              <textarea className="aa-input" style={{ minHeight: '55px' }} value={qf.explanation}
+                                onChange={e => setQf(f => ({ ...f, explanation: e.target.value }))}
+                                placeholder="Explain why this answer is correct..." />
+                            </div>
+
+                            <button type="submit" className="aa-btn aa-btn-primary" style={{ padding: '0.75rem 2rem' }}>
+                              <CheckCircle size={16} /> Add Question
+                            </button>
+                          </form>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* ── Test's Questions list ── */}
+                    <div className="aa-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>📋 Current Questions in this Assessment ({selTest.questions?.length ?? 0})</span>
+                      {selTest.questions?.length > 0 && (
+                        <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'none', fontWeight: 600 }}>
+                          Total Marks: {selTest.questions.reduce((acc, q) => acc + Number(q.marks || 1), 0)}
+                        </span>
+                      )}
+                    </div>
+
+                    {(selTest.questions || []).length === 0 && (
+                      <div className="aa-card" style={{ textAlign: 'center', padding: '2.5rem', color: '#94a3b8' }}>
+                        No questions in this assessment yet. Fill out the form above or click <strong>"Pick from Ready-Made Java Bank"</strong> to add questions in seconds.
+                      </div>
+                    )}
+                    {(selTest.questions || []).map((q, i) => (
+                      <div key={q._id || i} className="aa-q-item" style={{ flexDirection: 'column', gap: '0.65rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.85rem', width: '100%' }}>
+                          <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(14,165,233,0.1)', color: '#0369a1', fontWeight: 800, fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.92rem', marginBottom: '0.35rem' }}>{q.text}</div>
+                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                              <span className="aa-badge" style={{ background: `${TYPE_COLORS[q.type] || '#6b7280'}18`, color: TYPE_COLORS[q.type] || '#6b7280' }}>
+                                {TYPE_ICONS[q.type] || '❓'} {q.type?.toUpperCase()}
+                              </span>
+                              <span className="aa-badge" style={{ background: 'rgba(0,0,0,0.04)', color: DIFF_COLORS[q.difficulty] || '#6b7280' }}>{q.difficulty}</span>
+                              <span className="aa-badge" style={{ background: '#f1f5f9', color: '#475569' }}>{q.marks} mark{q.marks > 1 ? 's' : ''}</span>
+                              {q.topic && <span className="aa-badge" style={{ background: '#f0f9ff', color: '#0369a1' }}>{q.topic}</span>}
+                              {q.type === 'mcq'    && <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 700 }}>✓ Correct: {q.correct}</span>}
+                              {q.type === 'theory' && <span style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 700, background: '#fef3c7', padding: '0.15rem 0.5rem', borderRadius: '5px' }}>✋ Manual</span>}
+                              {q.type === 'sql'    && <span style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 700, background: '#d1fae5', padding: '0.15rem 0.5rem', borderRadius: '5px' }}>🗄️ In-Memory SQL</span>}
+                            </div>
+                          </div>
+                          <button className="aa-btn aa-btn-danger" style={{ padding: '0.4rem 0.7rem', flexShrink: 0 }} onClick={() => deleteQuestion(q._id)}>
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                        {q.sqlSchema && (
+                          <pre style={{ background: '#0f172a', color: '#94a3b8', borderRadius: '8px', padding: '0.65rem 0.85rem', fontSize: '0.78rem', lineHeight: 1.5, overflowX: 'auto', margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                            {q.sqlSchema.substring(0, 100)}{q.sqlSchema.length > 100 ? '…' : ''}
+                          </pre>
+                        )}
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
             )}
           </div>
         )}

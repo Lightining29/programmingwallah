@@ -8,6 +8,13 @@ import { runSql, checkSqlAnswer } from '../utils/sqlRunner.js';
 import QRCode from 'qrcode';
 import nodemailer from 'nodemailer';
 import { getMySQLPool } from '../config/mysql.js';
+import {
+  getAllJavaQuestions,
+  filterJavaQuestions,
+  getRandomJavaSample,
+  getJavaQuestionBankStats,
+  JAVA_TOPICS
+} from '../data/javaQuestionBank.js';
 
 const router = express.Router();
 
@@ -594,12 +601,29 @@ router.post('/admin/create', adminGuard, async (req, res) => {
       ? String(accessPassword).trim().toUpperCase()
       : `EXAM${Math.floor(1000 + Math.random() * 9000)}`;
 
+    const initialQuestions = Array.isArray(req.body.questions) ? req.body.questions.map(q => ({
+      _id: genId(),
+      text: q.text || 'Untitled Question',
+      type: q.type || 'mcq',
+      options: Array.isArray(q.options) ? q.options : [],
+      correct: q.correct || '',
+      explanation: q.explanation || '',
+      marks: Number(q.marks) || 1,
+      difficulty: q.difficulty || 'medium',
+      topic: q.topic || 'Java',
+      modelAnswer: q.modelAnswer || '',
+      sqlSchema: q.sqlSchema || '',
+      sqlExpected: q.sqlExpected || '',
+      sqlHint: q.sqlHint || '',
+      createdAt: new Date()
+    })) : [];
+
     const newDoc = {
       _id: genId(),
       title,
       description: description || '',
       jobTitle: jobTitle || 'General',
-      questions: [],
+      questions: initialQuestions,
       duration: duration ? Number(duration) : 30,
       passingScore: passingScore ? Number(passingScore) : 50,
       maxAttempts: maxAttempts ? Number(maxAttempts) : 1,
@@ -723,6 +747,91 @@ router.delete('/admin/:id/question/:qid', adminGuard, async (req, res) => {
     res.json({ message: 'Question removed.' });
   } catch (e) {
     res.status(500).json({ error: e.message });
+  }
+});
+
+// ── Batch Add Questions to Assessment ───────────────────────────────────────
+router.post('/admin/:id/questions/batch', adminGuard, async (req, res) => {
+  try {
+    const test = await findAssessmentInDB(req.params.id);
+    if (!test) return res.status(404).json({ error: 'Assessment not found.' });
+
+    const rawQuestions = Array.isArray(req.body.questions) ? req.body.questions : [];
+    if (rawQuestions.length === 0) {
+      return res.status(400).json({ error: 'No questions provided for batch addition.' });
+    }
+
+    const formattedList = rawQuestions.map(q => ({
+      _id: genId(),
+      text: q.text || 'Untitled Question',
+      type: q.type || 'mcq',
+      options: Array.isArray(q.options) ? q.options : [],
+      correct: q.correct || '',
+      explanation: q.explanation || '',
+      marks: Number(q.marks) || 1,
+      difficulty: q.difficulty || 'medium',
+      topic: q.topic || 'Java',
+      modelAnswer: q.modelAnswer || '',
+      sqlSchema: q.sqlSchema || '',
+      sqlExpected: q.sqlExpected || '',
+      sqlHint: q.sqlHint || '',
+      createdAt: new Date()
+    }));
+
+    if (!Array.isArray(test.questions)) test.questions = [];
+    test.questions.push(...formattedList);
+
+    await saveAssessmentToDB(test);
+
+    res.json({
+      message: `${formattedList.length} question(s) added successfully.`,
+      addedCount: formattedList.length,
+      total: test.questions.length,
+      questions: test.questions
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── Ready-Made Java Question Bank Explorer Endpoints ─────────────────────────
+router.get('/question-bank', (req, res) => {
+  try {
+    const { topic, difficulty, search, page = 1, limit = 20 } = req.query;
+    const result = filterJavaQuestions({
+      topic: topic || undefined,
+      difficulty: difficulty || undefined,
+      search: search || undefined,
+      page: parseInt(page, 10) || 1,
+      limit: parseInt(limit, 10) || 20
+    });
+    const stats = getJavaQuestionBankStats();
+    res.json({
+      ...result,
+      topics: JAVA_TOPICS,
+      stats
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/question-bank/stats', (req, res) => {
+  try {
+    const stats = getJavaQuestionBankStats();
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/question-bank/sample', (req, res) => {
+  try {
+    const { topic, difficulty, count = 10 } = req.body;
+    const sample = getRandomJavaSample(parseInt(count, 10) || 10, { topic, difficulty });
+    res.json({ count: sample.length, questions: sample });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
