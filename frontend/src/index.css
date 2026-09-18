@@ -660,6 +660,7 @@ html.dark .admin-dashboard-shell .border-slate-200\/50 {
     margin: 0 auto !important;
     max-width: 100% !important;
     width: 100% !important;
+    transform: none !important;
     box-shadow: none !important;
     border-radius: 0 !important;
     page-break-inside: avoid !important;

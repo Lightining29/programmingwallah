@@ -178,14 +178,15 @@ export default function CertificateDocument({ certificate, qrCodeData }) {
     <div className="certificate-print-root bg-white text-slate-900 font-sans shadow-2xl rounded-sm mx-auto overflow-hidden relative"
       style={{
         width: '100%',
-        maxWidth: '960px',
+        maxWidth: '860px',
+        minWidth: '780px',
         aspectRatio: '1.414 / 1', // standard landscape certificate ratio (A4 landscape)
-        padding: '24px',
+        padding: '20px',
         boxSizing: 'border-box'
       }}
     >
       {/* Outer Dark Navy Double Border */}
-      <div className="w-full h-full border-[8px] border-[#162d59] relative p-6 flex flex-col justify-between box-border bg-gradient-to-b from-white via-[#fafcff] to-white">
+      <div className="w-full h-full border-[6px] border-[#162d59] relative p-5 flex flex-col justify-between box-border bg-gradient-to-b from-white via-[#fafcff] to-white">
         
         {/* Inner Thin Border */}
         <div className="absolute inset-1.5 border border-[#162d59]/40 pointer-events-none" />
@@ -234,8 +235,8 @@ export default function CertificateDocument({ certificate, qrCodeData }) {
         </div>
 
         {/* 3. MAIN CERTIFICATE TITLE */}
-        <div className="text-center my-3 relative z-10">
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-wider text-[#d32f2f] uppercase inline-block pb-1 border-b-2 border-[#d32f2f] font-serif"
+        <div className="text-center my-2 relative z-10">
+          <h1 className="text-xl md:text-2xl font-extrabold tracking-wider text-[#d32f2f] uppercase inline-block pb-1 border-b-2 border-[#d32f2f] font-serif"
             style={{ letterSpacing: '0.08em' }}
           >
             CERTIFICATE OF COMPLETION
@@ -243,12 +244,12 @@ export default function CertificateDocument({ certificate, qrCodeData }) {
         </div>
 
         {/* 4. BODY CONTENT PARAGRAPH */}
-        <div className="text-center space-y-3 px-6 relative z-10">
-          <p className="text-sm md:text-base font-serif italic text-slate-700">
+        <div className="text-center space-y-2 px-6 relative z-10">
+          <p className="text-xs md:text-sm font-serif italic text-slate-700">
             This is to certify that
           </p>
 
-          <h2 className="text-2xl md:text-3xl font-serif font-bold text-slate-900 tracking-wide text-center">
+          <h2 className="text-xl md:text-2xl font-serif font-bold text-slate-900 tracking-wide text-center">
             {studentName}
           </h2>
 
@@ -273,13 +274,13 @@ export default function CertificateDocument({ certificate, qrCodeData }) {
             )}
           </div>
 
-          <p className="text-[10px] md:text-xs text-slate-600 max-w-xl mx-auto leading-relaxed italic pt-1">
+          <p className="text-[10px] md:text-xs text-slate-600 max-w-xl mx-auto leading-relaxed italic pt-0.5">
             {description}
           </p>
         </div>
 
         {/* 5. FOOTER ROW */}
-        <div className="flex items-end justify-between mt-4 px-2 pt-2 border-t border-slate-200/50 relative z-10">
+        <div className="flex items-end justify-between mt-3 px-2 pt-2 border-t border-slate-200/50 relative z-10">
           {/* Footer Left: Partner Signature & Stamp */}
           <div className="flex-1">
             <SignatureStamp />
