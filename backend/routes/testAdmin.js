@@ -14,9 +14,30 @@ import {
   switchSequelizeToMySQL, 
   getSequelize 
 } from '../config/sequelize.js';
+import { resetMySQLPool } from '../config/mysql.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const EXAMS_BACKUP_FILE = path.join(__dirname, '../data/exams.json');
+
+const loadExamsFromFile = () => {
+  try {
+    if (fs.existsSync(EXAMS_BACKUP_FILE)) {
+      const raw = fs.readFileSync(EXAMS_BACKUP_FILE, 'utf8');
+      const data = JSON.parse(raw);
+      if (Array.isArray(data)) return data;
+    }
+  } catch (err) {}
+  return [];
+};
+
+const saveExamsToFile = (exams) => {
+  try {
+    const dir = path.dirname(EXAMS_BACKUP_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(EXAMS_BACKUP_FILE, JSON.stringify(exams || [], null, 2), 'utf8');
+  } catch (err) {}
+};
 
 const router = express.Router();
 
@@ -335,10 +356,15 @@ router.get('/exams', async (req, res) => {
       };
     });
 
+    saveExamsToFile(formatted);
     return res.json({ success: true, exams: formatted });
   } catch (err) {
-    console.error('Admin exams fetch error:', err);
-    return res.status(500).json({ success: false, message: 'Failed to fetch exams.' });
+    console.error('Admin exams fetch notice:', err.message);
+    const fallback = loadExamsFromFile();
+    if (fallback.length > 0) {
+      return res.json({ success: true, exams: fallback, fallback: true });
+    }
+    return res.json({ success: true, exams: [], fallback: true });
   }
 });
 
@@ -419,6 +445,11 @@ router.post('/exams', async (req, res) => {
     plain.question_count = attachedCount;
     plain.assigned_students_count = 0;
     plain.completed_attempts_count = 0;
+
+    const currentExams = loadExamsFromFile();
+    const existingIdx = currentExams.findIndex(x => x.id === plain.id || x.code === plain.code);
+    if (existingIdx >= 0) currentExams[existingIdx] = plain; else currentExams.unshift(plain);
+    saveExamsToFile(currentExams);
 
     return res.status(201).json({ success: true, message: 'Exam created successfully.', exam: plain });
   } catch (err) {
@@ -1684,6 +1715,15 @@ router.post('/database/connect', async (req, res) => {
 
     // Re-initialize tables and schema
     await initExamDatabase();
+
+    // Reset unified MySQL pool
+    await resetMySQLPool({
+      host: cleanHost,
+      user: cleanUser,
+      password: cleanPassword,
+      database: cleanDatabase,
+      port: cleanPort
+    }).catch(() => {});
 
     return res.json({
       success: true,

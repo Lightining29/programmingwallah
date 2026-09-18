@@ -6,7 +6,7 @@ import {
   LogOut, CheckCircle, AlertCircle, ChevronUp, ChevronDown, MapPin, Clock, DollarSign,
   Edit, FileText, Bell, ClipboardList, UserCheck, Database, Copy, Check, UserPlus, Award,
   BookOpen, Search, Filter, CheckSquare, Square, Sparkles, Layers, ArrowRight, RefreshCw,
-  Sliders, ArrowUpDown
+  Sliders, ArrowUpDown, Server
 } from 'lucide-react';
 import CertificateModal from '../components/CertificateModal.jsx';
 
@@ -37,12 +37,34 @@ export default function AssessmentAdmin() {
   const [tab, setTab] = useState('tests');
 
   /* ── data ── */
-  const [tests,        setTests]       = useState([]);
+  const [tests, setTests] = useState(() => {
+    try {
+      const cached = localStorage.getItem('appletree_cached_assessments');
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [stats,        setStats]       = useState({});
   const [selTest,      setSelTest]     = useState(null);
   const [attempts,     setAttempts]    = useState([]);
   const [candidatePool, setCandidatePool] = useState([]);
   const [loading,      setLoading]     = useState(false);
+
+  /* ── Hostinger MySQL Database State ── */
+  const [showDatabaseModal, setShowDatabaseModal] = useState(false);
+  const [dbStatus, setDbStatus]                   = useState(null);
+  const [testingDb, setTestingDb]                 = useState(false);
+  const [connectingDb, setConnectingDb]           = useState(false);
+  const [syncingDb, setSyncingDb]                 = useState(false);
+  const [dbMessage, setDbMessage]                 = useState({ type: '', text: '' });
+  const [dbForm, setDbForm]                       = useState({
+    host: 'localhost',
+    port: 3306,
+    database: 'pranidha_school',
+    user: 'root',
+    password: ''
+  });
 
   /* ── certificate preview & issuance ── */
   const [selectedCert, setSelectedCert] = useState(null);
@@ -143,9 +165,108 @@ export default function AssessmentAdmin() {
     }
   };
 
+  /* ── Database Health & Settings Handlers ── */
+  const fetchDbStatus = async () => {
+    try {
+      const r = await api('/api/assessment/admin/database/status');
+      const data = await r.json();
+      if (data.success && data.status) {
+        setDbStatus(data.status);
+        setDbForm(prev => ({
+          ...prev,
+          host: data.status.host || 'localhost',
+          port: data.status.port || 3306,
+          database: data.status.database || 'pranidha_school',
+          user: data.status.user || 'root'
+        }));
+      }
+    } catch (err) {
+      console.warn('Error fetching DB status:', err);
+    }
+  };
+
+  const testDbConnection = async () => {
+    setTestingDb(true);
+    setDbMessage({ type: '', text: '' });
+    try {
+      const r = await api('/api/assessment/admin/database/test', {
+        method: 'POST',
+        body: JSON.stringify(dbForm)
+      });
+      const data = await r.json();
+      if (data.success) {
+        setDbMessage({ type: 'success', text: data.message });
+      } else {
+        setDbMessage({ type: 'error', text: data.message || 'Connection test failed.' });
+      }
+    } catch (err) {
+      setDbMessage({ type: 'error', text: 'Network error: ' + err.message });
+    } finally {
+      setTestingDb(false);
+    }
+  };
+
+  const connectDatabase = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setConnectingDb(true);
+    setDbMessage({ type: '', text: '' });
+    try {
+      const r = await api('/api/assessment/admin/database/connect', {
+        method: 'POST',
+        body: JSON.stringify(dbForm)
+      });
+      const data = await r.json();
+      if (data.success) {
+        setDbMessage({ type: 'success', text: data.message });
+        if (data.status) setDbStatus(data.status);
+        Swal.fire({
+          icon: 'success',
+          title: 'Connected to Hostinger MySQL!',
+          text: data.message,
+          timer: 2500,
+          showConfirmButton: false
+        });
+        fetchAll();
+      } else {
+        setDbMessage({ type: 'error', text: data.message || 'Failed to connect.' });
+      }
+    } catch (err) {
+      setDbMessage({ type: 'error', text: 'Connection error: ' + err.message });
+    } finally {
+      setConnectingDb(false);
+    }
+  };
+
+  const syncAllAssessmentsToDb = async () => {
+    setSyncingDb(true);
+    setDbMessage({ type: '', text: '' });
+    try {
+      const r = await api('/api/assessment/admin/database/sync', { method: 'POST' });
+      const data = await r.json();
+      if (data.success) {
+        setDbMessage({ type: 'success', text: data.message });
+        Swal.fire({
+          icon: 'success',
+          title: 'Sync Complete!',
+          text: data.message,
+          timer: 2000,
+          showConfirmButton: false
+        });
+        fetchAll();
+      } else {
+        setDbMessage({ type: 'error', text: data.message || 'Sync failed.' });
+      }
+    } catch (err) {
+      setDbMessage({ type: 'error', text: 'Sync error: ' + err.message });
+    } finally {
+      setSyncingDb(false);
+    }
+  };
+
   /* ── fetch everything ── */
   const fetchAll = async () => {
     setLoading(true);
+    fetchDbStatus();
     try {
       const [tRes, sRes, cRes] = await Promise.all([
         api('/api/assessment/admin/list'),
@@ -156,7 +277,28 @@ export default function AssessmentAdmin() {
       const statsData = await sRes.json();
       const poolData  = await cRes.json();
       const loadedTests = Array.isArray(testsData) ? testsData : [];
-      setTests(loadedTests);
+      if (loadedTests.length > 0) {
+        setTests(loadedTests);
+        try { localStorage.setItem('appletree_cached_assessments', JSON.stringify(loadedTests)); } catch (e) {}
+      } else {
+        // Check localStorage backup
+        const cached = localStorage.getItem('appletree_cached_assessments');
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setTests(parsed);
+              api('/api/assessment/admin/database/sync', { method: 'POST' }).catch(() => {});
+            } else {
+              setTests([]);
+            }
+          } catch (_) {
+            setTests([]);
+          }
+        } else {
+          setTests([]);
+        }
+      }
       setStats(statsData || {});
       setCandidatePool(Array.isArray(poolData) ? poolData : []);
 
@@ -179,6 +321,7 @@ export default function AssessmentAdmin() {
   useEffect(() => {
     fetchAll();
     fetchQuestionBank(1);
+    fetchDbStatus();
   }, []);
 
   useEffect(() => {
@@ -344,12 +487,25 @@ export default function AssessmentAdmin() {
     const r = await api('/api/assessment/admin/create', { method: 'POST', body: JSON.stringify(payload) });
     const d = await r.json();
     if (!r.ok) { Swal.fire({ icon: 'error', title: 'Error', text: d.error }); return; }
+
+    // Instant optimistic update so the test NEVER disappears even for a frame
+    if (d.assessment) {
+      setTests(prev => {
+        const next = [d.assessment, ...prev.filter(t => t._id !== d.assessment._id)];
+        try { localStorage.setItem('appletree_cached_assessments', JSON.stringify(next)); } catch (e) {}
+        return next;
+      });
+      if (!qbTargetTestId) {
+        setQbTargetTestId(d.assessment._id);
+      }
+    }
+
     Swal.fire({
       icon: 'success',
-      title: 'Assessment Created!',
+      title: 'Assessment Created & Saved to Database!',
       text: initialQuestions.length > 0 
         ? `Created assessment with ${initialQuestions.length} ready-made Java questions loaded!` 
-        : 'Assessment created successfully.',
+        : 'Assessment saved to Hostinger MySQL database successfully.',
       timer: 2000,
       showConfirmButton: false
     });
@@ -664,9 +820,30 @@ export default function AssessmentAdmin() {
             </button>
           ))}
         </div>
-        <button className="aa-btn aa-btn-outline" onClick={() => navigate('/portal/admin')}>
-          <LogOut size={14} /> Back to Portal
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+          <button
+            className="aa-btn"
+            style={{
+              background: dbStatus?.connected ? '#ecfdf5' : '#fffbeb',
+              borderColor: dbStatus?.connected ? '#10b981' : '#f59e0b',
+              color: dbStatus?.connected ? '#065f46' : '#92400e',
+              fontWeight: 800,
+              fontSize: '0.8rem',
+              padding: '0.45rem 0.85rem',
+              borderRadius: '8px',
+              border: '1.5px solid'
+            }}
+            onClick={() => { setShowDatabaseModal(true); fetchDbStatus(); }}
+            title="Manage Hostinger MySQL Database Connection"
+          >
+            <Database size={15} color={dbStatus?.connected ? '#059669' : '#d97706'} />
+            <span>{dbStatus?.connected ? `Hostinger MySQL: Connected (${dbStatus.database || 'Active'})` : 'Hostinger DB: Setup / Disconnected'}</span>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: dbStatus?.connected ? '#10b981' : '#f59e0b', display: 'inline-block' }} />
+          </button>
+          <button className="aa-btn aa-btn-outline" onClick={() => navigate('/portal/admin')}>
+            <LogOut size={14} /> Back to Portal
+          </button>
+        </div>
       </div>
 
       <div className="aa-body">
@@ -692,11 +869,41 @@ export default function AssessmentAdmin() {
         {tab === 'tests' && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-              <h2 style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.25rem', margin: 0 }}>📋 All Assessments</h2>
-              <button className="aa-btn aa-btn-primary" onClick={() => setShowNewTest(v => !v)}>
-                {showNewTest ? <ChevronUp size={16} /> : <PlusCircle size={16} />}
-                {showNewTest ? 'Hide Form' : 'Create New Test'}
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <h2 style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.25rem', margin: 0 }}>📋 All Assessments</h2>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.25rem 0.65rem',
+                    borderRadius: '20px',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    background: dbStatus?.connected ? '#d1fae5' : '#fef3c7',
+                    color: dbStatus?.connected ? '#065f46' : '#92400e',
+                    border: `1px solid ${dbStatus?.connected ? '#a7f3d0' : '#fde68a'}`,
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => { setShowDatabaseModal(true); fetchDbStatus(); }}
+                >
+                  <Database size={13} />
+                  {dbStatus?.connected ? `Hostinger MySQL (${dbStatus.database})` : 'Hostinger DB: Disconnected'}
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  className="aa-btn aa-btn-outline"
+                  onClick={() => { setShowDatabaseModal(true); fetchDbStatus(); }}
+                  title="Hostinger MySQL Database Settings"
+                >
+                  <Database size={15} /> Database Settings
+                </button>
+                <button className="aa-btn aa-btn-primary" onClick={() => setShowNewTest(v => !v)}>
+                  {showNewTest ? <ChevronUp size={16} /> : <PlusCircle size={16} />}
+                  {showNewTest ? 'Hide Form' : 'Create New Test'}
+                </button>
+              </div>
             </div>
 
             {/* Create test form */}
@@ -2261,6 +2468,178 @@ export default function AssessmentAdmin() {
         )}
 
       </div>
+
+      {/* ══════════ MODAL: HOSTINGER MYSQL DATABASE CONFIGURATION & SYNC ══════════ */}
+      {showDatabaseModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
+        }}>
+          <div style={{
+            background: '#ffffff', borderRadius: '20px', maxWidth: '560px', width: '100%',
+            padding: '1.75rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            maxHeight: '90vh', overflowY: 'auto', border: '1px solid #e2e8f0', color: '#0f172a'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.85rem', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div style={{ background: '#eff6ff', padding: '0.5rem', borderRadius: '10px' }}>
+                  <Database size={22} color="#0284c7" />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontWeight: 800, fontSize: '1.15rem', color: '#0f172a' }}>Hostinger MySQL Database</h3>
+                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>Manage your live database connection & assessment synchronization</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowDatabaseModal(false)}
+                style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#64748b' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Status Banner */}
+            <div style={{
+              padding: '1rem', borderRadius: '12px', marginBottom: '1.25rem', fontSize: '0.82rem',
+              border: `1.5px solid ${dbStatus?.connected ? '#a7f3d0' : '#fde68a'}`,
+              background: dbStatus?.connected ? '#ecfdf5' : '#fffbeb',
+              color: dbStatus?.connected ? '#065f46' : '#92400e'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 800, marginBottom: '0.4rem' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: dbStatus?.connected ? '#10b981' : '#f59e0b', display: 'inline-block' }} />
+                  <span>{dbStatus?.connected ? 'Hostinger MySQL Database Connected & Active' : 'Operating in Resilient Local Storage Mode'}</span>
+                </span>
+                <span style={{ fontFamily: 'monospace', fontSize: '0.72rem', padding: '0.15rem 0.5rem', borderRadius: '4px', background: 'rgba(0,0,0,0.06)' }}>
+                  {dbStatus?.connected ? 'MYSQL' : 'LOCAL'}
+                </span>
+              </div>
+              <p style={{ margin: 0, fontSize: '0.78rem', lineHeight: 1.5, opacity: 0.9 }}>
+                {dbStatus?.connected
+                  ? `All assessments, questions, candidate registrations, and exam results are actively saved to Hostinger MySQL (${dbStatus.database} on ${dbStatus.host}:${dbStatus.port || 3306}).`
+                  : 'Your tests are currently stored with persistent disk backup. Provide your Hostinger MySQL database credentials below to save and synchronize your assessments directly to Hostinger MySQL.'}
+              </p>
+            </div>
+
+            {/* Message Banner */}
+            {dbMessage.text && (
+              <div style={{
+                padding: '0.75rem 1rem', borderRadius: '10px', marginBottom: '1rem', fontSize: '0.82rem', fontWeight: 700,
+                background: dbMessage.type === 'success' ? '#dcfce7' : '#fee2e2',
+                color: dbMessage.type === 'success' ? '#166534' : '#991b1b',
+                border: `1px solid ${dbMessage.type === 'success' ? '#86efac' : '#fca5a5'}`,
+                display: 'flex', alignItems: 'center', gap: '0.5rem'
+              }}>
+                {dbMessage.type === 'success' ? <Check size={16} /> : <AlertCircle size={16} />}
+                <span>{dbMessage.text}</span>
+              </div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={connectDatabase}>
+              <div className="aa-grid2" style={{ marginBottom: '0.85rem' }}>
+                <div>
+                  <label className="aa-label">Hostinger DB Host *</label>
+                  <input
+                    className="aa-input"
+                    required
+                    placeholder="localhost or remote IP"
+                    value={dbForm.host}
+                    onChange={e => setDbForm({ ...dbForm, host: e.target.value })}
+                  />
+                  <span style={{ fontSize: '0.7rem', color: '#64748b' }}>Use localhost if running on Hostinger</span>
+                </div>
+                <div>
+                  <label className="aa-label">Port</label>
+                  <input
+                    type="number"
+                    className="aa-input"
+                    value={dbForm.port}
+                    onChange={e => setDbForm({ ...dbForm, port: parseInt(e.target.value) || 3306 })}
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '0.85rem' }}>
+                <label className="aa-label">Hostinger Database Name *</label>
+                <input
+                  className="aa-input"
+                  required
+                  placeholder="e.g. u123456789_exams"
+                  value={dbForm.database}
+                  onChange={e => setDbForm({ ...dbForm, database: e.target.value })}
+                />
+                <span style={{ fontSize: '0.7rem', color: '#64748b' }}>Found in Hostinger hPanel &rarr; Databases &rarr; MySQL Databases</span>
+              </div>
+
+              <div className="aa-grid2" style={{ marginBottom: '1.25rem' }}>
+                <div>
+                  <label className="aa-label">Hostinger MySQL Username *</label>
+                  <input
+                    className="aa-input"
+                    required
+                    placeholder="e.g. u123456789_user"
+                    value={dbForm.user}
+                    onChange={e => setDbForm({ ...dbForm, user: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="aa-label">Hostinger MySQL Password</label>
+                  <input
+                    type="password"
+                    className="aa-input"
+                    placeholder="Enter database password"
+                    value={dbForm.password}
+                    onChange={e => setDbForm({ ...dbForm, password: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: '1rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="aa-btn aa-btn-outline"
+                    onClick={testDbConnection}
+                    disabled={testingDb}
+                  >
+                    {testingDb ? <RefreshCw className="animate-spin" size={14} /> : <Server size={14} />}
+                    {testingDb ? 'Testing...' : 'Test Connection'}
+                  </button>
+                  <button
+                    type="button"
+                    className="aa-btn aa-btn-outline"
+                    onClick={syncAllAssessmentsToDb}
+                    disabled={syncingDb}
+                    title="Sync all current assessments to MySQL database"
+                  >
+                    {syncingDb ? <RefreshCw className="animate-spin" size={14} /> : <Database size={14} />}
+                    {syncingDb ? 'Syncing...' : 'Sync to MySQL'}
+                  </button>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    className="aa-btn aa-btn-outline"
+                    onClick={() => setShowDatabaseModal(false)}
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="submit"
+                    className="aa-btn aa-btn-primary"
+                    disabled={connectingDb}
+                  >
+                    {connectingDb ? <RefreshCw className="animate-spin" size={14} /> : <CheckCircle size={14} />}
+                    {connectingDb ? 'Connecting...' : 'Save & Connect to MySQL'}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Official Certificate Document Modal with Print & Verification Links */}
       <CertificateModal

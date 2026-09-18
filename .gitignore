@@ -21,3 +21,4 @@ Thumbs.db
 # Local SQLite databases
 *.sqlite
 backend/data/*.sqlite
+mockData.json

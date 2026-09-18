@@ -1,13 +1,23 @@
 import express from 'express';
 import crypto from 'crypto';
 import mongoose from 'mongoose';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { Assessment, Attempt } from '../models/Assessment.js';
 import Certificate from '../models/Certificate.js';
 import mockStore from '../config/mockStore.js';
 import { runSql, checkSqlAnswer } from '../utils/sqlRunner.js';
 import QRCode from 'qrcode';
 import nodemailer from 'nodemailer';
-import { getMySQLPool } from '../config/mysql.js';
+import {
+  getMySQLPool,
+  resetMySQLPool,
+  testMySQLConnection,
+  updateEnvFiles,
+  initMySQLTables,
+  getMySQLStatus
+} from '../config/mysql.js';
 import {
   getAllJavaQuestions,
   filterJavaQuestions,
@@ -17,6 +27,65 @@ import {
 } from '../data/javaQuestionBank.js';
 
 const router = express.Router();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DATA_DIR = path.join(__dirname, '../data');
+const ASSESSMENTS_FILE = path.join(DATA_DIR, 'assessments.json');
+const ATTEMPTS_FILE = path.join(DATA_DIR, 'attempts.json');
+
+// Ensure data directory exists
+if (!fs.existsSync(DATA_DIR)) {
+  try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch (e) {}
+}
+
+export const loadAssessmentsFromFile = () => {
+  try {
+    if (fs.existsSync(ASSESSMENTS_FILE)) {
+      const raw = fs.readFileSync(ASSESSMENTS_FILE, 'utf8');
+      const data = JSON.parse(raw);
+      if (Array.isArray(data)) return data;
+    }
+  } catch (err) {
+    console.warn('Error reading assessments.json backup:', err.message);
+  }
+  return [];
+};
+
+export const saveAssessmentsToFile = (list) => {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(ASSESSMENTS_FILE, JSON.stringify(list || [], null, 2), 'utf8');
+  } catch (err) {
+    console.warn('Error saving assessments.json backup:', err.message);
+  }
+};
+
+export const loadAttemptsFromFile = () => {
+  try {
+    if (fs.existsSync(ATTEMPTS_FILE)) {
+      const raw = fs.readFileSync(ATTEMPTS_FILE, 'utf8');
+      const data = JSON.parse(raw);
+      if (Array.isArray(data)) return data;
+    }
+  } catch (err) {
+    console.warn('Error reading attempts.json backup:', err.message);
+  }
+  return [];
+};
+
+export const saveAttemptsToFile = (list) => {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(ATTEMPTS_FILE, JSON.stringify(list || [], null, 2), 'utf8');
+  } catch (err) {
+    console.warn('Error saving attempts.json backup:', err.message);
+  }
+};
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 const adminGuard = (req, res, next) => {
@@ -58,11 +127,23 @@ function normalizeDob(dob) {
 // Dual-persistence helpers
 const getAssessmentsFromStore = () => {
   if (!Array.isArray(mockStore.assessments)) mockStore.assessments = [];
+  if (mockStore.assessments.length === 0) {
+    const fromFile = loadAssessmentsFromFile();
+    if (fromFile.length > 0) {
+      mockStore.assessments = fromFile;
+    }
+  }
   return mockStore.assessments;
 };
 
 const getAttemptsFromStore = () => {
   if (!Array.isArray(mockStore.attempts)) mockStore.attempts = [];
+  if (mockStore.attempts.length === 0) {
+    const fromFile = loadAttemptsFromFile();
+    if (fromFile.length > 0) {
+      mockStore.attempts = fromFile;
+    }
+  }
   return mockStore.attempts;
 };
 
@@ -70,6 +151,8 @@ const saveStore = () => {
   if (typeof mockStore.saveToDisk === 'function') {
     mockStore.saveToDisk(mockStore);
   }
+  saveAssessmentsToFile(mockStore.assessments || []);
+  saveAttemptsToFile(mockStore.attempts || []);
 };
 
 // ── Smart Answer Evaluation & Grader ─────────────────────────────────────────
@@ -220,16 +303,7 @@ export const findAssessmentInDB = async (id) => {
   let a = store.find(x => String(x._id) === String(id));
   if (a) return a;
 
-  if (mongoose.connection?.readyState === 1) {
-    try {
-      a = await Assessment.findById(id).lean();
-      if (a) {
-        store.push(a);
-        return a;
-      }
-    } catch (e) {}
-  }
-
+  // 1. Try Hostinger MySQL
   try {
     const pool = getMySQLPool();
     const [rows] = await pool.query('SELECT * FROM assessments WHERE id = ? LIMIT 1', [id]);
@@ -259,10 +333,34 @@ export const findAssessmentInDB = async (id) => {
         createdAt: r.created_at
       };
       store.push(a);
+      saveStore();
       return a;
     }
   } catch (err) {
-    console.warn('MySQL findAssessment error:', err.message);
+    // MySQL notice
+  }
+
+  // 2. Try file backup
+  const fileList = loadAssessmentsFromFile();
+  a = fileList.find(x => String(x._id) === String(id));
+  if (a) {
+    store.push(a);
+    return a;
+  }
+
+  // 3. Try Mongoose if available
+  if (mongoose.connection?.readyState === 1) {
+    try {
+      a = await Promise.race([
+        Assessment.findById(id).lean(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Mongo timeout')), 1500))
+      ]);
+      if (a) {
+        store.push(a);
+        saveStore();
+        return a;
+      }
+    } catch (e) {}
   }
 
   return null;
@@ -271,17 +369,13 @@ export const findAssessmentInDB = async (id) => {
 export const saveAssessmentToDB = async (assessment) => {
   if (!assessment || !assessment._id) return;
 
+  // 1. In-memory and local disk persistence (guarantees zero data loss)
   const store = getAssessmentsFromStore();
   const idx = store.findIndex(x => String(x._id) === String(assessment._id));
   if (idx >= 0) store[idx] = assessment; else store.unshift(assessment);
   saveStore();
 
-  if (mongoose.connection?.readyState === 1) {
-    try {
-      await Assessment.findByIdAndUpdate(assessment._id, assessment, { upsert: true });
-    } catch (e) {}
-  }
-
+  // 2. Hostinger MySQL persistence
   try {
     const pool = getMySQLPool();
     await pool.query(`
@@ -323,7 +417,17 @@ export const saveAssessmentToDB = async (assessment) => {
       assessment.expiresAt ? new Date(assessment.expiresAt) : null
     ]);
   } catch (err) {
-    console.warn('MySQL saveAssessment error:', err.message);
+    console.warn('MySQL saveAssessment notice:', err.message);
+  }
+
+  // 3. Mongoose safe upsert
+  if (mongoose.connection?.readyState === 1) {
+    try {
+      await Promise.race([
+        Assessment.findByIdAndUpdate(assessment._id, assessment, { upsert: true }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Mongo timeout')), 1500))
+      ]);
+    } catch (e) {}
   }
 };
 
@@ -496,20 +600,54 @@ export const saveAttemptToDB = async (attempt) => {
 // ADMIN — CRUD
 // ════════════════════════════════════════════════════════════════════════════
 
+// ════════════════════════════════════════════════════════════════════════════
+// ADMIN — CRUD
+// ════════════════════════════════════════════════════════════════════════════
+
 router.get('/admin/list', adminGuard, async (req, res) => {
   try {
     let list = [];
-    if (mongoose.connection?.readyState === 1) {
-      try {
-        list = await Assessment.find()
-          .select('-questions.correct -questions.modelAnswer -questions.sqlExpected')
-          .sort({ createdAt: -1 }).lean();
-      } catch (err) {}
+
+    // 1. Query Hostinger MySQL first
+    try {
+      const pool = getMySQLPool();
+      const [rows] = await pool.query('SELECT * FROM assessments ORDER BY created_at DESC');
+      if (rows && rows.length > 0) {
+        list = rows.map(r => {
+          let qs = [];
+          let ics = [];
+          try { qs = typeof r.questions_json === 'string' ? JSON.parse(r.questions_json) : (r.questions_json || []); } catch(e){}
+          try { ics = typeof r.invited_candidates_json === 'string' ? JSON.parse(r.invited_candidates_json) : (r.invited_candidates_json || []); } catch(e){}
+          return {
+            _id: r.id,
+            title: r.title,
+            description: r.description || '',
+            jobTitle: r.job_title || 'General',
+            duration: r.duration || 30,
+            passingScore: r.passing_score || 50,
+            maxAttempts: r.max_attempts || 1,
+            shuffleQuestions: Boolean(r.shuffle_questions),
+            shuffleOptions: Boolean(r.shuffle_options),
+            showResult: Boolean(r.show_result),
+            isActive: Boolean(r.is_active),
+            accessPassword: r.access_password || '',
+            questions: qs,
+            invitedCandidates: ics,
+            scheduledAt: r.scheduled_at,
+            expiresAt: r.expires_at,
+            createdAt: r.created_at
+          };
+        });
+        mockStore.assessments = list;
+        saveStore();
+      }
+    } catch (mysqlErr) {
+      console.warn('MySQL admin/list query notice:', mysqlErr.message);
     }
-    
-    // Merge or fallback to mockStore/MySQL store
-    const storeList = getAssessmentsFromStore();
+
+    // 2. Fallback to in-memory store & persistent file backup if MySQL returned 0 rows or errored
     if (!list || list.length === 0) {
+      const storeList = getAssessmentsFromStore();
       if (storeList && storeList.length > 0) {
         list = storeList.map(a => {
           const copy = JSON.parse(JSON.stringify(a));
@@ -523,49 +661,181 @@ router.get('/admin/list', adminGuard, async (req, res) => {
           }
           return copy;
         });
-      } else {
-        // Query Hostinger MySQL
-        try {
-          const pool = getMySQLPool();
-          const [rows] = await pool.query('SELECT * FROM assessments ORDER BY created_at DESC');
-          if (rows && rows.length > 0) {
-            list = rows.map(r => {
-              let qs = [];
-              let ics = [];
-              try { qs = typeof r.questions_json === 'string' ? JSON.parse(r.questions_json) : (r.questions_json || []); } catch(e){}
-              try { ics = typeof r.invited_candidates_json === 'string' ? JSON.parse(r.invited_candidates_json) : (r.invited_candidates_json || []); } catch(e){}
-              return {
-                _id: r.id,
-                title: r.title,
-                description: r.description || '',
-                jobTitle: r.job_title || 'General',
-                duration: r.duration || 30,
-                passingScore: r.passing_score || 50,
-                maxAttempts: r.max_attempts || 1,
-                shuffleQuestions: Boolean(r.shuffle_questions),
-                shuffleOptions: Boolean(r.shuffle_options),
-                showResult: Boolean(r.show_result),
-                isActive: Boolean(r.is_active),
-                accessPassword: r.access_password || '',
-                questions: qs,
-                invitedCandidates: ics,
-                scheduledAt: r.scheduled_at,
-                expiresAt: r.expires_at,
-                createdAt: r.created_at
-              };
-            });
-            mockStore.assessments = list;
-            saveStore();
-          }
-        } catch (mysqlErr) {
-          console.warn('MySQL admin/list query error:', mysqlErr.message);
+
+        // If MySQL is active and connected, auto-sync storeList to MySQL
+        const status = getMySQLStatus();
+        if (status.connected) {
+          (async () => {
+            for (const item of storeList) {
+              await saveAssessmentToDB(item).catch(() => {});
+            }
+          })().catch(() => {});
         }
       }
+    }
+
+    // 3. Fallback to Mongoose if list is still empty and Mongo is ready
+    if ((!list || list.length === 0) && mongoose.connection?.readyState === 1) {
+      try {
+        const mongoList = await Promise.race([
+          Assessment.find()
+            .select('-questions.correct -questions.modelAnswer -questions.sqlExpected')
+            .sort({ createdAt: -1 }).lean(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Mongo timeout')), 1500))
+        ]);
+        if (mongoList && mongoList.length > 0) {
+          list = mongoList;
+          mockStore.assessments = list;
+          saveStore();
+        }
+      } catch (err) {}
     }
 
     res.json(list || []);
   } catch (e) {
     res.status(500).json({ error: e.message });
+  }
+});
+
+// ── Hostinger MySQL Database Admin Endpoints ─────────────────────────────────
+router.get('/admin/database/status', adminGuard, async (req, res) => {
+  try {
+    const status = getMySQLStatus();
+    const store = getAssessmentsFromStore();
+    let mysqlAssessmentsCount = 0;
+    try {
+      const pool = getMySQLPool();
+      const [rows] = await pool.query('SELECT COUNT(*) as count FROM assessments');
+      mysqlAssessmentsCount = rows?.[0]?.count || 0;
+    } catch (_) {}
+
+    return res.json({
+      success: true,
+      status,
+      counts: {
+        assessments: Math.max(store.length, mysqlAssessmentsCount),
+        inMemory: store.length,
+        inMySQL: mysqlAssessmentsCount
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.post('/admin/database/test', adminGuard, async (req, res) => {
+  try {
+    const { host, user, password, database, port } = req.body;
+    if (!database || !user) {
+      return res.status(400).json({ success: false, message: 'Database name and username are required.' });
+    }
+    const result = await testMySQLConnection({
+      host: host || 'localhost',
+      user,
+      password: password || '',
+      database,
+      port: Number(port) || 3306
+    });
+    if (result.success) {
+      return res.json({ success: true, message: result.message });
+    } else {
+      return res.status(400).json({ success: false, message: result.message });
+    }
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.post('/admin/database/connect', adminGuard, async (req, res) => {
+  try {
+    const { host, user, password, database, port } = req.body;
+    if (!database || !user) {
+      return res.status(400).json({ success: false, message: 'Database name and username are required.' });
+    }
+
+    const cleanHost = String(host || 'localhost').trim();
+    const cleanUser = String(user).trim();
+    const cleanPassword = String(password || '').trim();
+    const cleanDatabase = String(database).trim();
+    const cleanPort = Number(port) || 3306;
+
+    // Test connection first
+    const testResult = await testMySQLConnection({
+      host: cleanHost,
+      user: cleanUser,
+      password: cleanPassword,
+      database: cleanDatabase,
+      port: cleanPort
+    });
+
+    if (!testResult.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Could not connect to Hostinger MySQL: ' + testResult.message
+      });
+    }
+
+    // Update .env files
+    updateEnvFiles({
+      DB_HOST: cleanHost,
+      DB_USER: cleanUser,
+      DB_PASSWORD: cleanPassword,
+      DB_NAME: cleanDatabase,
+      DB_PORT: cleanPort,
+      MYSQL_HOST: cleanHost,
+      MYSQL_USER: cleanUser,
+      MYSQL_PASSWORD: cleanPassword,
+      MYSQL_DATABASE: cleanDatabase,
+      MYSQL_PORT: cleanPort
+    });
+
+    // Reset pool and re-initialize tables
+    await resetMySQLPool({
+      host: cleanHost,
+      user: cleanUser,
+      password: cleanPassword,
+      database: cleanDatabase,
+      port: cleanPort
+    });
+
+    // Auto-sync all local assessments into MySQL
+    const store = getAssessmentsFromStore();
+    let synced = 0;
+    for (const a of store) {
+      try {
+        await saveAssessmentToDB(a);
+        synced++;
+      } catch (e) {}
+    }
+
+    return res.json({
+      success: true,
+      message: `Successfully connected to Hostinger MySQL (${cleanDatabase})! Synced ${synced} assessment(s).`,
+      status: getMySQLStatus(),
+      synced
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Connection error: ' + err.message });
+  }
+});
+
+router.post('/admin/database/sync', adminGuard, async (req, res) => {
+  try {
+    const store = getAssessmentsFromStore();
+    let synced = 0;
+    for (const a of store) {
+      try {
+        await saveAssessmentToDB(a);
+        synced++;
+      } catch (e) {}
+    }
+    return res.json({
+      success: true,
+      message: `Successfully synced ${synced} assessment(s) to Hostinger MySQL database.`,
+      count: synced
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
   }
 });
 

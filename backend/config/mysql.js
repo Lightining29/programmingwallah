@@ -1,30 +1,124 @@
 import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Hostinger MySQL Connection Configuration
-const dbConfig = {
-  host: process.env.DB_HOST || process.env.MYSQL_HOST || 'localhost',
-  user: process.env.DB_USER || process.env.MYSQL_USER || 'root',
-  password: process.env.DB_PASSWORD || process.env.MYSQL_PASSWORD || '',
-  database: process.env.DB_NAME || process.env.DB_DATABASE || process.env.MYSQL_DATABASE || 'pranidha_school',
-  port: Number(process.env.DB_PORT || process.env.MYSQL_PORT || 3306),
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 10000
+// Helper to reload environment from multiple possible locations (root .env and backend/.env)
+export const reloadEnv = () => {
+  dotenv.config({ path: path.join(__dirname, '../../.env') });
+  dotenv.config({ path: path.join(__dirname, '../.env') });
+  dotenv.config();
 };
 
+reloadEnv();
+
+// Hostinger MySQL Connection Configuration Resolver
+export const getMySQLConfig = (override = {}) => {
+  reloadEnv();
+  return {
+    host: override.host || process.env.DB_HOST || process.env.MYSQL_HOST || 'localhost',
+    user: override.user || process.env.DB_USER || process.env.MYSQL_USER || 'root',
+    password: override.password !== undefined
+      ? override.password
+      : (process.env.DB_PASSWORD || process.env.MYSQL_PASSWORD || process.env.DB_PASS || process.env.MYSQL_PASS || ''),
+    database: override.database || process.env.DB_NAME || process.env.DB_DATABASE || process.env.MYSQL_DATABASE || 'pranidha_school',
+    port: Number(override.port || process.env.DB_PORT || process.env.MYSQL_PORT || 3306),
+    waitForConnections: true,
+    connectionLimit: 15,
+    queueLimit: 0,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 10000,
+    connectTimeout: 10000
+  };
+};
+
+let activeDbConfig = getMySQLConfig();
 let pool = null;
 let isConnected = false;
 
 export const getMySQLPool = () => {
   if (!pool) {
-    pool = mysql.createPool(dbConfig);
+    activeDbConfig = getMySQLConfig();
+    pool = mysql.createPool(activeDbConfig);
   }
   return pool;
+};
+
+// Reset pool with new config (e.g. after updating Hostinger credentials via admin)
+export const resetMySQLPool = async (override = {}) => {
+  try {
+    if (pool && typeof pool.end === 'function') {
+      await pool.end().catch(() => {});
+    }
+  } catch (_) {}
+  activeDbConfig = getMySQLConfig(override);
+  pool = mysql.createPool(activeDbConfig);
+  isConnected = false;
+  return await initMySQLTables();
+};
+
+// Test Hostinger MySQL credentials safely without resetting active pool
+export const testMySQLConnection = async (config = {}) => {
+  const testCfg = getMySQLConfig(config);
+  let testConn = null;
+  try {
+    testConn = await mysql.createConnection({
+      host: testCfg.host,
+      user: testCfg.user,
+      password: testCfg.password,
+      database: testCfg.database,
+      port: testCfg.port,
+      connectTimeout: 8000
+    });
+    await testConn.query('SELECT 1');
+    await testConn.end().catch(() => {});
+    return {
+      success: true,
+      message: `Successfully connected to Hostinger MySQL (${testCfg.database} @ ${testCfg.host}:${testCfg.port})`
+    };
+  } catch (err) {
+    if (testConn) {
+      try { await testConn.end(); } catch (_) {}
+    }
+    return {
+      success: false,
+      message: err.message || 'Connection failed'
+    };
+  }
+};
+
+// Helper to write updated credentials to both root .env and backend/.env
+export const updateEnvFiles = (newEnvVars) => {
+  const backendEnvPath = path.join(__dirname, '../.env');
+  const rootEnvPath = path.join(__dirname, '../../.env');
+
+  const updateSingleFile = (filePath) => {
+    try {
+      let content = '';
+      if (fs.existsSync(filePath)) {
+        content = fs.readFileSync(filePath, 'utf8');
+      }
+      for (const [key, value] of Object.entries(newEnvVars)) {
+        const regex = new RegExp(`^${key}=.*$`, 'm');
+        if (regex.test(content)) {
+          content = content.replace(regex, `${key}=${value}`);
+        } else {
+          content += `\n${key}=${value}`;
+        }
+      }
+      fs.writeFileSync(filePath, content, 'utf8');
+    } catch (err) {
+      console.warn(`Could not update .env at ${filePath}:`, err.message);
+    }
+  };
+
+  updateSingleFile(backendEnvPath);
+  updateSingleFile(rootEnvPath);
+  reloadEnv();
 };
 
 // Initialize MySQL Tables and Schema on Hostinger
@@ -33,7 +127,7 @@ export const initMySQLTables = async () => {
     const currentPool = getMySQLPool();
     const connection = await currentPool.getConnection();
     isConnected = true;
-    console.log(`\x1b[32m✔ Connected to Hostinger MySQL Database: ${dbConfig.database} @ ${dbConfig.host}:${dbConfig.port}\x1b[0m`);
+    console.log(`\x1b[32m✔ Connected to Hostinger MySQL Database: ${activeDbConfig.database} @ ${activeDbConfig.host}:${activeDbConfig.port}\x1b[0m`);
 
     // Create persistent storage table for JSON/key-value synchronization
     await connection.query(`
@@ -262,16 +356,20 @@ export const initMySQLTables = async () => {
 export const getMySQLStatus = () => {
   return {
     configured: Boolean(process.env.DB_NAME || process.env.MYSQL_DATABASE),
-    host: dbConfig.host,
-    port: dbConfig.port,
-    database: dbConfig.database,
-    user: dbConfig.user,
+    host: activeDbConfig.host,
+    port: activeDbConfig.port,
+    database: activeDbConfig.database,
+    user: activeDbConfig.user,
     connected: isConnected
   };
 };
 
 export default {
   getMySQLPool,
+  resetMySQLPool,
+  testMySQLConnection,
+  updateEnvFiles,
   initMySQLTables,
-  getMySQLStatus
+  getMySQLStatus,
+  reloadEnv
 };
