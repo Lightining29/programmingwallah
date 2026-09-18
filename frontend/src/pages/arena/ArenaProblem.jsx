@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Play, Send, CheckCircle2, XCircle, Terminal, 
   RotateCcw, Sparkles, User, Trophy, ShieldCheck, ChevronRight,
-  Code2, AlertCircle, Check, Copy, ChevronLeft, Shuffle,
+  Code2, AlertCircle, AlertTriangle, Check, Copy, ChevronLeft, Shuffle,
   Timer, Pause, PlayCircle, RefreshCw, Maximize2, Minimize2,
   Lightbulb, History, BookOpen, ChevronDown, ChevronUp, Cpu
 } from 'lucide-react';
@@ -487,7 +487,7 @@ export default function ArenaProblem() {
               <option value="sql">SQL (Alasql)</option>
             ) : null}
             <option value="javascript">JavaScript (Node.js)</option>
-            <option value="java">Java 17/21</option>
+            <option value="java">Java (JDK 25 LTS)</option>
             <option value="python">Python 3</option>
           </select>
 
@@ -1056,6 +1056,13 @@ export default function ArenaProblem() {
                                   {submitResults ? 'Accepted' : 'Sample Testcases Passed'}
                                 </span>
                               </>
+                            ) : (submitResults?.hasCompilationError || runResults?.hasCompilationError) ? (
+                              <>
+                                <AlertTriangle className="w-5 h-5 text-rose-400" />
+                                <span className="font-black text-sm text-rose-400">
+                                  Compilation Error
+                                </span>
+                              </>
                             ) : (
                               <>
                                 <XCircle className="w-5 h-5 text-rose-400" />
@@ -1113,7 +1120,7 @@ export default function ArenaProblem() {
                             {activeCases[activeTestTab].actual !== undefined && (
                               <div>
                                 <span className="text-[10px] font-bold text-slate-400 uppercase">Your Output:</span>
-                                <pre className={`p-2.5 rounded-xl bg-[#161b22] mt-1 overflow-x-auto text-[11px] border border-[#30363d] ${
+                                <pre className={`p-2.5 rounded-xl bg-[#161b22] mt-1 overflow-x-auto text-[11px] border border-[#30363d] font-mono whitespace-pre-wrap ${
                                   activeCases[activeTestTab].passed ? 'text-emerald-400' : 'text-rose-400'
                                 }`}>
                                   {activeCases[activeTestTab].actual}
@@ -1121,9 +1128,24 @@ export default function ArenaProblem() {
                               </div>
                             )}
 
+                            {(runResults?.stdout || submitResults?.stdout) && (
+                              <div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase">Standard Output (Stdout):</span>
+                                <pre className="p-2.5 rounded-xl bg-[#161b22] text-slate-200 mt-1 overflow-x-auto text-[11px] border border-[#30363d] font-mono whitespace-pre-wrap">
+                                  {runResults?.stdout || submitResults?.stdout}
+                                </pre>
+                              </div>
+                            )}
+
                             {activeCases[activeTestTab].error && (
-                              <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-800 text-rose-300 text-xs">
-                                ⚠️ Runtime / Compilation Error: {activeCases[activeTestTab].error}
+                              <div className="p-3.5 rounded-xl bg-rose-950/70 border border-rose-800/80 text-rose-300 text-xs font-mono space-y-1.5">
+                                <div className="font-bold text-rose-200 flex items-center gap-1.5">
+                                  <AlertCircle className="w-4 h-4 text-rose-400" />
+                                  <span>Compiler / Execution Diagnostic:</span>
+                                </div>
+                                <pre className="whitespace-pre-wrap text-[11px] text-rose-300 overflow-x-auto bg-black/50 p-3 rounded-lg border border-rose-900/60 leading-relaxed select-text font-mono">
+                                  {activeCases[activeTestTab].error}
+                                </pre>
                               </div>
                             )}
                           </div>

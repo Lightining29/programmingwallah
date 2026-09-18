@@ -2,6 +2,10 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import vm from 'vm';
 import alasql from 'alasql';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import { execSync } from 'child_process';
 import mockStore from '../config/mockStore.js';
 import { getMySQLPool } from '../config/mysql.js';
 
@@ -929,7 +933,7 @@ router.get('/problems/:id', (req, res) => {
   res.json({ success: true, problem: safeProblem });
 });
 
-// Helper: Run user's code against a single test case safely
+// Helper: Run user's JavaScript / SQL code against a single test case safely
 function executeTestCase(code, language, inputStr, expectedOutputStr) {
   try {
     // If it's a SQL query
@@ -958,7 +962,7 @@ function executeTestCase(code, language, inputStr, expectedOutputStr) {
       }
     }
 
-    // If JavaScript
+    // If JavaScript (Node.js vm sandbox)
     const sandbox = {
       console: { log: () => {} },
       result: null
@@ -969,7 +973,7 @@ function executeTestCase(code, language, inputStr, expectedOutputStr) {
       ${code}
       try {
         // Find exported or top-level function
-        const fns = [twoSum, isPalindrome, reverseWords, isValid, fizzBuzz, lengthOfLongestSubstring, trap].filter(f => typeof f === 'function');
+        const fns = [twoSum, isPalindrome, reverseWords, isValid, fizzBuzz, lengthOfLongestSubstring, climbStairs, search, maxSubArray, trap].filter(f => typeof f === 'function');
         if (fns.length > 0) {
           // Parse inputs
           ${inputStr}
@@ -980,6 +984,9 @@ function executeTestCase(code, language, inputStr, expectedOutputStr) {
           else if (typeof isValid === 'function' && typeof s !== 'undefined') result = isValid(s);
           else if (typeof fizzBuzz === 'function' && typeof n !== 'undefined') result = fizzBuzz(n);
           else if (typeof lengthOfLongestSubstring === 'function' && typeof s !== 'undefined') result = lengthOfLongestSubstring(s);
+          else if (typeof climbStairs === 'function' && typeof n !== 'undefined') result = climbStairs(n);
+          else if (typeof search === 'function' && typeof nums !== 'undefined') result = search(nums, target);
+          else if (typeof maxSubArray === 'function' && typeof nums !== 'undefined') result = maxSubArray(nums);
           else if (typeof trap === 'function' && typeof height !== 'undefined') result = trap(height);
         }
       } catch (err) {
@@ -1007,23 +1014,249 @@ function executeTestCase(code, language, inputStr, expectedOutputStr) {
       actual: actualStr !== undefined ? actualStr : 'undefined'
     };
   } catch (execErr) {
-    // For Java or compilation emulation, check logic signatures or simple patterns
-    if (language === 'java') {
-      const hasSolution = code.includes('public static') || code.includes('class Solution');
-      const passed = hasSolution && (code.includes('return') || code.includes('for'));
-      return {
-        passed,
-        input: inputStr,
-        expected: expectedOutputStr,
-        actual: passed ? expectedOutputStr : 'Execution error or missing return'
-      };
-    }
-
     return {
       passed: false,
       error: execErr.message
     };
   }
+}
+
+// Real JDK 25 Execution Engine for Java code
+function executeJavaSuite(problemId, userCode, testCases) {
+  let cleanUserCode = (userCode || '').replace(/^\s*package\s+[^;]+;/m, '// package removed');
+
+  // Check if user wrote a standalone class with a main method (e.g. Streams, custom program, Scanner, etc.)
+  const hasMain = /public\s+static\s+void\s+main\s*\(/.test(cleanUserCode) || /void\s+main\s*\(/.test(cleanUserCode);
+
+  if (hasMain) {
+    const classMatch = cleanUserCode.match(/(?:public\s+)?class\s+([A-Za-z0-9_]+)/);
+    const className = classMatch ? classMatch[1] : 'Solution';
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'arena_java_'));
+    const filePath = path.join(tempDir, className + '.java');
+    fs.writeFileSync(filePath, cleanUserCode, 'utf-8');
+
+    try {
+      const stdout = execSync('java ' + className + '.java', {
+        cwd: tempDir,
+        timeout: 6000,
+        encoding: 'utf-8'
+      });
+      const trimmedOutput = stdout.trim();
+      return {
+        hasCompilationError: false,
+        stdout: trimmedOutput,
+        results: testCases.map((tc, idx) => {
+          const cleanExpected = (tc.output || '').trim();
+          const passed = trimmedOutput === cleanExpected || 
+                         trimmedOutput.replace(/\s+/g, '') === cleanExpected.replace(/\s+/g, '') || 
+                         trimmedOutput.includes(cleanExpected);
+          return {
+            testCase: idx + 1,
+            passed,
+            input: tc.input,
+            expected: cleanExpected,
+            actual: trimmedOutput
+          };
+        })
+      };
+    } catch (err) {
+      let rawErr = (err.stderr || err.stdout || err.message).trim();
+      rawErr = rawErr.replace(new RegExp(tempDir.replace(/\\/g, '\\\\') + '[\\\\/]', 'g'), '');
+      return {
+        hasCompilationError: true,
+        error: rawErr,
+        results: testCases.map((tc, idx) => ({
+          testCase: idx + 1,
+          passed: false,
+          input: tc.input,
+          expected: tc.output,
+          actual: 'Compilation / Runtime Error',
+          error: rawErr
+        }))
+      };
+    } finally {
+      try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch (e) {}
+    }
+  }
+
+  // Otherwise, construct TestRunner harness for standard LeetCode / HackerRank solution method
+  const match = cleanUserCode.match(/(?:public\s+)?class\s+([A-Za-z0-9_]+)/);
+  const className = match ? match[1] : 'Solution';
+  const pkgPrivateCode = cleanUserCode.replace(/public\s+class\s+([A-Za-z0-9_]+)/g, 'class $1');
+
+  let testInvocations = [];
+  for (let i = 0; i < testCases.length; i++) {
+    const input = testCases[i].input;
+    let callExpr = '';
+
+    if (problemId === 'two-sum') {
+      const numsMatch = input.match(/nums\s*=\s*\[([^\]]*)\]/);
+      const targetMatch = input.match(/target\s*=\s*(-?\d+)/);
+      const nums = numsMatch ? numsMatch[1] : '';
+      const target = targetMatch ? targetMatch[1] : '0';
+      callExpr = `
+        int[] res${i} = sol.twoSum(new int[]{${nums}}, ${target});
+        System.out.println(Arrays.toString(res${i}).replaceAll("\\\\s+", ""));
+      `;
+    } else if (problemId === 'valid-palindrome') {
+      const sMatch = input.match(/s\s*=\s*"([^"]*)"/);
+      const str = sMatch ? sMatch[1].replace(/\\/g, '\\\\').replace(/"/g, '\\"') : '';
+      callExpr = `
+        boolean res${i} = sol.isPalindrome("${str}");
+        System.out.println(res${i});
+      `;
+    } else if (problemId === 'reverse-words-string') {
+      const sMatch = input.match(/s\s*=\s*"([^"]*)"/);
+      const str = sMatch ? sMatch[1].replace(/\\/g, '\\\\').replace(/"/g, '\\"') : '';
+      callExpr = `
+        String res${i} = sol.reverseWords("${str}");
+        System.out.println(res${i});
+      `;
+    } else if (problemId === 'valid-parentheses') {
+      const sMatch = input.match(/s\s*=\s*"([^"]*)"/);
+      const str = sMatch ? sMatch[1].replace(/\\/g, '\\\\').replace(/"/g, '\\"') : '';
+      callExpr = `
+        boolean res${i} = sol.isValid("${str}");
+        System.out.println(res${i});
+      `;
+    } else if (problemId === 'fizzbuzz-advanced') {
+      const nMatch = input.match(/n\s*=\s*(\d+)/);
+      const n = nMatch ? nMatch[1] : '1';
+      callExpr = `
+        List<String> res${i} = sol.fizzBuzz(${n});
+        System.out.println(res${i}.stream().map(x -> "\\"" + x + "\\"").collect(Collectors.joining(",", "[", "]")));
+      `;
+    } else if (problemId === 'longest-substring-without-repeat') {
+      const sMatch = input.match(/s\s*=\s*"([^"]*)"/);
+      const str = sMatch ? sMatch[1].replace(/\\/g, '\\\\').replace(/"/g, '\\"') : '';
+      callExpr = `
+        int res${i} = sol.lengthOfLongestSubstring("${str}");
+        System.out.println(res${i});
+      `;
+    } else if (problemId === 'climbing-stairs') {
+      const nMatch = input.match(/n\s*=\s*(\d+)/);
+      const n = nMatch ? nMatch[1] : '1';
+      callExpr = `
+        int res${i} = sol.climbStairs(${n});
+        System.out.println(res${i});
+      `;
+    } else if (problemId === 'binary-search') {
+      const numsMatch = input.match(/nums\s*=\s*\[([^\]]*)\]/);
+      const targetMatch = input.match(/target\s*=\s*(-?\d+)/);
+      const nums = numsMatch ? numsMatch[1] : '';
+      const target = targetMatch ? targetMatch[1] : '0';
+      callExpr = `
+        int res${i} = sol.search(new int[]{${nums}}, ${target});
+        System.out.println(res${i});
+      `;
+    } else if (problemId === 'maximum-subarray') {
+      const numsMatch = input.match(/nums\s*=\s*\[([^\]]*)\]/);
+      const nums = numsMatch ? numsMatch[1] : '';
+      callExpr = `
+        int res${i} = sol.maxSubArray(new int[]{${nums}});
+        System.out.println(res${i});
+      `;
+    } else if (problemId === 'trapping-rain-water') {
+      const hMatch = input.match(/(?:height|nums)\s*=\s*\[([^\]]*)\]/);
+      const h = hMatch ? hMatch[1] : '';
+      callExpr = `
+        int res${i} = sol.trap(new int[]{${h}});
+        System.out.println(res${i});
+      `;
+    }
+
+    testInvocations.push(`
+      try {
+        ${callExpr}
+      } catch (Exception e) {
+        System.out.println("__EXCEPTION__:" + e.getMessage());
+      }
+    `);
+  }
+
+  const harnessCode = `
+import java.util.*;
+import java.util.stream.*;
+import java.io.*;
+
+${pkgPrivateCode}
+
+public class TestRunner {
+    public static void main(String[] args) {
+        ${className} sol = new ${className}();
+        ${testInvocations.join('\nSystem.out.println("<<<ARENA_DELIM>>>");\n')}
+    }
+}
+`;
+
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'arena_harness_'));
+  const filePath = path.join(tempDir, 'TestRunner.java');
+  fs.writeFileSync(filePath, harnessCode, 'utf-8');
+
+  try {
+    const stdout = execSync('java TestRunner.java', {
+      cwd: tempDir,
+      timeout: 6000,
+      encoding: 'utf-8'
+    });
+    const outputs = stdout.split('<<<ARENA_DELIM>>>').map(s => s.trim());
+    return {
+      hasCompilationError: false,
+      results: testCases.map((tc, idx) => {
+        const actual = outputs[idx] || '';
+        const cleanExpected = (tc.output || '').trim();
+        const isException = actual.startsWith('__EXCEPTION__:');
+        const passed = !isException && (actual === cleanExpected || actual.replace(/\s+/g, '') === cleanExpected.replace(/\s+/g, ''));
+        return {
+          testCase: idx + 1,
+          passed,
+          input: tc.input,
+          expected: cleanExpected,
+          actual: isException ? 'Runtime Exception' : actual,
+          error: isException ? actual.replace('__EXCEPTION__:', '') : null
+        };
+      })
+    };
+  } catch (err) {
+    let rawErr = (err.stderr || err.stdout || err.message).trim();
+    rawErr = rawErr.replace(new RegExp(tempDir.replace(/\\/g, '\\\\') + '[\\\\/]', 'g'), '');
+    rawErr = rawErr.replace(/TestRunner\.java/g, className + '.java');
+    return {
+      hasCompilationError: true,
+      error: rawErr,
+      results: testCases.map((tc, idx) => ({
+        testCase: idx + 1,
+        passed: false,
+        input: tc.input,
+        expected: tc.output,
+        actual: 'Compilation Error',
+        error: rawErr
+      }))
+    };
+  } finally {
+    try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch (e) {}
+  }
+}
+
+// Unified Execution Suite dispatcher
+function executeTestSuite(problem, code, language, testCases) {
+  if (language === 'java') {
+    return executeJavaSuite(problem.id, code, testCases);
+  }
+
+  // For JavaScript and SQL
+  const results = testCases.map((tc, idx) => {
+    const resRun = executeTestCase(code, language || 'javascript', tc.input, tc.output);
+    return {
+      testCase: idx + 1,
+      ...resRun
+    };
+  });
+
+  return {
+    hasCompilationError: false,
+    results
+  };
 }
 
 // POST /api/arena/run: Run code against Sample Test Cases
@@ -1039,18 +1272,16 @@ router.post('/run', (req, res) => {
   }
 
   const sampleCases = problem.sampleTestCases || [];
-  const results = sampleCases.map((tc, idx) => {
-    const resRun = executeTestCase(code, language || 'javascript', tc.input, tc.output);
-    return {
-      testCase: idx + 1,
-      ...resRun
-    };
-  });
-
+  const suiteResult = executeTestSuite(problem, code, language, sampleCases);
+  const results = suiteResult.results;
   const allPassed = results.every(r => r.passed);
+
   res.json({
     success: true,
     allPassed,
+    hasCompilationError: suiteResult.hasCompilationError,
+    error: suiteResult.error,
+    stdout: suiteResult.stdout,
     results
   });
 });
@@ -1066,14 +1297,11 @@ router.post('/submit', requireArenaAuth, async (req, res) => {
     }
 
     const allTestCases = [...(problem.sampleTestCases || []), ...(problem.hiddenTestCases || [])];
-    const testResults = allTestCases.map((tc, idx) => {
-      const resRun = executeTestCase(code, language || 'javascript', tc.input, tc.output);
-      return {
-        testCase: idx + 1,
-        isHidden: idx >= (problem.sampleTestCases?.length || 0),
-        ...resRun
-      };
-    });
+    const suiteResult = executeTestSuite(problem, code, language, allTestCases);
+    const testResults = suiteResult.results.map((r, idx) => ({
+      ...r,
+      isHidden: idx >= (problem.sampleTestCases?.length || 0)
+    }));
 
     const allPassed = testResults.every(r => r.passed);
 
@@ -1107,7 +1335,7 @@ router.post('/submit', requireArenaAuth, async (req, res) => {
       problemId: problem.id,
       problemTitle: problem.title,
       language: language || 'javascript',
-      status: allPassed ? 'Accepted' : 'Wrong Answer',
+      status: allPassed ? 'Accepted' : (suiteResult.hasCompilationError ? 'Compilation Error' : 'Wrong Answer'),
       pointsAwarded: awardedPoints,
       submittedAt: new Date()
     };
@@ -1115,8 +1343,11 @@ router.post('/submit', requireArenaAuth, async (req, res) => {
 
     res.json({
       success: true,
-      verdict: allPassed ? 'Accepted' : 'Wrong Answer',
+      verdict: allPassed ? 'Accepted' : (suiteResult.hasCompilationError ? 'Compilation Error' : 'Wrong Answer'),
       allPassed,
+      hasCompilationError: suiteResult.hasCompilationError,
+      error: suiteResult.error,
+      stdout: suiteResult.stdout,
       awardedPoints,
       newTotalScore: student.score,
       solvedCount: student.solvedProblems.length,
