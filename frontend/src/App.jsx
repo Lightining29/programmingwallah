@@ -52,6 +52,7 @@ import StudentRegister from './pages/exam/StudentRegister.jsx';
 import AssessmentAdmin from './pages/AssessmentAdmin.jsx';
 import ArenaHub from './pages/arena/ArenaHub.jsx';
 import ArenaProblem from './pages/arena/ArenaProblem.jsx';
+import ArenaProfile from './pages/arena/ArenaProfile.jsx';
 
 // Layout Components
 import Navbar from './components/Navbar.jsx';
@@ -167,6 +168,8 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
           <Route path="/coding-arena" element={<Navigate to="/arena" replace />} />
           <Route path="/hackerrank" element={<Navigate to="/arena" replace />} />
           <Route path="/arena/problem/:id" element={<ArenaProblem />} />
+          <Route path="/arena/profile" element={<ArenaProfile />} />
+          <Route path="/student/profile" element={<ArenaProfile />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/tutorials" element={<Tutorials />} />
           <Route path="/music" element={<Navigate to="/" replace />} />

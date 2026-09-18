@@ -524,8 +524,12 @@ export default function ArenaProblem() {
 
           {/* Student Status Badge */}
           {student ? (
-            <div className="flex items-center gap-2 pl-2 border-l border-[#30363d]">
-              <div className="w-7 h-7 rounded-xl overflow-hidden border border-emerald-500/50 bg-[#161b22]">
+            <Link 
+              to="/student/profile" 
+              title={`View ${student.name}'s Profile`}
+              className="flex items-center gap-2 pl-2 border-l border-[#30363d] group cursor-pointer"
+            >
+              <div className="w-7 h-7 rounded-xl overflow-hidden border border-emerald-500/50 bg-[#161b22] group-hover:border-emerald-400 group-hover:scale-105 transition-all">
                 {student.photo ? (
                   <img src={student.photo} alt={student.name} className="w-full h-full object-cover" />
                 ) : (
@@ -534,7 +538,7 @@ export default function ArenaProblem() {
                   </div>
                 )}
               </div>
-            </div>
+            </Link>
           ) : (
             <button
               onClick={() => setShowAuthModal(true)}

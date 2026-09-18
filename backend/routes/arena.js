@@ -832,6 +832,59 @@ router.get('/me', requireArenaAuth, async (req, res) => {
   }
 });
 
+// GET /api/arena/profile: Get profile by email or auth token
+router.get('/profile', async (req, res) => {
+  try {
+    let email = req.query.email;
+    if (!email && req.headers.authorization) {
+      try {
+        const token = req.headers.authorization.split(' ')[1];
+        const decoded = jwt.verify(token, JWT_SECRET);
+        email = decoded.email;
+      } catch (e) {}
+    }
+    if (!email) {
+      return res.status(400).json({ error: 'Email or authorization token required.' });
+    }
+    const student = await findArenaStudent(email);
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found.' });
+    }
+    res.json({ success: true, student });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/arena/profile: Update profile info (photo, name, dob)
+router.put('/profile', async (req, res) => {
+  try {
+    let email = req.body.email;
+    if (!email && req.headers.authorization) {
+      try {
+        const token = req.headers.authorization.split(' ')[1];
+        const decoded = jwt.verify(token, JWT_SECRET);
+        email = decoded.email;
+      } catch (e) {}
+    }
+    if (!email) {
+      return res.status(400).json({ error: 'Email required to update profile.' });
+    }
+    const student = await findArenaStudent(email);
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found.' });
+    }
+    if (req.body.name) student.name = String(req.body.name).trim();
+    if (req.body.dob) student.dob = normalizeDob(req.body.dob);
+    if (req.body.photo !== undefined) student.photo = req.body.photo;
+    await saveArenaStudent(student);
+    const token = generateArenaToken(student);
+    res.json({ success: true, message: 'Profile updated successfully!', student, token });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /* ─────────────────────────────────────────────────────────────────────────────
    4. CODING PROBLEMS & SUBMISSIONS
 ───────────────────────────────────────────────────────────────────────────── */

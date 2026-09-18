@@ -196,8 +196,12 @@ export default function ArenaHub() {
             {student ? (
               <div className="space-y-4">
                 {/* Profile Header */}
-                <div className="flex items-center gap-3.5 pb-4 border-b border-[#30363d]">
-                  <div className="relative w-12 h-12 rounded-2xl overflow-hidden border-2 border-emerald-500/50 bg-[#161b22] flex items-center justify-center flex-shrink-0 shadow-sm">
+                <Link 
+                  to="/student/profile" 
+                  className="flex items-center gap-3.5 pb-4 border-b border-[#30363d] hover:bg-[#161b22]/50 -mx-2 -mt-2 p-2 rounded-2xl transition group cursor-pointer"
+                  title="View Student Profile"
+                >
+                  <div className="relative w-12 h-12 rounded-2xl overflow-hidden border-2 border-emerald-500/50 bg-[#161b22] flex items-center justify-center flex-shrink-0 shadow-sm group-hover:border-emerald-400 group-hover:scale-105 transition-all">
                     {student.photo ? (
                       <img src={student.photo} alt={student.name} className="w-full h-full object-cover" />
                     ) : (
@@ -208,14 +212,19 @@ export default function ArenaHub() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-bold text-white truncate flex items-center gap-1.5">
-                      <span>{student.name}</span>
+                      <span className="group-hover:text-emerald-400 transition-colors">{student.name}</span>
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 font-bold">
-                        🔥 3-day Streak
+                        🔥 Streak
                       </span>
                     </div>
-                    <div className="text-xs text-slate-400 truncate">{student.email}</div>
+                    <div className="text-xs text-slate-400 truncate flex items-center justify-between mt-0.5">
+                      <span className="truncate">{student.email}</span>
+                      <span className="text-[10px] text-emerald-400 font-bold group-hover:underline flex items-center gap-0.5 flex-shrink-0">
+                        Profile ↗
+                      </span>
+                    </div>
                   </div>
-                </div>
+                </Link>
 
                 {/* LeetCode Circular Progress & Breakdown */}
                 <div>

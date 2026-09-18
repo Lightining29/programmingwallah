@@ -3,7 +3,8 @@ import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { 
   User, Lock, Eye, EyeOff, Mail, ArrowRight, Home,
-  GraduationCap, Users, UserCheck, ShieldCheck, Flame, Zap, CheckCircle2
+  GraduationCap, Users, UserCheck, ShieldCheck, Flame, Zap, CheckCircle2,
+  Calendar, Camera, Sparkles, Upload
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -56,13 +57,27 @@ export default function Login() {
   const [selectedPortalId, setSelectedPortalId] = useState('student');
   const [name, setName]         = useState('');
   const [email, setEmail]       = useState('');
+  const [dob, setDob]           = useState('');
+  const [photo, setPhoto]       = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm]   = useState('');
   const [valErr, setValErr]     = useState('');
+  const [infoMsg, setInfoMsg]   = useState('');
   const [showPw, setShowPw]     = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [studentLoading, setStudentLoading] = useState(false);
+  const [existingStudent, setExistingStudent] = useState(null);
 
   const selectedPortal = PORTALS.find(p => p.id === selectedPortalId) || PORTALS[0];
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('arena_student');
+      if (stored) {
+        setExistingStudent(JSON.parse(stored));
+      }
+    } catch (e) {}
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -75,8 +90,113 @@ export default function Login() {
   const handleSelectPortal = (portal) => {
     setSelectedPortalId(portal.id);
     setEmail('');
+    setDob('');
     setPassword('');
     setValErr('');
+    setInfoMsg('');
+  };
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      setValErr('Photo size should be under 2MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setPhoto(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  // Student LMS Login: Only Email + Date of Birth
+  const handleStudentLogin = async (e) => {
+    if (e) e.preventDefault();
+    setValErr('');
+    setInfoMsg('');
+
+    if (!email.trim()) {
+      setValErr('Please enter your email address.');
+      return;
+    }
+    if (!dob) {
+      setValErr('Please select or enter your Date of Birth (DOB).');
+      return;
+    }
+
+    setStudentLoading(true);
+    try {
+      const res = await fetch('/api/arena/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim().toLowerCase(), dob })
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        localStorage.setItem('arena_token', data.token);
+        localStorage.setItem('arena_student', JSON.stringify(data.student));
+        confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+        navigate('/student/profile');
+      } else if (res.status === 404 || data.notRegistered) {
+        // Account does not exist in DB: switch to register mode pre-filling email & dob
+        setIsRegister(true);
+        setInfoMsg('No existing student account found for this email. Enter your Full Name below to register and create your coder profile!');
+      } else {
+        setValErr(data.error || 'Student login failed.');
+      }
+    } catch (err) {
+      setValErr('Unable to connect to server. Please try again.');
+    } finally {
+      setStudentLoading(false);
+    }
+  };
+
+  // Student LMS Register: Name + Email + DOB + optional Photo
+  const handleStudentRegister = async (e) => {
+    if (e) e.preventDefault();
+    setValErr('');
+    setInfoMsg('');
+
+    if (!name.trim()) {
+      setValErr('Please enter your full name.');
+      return;
+    }
+    if (!email.trim()) {
+      setValErr('Please enter your email address.');
+      return;
+    }
+    if (!dob) {
+      setValErr('Please select your Date of Birth.');
+      return;
+    }
+
+    setStudentLoading(true);
+    try {
+      const res = await fetch('/api/arena/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          dob,
+          photo
+        })
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        localStorage.setItem('arena_token', data.token);
+        localStorage.setItem('arena_student', JSON.stringify(data.student));
+        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+        navigate('/student/profile');
+      } else {
+        setValErr(data.error || 'Registration failed.');
+      }
+    } catch (err) {
+      setValErr('Unable to connect to server. Please try again.');
+    } finally {
+      setStudentLoading(false);
+    }
   };
 
   const handleLogin = async (e) => {
@@ -197,14 +317,36 @@ export default function Login() {
           {/* Header Title */}
           <div className="space-y-1">
             <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-              {isRegister ? 'Create an account' : 'Welcome back'}
+              {selectedPortalId === 'student'
+                ? (isRegister ? 'Register Student LMS' : 'Student LMS Login')
+                : (isRegister ? 'Create an account' : 'Welcome back')}
             </h2>
             <p className="text-xs text-slate-400 font-medium">
-              {isRegister 
-                ? 'Start learning and building your career with Appletree AI' 
-                : 'Select your portal or enter your credentials to continue'}
+              {selectedPortalId === 'student'
+                ? (isRegister 
+                    ? 'Enter your name, email & date of birth to create your student coder profile' 
+                    : 'Enter your registered Email & Date of Birth (no password needed!)')
+                : (isRegister 
+                    ? 'Start learning and building your career with Appletree AI' 
+                    : 'Select your portal or enter your credentials to continue')}
             </p>
           </div>
+
+          {/* Active Arena Student Quick Access Banner */}
+          {selectedPortalId === 'student' && existingStudent && (
+            <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 text-emerald-300 font-bold truncate">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                <span className="truncate">Saved Profile: {existingStudent.name}</span>
+              </div>
+              <Link 
+                to="/student/profile" 
+                className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-black text-[11px] whitespace-nowrap transition cursor-pointer shadow-sm"
+              >
+                Open Profile →
+              </Link>
+            </div>
+          )}
 
           {/* Portal Selector Tabs (Student LMS, Parent, Teacher, Admin) */}
           {!isRegister && (
@@ -238,6 +380,14 @@ export default function Login() {
             </div>
           )}
 
+          {/* Info Banner */}
+          {infoMsg && (
+            <div className="p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-semibold flex items-start gap-2.5 shadow-md">
+              <Sparkles className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
+              <span>{infoMsg}</span>
+            </div>
+          )}
+
           {/* Error Banner */}
           {(valErr || error) && (
             <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-2">
@@ -248,147 +398,280 @@ export default function Login() {
 
           {/* Form */}
           <form 
-            onSubmit={isRegister ? handleRegister : handleLogin} 
+            onSubmit={
+              selectedPortalId === 'student'
+                ? (isRegister ? handleStudentRegister : handleStudentLogin)
+                : (isRegister ? handleRegister : handleLogin)
+            } 
             className="space-y-4"
             autoComplete="off"
             noValidate
           >
 
-            {/* Name Input (Register mode only) */}
-            {isRegister && (
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                  <User className="w-4 h-4 text-cyan-400/80" />
-                </div>
-                <input
-                  type="text"
-                  name="user_display_name"
-                  id="user_display_name"
-                  required
-                  placeholder="Full Name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  autoComplete="off"
-                  autoCorrect="off"
-                  autoCapitalize="none"
-                  spellCheck="false"
-                  className="w-full bg-[#0c1017] border border-slate-700 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-slate-400 outline-none transition-all"
-                />
-              </div>
-            )}
+            {/* ── Student LMS Portal Fields (Passwordless Email + DOB) ── */}
+            {selectedPortalId === 'student' ? (
+              <>
+                {/* Full Name (Student Register only) */}
+                {isRegister && (
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                      <User className="w-4 h-4 text-cyan-400/80" />
+                    </div>
+                    <input
+                      type="text"
+                      name="student_full_name"
+                      id="student_full_name"
+                      required
+                      placeholder="Your Full Name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      autoComplete="off"
+                      className="w-full bg-[#0c1017] border border-slate-700 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-slate-400 outline-none transition-all shadow-sm"
+                    />
+                  </div>
+                )}
 
-            {/* Email Address Input */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                <Mail className="w-4 h-4 text-cyan-400/80" />
-              </div>
-              <input
-                type="email"
-                name="user_email_address"
-                id="user_email_address"
-                required
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="none"
-                spellCheck="false"
-                className="w-full bg-[#0c1017] border border-cyan-500/50 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-slate-400 outline-none transition-all shadow-[0_0_10px_rgba(6,182,212,0.15)]"
-              />
-            </div>
-
-            {/* Password Input */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                <Lock className="w-4 h-4 text-slate-400" />
-              </div>
-              <input
-                type={showPw ? 'text' : 'password'}
-                name="user_access_token"
-                id="user_access_token"
-                required
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="new-password"
-                autoCorrect="off"
-                autoCapitalize="none"
-                spellCheck="false"
-                className="w-full bg-[#0c1017] border border-slate-800 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-2xl py-3.5 pl-11 pr-11 text-sm text-white placeholder-slate-400 outline-none transition-all"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPw(!showPw)}
-                className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-200 cursor-pointer"
-              >
-                {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-
-            {/* Confirm Password (Register mode only) */}
-            {isRegister && (
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                  <Lock className="w-4 h-4 text-slate-400" />
-                </div>
-                <input
-                  type={showPw ? 'text' : 'password'}
-                  name="user_confirm_token"
-                  id="user_confirm_token"
-                  required
-                  placeholder="Confirm Password"
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
-                  autoComplete="new-password"
-                  autoCorrect="off"
-                  autoCapitalize="none"
-                  spellCheck="false"
-                  className="w-full bg-[#0c1017] border border-slate-800 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-slate-400 outline-none transition-all"
-                />
-              </div>
-            )}
-
-            {/* Options Row: Remember Me & Forgot Password */}
-            {!isRegister && (
-              <div className="flex items-center justify-between text-xs pt-1">
-                <label className="flex items-center gap-2 text-slate-400 cursor-pointer select-none">
+                {/* Registered Email */}
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                    <Mail className="w-4 h-4 text-cyan-400/80" />
+                  </div>
                   <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded bg-[#0c1017] border-slate-700 text-pink-500 focus:ring-0 accent-pink-500"
+                    type="email"
+                    name="student_email"
+                    id="student_email"
+                    required
+                    placeholder="Registered Email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="off"
+                    className="w-full bg-[#0c1017] border border-cyan-500/50 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-slate-400 outline-none transition-all shadow-[0_0_10px_rgba(6,182,212,0.15)]"
                   />
-                  <span>Remember Me</span>
-                </label>
-                <button
-                  type="button"
-                  className="text-[#f43f5e] hover:text-pink-400 font-semibold transition-colors cursor-pointer"
-                >
-                  Forgot Password?
-                </button>
-              </div>
-            )}
+                </div>
 
-            {/* Primary Action Button: Pink Pill CTA */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3.5 rounded-full font-bold text-sm text-white tracking-wide transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 mt-3"
-              style={{
-                background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)',
-                boxShadow: '0 4px 22px rgba(244, 63, 94, 0.45)'
-              }}
-            >
-              {loading ? (
-                <>
-                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Processing...</span>
-                </>
-              ) : (
-                <span>{isRegister ? 'Create Free Account' : 'Continue with Email'}</span>
-              )}
-            </button>
+                {/* Date of Birth (DOB) */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="student_dob" className="text-[11px] uppercase tracking-wider font-bold text-slate-300 flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Date of Birth (DOB)</span>
+                    </label>
+                    <span className="text-[10px] text-cyan-400/90 font-bold bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20">
+                      Passwordless Auth
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      name="student_dob"
+                      id="student_dob"
+                      required
+                      value={dob}
+                      onChange={(e) => setDob(e.target.value)}
+                      max={new Date().toISOString().split('T')[0]}
+                      style={{ colorScheme: 'dark' }}
+                      className="w-full bg-[#0c1017] border border-cyan-500/50 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-2xl py-3.5 px-4 text-sm text-white placeholder-slate-400 outline-none transition-all shadow-[0_0_10px_rgba(6,182,212,0.12)] cursor-pointer"
+                    />
+                  </div>
+                  <p className="text-[11px] text-slate-400 flex items-center gap-1">
+                    <span>💡</span>
+                    <span>Use only your email & date of birth. No password required for students!</span>
+                  </p>
+                </div>
+
+                {/* Profile Picture (Student Register only) */}
+                {isRegister && (
+                  <div className="space-y-1.5 pt-1">
+                    <label className="text-[11px] uppercase tracking-wider font-bold text-slate-300 flex items-center gap-1.5">
+                      <Camera className="w-3.5 h-3.5 text-pink-400" />
+                      <span>Profile Picture (Optional)</span>
+                    </label>
+                    <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-[#0c1017] border border-slate-800">
+                      <div className="w-11 h-11 rounded-xl overflow-hidden bg-slate-900 border border-slate-700 flex items-center justify-center flex-shrink-0">
+                        {photo ? (
+                          <img src={photo} alt="Preview" className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="w-5 h-5 text-slate-500" />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#161b22] hover:bg-[#21262d] border border-slate-700 text-xs font-bold text-slate-200 cursor-pointer transition">
+                          <Upload className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>Upload Photo</span>
+                          <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                        </label>
+                        {photo && (
+                          <button
+                            type="button"
+                            onClick={() => setPhoto('')}
+                            className="text-[11px] text-rose-400 hover:text-rose-300 font-semibold cursor-pointer"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Student Action Button */}
+                <button
+                  type="submit"
+                  disabled={studentLoading}
+                  className="w-full py-3.5 rounded-full font-bold text-sm text-white tracking-wide transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 mt-3 active:scale-[0.99]"
+                  style={{
+                    background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)',
+                    boxShadow: '0 4px 22px rgba(244, 63, 94, 0.45)'
+                  }}
+                >
+                  {studentLoading ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Verifying Student Credentials...</span>
+                    </>
+                  ) : isRegister ? (
+                    <>
+                      <Sparkles className="w-4 h-4 text-amber-300" />
+                      <span>Register & Open Profile</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  ) : (
+                    <>
+                      <Flame className="w-4 h-4 text-amber-300 fill-amber-300" />
+                      <span>Continue to Student Profile & Arena</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </>
+            ) : (
+              /* ── Parent, Teacher & Admin Portals (Email + Password) ── */
+              <>
+                {/* Name Input (Register mode only) */}
+                {isRegister && (
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                      <User className="w-4 h-4 text-cyan-400/80" />
+                    </div>
+                    <input
+                      type="text"
+                      name="user_display_name"
+                      id="user_display_name"
+                      required
+                      placeholder="Full Name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      autoComplete="off"
+                      className="w-full bg-[#0c1017] border border-slate-700 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-slate-400 outline-none transition-all"
+                    />
+                  </div>
+                )}
+
+                {/* Email Address Input */}
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                    <Mail className="w-4 h-4 text-cyan-400/80" />
+                  </div>
+                  <input
+                    type="email"
+                    name="user_email_address"
+                    id="user_email_address"
+                    required
+                    placeholder="Email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="off"
+                    className="w-full bg-[#0c1017] border border-cyan-500/50 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-slate-400 outline-none transition-all shadow-[0_0_10px_rgba(6,182,212,0.15)]"
+                  />
+                </div>
+
+                {/* Password Input */}
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                    <Lock className="w-4 h-4 text-slate-400" />
+                  </div>
+                  <input
+                    type={showPw ? 'text' : 'password'}
+                    name="user_access_token"
+                    id="user_access_token"
+                    required
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="new-password"
+                    className="w-full bg-[#0c1017] border border-slate-800 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-2xl py-3.5 pl-11 pr-11 text-sm text-white placeholder-slate-400 outline-none transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw(!showPw)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-200 cursor-pointer"
+                  >
+                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                {/* Confirm Password (Register mode only) */}
+                {isRegister && (
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                      <Lock className="w-4 h-4 text-slate-400" />
+                    </div>
+                    <input
+                      type={showPw ? 'text' : 'password'}
+                      name="user_confirm_token"
+                      id="user_confirm_token"
+                      required
+                      placeholder="Confirm Password"
+                      value={confirm}
+                      onChange={(e) => setConfirm(e.target.value)}
+                      autoComplete="new-password"
+                      className="w-full bg-[#0c1017] border border-slate-800 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-slate-400 outline-none transition-all"
+                    />
+                  </div>
+                )}
+
+                {/* Options Row: Remember Me & Forgot Password */}
+                {!isRegister && (
+                  <div className="flex items-center justify-between text-xs pt-1">
+                    <label className="flex items-center gap-2 text-slate-400 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        className="w-4 h-4 rounded bg-[#0c1017] border-slate-700 text-pink-500 focus:ring-0 accent-pink-500"
+                      />
+                      <span>Remember Me</span>
+                    </label>
+                    <button
+                      type="button"
+                      className="text-[#f43f5e] hover:text-pink-400 font-semibold transition-colors cursor-pointer"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                )}
+
+                {/* Primary Action Button: Pink Pill CTA */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3.5 rounded-full font-bold text-sm text-white tracking-wide transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 mt-3"
+                  style={{
+                    background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)',
+                    boxShadow: '0 4px 22px rgba(244, 63, 94, 0.45)'
+                  }}
+                >
+                  {loading ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    <span>{isRegister ? 'Create Free Account' : 'Continue with Email'}</span>
+                  )}
+                </button>
+              </>
+            )}
           </form>
 
           {/* Toggle Login / Sign Up */}
@@ -396,7 +679,11 @@ export default function Login() {
             <span>{isRegister ? 'Already have an account? ' : "Don't have an account? "}</span>
             <button
               type="button"
-              onClick={() => { setIsRegister(!isRegister); setValErr(''); }}
+              onClick={() => { 
+                setIsRegister(!isRegister); 
+                setValErr(''); 
+                setInfoMsg('');
+              }}
               className="text-[#f43f5e] hover:text-pink-400 font-bold ml-1 transition-colors cursor-pointer"
             >
               {isRegister ? 'Sign In' : 'Sign Up'}
