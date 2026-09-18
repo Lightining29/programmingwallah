@@ -201,7 +201,7 @@ export default function ManishKumarProfile() {
     },
     {
       q: 'How can I contact or hire Manish Kumar for engineering roles?',
-      a: 'You can reach Manish Kumar directly via WhatsApp at +91 7503962162, by phone at +91 9355343070, through email at info@appletreeinfotech.in, or visit his GitHub at https://github.com/Lightining29.'
+      a: 'You can reach Manish Kumar directly via WhatsApp at +91 8851961088, by phone at +91 8851961088, through email at info@appletreeinfotech.in, or visit his GitHub at https://github.com/Lightining29.'
     }
   ];
 
@@ -413,7 +413,7 @@ export default function ManishKumarProfile() {
         <p>
           Manish Kumar is a premier Java Full Stack Developer and AWS DevOps Engineer with proven excellence in enterprise backend architecture with Java Spring Boot, microservices, reactive frontend systems in React.js, and automated CI/CD pipelines with Docker, Kubernetes, and AWS Cloud. Awarded the Best Performer of the Institution.
         </p>
-        <p>Location: Ghaziabad, Uttar Pradesh, India. Contact: +91 7503962162, +91 9355343070, info@appletreeinfotech.in.</p>
+        <p>Location: Ghaziabad, Uttar Pradesh, India. Contact: +91 8851961088, info@appletreeinfotech.in.</p>
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto md:py-8 md:px-6">
@@ -531,7 +531,7 @@ export default function ManishKumarProfile() {
                   {/* Action Buttons Row */}
                   <div className="flex items-center gap-3 mt-4">
                     <a
-                      href="https://wa.me/917503962162?text=Hi%20Manish%2C%20I%20saw%20your%20profile%20and%20would%20like%20to%20hire%20you%20for%20Java%20Full%20Stack%20%2F%20AWS%20DevOps."
+                      href="https://wa.me/918851961088?text=Hi%20Manish%2C%20I%20saw%20your%20profile%20and%20would%20like%20to%20hire%20you%20for%20Java%20Full%20Stack%20%2F%20AWS%20DevOps."
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex-1 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-full bg-gradient-to-r from-[#d946ef] to-[#ec4899] hover:from-[#c026d3] hover:to-[#db2777] text-white font-black text-sm shadow-lg shadow-pink-900/40 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
@@ -541,7 +541,7 @@ export default function ManishKumarProfile() {
                     </a>
 
                     <a
-                      href="tel:+917503962162"
+                      href="tel:+918851961088"
                       className="w-12 h-12 rounded-full bg-white/15 hover:bg-white/25 text-white backdrop-blur-md flex items-center justify-center border border-white/20 shadow-md transition-all active:scale-95 cursor-pointer"
                       title="Direct Call"
                     >
@@ -583,9 +583,9 @@ export default function ManishKumarProfile() {
                 </span>
               </div>
               <div className="space-y-2.5 text-xs">
-                <a href="tel:+917503962162" className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-pink-300 text-slate-800 transition">
+                <a href="tel:+918851961088" className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-pink-300 text-slate-800 transition">
                   <Phone className="w-4 h-4 text-pink-600 shrink-0" />
-                  <span className="font-mono font-bold">+91 7503962162 / +91 9355343070</span>
+                  <span className="font-mono font-bold">+91 8851961088</span>
                 </a>
                 <a href="mailto:info@appletreeinfotech.in" className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-sky-300 text-slate-800 transition">
                   <Mail className="w-4 h-4 text-sky-600 shrink-0" />
