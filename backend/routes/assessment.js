@@ -342,10 +342,14 @@ export const findAttemptInDB = async (attemptId) => {
         candidate: {
           email: r.candidate_email,
           name: r.candidate_name,
+          photo: r.candidate_photo || '',
+          college: r.candidate_college || '',
           accessCode: r.candidate_access_code
         },
         candidateEmail: r.candidate_email,
         candidateName: r.candidate_name,
+        candidatePhoto: r.candidate_photo || '',
+        candidateCollege: r.candidate_college || '',
         answers: ans,
         score: r.score,
         percentage: r.percentage,
@@ -382,14 +386,17 @@ export const saveAttemptToDB = async (attempt) => {
     } catch (e) {}
   }
 
+  const candPhoto = attempt.candidatePhoto || attempt.candidate?.photo || '';
+  const candCollege = attempt.candidateCollege || attempt.candidate?.college || '';
+
   try {
     const pool = getMySQLPool();
     await pool.query(`
       INSERT INTO assessment_attempts (
         id, assessment_id, candidate_email, candidate_name, candidate_access_code,
         answers_json, score, percentage, passed, total_marks, time_taken, status,
-        violations_json, certificate_number, started_at, submitted_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        violations_json, certificate_number, candidate_photo, candidate_college, started_at, submitted_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
         candidate_name=VALUES(candidate_name),
         candidate_email=VALUES(candidate_email),
@@ -402,6 +409,8 @@ export const saveAttemptToDB = async (attempt) => {
         status=VALUES(status),
         violations_json=VALUES(violations_json),
         certificate_number=VALUES(certificate_number),
+        candidate_photo=VALUES(candidate_photo),
+        candidate_college=VALUES(candidate_college),
         submitted_at=VALUES(submitted_at)
     `, [
       attempt._id,
@@ -418,9 +427,50 @@ export const saveAttemptToDB = async (attempt) => {
       attempt.status || 'in-progress',
       JSON.stringify(attempt.violations || []),
       attempt.certificateNumber || '',
+      candPhoto,
+      candCollege,
       attempt.startedAt ? new Date(attempt.startedAt) : new Date(),
       attempt.submittedAt ? new Date(attempt.submittedAt) : null
-    ]);
+    ]).catch(async (e) => {
+      // Fallback in case columns do not exist yet in existing MySQL table
+      await pool.query(`
+        INSERT INTO assessment_attempts (
+          id, assessment_id, candidate_email, candidate_name, candidate_access_code,
+          answers_json, score, percentage, passed, total_marks, time_taken, status,
+          violations_json, certificate_number, started_at, submitted_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          candidate_name=VALUES(candidate_name),
+          candidate_email=VALUES(candidate_email),
+          answers_json=VALUES(answers_json),
+          score=VALUES(score),
+          percentage=VALUES(percentage),
+          passed=VALUES(passed),
+          total_marks=VALUES(total_marks),
+          time_taken=VALUES(time_taken),
+          status=VALUES(status),
+          violations_json=VALUES(violations_json),
+          certificate_number=VALUES(certificate_number),
+          submitted_at=VALUES(submitted_at)
+      `, [
+        attempt._id,
+        attempt.assessment || attempt.assessmentId || '',
+        attempt.candidateEmail || attempt.candidate?.email || '',
+        attempt.candidateName || attempt.candidate?.name || 'Candidate',
+        attempt.candidate?.accessCode || '',
+        JSON.stringify(attempt.answers || []),
+        Number(attempt.score) || 0,
+        Number(attempt.percentage) || 0,
+        attempt.passed ? 1 : 0,
+        Number(attempt.totalMarks) || 0,
+        Number(attempt.timeTaken) || 0,
+        attempt.status || 'in-progress',
+        JSON.stringify(attempt.violations || []),
+        attempt.certificateNumber || '',
+        attempt.startedAt ? new Date(attempt.startedAt) : new Date(),
+        attempt.submittedAt ? new Date(attempt.submittedAt) : null
+      ]);
+    });
   } catch (err) {
     console.warn('MySQL saveAttempt error:', err.message);
   }
@@ -1463,8 +1513,292 @@ router.post('/admin/run-sql', adminGuard, (req, res) => {
 });
 
 // ════════════════════════════════════════════════════════════════════════════
-// CANDIDATE ENDPOINTS
+// CANDIDATE ENDPOINTS & LEADERBOARD
 // ════════════════════════════════════════════════════════════════════════════
+
+// ── Leaderboard: Passed students ranked by marks / percentage ─────────────────
+router.get('/leaderboard', async (req, res) => {
+  try {
+    const { assessmentId, search } = req.query;
+
+    // 1. Gather all assessments (from mockStore, MySQL, and Mongo)
+    const assessmentsList = [];
+    const assessmentMap = new Map();
+
+    // From mockStore
+    const storeAssessments = getAssessmentsFromStore();
+    for (const a of storeAssessments) {
+      const id = String(a._id || a.id);
+      if (!assessmentMap.has(id)) {
+        const item = {
+          id,
+          title: a.title || 'Examination',
+          passingScore: Number(a.passingScore) || 50,
+          candidates: Array.isArray(a.invitedCandidates) ? a.invitedCandidates : []
+        };
+        assessmentMap.set(id, item);
+        assessmentsList.push({ id, title: item.title });
+      }
+    }
+
+    // From MySQL
+    try {
+      const pool = getMySQLPool();
+      const [assRows] = await pool.query('SELECT id, title, passing_score, invited_candidates_json FROM assessments');
+      for (const r of (assRows || [])) {
+        const id = String(r.id);
+        let cands = [];
+        try { cands = typeof r.invited_candidates_json === 'string' ? JSON.parse(r.invited_candidates_json) : (r.invited_candidates_json || []); } catch(e){}
+        if (!assessmentMap.has(id)) {
+          const item = {
+            id,
+            title: r.title || 'Examination',
+            passingScore: Number(r.passing_score) || 50,
+            candidates: cands
+          };
+          assessmentMap.set(id, item);
+          assessmentsList.push({ id, title: item.title });
+        } else {
+          const ex = assessmentMap.get(id);
+          if (cands.length > 0 && (!ex.candidates || ex.candidates.length === 0)) {
+            ex.candidates = cands;
+          }
+        }
+      }
+    } catch (e) {}
+
+    // From Mongo
+    if (mongoose.connection?.readyState === 1) {
+      try {
+        const mAssessments = await Assessment.find().lean();
+        for (const a of mAssessments) {
+          const id = String(a._id);
+          if (!assessmentMap.has(id)) {
+            const item = {
+              id,
+              title: a.title || 'Examination',
+              passingScore: Number(a.passingScore) || 50,
+              candidates: Array.isArray(a.invitedCandidates) ? a.invitedCandidates : []
+            };
+            assessmentMap.set(id, item);
+            assessmentsList.push({ id, title: item.title });
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 2. Gather all attempts
+    const attemptsMap = new Map();
+
+    // From mockStore
+    const storeAttempts = getAttemptsFromStore();
+    for (const att of storeAttempts) {
+      const attId = String(att._id || att.id);
+      attemptsMap.set(attId, att);
+    }
+
+    // From MySQL
+    try {
+      const pool = getMySQLPool();
+      const [attRows] = await pool.query(`
+        SELECT * FROM assessment_attempts
+        WHERE status = 'submitted' AND (passed = 1 OR percentage >= 40)
+      `);
+      for (const r of (attRows || [])) {
+        const attId = String(r.id);
+        attemptsMap.set(attId, {
+          _id: r.id,
+          assessment: r.assessment_id,
+          candidateEmail: r.candidate_email,
+          candidateName: r.candidate_name,
+          candidatePhoto: r.candidate_photo || '',
+          candidateCollege: r.candidate_college || '',
+          candidate: {
+            email: r.candidate_email,
+            name: r.candidate_name,
+            photo: r.candidate_photo || '',
+            college: r.candidate_college || ''
+          },
+          score: Number(r.score) || 0,
+          totalMarks: Number(r.total_marks) || 0,
+          percentage: Number(r.percentage) || 0,
+          passed: Boolean(r.passed),
+          timeTaken: Number(r.time_taken) || 0,
+          status: r.status,
+          certificateNumber: r.certificate_number || '',
+          submittedAt: r.submitted_at || r.started_at
+        });
+      }
+    } catch (e) {}
+
+    // From Mongo
+    if (mongoose.connection?.readyState === 1) {
+      try {
+        const mAttempts = await Attempt.find({ status: 'submitted', passed: true }).lean();
+        for (const att of mAttempts) {
+          const attId = String(att._id);
+          if (!attemptsMap.has(attId)) {
+            attemptsMap.set(attId, att);
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 3. Process each passed attempt
+    const rawPassed = [];
+    for (const att of attemptsMap.values()) {
+      if (att.status !== 'submitted') continue;
+
+      const assId = String(att.assessment || att.assessmentId || '');
+      const ass = assessmentMap.get(assId);
+      const passingScore = ass?.passingScore || 50;
+
+      const isPassed = att.passed === true || att.percentage >= passingScore;
+      if (!isPassed) continue;
+
+      // Filter by assessment if requested
+      if (assessmentId && assessmentId !== 'all' && assId !== String(assessmentId)) {
+        continue;
+      }
+
+      const cleanEmail = String(att.candidateEmail || att.candidate?.email || '').toLowerCase().trim();
+      const candMatch = (ass?.candidates || []).find(
+        c => String(c.email || '').toLowerCase().trim() === cleanEmail
+      );
+
+      const photo = att.candidatePhoto || att.candidate?.photo || candMatch?.photo || '';
+      const college = att.candidateCollege || att.candidate?.college || candMatch?.college || 'Computer Science & Engineering';
+      const name = att.candidateName || att.candidate?.name || candMatch?.name || 'Candidate';
+      const rollNo = att.candidate?.rollNo || candMatch?.rollNo || '';
+
+      const totalMarks = Number(att.totalMarks) || 100;
+      const score = Number(att.score) || 0;
+      const percentage = Number(att.percentage) || (totalMarks > 0 ? Math.round((score / totalMarks) * 100) : 0);
+
+      rawPassed.push({
+        id: att._id || att.id,
+        assessmentId: assId,
+        assessmentTitle: ass?.title || 'Online Assessment',
+        candidateEmail: cleanEmail,
+        candidateName: name,
+        photo: photo,
+        college: college,
+        rollNo: rollNo,
+        score: score,
+        totalMarks: totalMarks,
+        percentage: percentage,
+        timeTaken: Number(att.timeTaken) || 0,
+        certificateNumber: att.certificateNumber || '',
+        submittedAt: att.submittedAt || new Date()
+      });
+    }
+
+    // 4. Deduplicate by student email: keep candidate's single highest achievement
+    const studentBestMap = new Map();
+    for (const item of rawPassed) {
+      const key = item.candidateEmail || item.id;
+      if (!studentBestMap.has(key)) {
+        studentBestMap.set(key, item);
+      } else {
+        const prev = studentBestMap.get(key);
+        // Compare: higher percentage > higher score > lower timeTaken
+        if (
+          item.percentage > prev.percentage ||
+          (item.percentage === prev.percentage && item.score > prev.score) ||
+          (item.percentage === prev.percentage && item.score === prev.score && item.timeTaken < prev.timeTaken)
+        ) {
+          studentBestMap.set(key, item);
+        }
+      }
+    }
+
+    let sorted = Array.from(studentBestMap.values()).sort((a, b) => {
+      if (b.percentage !== a.percentage) return b.percentage - a.percentage;
+      if (b.score !== a.score) return b.score - a.score;
+      return a.timeTaken - b.timeTaken;
+    });
+
+    // Optional Search Filter
+    if (search && typeof search === 'string' && search.trim()) {
+      const q = search.trim().toLowerCase();
+      sorted = sorted.filter(s =>
+        s.candidateName.toLowerCase().includes(q) ||
+        s.candidateEmail.toLowerCase().includes(q) ||
+        s.college.toLowerCase().includes(q) ||
+        s.assessmentTitle.toLowerCase().includes(q)
+      );
+    }
+
+    // 5. Assign Ranks and Badges
+    const rankedList = sorted.map((student, idx) => {
+      const rank = idx + 1;
+      let badge = 'Rank #' + rank;
+      let rankTier = 'performer';
+      let medal = '#' + rank;
+
+      if (rank === 1) {
+        badge = 'Champion 🏆';
+        rankTier = 'gold';
+        medal = '🥇';
+      } else if (rank === 2) {
+        badge = '1st Runner-Up 🥈';
+        rankTier = 'silver';
+        medal = '🥈';
+      } else if (rank === 3) {
+        badge = '2nd Runner-Up 🥉';
+        rankTier = 'bronze';
+        medal = '🥉';
+      } else if (rank <= 10) {
+        badge = 'Top 10 ⭐';
+        rankTier = 'top10';
+      }
+
+      return {
+        ...student,
+        rank,
+        badge,
+        rankTier,
+        medal
+      };
+    });
+
+    const podium = {
+      first: rankedList[0] || null,
+      second: rankedList[1] || null,
+      third: rankedList[2] || null
+    };
+
+    const rankwise = rankedList.slice(3);
+
+    // Compute aggregate statistics
+    const totalPassed = rankedList.length;
+    const topScore = rankedList[0] ? rankedList[0].percentage : 0;
+    const avgScore = totalPassed > 0
+      ? Math.round(rankedList.reduce((acc, cur) => acc + cur.percentage, 0) / totalPassed)
+      : 0;
+    const uniqueColleges = new Set(rankedList.map(r => r.college).filter(Boolean)).size;
+
+    res.json({
+      success: true,
+      stats: {
+        totalPassed,
+        topScore,
+        avgScore,
+        uniqueColleges
+      },
+      podium,
+      rankwise,
+      leaderboard: rankedList,
+      assessments: [
+        { id: 'all', title: '🌟 All Assessments (Global Leaderboard)' },
+        ...assessmentsList
+      ]
+    });
+  } catch (e) {
+    console.error('Leaderboard error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
 
 // Public Assessment Details (for Student Registration Form)
 router.get('/public/:id', async (req, res) => {
@@ -1506,7 +1840,7 @@ router.get('/public/:id', async (req, res) => {
 // Student Self-Registration Form Submission
 router.post('/:id/register', async (req, res) => {
   try {
-    const { name, email, phone, college, rollNo } = req.body;
+    const { name, email, phone, college, rollNo, photo } = req.body;
     if (!name || !email) {
       return res.status(400).json({ error: 'Full name and email address are required.' });
     }
@@ -1516,6 +1850,7 @@ router.post('/:id/register', async (req, res) => {
     const cleanPhone = String(phone || '').trim();
     const cleanCollege = String(college || '').trim();
     const cleanRollNo = String(rollNo || '').trim();
+    const cleanPhoto = typeof photo === 'string' ? photo.trim() : '';
 
     let a = await findAssessmentInDB(req.params.id);
 
@@ -1541,6 +1876,7 @@ router.post('/:id/register', async (req, res) => {
       phone: cleanPhone,
       college: cleanCollege,
       rollNo: cleanRollNo,
+      photo: cleanPhoto,
       accessCode: a.accessPassword || 'EXAM',
       registeredAt: existingIdx !== -1 ? (a.invitedCandidates[existingIdx].registeredAt || new Date()) : new Date(),
       invitedAt: new Date()
@@ -1550,7 +1886,8 @@ router.post('/:id/register', async (req, res) => {
       // Update registration record
       a.invitedCandidates[existingIdx] = {
         ...a.invitedCandidates[existingIdx],
-        ...studentRecord
+        ...studentRecord,
+        photo: cleanPhoto || a.invitedCandidates[existingIdx].photo || ''
       };
     } else {
       // Append new student registration
@@ -1566,7 +1903,8 @@ router.post('/:id/register', async (req, res) => {
       candidate: {
         name: cleanName,
         email: cleanEmail,
-        college: cleanCollege
+        college: cleanCollege,
+        photo: cleanPhoto || (existingIdx !== -1 ? a.invitedCandidates[existingIdx].photo : '')
       },
       assessment: {
         _id: a._id,
@@ -1748,10 +2086,15 @@ router.post('/start', async (req, res) => {
           registrationId: candidateMatch?.registrationId || null,
           email: cleanEmail,
           name: candidateMatch?.name || 'Candidate',
+          photo: candidateMatch?.photo || '',
+          college: candidateMatch?.college || '',
+          rollNo: candidateMatch?.rollNo || '',
           accessCode: inputCode
         },
         candidateEmail: cleanEmail,
         candidateName: candidateMatch?.name || 'Candidate',
+        candidatePhoto: candidateMatch?.photo || '',
+        candidateCollege: candidateMatch?.college || '',
         answers: [],
         score: 0,
         percentage: 0,
@@ -1798,6 +2141,19 @@ router.post('/submit', async (req, res) => {
 
     let a = await findAssessmentInDB(attempt.assessment);
     if (!a) return res.status(404).json({ error: 'Assessment not found.' });
+
+    // Ensure candidate photo & college are linked
+    const candidateMatch = (a.invitedCandidates || []).find(
+      ic => String(ic.email || '').toLowerCase().trim() === String(attempt.candidateEmail || attempt.candidate?.email || '').toLowerCase().trim()
+    );
+    if (candidateMatch) {
+      if (!attempt.candidatePhoto && candidateMatch.photo) attempt.candidatePhoto = candidateMatch.photo;
+      if (!attempt.candidateCollege && candidateMatch.college) attempt.candidateCollege = candidateMatch.college;
+      if (!attempt.candidate) attempt.candidate = {};
+      if (!attempt.candidate.photo && candidateMatch.photo) attempt.candidate.photo = candidateMatch.photo;
+      if (!attempt.candidate.college && candidateMatch.college) attempt.candidate.college = candidateMatch.college;
+      if (!attempt.candidate.rollNo && candidateMatch.rollNo) attempt.candidate.rollNo = candidateMatch.rollNo;
+    }
 
     attempt.answers = answers || [];
     attempt.timeTaken = Number(timeTaken) || attempt.timeTaken || 0;

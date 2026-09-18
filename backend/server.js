@@ -275,6 +275,7 @@ if (resolvedDistPath) {
     'courses-in-ghaziabad',
     'careers',
     'tutorials',
+    'leaderboard',
     'practice',
     'verify-certificate',
     'about',

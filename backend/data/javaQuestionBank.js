@@ -705,7 +705,7 @@ const subtopicTemplates = [
 ];
 
 // Topic bank registry with targeted subtopics
-const javaTopics = [
+export const javaTopics = [
   'Core Java & Syntax',
   'Object-Oriented Programming (OOP)',
   'Exception Handling',
@@ -1069,3 +1069,6 @@ export function getJavaQuestionBankStats() {
     topics: javaTopics
   };
 }
+
+export const JAVA_TOPICS = javaTopics;
+

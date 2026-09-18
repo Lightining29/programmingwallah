@@ -20,6 +20,7 @@ import Contact from './pages/Contact.jsx';
 import Login from './pages/Login.jsx';
 import Practice from './pages/Practice.jsx';
 import Tutorials from './pages/Tutorials.jsx';
+import Leaderboard from './pages/Leaderboard.jsx';
 import RazorpayTestPage from './pages/RazorpayTestPage.jsx';
 import VerifyCertificate from './pages/VerifyCertificate.jsx';
 import ManishKumarProfile from './pages/ManishKumarProfile.jsx';
@@ -159,6 +160,7 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/practice" element={<Practice />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/tutorials" element={<Tutorials />} />
           <Route path="/music" element={<Navigate to="/" replace />} />
           <Route path="/games" element={<Navigate to="/" replace />} />

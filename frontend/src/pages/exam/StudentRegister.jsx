@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
@@ -52,6 +52,9 @@ export default function StudentRegister() {
   const [selectedCollege, setSelectedCollege] = useState('');
   const [customCollege, setCustomCollege] = useState('');
   const [rollNo, setRollNo] = useState('');
+  const [photo, setPhoto] = useState('');
+  const [photoError, setPhotoError] = useState('');
+  const fileInputRef = useRef(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [registeredSuccess, setRegisteredSuccess] = useState(null);
@@ -59,6 +62,60 @@ export default function StudentRegister() {
   useEffect(() => {
     fetchAssessmentInfo();
   }, [id]);
+
+  const compressImage = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (readerEvent) => {
+        const img = new Image();
+        img.onload = () => {
+          const maxDim = 320;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxDim) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          resolve(dataUrl);
+        };
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = readerEvent.target.result;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handlePhotoSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      Swal.fire({ icon: 'error', title: 'Invalid File', text: 'Please select an image file (JPG, PNG, WebP).' });
+      return;
+    }
+    try {
+      const compressed = await compressImage(file);
+      setPhoto(compressed);
+      setPhotoError('');
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Image Error', text: 'Could not process selected image.' });
+    }
+  };
 
   const fetchAssessmentInfo = async () => {
     setLoading(true);
@@ -82,6 +139,16 @@ export default function StudentRegister() {
       return;
     }
 
+    if (!photo) {
+      setPhotoError('Profile photo is required for your exam admit card and leaderboard rank.');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Profile Photo Required',
+        text: 'Please upload your profile photo. This photo will be shown on the Leaderboard podium when you score top marks!'
+      });
+      return;
+    }
+
     setSubmitting(true);
     const finalCollege = selectedCollege === 'Other / College Not Listed'
       ? customCollege.trim()
@@ -96,7 +163,8 @@ export default function StudentRegister() {
           email: email.trim().toLowerCase(),
           phone: phone.trim(),
           college: finalCollege,
-          rollNo: rollNo.trim()
+          rollNo: rollNo.trim(),
+          photo: photo
         })
       });
 
@@ -112,7 +180,7 @@ export default function StudentRegister() {
       Swal.fire({
         icon: 'success',
         title: 'Registration Successful!',
-        text: 'Your registration has been confirmed. You can now proceed to the examination gate.',
+        text: 'Your registration has been confirmed with your profile picture. You can now proceed to the exam gate.',
         timer: 2000,
         showConfirmButton: false
       });
@@ -157,9 +225,23 @@ export default function StudentRegister() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center p-4">
         <div className="max-w-lg w-full bg-white dark:bg-slate-800 rounded-3xl p-8 sm:p-10 shadow-2xl border border-slate-200 dark:border-slate-700 text-center animate-fade-in">
-          <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center text-4xl mx-auto mb-5 shadow-lg shadow-emerald-500/20">
-            ✓
+          <div className="relative mx-auto w-24 h-24 mb-4">
+            {registeredSuccess.candidate?.photo || photo ? (
+              <img
+                src={registeredSuccess.candidate?.photo || photo}
+                alt="Student Profile"
+                className="w-24 h-24 rounded-full object-cover border-4 border-emerald-500 shadow-xl"
+              />
+            ) : (
+              <div className="w-24 h-24 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center text-4xl mx-auto shadow-lg shadow-emerald-500/20">
+                ✓
+              </div>
+            )}
+            <span className="absolute bottom-0 right-0 w-7 h-7 bg-emerald-500 text-white rounded-full flex items-center justify-center text-sm font-bold border-2 border-white shadow">
+              ✓
+            </span>
           </div>
+
           <span className="inline-block px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider rounded-full mb-3">
             Enrolled Successfully
           </span>
@@ -167,7 +249,7 @@ export default function StudentRegister() {
             Registration Confirmed!
           </h1>
           <p className="text-slate-600 dark:text-slate-300 text-sm mb-6">
-            Welcome, <strong className="text-slate-900 dark:text-white">{registeredSuccess.candidate?.name}</strong>! Your email has been registered for:
+            Welcome, <strong className="text-slate-900 dark:text-white">{registeredSuccess.candidate?.name}</strong>! Your email and profile photo are registered for:
           </p>
 
           <div className="bg-slate-50 dark:bg-slate-900/60 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 text-left mb-6 space-y-2.5">
@@ -258,11 +340,85 @@ export default function StudentRegister() {
           <div className="mb-6">
             <h2 className="text-base font-bold text-slate-900 dark:text-white">Candidate Registration</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Fill in your details below to register. Your email will be your unique identification key for entering the exam.
+              Fill in your details and upload your profile photo below. If you score top marks, you will be showcased on the <strong>Leaderboard Stage</strong>!
             </p>
           </div>
 
           <form onSubmit={handleRegister} className="space-y-4">
+            {/* Student Profile Photo Upload */}
+            <div className={`p-4 rounded-2xl border transition-all ${
+              photoError
+                ? 'bg-rose-50 dark:bg-rose-950/20 border-rose-300 dark:border-rose-700'
+                : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-700'
+            }`}>
+              <div className="flex justify-between items-center mb-2.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <span>📸</span> Student Profile Photo <span className="text-rose-500">*</span>
+                </label>
+                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold lowercase">
+                  Shown on Leaderboard & Certificate
+                </span>
+              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoSelect}
+                className="hidden"
+              />
+
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-emerald-500/60 bg-slate-200 dark:bg-slate-700 flex items-center justify-center shadow-md">
+                    {photo ? (
+                      <img src={photo} alt="Student avatar preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="text-center p-2 text-slate-400">
+                        <span className="text-3xl block">👤</span>
+                        <span className="text-[10px] font-bold block mt-0.5">Required</span>
+                      </div>
+                    )}
+                  </div>
+                  {photo && (
+                    <button
+                      type="button"
+                      onClick={() => setPhoto('')}
+                      className="absolute -top-1.5 -right-1.5 bg-rose-500 hover:bg-rose-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shadow-md cursor-pointer transition-transform active:scale-90"
+                      title="Remove Photo"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex-1 text-center sm:text-left">
+                  <div className="flex flex-wrap gap-2 justify-center sm:justify-start mb-1.5">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                    >
+                      <span>📷</span> {photo ? 'Change Profile Photo' : 'Upload Profile Photo *'}
+                    </button>
+                    {photo && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded-xl border border-emerald-300 dark:border-emerald-800">
+                        ✓ Photo Ready
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Upload a clear face portrait (JPG, PNG). Candidates who pass with top scores will be placed on the <strong>Leaderboard 1st, 2nd, and 3rd Podium</strong>!
+                  </p>
+                  {photoError && (
+                    <p className="text-xs text-rose-500 font-bold mt-1.5 flex items-center gap-1 justify-center sm:justify-start">
+                      <span>⚠️</span> {photoError}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Full Name */}
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">

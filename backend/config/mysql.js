@@ -216,6 +216,14 @@ export const initMySQLTables = async () => {
       ALTER TABLE assessment_attempts ADD COLUMN certificate_number VARCHAR(100) DEFAULT '';
     `).catch(() => {});
 
+    await connection.query(`
+      ALTER TABLE assessment_attempts ADD COLUMN candidate_photo LONGTEXT;
+    `).catch(() => {});
+
+    await connection.query(`
+      ALTER TABLE assessment_attempts ADD COLUMN candidate_college VARCHAR(255) DEFAULT '';
+    `).catch(() => {});
+
     // Create certificates table in Hostinger MySQL
     await connection.query(`
       CREATE TABLE IF NOT EXISTS certificates (

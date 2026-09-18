@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { 
   Menu, X, LogOut, LayoutDashboard, LogIn, UserPlus, BookOpen, 
-  Sun, Moon, Home, Info, GraduationCap, Code2, Brain, 
+  Sun, Moon, Home, Info, GraduationCap, Code2, Trophy, 
   Video, Image, Phone, ChevronRight, Briefcase
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,7 +32,7 @@ export default function Navbar() {
     { name: 'CAREERS', path: '/careers', icon: Briefcase },
     { name: 'COURSES', path: '/programs', icon: GraduationCap },
     { name: 'TUTORIALS', path: '/tutorials', icon: Code2 },
-    { name: 'PRACTICE', path: '/practice', icon: Brain },
+    { name: 'LEADERBOARD', path: '/leaderboard', icon: Trophy },
     { name: 'LEARNING', path: '/lms', icon: BookOpen },
     { name: 'MEETINGS', path: '/meetings', icon: Video },
     { name: 'GALLERY', path: '/gallery', icon: Image },
