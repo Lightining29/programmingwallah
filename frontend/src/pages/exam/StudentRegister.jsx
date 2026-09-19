@@ -70,7 +70,7 @@ export default function StudentRegister() {
       reader.onload = (readerEvent) => {
         const img = new Image();
         img.onload = () => {
-          const maxDim = 320;
+          const maxDim = 240;
           let width = img.width;
           let height = img.height;
 
@@ -91,7 +91,7 @@ export default function StudentRegister() {
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.65);
           resolve(dataUrl);
         };
         img.onerror = () => reject(new Error('Failed to load image'));
@@ -122,12 +122,15 @@ export default function StudentRegister() {
     setLoading(true);
     setFetchError('');
     try {
-      const res = await fetch(`/api/assessment/public/${id}`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 7000);
+      const res = await fetch(`/api/assessment/public/${id}`, { signal: controller.signal });
+      clearTimeout(timeoutId);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to load assessment details.');
       setAssessment(data);
     } catch (err) {
-      setFetchError(err.message);
+      setFetchError(err.name === 'AbortError' ? 'Connection timed out loading test details.' : err.message);
     } finally {
       setLoading(false);
     }
@@ -164,10 +167,14 @@ export default function StudentRegister() {
       ? customCollege.trim()
       : selectedCollege.trim();
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
     try {
       const res = await fetch(`/api/assessment/${id}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           name: name.trim(),
           email: email.trim().toLowerCase(),
@@ -178,6 +185,7 @@ export default function StudentRegister() {
           photo: photo
         })
       });
+      clearTimeout(timeoutId);
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Registration failed.');
@@ -196,7 +204,11 @@ export default function StudentRegister() {
         showConfirmButton: false
       });
     } catch (err) {
-      Swal.fire({ icon: 'error', title: 'Registration Failed', text: err.message });
+      clearTimeout(timeoutId);
+      const errMsg = err.name === 'AbortError' 
+        ? 'Registration is taking too long. Please check your network and try again.'
+        : err.message;
+      Swal.fire({ icon: 'error', title: 'Registration Failed', text: errMsg });
     } finally {
       setSubmitting(false);
     }

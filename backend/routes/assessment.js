@@ -57,9 +57,12 @@ export const saveAssessmentsToFile = (list) => {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
-    fs.writeFileSync(ASSESSMENTS_FILE, JSON.stringify(list || [], null, 2), 'utf8');
+    const dataStr = JSON.stringify(list || [], null, 2);
+    fs.writeFile(ASSESSMENTS_FILE, dataStr, 'utf8', (err) => {
+      if (err) console.warn('Non-critical: Error saving assessments.json backup:', err.message);
+    });
   } catch (err) {
-    console.warn('Error saving assessments.json backup:', err.message);
+    console.warn('Error scheduling assessments.json backup:', err.message);
   }
 };
 
@@ -81,9 +84,12 @@ export const saveAttemptsToFile = (list) => {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
-    fs.writeFileSync(ATTEMPTS_FILE, JSON.stringify(list || [], null, 2), 'utf8');
+    const dataStr = JSON.stringify(list || [], null, 2);
+    fs.writeFile(ATTEMPTS_FILE, dataStr, 'utf8', (err) => {
+      if (err) console.warn('Non-critical: Error saving attempts.json backup:', err.message);
+    });
   } catch (err) {
-    console.warn('Error saving attempts.json backup:', err.message);
+    console.warn('Error scheduling attempts.json backup:', err.message);
   }
 };
 
@@ -303,10 +309,23 @@ export const findAssessmentInDB = async (id) => {
   let a = store.find(x => String(x._id) === String(id));
   if (a) return a;
 
-  // 1. Try Hostinger MySQL
+  // 1. Check local file backup immediately (sub-millisecond)
+  try {
+    const fileList = loadAssessmentsFromFile();
+    a = fileList.find(x => String(x._id) === String(id));
+    if (a) {
+      store.push(a);
+      return a;
+    }
+  } catch (_) {}
+
+  // 2. Try Hostinger MySQL with safe fast timeout
   try {
     const pool = getMySQLPool();
-    const [rows] = await pool.query('SELECT * FROM assessments WHERE id = ? LIMIT 1', [id]);
+    const queryPromise = pool.query('SELECT * FROM assessments WHERE id = ? LIMIT 1', [id]);
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('MySQL query timeout')), 2500));
+    const [rows] = await Promise.race([queryPromise, timeoutPromise]);
+
     if (rows && rows.length > 0) {
       const r = rows[0];
       let qs = [];
@@ -337,15 +356,7 @@ export const findAssessmentInDB = async (id) => {
       return a;
     }
   } catch (err) {
-    // MySQL notice
-  }
-
-  // 2. Try file backup
-  const fileList = loadAssessmentsFromFile();
-  a = fileList.find(x => String(x._id) === String(id));
-  if (a) {
-    store.push(a);
-    return a;
+    // MySQL notice handled safely
   }
 
   // 3. Try Mongoose if available
@@ -369,16 +380,16 @@ export const findAssessmentInDB = async (id) => {
 export const saveAssessmentToDB = async (assessment) => {
   if (!assessment || !assessment._id) return;
 
-  // 1. In-memory and local disk persistence (guarantees zero data loss)
+  // 1. In-memory and local disk persistence (instant sub-millisecond)
   const store = getAssessmentsFromStore();
   const idx = store.findIndex(x => String(x._id) === String(assessment._id));
   if (idx >= 0) store[idx] = assessment; else store.unshift(assessment);
   saveStore();
 
-  // 2. Hostinger MySQL persistence
+  // 2. Hostinger MySQL persistence (with 3000ms safe timeout)
   try {
     const pool = getMySQLPool();
-    await pool.query(`
+    const queryPromise = pool.query(`
       INSERT INTO assessments (
         id, title, description, job_title, duration, passing_score, max_attempts,
         shuffle_questions, shuffle_options, show_result, is_active, access_password,
@@ -416,6 +427,9 @@ export const saveAssessmentToDB = async (assessment) => {
       assessment.scheduledAt ? new Date(assessment.scheduledAt) : null,
       assessment.expiresAt ? new Date(assessment.expiresAt) : null
     ]);
+
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('MySQL save timeout')), 3000));
+    await Promise.race([queryPromise, timeoutPromise]);
   } catch (err) {
     console.warn('MySQL saveAssessment notice:', err.message);
   }
@@ -2092,14 +2106,7 @@ router.get('/leaderboard', async (req, res) => {
 // Public Assessment Details (for Student Registration Form)
 router.get('/public/:id', async (req, res) => {
   try {
-    const store = getAssessmentsFromStore();
-    let a = store.find(x => String(x._id) === String(req.params.id));
-
-    if (!a && mongoose.connection?.readyState === 1) {
-      try {
-        a = await Assessment.findById(req.params.id).lean();
-      } catch (e) {}
-    }
+    let a = await findAssessmentInDB(req.params.id);
 
     if (!a || a.isActive === false) {
       return res.status(404).json({ error: 'Assessment not found or currently inactive.' });
@@ -2193,10 +2200,13 @@ router.post('/:id/register', async (req, res) => {
       a.invitedCandidates.push(studentRecord);
     }
 
-    // Persist to Hostinger MySQL, Mongo, and store
-    await saveAssessmentToDB(a);
+    // Non-blocking asynchronous persistence to Hostinger MySQL and file backup
+    saveAssessmentToDB(a).catch(err => {
+      console.warn('Asynchronous Hostinger MySQL saveAssessment notice:', err.message);
+    });
 
-    res.json({
+    // Immediate instant response (< 20ms) so candidate registration never hangs or spins indefinitely
+    return res.json({
       success: true,
       message: existingIdx !== -1 ? 'Registration details updated successfully!' : 'Registration successful!',
       candidate: {

@@ -19,20 +19,42 @@ reloadEnv();
 // Hostinger MySQL Connection Configuration Resolver
 export const getMySQLConfig = (override = {}) => {
   reloadEnv();
+
+  let dbUrlConfig = {};
+  const urlStr = process.env.DATABASE_URL || process.env.MYSQL_URL || process.env.JAWSDB_URL || process.env.CLEARDB_DATABASE_URL;
+  if (urlStr) {
+    try {
+      const u = new URL(urlStr);
+      dbUrlConfig = {
+        host: u.hostname,
+        port: u.port ? Number(u.port) : 3306,
+        user: decodeURIComponent(u.username || ''),
+        password: decodeURIComponent(u.password || ''),
+        database: u.pathname ? u.pathname.replace(/^\//, '') : ''
+      };
+    } catch (_) {}
+  }
+
+  const resolvedHost = override.host || process.env.DB_HOST || process.env.MYSQL_HOST || process.env.HOSTINGER_DB_HOST || process.env.DATABASE_HOST || dbUrlConfig.host || 'localhost';
+  const resolvedUser = override.user || process.env.DB_USER || process.env.MYSQL_USER || process.env.HOSTINGER_DB_USER || process.env.DATABASE_USER || process.env.DB_USERNAME || process.env.MYSQL_USERNAME || dbUrlConfig.user || 'root';
+  const resolvedPass = override.password !== undefined
+    ? override.password
+    : (process.env.DB_PASSWORD ?? process.env.MYSQL_PASSWORD ?? process.env.HOSTINGER_DB_PASSWORD ?? process.env.DATABASE_PASSWORD ?? process.env.DB_PASS ?? process.env.MYSQL_PASS ?? dbUrlConfig.password ?? '');
+  const resolvedDb = override.database || process.env.DB_NAME || process.env.MYSQL_DATABASE || process.env.HOSTINGER_DB_NAME || process.env.DATABASE_NAME || process.env.DB_DATABASE || dbUrlConfig.database || 'pranidha_school';
+  const resolvedPort = Number(override.port || process.env.DB_PORT || process.env.MYSQL_PORT || process.env.HOSTINGER_DB_PORT || process.env.DATABASE_PORT || dbUrlConfig.port || 3306);
+
   return {
-    host: override.host || process.env.DB_HOST || process.env.MYSQL_HOST || 'localhost',
-    user: override.user || process.env.DB_USER || process.env.MYSQL_USER || 'root',
-    password: override.password !== undefined
-      ? override.password
-      : (process.env.DB_PASSWORD || process.env.MYSQL_PASSWORD || process.env.DB_PASS || process.env.MYSQL_PASS || ''),
-    database: override.database || process.env.DB_NAME || process.env.DB_DATABASE || process.env.MYSQL_DATABASE || 'pranidha_school',
-    port: Number(override.port || process.env.DB_PORT || process.env.MYSQL_PORT || 3306),
+    host: resolvedHost,
+    user: resolvedUser,
+    password: resolvedPass,
+    database: resolvedDb,
+    port: resolvedPort,
     waitForConnections: true,
-    connectionLimit: 15,
+    connectionLimit: 20,
     queueLimit: 0,
     enableKeepAlive: true,
     keepAliveInitialDelay: 10000,
-    connectTimeout: 10000
+    connectTimeout: 4000
   };
 };
 
