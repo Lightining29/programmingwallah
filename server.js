@@ -7,15 +7,35 @@
 // ==============================================================================
 
 let appInstance = null;
+let initError = null;
 
 const handler = (req, res) => {
   if (appInstance) {
     return appInstance(req, res);
   }
-  const checkInterval = setInterval(() => {
+
+  if (initError) {
+    if (!res.headersSent) {
+      res.writeHead(503, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end('<h1>503 Service Unavailable</h1><p>The application server is starting up. Please refresh shortly.</p>');
+    }
+    return;
+  }
+
+  let attempts = 0;
+  const maxAttempts = 60; // 3 seconds max (60 * 50ms)
+  const timer = setInterval(() => {
+    attempts++;
     if (appInstance) {
-      clearInterval(checkInterval);
-      appInstance(req, res);
+      clearInterval(timer);
+      return appInstance(req, res);
+    }
+    if (initError || attempts >= maxAttempts) {
+      clearInterval(timer);
+      if (!res.headersSent) {
+        res.writeHead(503, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end('<h1>503 Service Unavailable</h1><p>Server initialization in progress. Please refresh in a few moments.</p>');
+      }
     }
   }, 50);
 };
@@ -27,6 +47,7 @@ module.exports = handler;
     const backend = await import('./backend/server.js');
     appInstance = backend.default || backend;
   } catch (err) {
-    console.error('[Hostinger Startup Error]:', err);
+    initError = err;
+    console.error('[Hostinger Startup Error]:', err.message || err);
   }
 })();
