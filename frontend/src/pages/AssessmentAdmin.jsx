@@ -277,28 +277,8 @@ export default function AssessmentAdmin() {
       const statsData = await sRes.json();
       const poolData  = await cRes.json();
       const loadedTests = Array.isArray(testsData) ? testsData : [];
-      if (loadedTests.length > 0) {
-        setTests(loadedTests);
-        try { localStorage.setItem('appletree_cached_assessments', JSON.stringify(loadedTests)); } catch (e) {}
-      } else {
-        // Check localStorage backup
-        const cached = localStorage.getItem('appletree_cached_assessments');
-        if (cached) {
-          try {
-            const parsed = JSON.parse(cached);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              setTests(parsed);
-              api('/api/assessment/admin/database/sync', { method: 'POST' }).catch(() => {});
-            } else {
-              setTests([]);
-            }
-          } catch (_) {
-            setTests([]);
-          }
-        } else {
-          setTests([]);
-        }
-      }
+      setTests(loadedTests);
+      try { localStorage.setItem('appletree_cached_assessments', JSON.stringify(loadedTests)); } catch (e) {}
       setStats(statsData || {});
       setCandidatePool(Array.isArray(poolData) ? poolData : []);
 
@@ -523,15 +503,36 @@ export default function AssessmentAdmin() {
   /* ── delete test ── */
   const deleteTest = async (id) => {
     const r = await Swal.fire({
-      icon: 'warning', title: 'Delete Test?', text: 'All questions and attempts for this test will also be deleted.',
-      showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonColor: '#6b7280',
+      icon: 'warning',
+      title: 'Delete Test?',
+      text: 'All questions, student registrations, and attempts for this test will also be deleted.',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
       confirmButtonText: 'Yes, delete',
     });
     if (!r.isConfirmed) return;
-    await api(`/api/assessment/admin/${id}`, { method: 'DELETE' });
-    Swal.fire({ icon: 'success', title: 'Deleted!', timer: 1500, showConfirmButton: false });
-    fetchAll();
-    if (selTest?._id === id) setSelTest(null);
+
+    // Immediately remove from state and cache so it never flickers back
+    setTests(prev => {
+      const next = (prev || []).filter(t => String(t._id || t.id) !== String(id));
+      try { localStorage.setItem('appletree_cached_assessments', JSON.stringify(next)); } catch (e) {}
+      return next;
+    });
+    if (selTest?._id === id || selTest?.id === id) setSelTest(null);
+
+    try {
+      const res = await api(`/api/assessment/admin/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || 'Failed to delete test');
+      }
+      Swal.fire({ icon: 'success', title: 'Deleted!', timer: 1500, showConfirmButton: false });
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Delete Failed', text: err.message });
+    } finally {
+      fetchAll();
+    }
   };
 
   /* ── add question ── */

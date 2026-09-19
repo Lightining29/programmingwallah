@@ -621,46 +621,47 @@ export const saveAttemptToDB = async (attempt) => {
 router.get('/admin/list', adminGuard, async (req, res) => {
   try {
     let list = [];
+    let mysqlSuccess = false;
 
     // 1. Query Hostinger MySQL first
     try {
       const pool = getMySQLPool();
       const [rows] = await pool.query('SELECT * FROM assessments ORDER BY created_at DESC');
-      if (rows && rows.length > 0) {
-        list = rows.map(r => {
-          let qs = [];
-          let ics = [];
-          try { qs = typeof r.questions_json === 'string' ? JSON.parse(r.questions_json) : (r.questions_json || []); } catch(e){}
-          try { ics = typeof r.invited_candidates_json === 'string' ? JSON.parse(r.invited_candidates_json) : (r.invited_candidates_json || []); } catch(e){}
-          return {
-            _id: r.id,
-            title: r.title,
-            description: r.description || '',
-            jobTitle: r.job_title || 'General',
-            duration: r.duration || 30,
-            passingScore: r.passing_score || 50,
-            maxAttempts: r.max_attempts || 1,
-            shuffleQuestions: Boolean(r.shuffle_questions),
-            shuffleOptions: Boolean(r.shuffle_options),
-            showResult: Boolean(r.show_result),
-            isActive: Boolean(r.is_active),
-            accessPassword: r.access_password || '',
-            questions: qs,
-            invitedCandidates: ics,
-            scheduledAt: r.scheduled_at,
-            expiresAt: r.expires_at,
-            createdAt: r.created_at
-          };
-        });
-        mockStore.assessments = list;
-        saveStore();
-      }
+      mysqlSuccess = true;
+      list = (rows || []).map(r => {
+        let qs = [];
+        let ics = [];
+        try { qs = typeof r.questions_json === 'string' ? JSON.parse(r.questions_json) : (r.questions_json || []); } catch(e){}
+        try { ics = typeof r.invited_candidates_json === 'string' ? JSON.parse(r.invited_candidates_json) : (r.invited_candidates_json || []); } catch(e){}
+        return {
+          _id: r.id,
+          title: r.title,
+          description: r.description || '',
+          jobTitle: r.job_title || 'General',
+          duration: r.duration || 30,
+          passingScore: r.passing_score || 50,
+          maxAttempts: r.max_attempts || 1,
+          shuffleQuestions: Boolean(r.shuffle_questions),
+          shuffleOptions: Boolean(r.shuffle_options),
+          showResult: Boolean(r.show_result),
+          isActive: Boolean(r.is_active),
+          accessPassword: r.access_password || '',
+          questions: qs,
+          invitedCandidates: ics,
+          scheduledAt: r.scheduled_at,
+          expiresAt: r.expires_at,
+          createdAt: r.created_at
+        };
+      });
+      mockStore.assessments = list;
+      saveStore();
+      return res.json(list);
     } catch (mysqlErr) {
       console.warn('MySQL admin/list query notice:', mysqlErr.message);
     }
 
-    // 2. Fallback to in-memory store & persistent file backup if MySQL returned 0 rows or errored
-    if (!list || list.length === 0) {
+    // 2. Fallback to in-memory store & persistent file backup ONLY if MySQL errored / unreachable
+    if (!mysqlSuccess) {
       const storeList = getAssessmentsFromStore();
       if (storeList && storeList.length > 0) {
         list = storeList.map(a => {
@@ -675,16 +676,6 @@ router.get('/admin/list', adminGuard, async (req, res) => {
           }
           return copy;
         });
-
-        // If MySQL is active and connected, auto-sync storeList to MySQL
-        const status = getMySQLStatus();
-        if (status.connected) {
-          (async () => {
-            for (const item of storeList) {
-              await saveAssessmentToDB(item).catch(() => {});
-            }
-          })().catch(() => {});
-        }
       }
     }
 
@@ -1019,32 +1010,38 @@ router.put('/admin/:id', adminGuard, async (req, res) => {
 
 router.delete('/admin/:id', adminGuard, async (req, res) => {
   try {
+    const targetId = String(req.params.id);
+
     if (mongoose.connection?.readyState === 1) {
       try {
-        await Assessment.findByIdAndDelete(req.params.id);
-        await Attempt.deleteMany({ assessment: req.params.id });
+        await Assessment.findByIdAndDelete(targetId);
+        await Attempt.deleteMany({ assessment: targetId });
       } catch (err) {}
     }
 
     try {
       const pool = getMySQLPool();
-      await pool.query('DELETE FROM assessment_attempts WHERE assessment_id = ?', [req.params.id]);
-      await pool.query('DELETE FROM assessments WHERE id = ?', [req.params.id]);
-    } catch (err) {}
-
-    const store = getAssessmentsFromStore();
-    const idx = store.findIndex(x => String(x._id) === String(req.params.id));
-    if (idx !== -1) {
-      store.splice(idx, 1);
-      saveStore();
+      await pool.query('DELETE FROM assessment_attempts WHERE assessment_id = ?', [targetId]);
+      await pool.query('DELETE FROM assessments WHERE id = ?', [targetId]);
+    } catch (err) {
+      console.warn('MySQL delete assessment notice:', err.message);
     }
 
+    // Completely purge from mockStore and in-memory lists
+    mockStore.assessments = (mockStore.assessments || []).filter(
+      x => String(x._id || x.id) !== targetId
+    );
     const attemptsStore = getAttemptsFromStore();
-    const remainingAttempts = attemptsStore.filter(a => String(a.assessment) !== String(req.params.id));
-    mockStore.attempts = remainingAttempts;
+    mockStore.attempts = (attemptsStore || []).filter(
+      a => String(a.assessment || a.assessment_id) !== targetId
+    );
     saveStore();
 
-    res.json({ message: 'Deleted.' });
+    // Immediately persist clean state to disk backup files
+    saveAssessmentsToFile(mockStore.assessments || []);
+    saveAttemptsToFile(mockStore.attempts || []);
+
+    res.json({ success: true, message: 'Assessment and all associated attempts deleted permanently.' });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
