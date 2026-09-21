@@ -307,7 +307,40 @@ export const findAssessmentInDB = async (id) => {
   if (!id) return null;
   const store = getAssessmentsFromStore();
   let a = store.find(x => String(x._id) === String(id));
-  if (a) return a;
+
+  // If found in memory, try to refresh candidates from assessment_candidates table if possible
+  if (a) {
+    try {
+      const pool = getMySQLPool();
+      const [candRows] = await pool.query(
+        'SELECT id, assessment_id, name, email, dob, phone, college, roll_no, photo_url, access_code, registered_at FROM assessment_candidates WHERE assessment_id = ?',
+        [id]
+      );
+      if (candRows && candRows.length > 0) {
+        if (!Array.isArray(a.invitedCandidates)) a.invitedCandidates = [];
+        const existingEmails = new Set(a.invitedCandidates.map(x => String(x.email || '').toLowerCase().trim()));
+        for (const cr of candRows) {
+          const em = String(cr.email || '').toLowerCase().trim();
+          if (!existingEmails.has(em)) {
+            a.invitedCandidates.push({
+              _id: cr.id,
+              name: cr.name,
+              email: cr.email,
+              dob: cr.dob,
+              phone: cr.phone,
+              college: cr.college,
+              rollNo: cr.roll_no,
+              photo: cr.photo_url,
+              accessCode: cr.access_code,
+              registeredAt: cr.registered_at
+            });
+            existingEmails.add(em);
+          }
+        }
+      }
+    } catch (_) {}
+    return a;
+  }
 
   // 1. Check local file backup immediately (sub-millisecond)
   try {
@@ -319,11 +352,11 @@ export const findAssessmentInDB = async (id) => {
     }
   } catch (_) {}
 
-  // 2. Try Hostinger MySQL with safe fast timeout
+  // 2. Try Hostinger MySQL with safe timeout
   try {
     const pool = getMySQLPool();
     const queryPromise = pool.query('SELECT * FROM assessments WHERE id = ? LIMIT 1', [id]);
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('MySQL query timeout')), 2500));
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('MySQL query timeout')), 6000));
     const [rows] = await Promise.race([queryPromise, timeoutPromise]);
 
     if (rows && rows.length > 0) {
@@ -332,6 +365,36 @@ export const findAssessmentInDB = async (id) => {
       let ics = [];
       try { qs = typeof r.questions_json === 'string' ? JSON.parse(r.questions_json) : (r.questions_json || []); } catch(e){}
       try { ics = typeof r.invited_candidates_json === 'string' ? JSON.parse(r.invited_candidates_json) : (r.invited_candidates_json || []); } catch(e){}
+
+      // Merge candidates from assessment_candidates table
+      try {
+        const [candRows] = await pool.query(
+          'SELECT id, assessment_id, name, email, dob, phone, college, roll_no, photo_url, access_code, registered_at FROM assessment_candidates WHERE assessment_id = ?',
+          [id]
+        );
+        if (candRows && candRows.length > 0) {
+          const existingEmails = new Set(ics.map(x => String(x.email || '').toLowerCase().trim()));
+          for (const cr of candRows) {
+            const em = String(cr.email || '').toLowerCase().trim();
+            if (!existingEmails.has(em)) {
+              ics.push({
+                _id: cr.id,
+                name: cr.name,
+                email: cr.email,
+                dob: cr.dob,
+                phone: cr.phone,
+                college: cr.college,
+                rollNo: cr.roll_no,
+                photo: cr.photo_url,
+                accessCode: cr.access_code,
+                registeredAt: cr.registered_at
+              });
+              existingEmails.add(em);
+            }
+          }
+        }
+      } catch (_) {}
+
       a = {
         _id: r.id,
         title: r.title,
@@ -386,9 +449,15 @@ export const saveAssessmentToDB = async (assessment) => {
   if (idx >= 0) store[idx] = assessment; else store.unshift(assessment);
   saveStore();
 
-  // 2. Hostinger MySQL persistence (with 3000ms safe timeout)
+  // 2. Hostinger MySQL persistence (with 15000ms safe timeout)
   try {
     const pool = getMySQLPool();
+    // Keep invited_candidates_json clean and compact for SQL storage
+    const sanitizedCandidates = (assessment.invitedCandidates || []).map(c => ({
+      ...c,
+      photo: typeof c.photo === 'string' && c.photo.length > 50000 ? c.photo.substring(0, 50000) : (c.photo || '')
+    }));
+
     const queryPromise = pool.query(`
       INSERT INTO assessments (
         id, title, description, job_title, duration, passing_score, max_attempts,
@@ -423,13 +492,46 @@ export const saveAssessmentToDB = async (assessment) => {
       assessment.isActive !== false ? 1 : 0,
       assessment.accessPassword || '',
       JSON.stringify(assessment.questions || []),
-      JSON.stringify(assessment.invitedCandidates || []),
+      JSON.stringify(sanitizedCandidates),
       assessment.scheduledAt ? new Date(assessment.scheduledAt) : null,
       assessment.expiresAt ? new Date(assessment.expiresAt) : null
     ]);
 
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('MySQL save timeout')), 3000));
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('MySQL save timeout')), 15000));
     await Promise.race([queryPromise, timeoutPromise]);
+
+    // Also persist candidates to dedicated assessment_candidates table
+    if (Array.isArray(assessment.invitedCandidates) && assessment.invitedCandidates.length > 0) {
+      for (const cand of assessment.invitedCandidates) {
+        if (!cand.email) continue;
+        const candId = String(cand._id || cand.candidateId || genId());
+        const candPhoto = typeof cand.photo === 'string' && cand.photo.length > 100000 ? cand.photo.substring(0, 100000) : (cand.photo || '');
+        await pool.query(`
+          INSERT INTO assessment_candidates (
+            id, assessment_id, name, email, dob, phone, college, roll_no, photo_url, access_code
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON DUPLICATE KEY UPDATE
+            name=VALUES(name),
+            dob=VALUES(dob),
+            phone=VALUES(phone),
+            college=VALUES(college),
+            roll_no=VALUES(roll_no),
+            photo_url=VALUES(photo_url),
+            access_code=VALUES(access_code)
+        `, [
+          candId,
+          assessment._id,
+          cand.name || 'Candidate',
+          String(cand.email).toLowerCase().trim(),
+          normalizeDob(cand.dob || cand.dateOfBirth),
+          cand.phone || '',
+          cand.college || '',
+          cand.rollNo || '',
+          candPhoto,
+          cand.accessCode || assessment.accessPassword || 'EXAM'
+        ]).catch(() => {});
+      }
+    }
   } catch (err) {
     console.warn('MySQL saveAssessment notice:', err.message);
   }
@@ -478,12 +580,18 @@ export const findAttemptInDB = async (attemptId) => {
           name: r.candidate_name,
           photo: r.candidate_photo || '',
           college: r.candidate_college || '',
+          dob: r.candidate_dob || '',
+          rollNo: r.candidate_roll_no || '',
+          phone: r.candidate_phone || '',
           accessCode: r.candidate_access_code
         },
         candidateEmail: r.candidate_email,
         candidateName: r.candidate_name,
         candidatePhoto: r.candidate_photo || '',
         candidateCollege: r.candidate_college || '',
+        candidateDob: r.candidate_dob || '',
+        candidateRollNo: r.candidate_roll_no || '',
+        candidatePhone: r.candidate_phone || '',
         answers: ans,
         score: r.score,
         percentage: r.percentage,
@@ -522,6 +630,14 @@ export const saveAttemptToDB = async (attempt) => {
 
   const candPhoto = attempt.candidatePhoto || attempt.candidate?.photo || '';
   const candCollege = attempt.candidateCollege || attempt.candidate?.college || '';
+  const candDob = attempt.candidateDob || attempt.candidate?.dob || attempt.candidate?.dateOfBirth || '';
+  const candRollNo = attempt.candidateRollNo || attempt.candidate?.rollNo || '';
+  const candPhone = attempt.candidatePhone || attempt.candidate?.phone || '';
+
+  // Limit photo size in database to 150KB string to prevent MySQL max_allowed_packet crashes
+  const safePhoto = typeof candPhoto === 'string' && candPhoto.length > 150000 
+    ? candPhoto.substring(0, 150000) 
+    : candPhoto;
 
   try {
     const pool = getMySQLPool();
@@ -529,11 +645,13 @@ export const saveAttemptToDB = async (attempt) => {
       INSERT INTO assessment_attempts (
         id, assessment_id, candidate_email, candidate_name, candidate_access_code,
         answers_json, score, percentage, passed, total_marks, time_taken, status,
-        violations_json, certificate_number, candidate_photo, candidate_college, started_at, submitted_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        violations_json, certificate_number, candidate_photo, candidate_college,
+        candidate_dob, candidate_roll_no, candidate_phone, started_at, submitted_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
         candidate_name=VALUES(candidate_name),
         candidate_email=VALUES(candidate_email),
+        candidate_access_code=VALUES(candidate_access_code),
         answers_json=VALUES(answers_json),
         score=VALUES(score),
         percentage=VALUES(percentage),
@@ -545,6 +663,9 @@ export const saveAttemptToDB = async (attempt) => {
         certificate_number=VALUES(certificate_number),
         candidate_photo=VALUES(candidate_photo),
         candidate_college=VALUES(candidate_college),
+        candidate_dob=VALUES(candidate_dob),
+        candidate_roll_no=VALUES(candidate_roll_no),
+        candidate_phone=VALUES(candidate_phone),
         submitted_at=VALUES(submitted_at)
     `, [
       attempt._id,
@@ -561,49 +682,60 @@ export const saveAttemptToDB = async (attempt) => {
       attempt.status || 'in-progress',
       JSON.stringify(attempt.violations || []),
       attempt.certificateNumber || '',
-      candPhoto,
+      safePhoto,
       candCollege,
+      candDob,
+      candRollNo,
+      candPhone,
       attempt.startedAt ? new Date(attempt.startedAt) : new Date(),
       attempt.submittedAt ? new Date(attempt.submittedAt) : null
     ]).catch(async (e) => {
-      // Fallback in case columns do not exist yet in existing MySQL table
-      await pool.query(`
-        INSERT INTO assessment_attempts (
-          id, assessment_id, candidate_email, candidate_name, candidate_access_code,
-          answers_json, score, percentage, passed, total_marks, time_taken, status,
-          violations_json, certificate_number, started_at, submitted_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-          candidate_name=VALUES(candidate_name),
-          candidate_email=VALUES(candidate_email),
-          answers_json=VALUES(answers_json),
-          score=VALUES(score),
-          percentage=VALUES(percentage),
-          passed=VALUES(passed),
-          total_marks=VALUES(total_marks),
-          time_taken=VALUES(time_taken),
-          status=VALUES(status),
-          violations_json=VALUES(violations_json),
-          certificate_number=VALUES(certificate_number),
-          submitted_at=VALUES(submitted_at)
-      `, [
-        attempt._id,
-        attempt.assessment || attempt.assessmentId || '',
-        attempt.candidateEmail || attempt.candidate?.email || '',
-        attempt.candidateName || attempt.candidate?.name || 'Candidate',
-        attempt.candidate?.accessCode || '',
-        JSON.stringify(attempt.answers || []),
-        Number(attempt.score) || 0,
-        Number(attempt.percentage) || 0,
-        attempt.passed ? 1 : 0,
-        Number(attempt.totalMarks) || 0,
-        Number(attempt.timeTaken) || 0,
-        attempt.status || 'in-progress',
-        JSON.stringify(attempt.violations || []),
-        attempt.certificateNumber || '',
-        attempt.startedAt ? new Date(attempt.startedAt) : new Date(),
-        attempt.submittedAt ? new Date(attempt.submittedAt) : null
-      ]);
+      // Fallback in case newer columns do not exist yet in existing MySQL table
+      try {
+        await pool.query(`
+          INSERT INTO assessment_attempts (
+            id, assessment_id, candidate_email, candidate_name, candidate_access_code,
+            answers_json, score, percentage, passed, total_marks, time_taken, status,
+            violations_json, certificate_number, candidate_photo, candidate_college, started_at, submitted_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON DUPLICATE KEY UPDATE
+            candidate_name=VALUES(candidate_name),
+            candidate_email=VALUES(candidate_email),
+            answers_json=VALUES(answers_json),
+            score=VALUES(score),
+            percentage=VALUES(percentage),
+            passed=VALUES(passed),
+            total_marks=VALUES(total_marks),
+            time_taken=VALUES(time_taken),
+            status=VALUES(status),
+            violations_json=VALUES(violations_json),
+            certificate_number=VALUES(certificate_number),
+            candidate_photo=VALUES(candidate_photo),
+            candidate_college=VALUES(candidate_college),
+            submitted_at=VALUES(submitted_at)
+        `, [
+          attempt._id,
+          attempt.assessment || attempt.assessmentId || '',
+          attempt.candidateEmail || attempt.candidate?.email || '',
+          attempt.candidateName || attempt.candidate?.name || 'Candidate',
+          attempt.candidate?.accessCode || '',
+          JSON.stringify(attempt.answers || []),
+          Number(attempt.score) || 0,
+          Number(attempt.percentage) || 0,
+          attempt.passed ? 1 : 0,
+          Number(attempt.totalMarks) || 0,
+          Number(attempt.timeTaken) || 0,
+          attempt.status || 'in-progress',
+          JSON.stringify(attempt.violations || []),
+          attempt.certificateNumber || '',
+          safePhoto,
+          candCollege,
+          attempt.startedAt ? new Date(attempt.startedAt) : new Date(),
+          attempt.submittedAt ? new Date(attempt.submittedAt) : null
+        ]);
+      } catch (innerErr) {
+        console.warn('MySQL fallback saveAttempt warning:', innerErr.message);
+      }
     });
   } catch (err) {
     console.warn('MySQL saveAttempt error:', err.message);
@@ -653,6 +785,44 @@ router.get('/admin/list', adminGuard, async (req, res) => {
           createdAt: r.created_at
         };
       });
+
+      // Also enrich with candidates registered in assessment_candidates table
+      try {
+        const [allCandRows] = await pool.query(
+          'SELECT assessment_id, id, name, email, dob, phone, college, roll_no, photo_url, access_code, registered_at FROM assessment_candidates'
+        );
+        if (allCandRows && allCandRows.length > 0) {
+          const candsByAssessment = {};
+          for (const c of allCandRows) {
+            if (!candsByAssessment[c.assessment_id]) candsByAssessment[c.assessment_id] = [];
+            candsByAssessment[c.assessment_id].push({
+              _id: c.id,
+              name: c.name,
+              email: c.email,
+              dob: c.dob,
+              phone: c.phone,
+              college: c.college,
+              rollNo: c.roll_no,
+              photo: c.photo_url,
+              accessCode: c.access_code,
+              registeredAt: c.registered_at
+            });
+          }
+          list.forEach(a => {
+            const extraCands = candsByAssessment[a._id] || [];
+            if (extraCands.length > 0) {
+              const existingEmails = new Set((a.invitedCandidates || []).map(x => String(x.email || '').toLowerCase().trim()));
+              for (const ec of extraCands) {
+                if (!existingEmails.has(String(ec.email).toLowerCase().trim())) {
+                  a.invitedCandidates.push(ec);
+                  existingEmails.add(String(ec.email).toLowerCase().trim());
+                }
+              }
+            }
+          });
+        }
+      } catch (candTableErr) {}
+
       mockStore.assessments = list;
       saveStore();
       return res.json(list);
@@ -858,6 +1028,17 @@ router.get('/admin/stats', adminGuard, async (req, res) => {
       } catch (e) {}
     }
 
+    // Direct Hostinger MySQL counts
+    try {
+      const pool = getMySQLPool();
+      const [testCountRows] = await pool.query('SELECT COUNT(*) as count FROM assessments');
+      const [attCountRows] = await pool.query('SELECT COUNT(*) as count FROM assessment_attempts WHERE status = "submitted"');
+      const [passedCountRows] = await pool.query('SELECT COUNT(*) as count FROM assessment_attempts WHERE status = "submitted" AND passed = 1');
+      if (testCountRows?.[0]?.count) totalTests = Math.max(totalTests, Number(testCountRows[0].count));
+      if (attCountRows?.[0]?.count) totalAttempts = Math.max(totalAttempts, Number(attCountRows[0].count));
+      if (passedCountRows?.[0]?.count) passedAttempts = Math.max(passedAttempts, Number(passedCountRows[0].count));
+    } catch (sqlErr) {}
+
     const storeTests = getAssessmentsFromStore();
     const storeAttempts = getAttemptsFromStore();
 
@@ -1022,6 +1203,7 @@ router.delete('/admin/:id', adminGuard, async (req, res) => {
     try {
       const pool = getMySQLPool();
       await pool.query('DELETE FROM assessment_attempts WHERE assessment_id = ?', [targetId]);
+      await pool.query('DELETE FROM assessment_candidates WHERE assessment_id = ?', [targetId]);
       await pool.query('DELETE FROM assessments WHERE id = ?', [targetId]);
     } catch (err) {
       console.warn('MySQL delete assessment notice:', err.message);
@@ -1253,6 +1435,10 @@ router.delete('/admin/:id/invite/:email', adminGuard, async (req, res) => {
       test.invitedCandidates = test.invitedCandidates.filter(ic => ic.email?.toLowerCase() !== targetEmail);
       await saveAssessmentToDB(test);
     }
+    try {
+      const pool = getMySQLPool();
+      await pool.query('DELETE FROM assessment_candidates WHERE assessment_id = ? AND LOWER(email) = ?', [req.params.id, targetEmail]);
+    } catch (e) {}
     res.json({ message: 'Candidate removed.' });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -1324,16 +1510,27 @@ router.get('/admin/:id/attempts', adminGuard, async (req, res) => {
           let viols = [];
           try { ans = typeof r.answers_json === 'string' ? JSON.parse(r.answers_json) : (r.answers_json || []); } catch(e){}
           try { viols = typeof r.violations_json === 'string' ? JSON.parse(r.violations_json) : (r.violations_json || []); } catch(e){}
+          const candObj = {
+            email: r.candidate_email,
+            name: r.candidate_name,
+            accessCode: r.candidate_access_code,
+            photo: r.candidate_photo || '',
+            college: r.candidate_college || '',
+            dob: r.candidate_dob || '',
+            rollNo: r.candidate_roll_no || '',
+            phone: r.candidate_phone || ''
+          };
           const sqlAtt = {
             _id: r.id,
             assessment: r.assessment_id,
-            candidate: {
-              email: r.candidate_email,
-              name: r.candidate_name,
-              accessCode: r.candidate_access_code
-            },
+            candidate: candObj,
             candidateEmail: r.candidate_email,
             candidateName: r.candidate_name,
+            candidatePhoto: r.candidate_photo || '',
+            candidateCollege: r.candidate_college || '',
+            candidateDob: r.candidate_dob || '',
+            candidateRollNo: r.candidate_roll_no || '',
+            candidatePhone: r.candidate_phone || '',
             answers: ans,
             score: r.score,
             percentage: r.percentage,
@@ -1351,11 +1548,31 @@ router.get('/admin/:id/attempts', adminGuard, async (req, res) => {
             attemptMap.set(rowId, sqlAtt);
           } else {
             const ex = attemptMap.get(rowId);
-            if ((!ex.answers || ex.answers.length === 0) && ans.length > 0) {
-              ex.answers = ans;
+            // Hostinger MySQL is the authoritative record: if MySQL has submitted status or higher/updated score, copy it over!
+            if (sqlAtt.status === 'submitted' || ex.status !== 'submitted') {
+              ex.status = sqlAtt.status;
+              ex.score = sqlAtt.score;
+              ex.percentage = sqlAtt.percentage;
+              ex.passed = sqlAtt.passed;
+              ex.totalMarks = sqlAtt.totalMarks;
+              ex.timeTaken = sqlAtt.timeTaken;
+              ex.submittedAt = sqlAtt.submittedAt;
             }
-            if (r.certificate_number && !ex.certificateNumber) {
-              ex.certificateNumber = r.certificate_number;
+            if (ans.length > 0) ex.answers = ans;
+            if (viols.length > 0) ex.violations = viols;
+            if (r.certificate_number) ex.certificateNumber = r.certificate_number;
+            if (r.candidate_photo) ex.candidatePhoto = r.candidate_photo;
+            if (r.candidate_college) ex.candidateCollege = r.candidate_college;
+            if (r.candidate_dob) ex.candidateDob = r.candidate_dob;
+            if (r.candidate_roll_no) ex.candidateRollNo = r.candidate_roll_no;
+            if (r.candidate_phone) ex.candidatePhone = r.candidate_phone;
+            if (!ex.candidate) ex.candidate = candObj;
+            else {
+              if (r.candidate_photo) ex.candidate.photo = r.candidate_photo;
+              if (r.candidate_college) ex.candidate.college = r.candidate_college;
+              if (r.candidate_dob) ex.candidate.dob = r.candidate_dob;
+              if (r.candidate_roll_no) ex.candidate.rollNo = r.candidate_roll_no;
+              if (r.candidate_phone) ex.candidate.phone = r.candidate_phone;
             }
           }
         }
@@ -1365,6 +1582,48 @@ router.get('/admin/:id/attempts', adminGuard, async (req, res) => {
     }
 
     let allAttempts = Array.from(attemptMap.values());
+
+    // Also enrich attempts with candidate registration profiles from assessment_candidates
+    try {
+      const pool = getMySQLPool();
+      const [candRows] = await pool.query(
+        'SELECT email, name, dob, phone, college, roll_no, photo_url, access_code FROM assessment_candidates WHERE assessment_id = ?',
+        [req.params.id]
+      );
+      if (candRows && candRows.length > 0) {
+        const candMap = new Map();
+        for (const cr of candRows) {
+          candMap.set(String(cr.email).toLowerCase().trim(), cr);
+        }
+        for (const att of allAttempts) {
+          const emailKey = String(att.candidateEmail || att.candidate?.email || '').toLowerCase().trim();
+          if (candMap.has(emailKey)) {
+            const profile = candMap.get(emailKey);
+            if (!att.candidate) att.candidate = {};
+            if (!att.candidatePhoto && profile.photo_url) {
+              att.candidatePhoto = profile.photo_url;
+              att.candidate.photo = profile.photo_url;
+            }
+            if (!att.candidateCollege && profile.college) {
+              att.candidateCollege = profile.college;
+              att.candidate.college = profile.college;
+            }
+            if (!att.candidateDob && profile.dob) {
+              att.candidateDob = profile.dob;
+              att.candidate.dob = profile.dob;
+            }
+            if (!att.candidateRollNo && profile.roll_no) {
+              att.candidateRollNo = profile.roll_no;
+              att.candidate.rollNo = profile.roll_no;
+            }
+            if (!att.candidatePhone && profile.phone) {
+              att.candidatePhone = profile.phone;
+              att.candidate.phone = profile.phone;
+            }
+          }
+        }
+      }
+    } catch (e) {}
 
     // AUTO-REGRADE: Check each submitted attempt against smart grading rules and update Hostinger MySQL if needed
     if (assessment && Array.isArray(assessment.questions) && assessment.questions.length > 0) {
@@ -1432,7 +1691,14 @@ router.post('/admin/:id/regrade', adminGuard, async (req, res) => {
             });
           } else {
             const ex = attemptMap.get(String(r.id));
-            if ((!ex.answers || ex.answers.length === 0) && ans.length > 0) ex.answers = ans;
+            if (r.status === 'submitted' || ex.status !== 'submitted') {
+              ex.status = r.status;
+              ex.score = r.score;
+              ex.percentage = r.percentage;
+              ex.passed = Boolean(r.passed);
+              ex.submittedAt = r.submitted_at;
+            }
+            if (ans.length > 0) ex.answers = ans;
           }
         }
       }
@@ -2197,10 +2463,40 @@ router.post('/:id/register', async (req, res) => {
       a.invitedCandidates.push(studentRecord);
     }
 
-    // Non-blocking asynchronous persistence to Hostinger MySQL and file backup
-    saveAssessmentToDB(a).catch(err => {
-      console.warn('Asynchronous Hostinger MySQL saveAssessment notice:', err.message);
-    });
+    // Direct persistence to Hostinger MySQL assessment_candidates table
+    const candidateId = genId();
+    try {
+      const pool = getMySQLPool();
+      await pool.query(`
+        INSERT INTO assessment_candidates (
+          id, assessment_id, name, email, dob, phone, college, roll_no, photo_url, access_code
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          name=VALUES(name),
+          dob=VALUES(dob),
+          phone=VALUES(phone),
+          college=VALUES(college),
+          roll_no=VALUES(roll_no),
+          photo_url=VALUES(photo_url),
+          access_code=VALUES(access_code)
+      `, [
+        candidateId,
+        req.params.id,
+        cleanName,
+        cleanEmail,
+        cleanDob,
+        cleanPhone,
+        cleanCollege,
+        cleanRollNo,
+        cleanPhoto,
+        a.accessPassword || 'EXAM'
+      ]);
+    } catch (sqlCandErr) {
+      console.warn('MySQL assessment_candidates insert notice:', sqlCandErr.message);
+    }
+
+    // Save assessment record
+    await saveAssessmentToDB(a);
 
     // Immediate instant response (< 20ms) so candidate registration never hangs or spins indefinitely
     return res.json({
@@ -2256,9 +2552,35 @@ router.post('/verify-access', async (req, res) => {
     }
 
     // 1. Verify candidate registration by email
-    const candidateMatch = (a.invitedCandidates || []).find(
+    let candidateMatch = (a.invitedCandidates || []).find(
       ic => String(ic.email || '').toLowerCase().trim() === cleanEmail
     );
+
+    if (!candidateMatch) {
+      try {
+        const pool = getMySQLPool();
+        const [candRows] = await pool.query(
+          'SELECT * FROM assessment_candidates WHERE assessment_id = ? AND LOWER(email) = ? LIMIT 1',
+          [assessmentId, cleanEmail]
+        );
+        if (candRows && candRows.length > 0) {
+          const cr = candRows[0];
+          candidateMatch = {
+            email: cr.email,
+            name: cr.name,
+            dob: cr.dob,
+            phone: cr.phone,
+            college: cr.college,
+            rollNo: cr.roll_no,
+            photo: cr.photo_url,
+            accessCode: cr.access_code || a.accessPassword || 'EXAM',
+            registeredAt: cr.registered_at
+          };
+          if (!Array.isArray(a.invitedCandidates)) a.invitedCandidates = [];
+          a.invitedCandidates.push(candidateMatch);
+        }
+      } catch (sqlErr) {}
+    }
 
     // 2. Verify password (assessment password OR candidate access code OR master admin password)
     const masterPassword = (process.env.ADMIN_PASSWORD || 'RANCOM@2026').toUpperCase();
@@ -2298,27 +2620,28 @@ router.post('/verify-access', async (req, res) => {
       }
     }
 
-    // Check attempts limit in memory & Hostinger MySQL
+    // Check attempts limit: count ONLY completed/submitted attempts (allow resuming ongoing in-progress attempts)
     const attemptsStore = getAttemptsFromStore();
-    let prevAttempts = attemptsStore.filter(att =>
+    let submittedAttempts = attemptsStore.filter(att =>
       String(att.assessment) === String(assessmentId) &&
-      (att.candidateEmail || att.candidate?.email || '').toLowerCase() === cleanEmail
+      (att.candidateEmail || att.candidate?.email || '').toLowerCase() === cleanEmail &&
+      att.status === 'submitted'
     );
 
-    if (prevAttempts.length === 0) {
+    if (submittedAttempts.length === 0) {
       try {
         const pool = getMySQLPool();
         const [rows] = await pool.query(
-          'SELECT id FROM assessment_attempts WHERE assessment_id = ? AND candidate_email = ?',
+          'SELECT id FROM assessment_attempts WHERE assessment_id = ? AND LOWER(candidate_email) = ? AND status = "submitted"',
           [assessmentId, cleanEmail]
         );
         if (rows && rows.length > 0) {
-          prevAttempts = rows;
+          submittedAttempts = rows;
         }
       } catch (e) {}
     }
 
-    if (prevAttempts.length >= (a.maxAttempts || 1)) {
+    if (submittedAttempts.length >= (a.maxAttempts || 1)) {
       return res.status(403).json({
         error: `Maximum attempts (${a.maxAttempts || 1}) reached for this test.`
       });
@@ -2351,9 +2674,36 @@ router.post('/start', async (req, res) => {
     const a = await findAssessmentInDB(assessmentId);
     if (!a || a.isActive === false) return res.status(404).json({ error: 'Assessment not found.' });
 
-    const candidateMatch = (a.invitedCandidates || []).find(
+    let candidateMatch = (a.invitedCandidates || []).find(
       ic => String(ic.email || '').toLowerCase().trim() === cleanEmail
     );
+
+    if (!candidateMatch) {
+      try {
+        const pool = getMySQLPool();
+        const [candRows] = await pool.query(
+          'SELECT * FROM assessment_candidates WHERE assessment_id = ? AND LOWER(email) = ? LIMIT 1',
+          [assessmentId, cleanEmail]
+        );
+        if (candRows && candRows.length > 0) {
+          const cr = candRows[0];
+          candidateMatch = {
+            email: cr.email,
+            name: cr.name,
+            dob: cr.dob,
+            phone: cr.phone,
+            college: cr.college,
+            rollNo: cr.roll_no,
+            photo: cr.photo_url,
+            accessCode: cr.access_code || a.accessPassword || 'EXAM',
+            registeredAt: cr.registered_at
+          };
+          if (!Array.isArray(a.invitedCandidates)) a.invitedCandidates = [];
+          a.invitedCandidates.push(candidateMatch);
+        }
+      } catch (sqlErr) {}
+    }
+
     const masterPassword = (process.env.ADMIN_PASSWORD || 'RANCOM@2026').toUpperCase();
     const isMasterAdmin = inputCode === masterPassword;
 
@@ -2386,7 +2736,29 @@ router.post('/start', async (req, res) => {
       }
     }
 
+    // Check if max submitted attempts reached (while allowing in-progress attempt resumption)
     const attemptsStore = getAttemptsFromStore();
+    let completedAttempts = attemptsStore.filter(att =>
+      String(att.assessment) === String(assessmentId) &&
+      (att.candidateEmail || att.candidate?.email || '').toLowerCase() === cleanEmail &&
+      att.status === 'submitted'
+    );
+    if (completedAttempts.length === 0) {
+      try {
+        const pool = getMySQLPool();
+        const [subRows] = await pool.query(
+          'SELECT id FROM assessment_attempts WHERE assessment_id = ? AND LOWER(candidate_email) = ? AND status = "submitted"',
+          [assessmentId, cleanEmail]
+        );
+        if (subRows && subRows.length > 0) completedAttempts = subRows;
+      } catch (e) {}
+    }
+    if (completedAttempts.length >= (a.maxAttempts || 1)) {
+      return res.status(403).json({
+        error: `Maximum attempts (${a.maxAttempts || 1}) reached for this test.`
+      });
+    }
+
     let attempt = attemptsStore.find(att =>
       String(att.assessment) === String(assessmentId) &&
       (att.candidateEmail || att.candidate?.email || '').toLowerCase() === cleanEmail &&
@@ -2425,6 +2797,7 @@ router.post('/start', async (req, res) => {
 
     if (!attempt) {
       const finalDob = inputDob || (candidateMatch ? normalizeDob(candidateMatch.dob || candidateMatch.dateOfBirth) : '');
+      const finalPhoto = candidateMatch?.photo || candidateMatch?.photo_url || '';
       attempt = {
         _id: genId(),
         assessment: assessmentId,
@@ -2432,18 +2805,21 @@ router.post('/start', async (req, res) => {
           registrationId: candidateMatch?.registrationId || null,
           email: cleanEmail,
           name: candidateMatch?.name || 'Candidate',
-          photo: candidateMatch?.photo || '',
+          photo: finalPhoto,
           dob: finalDob,
           dateOfBirth: finalDob,
           college: candidateMatch?.college || '',
-          rollNo: candidateMatch?.rollNo || '',
+          rollNo: candidateMatch?.rollNo || candidateMatch?.roll_no || '',
+          phone: candidateMatch?.phone || '',
           accessCode: inputCode
         },
         candidateEmail: cleanEmail,
         candidateName: candidateMatch?.name || 'Candidate',
-        candidatePhoto: candidateMatch?.photo || '',
+        candidatePhoto: finalPhoto,
         candidateDob: finalDob,
         candidateCollege: candidateMatch?.college || '',
+        candidateRollNo: candidateMatch?.rollNo || candidateMatch?.roll_no || '',
+        candidatePhone: candidateMatch?.phone || '',
         answers: [],
         score: 0,
         percentage: 0,
@@ -2486,22 +2862,68 @@ router.post('/submit', async (req, res) => {
     let attempt = await findAttemptInDB(attemptId);
 
     if (!attempt) return res.status(404).json({ error: 'Attempt not found.' });
-    if (attempt.status !== 'in-progress') return res.status(400).json({ error: 'Already submitted.' });
 
     let a = await findAssessmentInDB(attempt.assessment);
     if (!a) return res.status(404).json({ error: 'Assessment not found.' });
 
-    // Ensure candidate photo & college are linked
-    const candidateMatch = (a.invitedCandidates || []).find(
+    if (attempt.status !== 'in-progress') {
+      return res.json(a.showResult !== false
+        ? {
+            message: 'Already submitted.',
+            score: attempt.score,
+            total: attempt.totalMarks,
+            percentage: attempt.percentage,
+            passed: attempt.passed,
+            passingScore: a.passingScore || 50
+          }
+        : { submitted: true }
+      );
+    }
+
+    // Ensure candidate photo, college, dob, roll number, and phone are linked
+    let candidateMatch = (a.invitedCandidates || []).find(
       ic => String(ic.email || '').toLowerCase().trim() === String(attempt.candidateEmail || attempt.candidate?.email || '').toLowerCase().trim()
     );
+
+    if (!candidateMatch) {
+      try {
+        const pool = getMySQLPool();
+        const [candRows] = await pool.query(
+          'SELECT * FROM assessment_candidates WHERE assessment_id = ? AND LOWER(email) = ? LIMIT 1',
+          [attempt.assessment, String(attempt.candidateEmail || attempt.candidate?.email || '').toLowerCase().trim()]
+        );
+        if (candRows && candRows.length > 0) {
+          const cr = candRows[0];
+          candidateMatch = {
+            email: cr.email,
+            name: cr.name,
+            dob: cr.dob,
+            phone: cr.phone,
+            college: cr.college,
+            rollNo: cr.roll_no,
+            photo: cr.photo_url
+          };
+        }
+      } catch (e) {}
+    }
+
     if (candidateMatch) {
-      if (!attempt.candidatePhoto && candidateMatch.photo) attempt.candidatePhoto = candidateMatch.photo;
+      const matchPhoto = candidateMatch.photo || candidateMatch.photo_url || '';
+      const matchDob = candidateMatch.dob || candidateMatch.dateOfBirth || '';
+      const matchRollNo = candidateMatch.rollNo || candidateMatch.roll_no || '';
+
+      if (!attempt.candidatePhoto && matchPhoto) attempt.candidatePhoto = matchPhoto;
       if (!attempt.candidateCollege && candidateMatch.college) attempt.candidateCollege = candidateMatch.college;
+      if (!attempt.candidateDob && matchDob) attempt.candidateDob = matchDob;
+      if (!attempt.candidateRollNo && matchRollNo) attempt.candidateRollNo = matchRollNo;
+      if (!attempt.candidatePhone && candidateMatch.phone) attempt.candidatePhone = candidateMatch.phone;
+
       if (!attempt.candidate) attempt.candidate = {};
-      if (!attempt.candidate.photo && candidateMatch.photo) attempt.candidate.photo = candidateMatch.photo;
+      if (!attempt.candidate.photo && matchPhoto) attempt.candidate.photo = matchPhoto;
       if (!attempt.candidate.college && candidateMatch.college) attempt.candidate.college = candidateMatch.college;
-      if (!attempt.candidate.rollNo && candidateMatch.rollNo) attempt.candidate.rollNo = candidateMatch.rollNo;
+      if (!attempt.candidate.dob && matchDob) attempt.candidate.dob = matchDob;
+      if (!attempt.candidate.rollNo && matchRollNo) attempt.candidate.rollNo = matchRollNo;
+      if (!attempt.candidate.phone && candidateMatch.phone) attempt.candidate.phone = candidateMatch.phone;
     }
 
     attempt.answers = answers || [];

@@ -337,8 +337,52 @@ export const initMySQLTables = async () => {
     `).catch(() => {});
 
     await connection.query(`
+      ALTER TABLE assessment_attempts MODIFY COLUMN candidate_photo LONGTEXT;
+    `).catch(() => {});
+
+    await connection.query(`
+      ALTER TABLE assessment_attempts MODIFY COLUMN answers_json LONGTEXT;
+    `).catch(() => {});
+
+    await connection.query(`
+      ALTER TABLE assessment_attempts MODIFY COLUMN violations_json LONGTEXT;
+    `).catch(() => {});
+
+    await connection.query(`
       ALTER TABLE assessment_attempts ADD COLUMN candidate_college VARCHAR(255) DEFAULT '';
     `).catch(() => {});
+
+    await connection.query(`
+      ALTER TABLE assessment_attempts ADD COLUMN candidate_dob VARCHAR(50) DEFAULT '';
+    `).catch(() => {});
+
+    await connection.query(`
+      ALTER TABLE assessment_attempts ADD COLUMN candidate_roll_no VARCHAR(100) DEFAULT '';
+    `).catch(() => {});
+
+    await connection.query(`
+      ALTER TABLE assessment_attempts ADD COLUMN candidate_phone VARCHAR(50) DEFAULT '';
+    `).catch(() => {});
+
+    // Create dedicated assessment_candidates table in Hostinger MySQL
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS assessment_candidates (
+        id VARCHAR(100) PRIMARY KEY,
+        assessment_id VARCHAR(100) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        dob VARCHAR(50),
+        phone VARCHAR(50),
+        college VARCHAR(255),
+        roll_no VARCHAR(100),
+        photo_url LONGTEXT,
+        access_code VARCHAR(100),
+        registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uniq_assessment_student (assessment_id, email),
+        INDEX idx_assessment (assessment_id),
+        INDEX idx_email (email)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
 
     // Create certificates table in Hostinger MySQL
     await connection.query(`
