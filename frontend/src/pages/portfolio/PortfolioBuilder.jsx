@@ -809,7 +809,32 @@ export default function PortfolioBuilder() {
                     />
                   </div>
 
-
+                  {/* Floating Availability Card Settings */}
+                  <div className="p-4 rounded-2xl bg-[#231F1D] border border-[#332D2B] space-y-3">
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#A69B95] block">
+                      Floating Availability Card
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] text-[#8E8078] mb-1">Status Badge</label>
+                        <input
+                          type="text"
+                          value={availability.status}
+                          onChange={e => setAvailability({ ...availability, status: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] text-[#8E8078] mb-1">Target Period</label>
+                        <input
+                          type="text"
+                          value={availability.period}
+                          onChange={e => setAvailability({ ...availability, period: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -1411,8 +1436,8 @@ export default function PortfolioBuilder() {
             RIGHT: LIVE INTERACTIVE PREVIEW
         ================================================================= */}
         {(viewMode === 'split' || viewMode === 'preview') && (
-          <main className={`flex-1 overflow-y-auto ${viewMode === 'preview' ? 'p-0 bg-[#FFF7F3]' : 'bg-[#100E0D] p-3 sm:p-5 flex justify-center items-start'}`}>
-            <div className={viewMode === 'preview' ? 'w-full' : 'w-full max-w-5xl rounded-2xl overflow-hidden shadow-2xl'}>
+          <main className={`flex-1 overflow-y-auto ${viewMode === 'preview' ? 'p-0 bg-transparent' : 'bg-[#100E0D] p-3 sm:p-5 flex justify-center items-start'}`}>
+            <div className={`w-full ${viewMode === 'preview' ? '' : 'max-w-5xl rounded-3xl overflow-hidden shadow-2xl border border-[#332D2B]'}`}>
               <PortfolioModernView
                 data={livePortfolioData}
                 isEditing={true}

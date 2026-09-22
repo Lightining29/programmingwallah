@@ -106,7 +106,7 @@ export default function PublicPortfolio() {
   }
 
   return (
-    <div className="min-h-screen w-full font-sans antialiased bg-[#FFF7F3]">
+    <div className="w-full min-h-screen bg-transparent">
       <PortfolioModernView
         data={portfolio}
         showWindowMockup={false}

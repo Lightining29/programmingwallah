@@ -111,6 +111,23 @@ function CanonicalManager() {
   return null;
 }
 
+// Known standard application routes (anything else is treated as a direct student portfolio)
+const STANDARD_APP_ROUTES = [
+  '/about', '/admissions', '/programs', '/facilities', '/gallery', '/calendar',
+  '/meetings', '/fees', '/fee-structure', '/brochure', '/contact', '/login', '/practice',
+  '/arena', '/coding-arena', '/hackerrank', '/leaderboard', '/tutorials', '/music',
+  '/games', '/payment-demo', '/verify-certificate', '/certificate', '/cert', '/manish-kumar',
+  '/profile/manish-kumar', '/manish', '/careers', '/job-roles', '/trending-tech-jobs',
+  '/courses-in-ghaziabad', '/coaching-in-rdc-ghaziabad', '/courses', '/coaching',
+  '/lms', '/dashboard', '/portal', '/student/profile', '/student/dashboard', '/student-portal',
+  '/test', '/assessment-admin'
+];
+
+function isStandardRoute(pathname) {
+  if (pathname === '/' || pathname === '') return true;
+  return STANDARD_APP_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/') || pathname.startsWith(r + '?'));
+}
+
 // Inner layout — must be inside <Router> so useLocation works
 function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
   const location = useLocation();
@@ -118,26 +135,11 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
   const isExamPage = location.pathname.startsWith('/test') || location.pathname.startsWith('/dashboard/admin/tests') || location.pathname.startsWith('/assessment-admin');
   const isAdminPage = location.pathname.startsWith('/dashboard/admin') || location.pathname.startsWith('/portal/admin');
   const isArenaProblem = location.pathname.startsWith('/arena/problem');
-
-  // List of standard school routes to distinguish from dynamic student portfolio URLs like /manishrajput
-  const KNOWN_STATIC_PREFIXES = [
-    '/about', '/admissions', '/programs', '/facilities', '/gallery',
-    '/calendar', '/meetings', '/fees', '/fee-structure', '/brochure', '/contact',
-    '/login', '/practice', '/arena', '/coding-arena', '/hackerrank',
-    '/leaderboard', '/tutorials', '/music', '/games', '/payment-demo',
-    '/verify-certificate', '/certificate', '/cert', '/manish-kumar', '/manish',
-    '/careers', '/job-roles', '/trending-tech-jobs', '/courses', '/courses-in-ghaziabad',
-    '/coaching-in-rdc-ghaziabad', '/coaching', '/jobs', '/lms', '/dashboard', '/portal',
-    '/test', '/assessment-admin'
-  ];
-
-  const isExactHome = location.pathname === '/' || location.pathname === '';
-  const isKnownStaticPage = isExactHome || KNOWN_STATIC_PREFIXES.some(prefix => location.pathname === prefix || location.pathname.startsWith(prefix + '/'));
-
-  const isPortfolioPage = location.pathname.startsWith('/portfolio') || 
-                          location.pathname.startsWith('/student/portfolio') || 
-                          location.pathname.startsWith('/p/') ||
-                          !isKnownStaticPage;
+  const isPortfolioPage = 
+    location.pathname.startsWith('/student/portfolio') ||
+    location.pathname.startsWith('/portfolio') ||
+    location.pathname.startsWith('/p/') ||
+    !isStandardRoute(location.pathname);
 
   const hideHeaderFooter = isLoginPage || isExamPage || isArenaProblem || isPortfolioPage;
   const hideChatbot = hideHeaderFooter || isAdminPage || isArenaProblem || isPortfolioPage;
@@ -146,31 +148,37 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
     <div
       onMouseMove={onPointerMove}
       className={`relative flex min-h-screen flex-col overflow-x-hidden transition-colors duration-300 ${
-        isDark ? 'bg-slate-950 text-white' : 'bg-brandCream text-slate-800'
+        isPortfolioPage
+          ? 'bg-transparent text-slate-800'
+          : (isDark ? 'bg-slate-950 text-white' : 'bg-brandCream text-slate-800')
       }`}
     >
       <CanonicalManager />
-      <motion.div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 z-0 opacity-80"
-        style={{
-          background: isDark
-            ? `radial-gradient(380px circle at ${pointer.x}px ${pointer.y}px, rgba(56, 189, 248, 0.14), transparent 35%), radial-gradient(420px circle at 85% 18%, rgba(99, 102, 241, 0.12), transparent 26%), linear-gradient(135deg, rgba(2, 6, 23, 0.95), rgba(15, 23, 42, 0.98))`
-            : `radial-gradient(420px circle at ${pointer.x}px ${pointer.y}px, rgba(255, 112, 67, 0.10), transparent 35%), radial-gradient(460px circle at 85% 12%, rgba(79, 195, 247, 0.12), transparent 28%), linear-gradient(135deg, rgba(252, 251, 247, 0.96), rgba(243, 239, 233, 0.98))`
-        }}
-      />
-      <motion.div
-        aria-hidden="true"
-        className="pointer-events-none fixed left-[8%] top-[12%] h-40 w-40 rounded-full bg-cyan-400/8 blur-3xl"
-        style={{ y: glowY, x: glowX }}
-      />
-      <motion.div
-        aria-hidden="true"
-        className="pointer-events-none fixed bottom-[10%] right-[6%] h-56 w-56 rounded-full bg-indigo-500/10 blur-3xl"
-        style={{ y: glowY, x: glowX }}
-      />
+      {!isPortfolioPage && (
+        <>
+          <motion.div
+            aria-hidden="true"
+            className="pointer-events-none fixed inset-0 z-0 opacity-80"
+            style={{
+              background: isDark
+                ? `radial-gradient(380px circle at ${pointer.x}px ${pointer.y}px, rgba(56, 189, 248, 0.14), transparent 35%), radial-gradient(420px circle at 85% 18%, rgba(99, 102, 241, 0.12), transparent 26%), linear-gradient(135deg, rgba(2, 6, 23, 0.95), rgba(15, 23, 42, 0.98))`
+                : `radial-gradient(420px circle at ${pointer.x}px ${pointer.y}px, rgba(255, 112, 67, 0.10), transparent 35%), radial-gradient(460px circle at 85% 12%, rgba(79, 195, 247, 0.12), transparent 28%), linear-gradient(135deg, rgba(252, 251, 247, 0.96), rgba(243, 239, 233, 0.98))`
+            }}
+          />
+          <motion.div
+            aria-hidden="true"
+            className="pointer-events-none fixed left-[8%] top-[12%] h-40 w-40 rounded-full bg-cyan-400/8 blur-3xl"
+            style={{ y: glowY, x: glowX }}
+          />
+          <motion.div
+            aria-hidden="true"
+            className="pointer-events-none fixed bottom-[10%] right-[6%] h-56 w-56 rounded-full bg-indigo-500/10 blur-3xl"
+            style={{ y: glowY, x: glowX }}
+          />
+        </>
+      )}
       {!hideHeaderFooter && <Navbar />}
-      <main className="relative z-10 flex-grow">
+      <main className="relative z-10 flex-grow w-full">
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
