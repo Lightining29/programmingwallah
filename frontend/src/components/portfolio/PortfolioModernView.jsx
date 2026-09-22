@@ -22,6 +22,9 @@ import {
   FileText
 } from 'lucide-react';
 import ProjectModal from './ProjectModal';
+import PortfolioCyberView from './PortfolioCyberView';
+import PortfolioEmeraldView from './PortfolioEmeraldView';
+import PortfolioAuroraView from './PortfolioAuroraView';
 
 export default function PortfolioModernView({
   data,
@@ -29,6 +32,19 @@ export default function PortfolioModernView({
   onEditSection = () => {},
   showWindowMockup = true
 }) {
+  const currentTheme = data?.theme || 'editorial-warm';
+
+  // Dynamic Theme Switching
+  if (currentTheme === 'cyber-neon') {
+    return <PortfolioCyberView data={data} />;
+  }
+  if (currentTheme === 'midnight-emerald') {
+    return <PortfolioEmeraldView data={data} />;
+  }
+  if (currentTheme === 'cosmic-aurora') {
+    return <PortfolioAuroraView data={data} />;
+  }
+
   const [selectedProject, setSelectedProject] = useState(null);
 
   // Fallback defaults to ensure rock-solid rendering
@@ -212,34 +228,16 @@ export default function PortfolioModernView({
 
                 {/* Hero Action Buttons */}
                 <div className="flex flex-wrap items-center gap-4 pt-2">
-                  {hasProjects ? (
-                    <a
-                      href="#work"
-                      className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-[#E05A38] hover:bg-[#CF4E2C] text-white text-sm sm:text-base font-semibold shadow-lg shadow-[#E05A38]/25 hover:shadow-xl hover:shadow-[#E05A38]/35 transition-all hover:-translate-y-0.5"
-                    >
-                      <span>View my work</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </a>
-                  ) : (
-                    <a
-                      href="#experience"
-                      className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-[#E05A38] hover:bg-[#CF4E2C] text-white text-sm sm:text-base font-semibold shadow-lg shadow-[#E05A38]/25 transition-all hover:-translate-y-0.5"
-                    >
-                      <span>Explore Experience</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </a>
-                  )}
-
                   {resumeUrl && resumeUrl !== '#' && (
                     <a
                       href={resumeUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-[#1C1917] hover:bg-black text-white text-sm sm:text-base font-semibold shadow-md shadow-stone-900/15 transition-all hover:-translate-y-0.5"
+                      className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-[#E05A38] hover:bg-[#CF4E2C] text-white text-sm sm:text-base font-semibold shadow-lg shadow-[#E05A38]/25 hover:shadow-xl hover:shadow-[#E05A38]/35 transition-all hover:-translate-y-0.5"
                     >
-                      <FileText className="w-4 h-4 text-[#E05A38]" />
+                      <FileText className="w-4 h-4" />
                       <span>Resume (PDF)</span>
-                      <Download className="w-4 h-4 text-white/70" />
+                      <Download className="w-4 h-4 opacity-80" />
                     </a>
                   )}
 
@@ -249,6 +247,14 @@ export default function PortfolioModernView({
                   >
                     <span>About me</span>
                     <User className="w-4 h-4 text-[#8C7B73]" />
+                  </a>
+
+                  <a
+                    href="#contact"
+                    className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-stone-900 hover:bg-black text-white text-sm sm:text-base font-semibold shadow-md transition-all hover:-translate-y-0.5"
+                  >
+                    <span>Get in touch</span>
+                    <ArrowUpRight className="w-4 h-4 text-[#E05A38]" />
                   </a>
                 </div>
               </motion.div>

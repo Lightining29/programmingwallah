@@ -86,6 +86,7 @@ async function ensurePortfolioTable() {
     await pool.query(`ALTER TABLE student_portfolios ADD COLUMN avatar_image LONGTEXT;`).catch(() => {});
     await pool.query(`ALTER TABLE student_portfolios ADD COLUMN resume_pdf_url LONGTEXT;`).catch(() => {});
     await pool.query(`ALTER TABLE student_portfolios ADD COLUMN resume_pdf_name VARCHAR(255) DEFAULT '';`).catch(() => {});
+    await pool.query(`ALTER TABLE student_portfolios ADD COLUMN theme VARCHAR(50) DEFAULT 'editorial-warm';`).catch(() => {});
   } catch (err) {
     console.warn('MySQL student_portfolios table check:', err.message);
   }
@@ -311,12 +312,13 @@ router.post('/save', async (req, res) => {
       try {
         await pool.query(
           `INSERT INTO student_portfolios (
-             id, email, student_name, slug, avatar_image, resume_pdf_url, resume_pdf_name, data_json
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+             id, email, student_name, slug, theme, avatar_image, resume_pdf_url, resume_pdf_name, data_json
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON DUPLICATE KEY UPDATE
              email = VALUES(email),
              student_name = VALUES(student_name),
              slug = VALUES(slug),
+             theme = VALUES(theme),
              avatar_image = VALUES(avatar_image),
              resume_pdf_url = VALUES(resume_pdf_url),
              resume_pdf_name = VALUES(resume_pdf_name),
@@ -326,6 +328,7 @@ router.post('/save', async (req, res) => {
             email,
             studentName,
             slug,
+            portfolioData.theme || 'editorial-warm',
             avatarImage,
             portfolioData.resumeUrl,
             resumePdfName,

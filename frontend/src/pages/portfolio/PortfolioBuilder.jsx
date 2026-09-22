@@ -24,7 +24,10 @@ import {
   Sliders,
   Rocket,
   FileText,
-  Download
+  Download,
+  Palette,
+  Zap,
+  Crown
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import Swal from 'sweetalert2';
@@ -37,11 +40,14 @@ export default function PortfolioBuilder() {
   const avatarInputRef = useRef(null);
   const pdfInputRef = useRef(null);
 
-  // Active Tab: 'hero' | 'projects' | 'experience' | 'skills' | 'about' | 'contact'
+  // Active Tab: 'hero' | 'design' | 'projects' | 'experience' | 'skills' | 'about' | 'contact'
   const [activeTab, setActiveTab] = useState('hero');
 
   // View Mode: 'split' | 'editor' | 'preview'
   const [viewMode, setViewMode] = useState('split');
+
+  // Selected Design / Lighting Theme: 'editorial-warm' | 'cyber-neon' | 'midnight-emerald' | 'cosmic-aurora'
+  const [theme, setTheme] = useState('editorial-warm');
 
   // State: Hero & Identity
   const [name, setName] = useState('Alex Morgan');
@@ -211,6 +217,7 @@ export default function PortfolioBuilder() {
         .then(res => {
           if (res.success && res.portfolio) {
             const p = res.portfolio;
+            if (p.theme) setTheme(p.theme);
             if (p.name) setName(p.name);
             if (p.role) setRole(p.role);
             if (p.location) setLocation(p.location);
@@ -451,6 +458,7 @@ export default function PortfolioBuilder() {
         email,
         phone,
         socials,
+        theme,
         slug: generatedSlug
       };
 
@@ -573,6 +581,7 @@ export default function PortfolioBuilder() {
     email,
     phone,
     socials,
+    theme,
     slug: savedSlug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
   };
 
@@ -688,6 +697,7 @@ export default function PortfolioBuilder() {
             <div className="flex items-center gap-1 p-2 bg-[#171413] border-b border-[#2C2725] overflow-x-auto text-xs scrollbar-none">
               {[
                 { id: 'hero', label: 'Hero & Bio', icon: User },
+                { id: 'design', label: 'Theme & Lights', icon: Palette },
                 { id: 'projects', label: `Projects (${projects.length})`, icon: Layers },
                 { id: 'experience', label: `Experience (${experience.length})`, icon: Briefcase },
                 { id: 'skills', label: 'Skills', icon: Code2 },
@@ -726,6 +736,31 @@ export default function PortfolioBuilder() {
                       <User className="w-4 h-4 text-[#E05A38]" />
                       Hero & Visual Identity
                     </h2>
+                  </div>
+
+                  {/* Active Theme Status & Quick Switcher */}
+                  <div className="p-3.5 rounded-2xl bg-[#231F1D] border border-[#332D2B] flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-[#E05A38]/15 border border-[#E05A38]/30 flex items-center justify-center text-[#E05A38] shrink-0">
+                        <Palette className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="text-xs font-semibold text-white block">Active Design Theme</span>
+                        <span className="text-[11px] text-[#A69B95] block">
+                          {theme === 'cyber-neon' ? '⚡ Cyber Neon (Electric Lightning)' :
+                           theme === 'midnight-emerald' ? '👑 Midnight Emerald (Royal Luxury)' :
+                           theme === 'cosmic-aurora' ? '🌌 Cosmic Aurora (Moving Lights)' :
+                           '🌸 Editorial Warm (Alex Morgan)'}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('design')}
+                      className="px-3 py-1.5 rounded-lg bg-[#2E2825] hover:bg-[#38312E] text-white text-xs font-semibold transition-colors shrink-0"
+                    >
+                      Change Theme ↗
+                    </button>
                   </div>
 
                   {/* Circular Avatar Selector */}
@@ -951,6 +986,162 @@ export default function PortfolioBuilder() {
                         />
                       </div>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ─────────────────────────────────────────────────────────────
+                  TAB: DESIGN THEMES & LIGHTING EFFECTS
+              ───────────────────────────────────────────────────────────── */}
+              {activeTab === 'design' && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-sm font-bold uppercase tracking-wider text-[#A69B95] flex items-center gap-2">
+                        <Palette className="w-4 h-4 text-[#E05A38]" />
+                        Portfolio Designs & Lighting Styles
+                      </h2>
+                      <p className="text-[11px] text-[#8E8078]">
+                        Select from 4 unique, premium designs with distinct layouts, lighting effects, and animations.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {[
+                      {
+                        id: 'editorial-warm',
+                        name: 'Editorial Warm (Alex Morgan)',
+                        tagline: 'Warm Peach & Coral, Serif Elegance, Ambient Radial Glow',
+                        accentColor: '#E05A38',
+                        icon: Sparkles,
+                        badge: 'Editorial Classic',
+                        lighting: 'Ambient Radial Glow & Soft Pulse',
+                        features: ['Two-column editorial hero', 'Circular luxury portrait frame', 'Clean toolset ticker', 'Warm peach lighting']
+                      },
+                      {
+                        id: 'cyber-neon',
+                        name: 'Cyber Neon (Tech & Systems)',
+                        tagline: 'Electric Lightning, Moving Neon Lights, Obsidian HUD',
+                        accentColor: '#00F0FF',
+                        icon: Zap,
+                        badge: '⚡ Electric Lightning',
+                        lighting: 'Electric Lightning Beam & Moving Neon Orbs',
+                        features: ['Animated lightning border', 'Terminal & HUD interface', 'Cyan/violet moving light flares', 'Monospace systems look']
+                      },
+                      {
+                        id: 'midnight-emerald',
+                        name: 'Midnight Emerald (Royal Luxury)',
+                        tagline: 'Emerald Aurora Waves, Champagne Gold Shimmer, Arched Crest',
+                        accentColor: '#10B981',
+                        icon: Crown,
+                        badge: '👑 Royal Luxury',
+                        lighting: 'Shifting Aurora Waves & Gold Shimmer Line',
+                        features: ['Arched portrait crest with gold trim', 'Emerald aurora wave background', 'Gemstone milestone nodes', 'Regal luxury serif typography']
+                      },
+                      {
+                        id: 'cosmic-aurora',
+                        name: 'Cosmic Aurora (Creative Founder)',
+                        tagline: 'Fluid Moving Light Blobs, Iridescent Halo, Frosted 20px Glass',
+                        accentColor: '#EC4899',
+                        icon: Layers,
+                        badge: '🌌 Cosmic Aurora',
+                        lighting: 'Multi-layer Moving Light Blobs & Rotating Halo',
+                        features: ['Continuously floating moving light orbs', 'Spinning iridescent halo avatar ring', '20px blur frosted glassmorphism', 'Grand centered modern hero']
+                      }
+                    ].map(opt => {
+                      const Icon = opt.icon;
+                      const isSelected = theme === opt.id;
+                      return (
+                        <div
+                          key={opt.id}
+                          onClick={() => {
+                            setTheme(opt.id);
+                            Swal.fire({
+                              toast: true,
+                              position: 'top-end',
+                              icon: 'success',
+                              title: `Switched to ${opt.name}`,
+                              showConfirmButton: false,
+                              timer: 1500
+                            });
+                          }}
+                          className={`p-5 rounded-2xl border cursor-pointer transition-all duration-300 relative overflow-hidden ${
+                            isSelected
+                              ? 'bg-[#231F1D] border-[#E05A38] shadow-lg shadow-[#E05A38]/20 ring-1 ring-[#E05A38]'
+                              : 'bg-[#1D1918] border-[#332D2B] hover:border-[#4D433F] hover:bg-[#231F1D]'
+                          }`}
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="flex items-start gap-3.5">
+                              <div
+                                className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border"
+                                style={{
+                                  backgroundColor: `${opt.accentColor}15`,
+                                  borderColor: `${opt.accentColor}40`,
+                                  color: opt.accentColor
+                                }}
+                              >
+                                <Icon className="w-6 h-6" />
+                              </div>
+
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <h3 className="text-sm font-bold text-white">
+                                    {opt.name}
+                                  </h3>
+                                  <span
+                                    className="text-[10px] font-bold px-2 py-0.5 rounded-full border"
+                                    style={{
+                                      backgroundColor: `${opt.accentColor}20`,
+                                      borderColor: `${opt.accentColor}40`,
+                                      color: opt.accentColor
+                                    }}
+                                  >
+                                    {opt.badge}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-[#A69B95]">
+                                  {opt.tagline}
+                                </p>
+                                <div className="flex items-center gap-1.5 text-[11px] text-[#8E8078] pt-1">
+                                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: opt.accentColor }} />
+                                  <span>Lighting: <strong className="text-[#D8CCC4]">{opt.lighting}</strong></span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="shrink-0 flex items-center gap-2">
+                              {isSelected ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#E05A38] text-white text-xs font-bold shadow-sm">
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  <span>Active Design</span>
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="px-3 py-1.5 rounded-xl bg-[#2A2422] hover:bg-[#38302D] text-[#D8CCC4] text-xs font-semibold transition-colors"
+                                >
+                                  Apply Design
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Feature Tags */}
+                          <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-[#2C2725]">
+                            {opt.features.map((feat, fIdx) => (
+                              <span
+                                key={fIdx}
+                                className="text-[10px] px-2 py-0.5 rounded-md bg-[#171413] text-[#8E8078] border border-[#2E2826]"
+                              >
+                                {feat}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}

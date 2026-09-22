@@ -66,6 +66,7 @@ export default function PublicPortfolio() {
                 tags: ['React Native', 'Figma']
               }
             ],
+            theme: 'editorial-warm',
             slug: id
           });
         }
