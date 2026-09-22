@@ -53,6 +53,8 @@ import AssessmentAdmin from './pages/AssessmentAdmin.jsx';
 import ArenaHub from './pages/arena/ArenaHub.jsx';
 import ArenaProblem from './pages/arena/ArenaProblem.jsx';
 import ArenaProfile from './pages/arena/ArenaProfile.jsx';
+import PortfolioBuilder from './pages/portfolio/PortfolioBuilder.jsx';
+import PublicPortfolio from './pages/portfolio/PublicPortfolio.jsx';
 
 // Layout Components
 import Navbar from './components/Navbar.jsx';
@@ -170,6 +172,9 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
           <Route path="/arena/problem/:id" element={<ArenaProblem />} />
           <Route path="/arena/profile" element={<ArenaProfile />} />
           <Route path="/student/profile" element={<ArenaProfile />} />
+          <Route path="/student/portfolio" element={<PortfolioBuilder />} />
+          <Route path="/portfolio" element={<Navigate to="/student/portfolio" replace />} />
+          <Route path="/portfolio/:id" element={<PublicPortfolio />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/tutorials" element={<Tutorials />} />
           <Route path="/music" element={<Navigate to="/" replace />} />

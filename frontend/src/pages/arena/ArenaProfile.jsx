@@ -428,6 +428,13 @@ export default function ArenaProfile() {
                   <span>Edit Profile</span>
                 </button>
                 <Link
+                  to="/student/portfolio"
+                  className="px-4 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-500 border-2 border-yellow-500 text-black font-black text-xs inline-flex items-center gap-2 shadow-sm transition cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-black" />
+                  <span>Generate AI Portfolio</span>
+                </Link>
+                <Link
                   to="/arena"
                   className="px-5 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-500 border-2 border-yellow-500 text-black font-black text-xs inline-flex items-center gap-2 shadow-sm transition cursor-pointer"
                 >
