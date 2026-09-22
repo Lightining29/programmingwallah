@@ -4,12 +4,16 @@ import {
   User, Mail, Calendar, Trophy, Zap, Flame, ShieldCheck, 
   ArrowLeft, ArrowRight, Code2, Terminal, CheckCircle2, 
   XCircle, Clock, Award, Sparkles, ExternalLink, LogOut, 
-  Edit3, Camera, Save, RefreshCw, Layers, Check, ChevronRight
+  Edit3, Camera, Save, RefreshCw, Layers, Check, ChevronRight,
+  BookOpen, FileText, CheckCircle, AlertTriangle, Eye, Printer,
+  Filter, HelpCircle, ChevronDown, ChevronUp, Share2, Copy
 } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { useAuth } from '../../context/AuthContext.jsx';
 
 export default function ArenaProfile() {
   const navigate = useNavigate();
+  const { user: authUser, logout: authLogout } = useAuth();
 
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,9 +21,17 @@ export default function ArenaProfile() {
   const [problems, setProblems] = useState([]);
   const [leaderboardRank, setLeaderboardRank] = useState(null);
 
+  // New Exam & Certificate States
+  const [certificates, setCertificates] = useState([]);
+  const [examAttempts, setExamAttempts] = useState([]);
+  const [activeTab, setActiveTab] = useState('certificates'); // 'certificates' | 'exams' | 'arena'
+  const [expandedExamId, setExpandedExamId] = useState(null);
+  const [questionFilter, setQuestionFilter] = useState('all'); // 'all' | 'wrong' | 'correct'
+
   // Edit Mode
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
+  const [editCollege, setEditCollege] = useState('');
   const [editDob, setEditDob] = useState('');
   const [editPhoto, setEditPhoto] = useState('');
   const [saving, setSaving] = useState(false);
@@ -27,70 +39,124 @@ export default function ArenaProfile() {
 
   useEffect(() => {
     loadProfileData();
-  }, []);
+  }, [authUser]);
 
   const loadProfileData = async () => {
     setLoading(true);
     try {
-      const savedStudent = localStorage.getItem('arena_student');
-      let currentStudent = null;
-      if (savedStudent) {
-        try {
-          currentStudent = JSON.parse(savedStudent);
-          setStudent(currentStudent);
-          setEditName(currentStudent.name || '');
-          setEditDob(currentStudent.dob || '');
-          setEditPhoto(currentStudent.photo || '');
-        } catch (e) {}
+      // 1. Identify active student identity from multiple sources
+      let activeEmail = null;
+      let initialData = {};
+
+      if (authUser && authUser.email) {
+        activeEmail = authUser.email;
+        initialData = {
+          email: authUser.email,
+          name: authUser.name || 'Student',
+          college: authUser.college || '',
+          photo: authUser.photo || ''
+        };
+      } else {
+        const savedStudent = localStorage.getItem('arena_student') || 
+                             localStorage.getItem('user') || 
+                             localStorage.getItem('student_user');
+        if (savedStudent) {
+          try {
+            const parsed = JSON.parse(savedStudent);
+            if (parsed.email) {
+              activeEmail = parsed.email;
+              initialData = parsed;
+            }
+          } catch (e) {}
+        }
       }
 
-      // If no student found in localStorage, redirect to login with student LMS selected
-      if (!currentStudent || !currentStudent.email) {
+      // If no valid student session exists, redirect to login
+      if (!activeEmail) {
         navigate('/login?portal=student');
         return;
       }
 
-      // Fetch fresh profile from server
-      const token = localStorage.getItem('arena_token');
-      const res = await fetch(`/api/arena/profile?email=${encodeURIComponent(currentStudent.email)}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      });
-      const data = await res.json();
-      if (data.success && data.student) {
-        setStudent(data.student);
-        localStorage.setItem('arena_student', JSON.stringify(data.student));
-        setEditName(data.student.name || '');
-        setEditDob(data.student.dob || '');
-        setEditPhoto(data.student.photo || '');
-      }
+      setStudent(initialData);
+      setEditName(initialData.name || '');
+      setEditCollege(initialData.college || '');
+      setEditDob(initialData.dob || '');
+      setEditPhoto(initialData.photo || '');
 
-      // Fetch all problems to calculate accurate stats
-      const probRes = await fetch('/api/arena/problems');
-      const probData = await probRes.json();
-      if (probData.success) {
-        setProblems(probData.problems || []);
-      }
-
-      // Fetch student submissions
-      const subRes = await fetch(`/api/arena/submissions?email=${encodeURIComponent(currentStudent.email)}`);
-      const subData = await subRes.json();
-      if (subData.success) {
-        setSubmissions(subData.submissions || []);
-      }
-
-      // Fetch leaderboard to get user's global rank
-      const leadRes = await fetch('/api/arena/leaderboard');
-      const leadData = await leadRes.json();
-      if (leadData.success && leadData.leaderboard) {
-        const foundIdx = leadData.leaderboard.findIndex(
-          u => String(u.email).toLowerCase() === String(currentStudent.email).toLowerCase()
-        );
-        if (foundIdx !== -1) {
-          setLeaderboardRank(foundIdx + 1);
+      // 2. Fetch Exam Certificates & Attempts with Wrong-Questions review
+      try {
+        const examRes = await fetch(`/api/assessment/student/profile-exams?email=${encodeURIComponent(activeEmail)}`);
+        const examData = await examRes.json();
+        if (examData.success) {
+          if (examData.student) {
+            setStudent(prev => ({
+              ...prev,
+              ...examData.student,
+              name: examData.student.name || prev?.name || 'Student',
+              college: examData.student.college || prev?.college || '',
+              photo: prev?.photo || examData.student.photo || ''
+            }));
+            setEditName(examData.student.name || initialData.name || '');
+            setEditCollege(examData.student.college || initialData.college || '');
+            if (examData.student.dob) setEditDob(examData.student.dob);
+          }
+          setCertificates(examData.certificates || []);
+          setExamAttempts(examData.attempts || []);
+          if (examData.attempts && examData.attempts.length > 0 && !expandedExamId) {
+            setExpandedExamId(examData.attempts[0].id);
+          }
         }
+      } catch (e) {
+        console.error('Error fetching exam certificates:', e);
       }
+
+      // 3. Fetch Arena Profile & XP
+      try {
+        const token = localStorage.getItem('arena_token') || localStorage.getItem('token');
+        const res = await fetch(`/api/arena/profile?email=${encodeURIComponent(activeEmail)}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        const data = await res.json();
+        if (data.success && data.student) {
+          setStudent(prev => ({
+            ...prev,
+            ...data.student,
+            photo: data.student.photo || prev?.photo || ''
+          }));
+          setEditPhoto(data.student.photo || '');
+          localStorage.setItem('arena_student', JSON.stringify({ ...data.student, email: activeEmail }));
+        }
+      } catch (e) {
+        console.error('Error fetching arena profile:', e);
+      }
+
+      // 4. Fetch Problems & Coding Submissions
+      try {
+        const [probRes, subRes, leadRes] = await Promise.all([
+          fetch('/api/arena/problems'),
+          fetch(`/api/arena/submissions?email=${encodeURIComponent(activeEmail)}`),
+          fetch('/api/arena/leaderboard')
+        ]);
+        
+        const probData = await probRes.json();
+        if (probData.success) setProblems(probData.problems || []);
+
+        const subData = await subRes.json();
+        if (subData.success) setSubmissions(subData.submissions || []);
+
+        const leadData = await leadRes.json();
+        if (leadData.success && leadData.leaderboard) {
+          const foundIdx = leadData.leaderboard.findIndex(
+            u => String(u.email).toLowerCase() === String(activeEmail).toLowerCase()
+          );
+          if (foundIdx !== -1) setLeaderboardRank(foundIdx + 1);
+        }
+      } catch (e) {
+        console.error('Error fetching arena stats:', e);
+      }
+
     } catch (err) {
-      console.error('Error loading profile:', err);
+      console.error('Error loading complete profile:', err);
     } finally {
       setLoading(false);
     }
@@ -132,7 +198,7 @@ export default function ArenaProfile() {
     }
     setSaving(true);
     try {
-      const token = localStorage.getItem('arena_token');
+      const token = localStorage.getItem('arena_token') || localStorage.getItem('token');
       const res = await fetch('/api/arena/profile', {
         method: 'PUT',
         headers: {
@@ -142,23 +208,27 @@ export default function ArenaProfile() {
         body: JSON.stringify({
           email: student.email,
           name: editName.trim(),
+          college: editCollege.trim(),
           dob: editDob.trim(),
           photo: editPhoto
         })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to update profile');
-      setStudent(data.student);
-      localStorage.setItem('arena_student', JSON.stringify(data.student));
+      setStudent(prev => ({
+        ...prev,
+        ...data.student,
+        college: editCollege.trim()
+      }));
       setIsEditing(false);
       Swal.fire({
         icon: 'success',
         title: 'Profile Updated!',
-        text: 'Your student coder details have been saved.',
+        text: 'Your student details have been saved successfully.',
         timer: 2000,
         showConfirmButton: false,
-        background: '#0d1117',
-        color: '#f0f6fc'
+        background: '#09090b',
+        color: '#fef08a'
       });
     } catch (err) {
       Swal.fire({ icon: 'error', title: 'Update Error', text: err.message });
@@ -170,15 +240,37 @@ export default function ArenaProfile() {
   const handleLogout = () => {
     localStorage.removeItem('arena_token');
     localStorage.removeItem('arena_student');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    if (authLogout) authLogout();
     navigate('/login?portal=student');
+  };
+
+  const copyToClipboard = (text, label = 'Certificate ID') => {
+    navigator.clipboard.writeText(text);
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: `${label} copied to clipboard!`,
+      showConfirmButton: false,
+      timer: 1800,
+      background: '#18181b',
+      color: '#fef08a'
+    });
   };
 
   if (loading) {
     return (
-      <div className="arena-dark-root min-h-screen bg-[#0a0e17] flex items-center justify-center text-slate-200">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-sm font-bold text-slate-400">Loading Student Profile...</p>
+      <div className="min-h-screen bg-[#09090b] flex items-center justify-center text-slate-200">
+        <div className="text-center space-y-4">
+          <div className="relative w-16 h-16 mx-auto">
+            <div className="absolute inset-0 rounded-full border-4 border-amber-400/20 animate-ping" />
+            <div className="w-16 h-16 border-4 border-amber-400 border-t-white rounded-full animate-spin" />
+          </div>
+          <p className="text-sm font-black tracking-wider uppercase bg-gradient-to-r from-amber-300 via-yellow-200 to-white bg-clip-text text-transparent">
+            Loading Student Profile & Certificates...
+          </p>
         </div>
       </div>
     );
@@ -199,36 +291,49 @@ export default function ArenaProfile() {
   const hardSolved = problems.filter(p => p.difficulty === 'Hard' && solvedList.includes(p.id)).length;
 
   return (
-    <div className="arena-dark-root min-h-screen bg-[#0a0e17] text-slate-100 font-sans pb-24 selection:bg-emerald-500/20 selection:text-emerald-300">
+    <div className="min-h-screen bg-[#09090b] text-slate-100 font-sans pb-28 selection:bg-amber-400/30 selection:text-amber-200 relative overflow-x-hidden">
       
-      {/* ─── Top Ambient Glow ─────────────────────────────────────────── */}
+      {/* ─── Luxury Yellow, White & Black Background Glows ─────────────────── */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-[-15%] left-1/2 -translate-x-1/2 w-[900px] h-[400px] rounded-full bg-gradient-to-b from-emerald-500/15 via-teal-500/5 to-transparent blur-[140px]" />
+        {/* Radiant top-center amber/yellow bloom */}
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1100px] h-[550px] rounded-full bg-gradient-to-b from-amber-400/20 via-yellow-300/10 to-transparent blur-[150px]" />
+        {/* Soft white shimmer spotlight */}
+        <div className="absolute top-48 left-1/4 w-[600px] h-[400px] rounded-full bg-white/[0.04] blur-[120px]" />
+        {/* Subtle bottom golden ambient haze */}
+        <div className="absolute bottom-0 right-1/4 w-[700px] h-[450px] rounded-full bg-amber-500/10 blur-[160px]" />
+        {/* Mesh grid pattern */}
+        <div 
+          className="absolute inset-0 opacity-[0.035]"
+          style={{
+            backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px)`,
+            backgroundSize: '28px 28px'
+          }}
+        />
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-7">
         
-        {/* ─── Top Navigation Bar ─────────────────────────────────────── */}
+        {/* ─── Top Navigation Bar ─────────────────────────────────────────── */}
         <div className="flex items-center justify-between">
           <Link
             to="/arena"
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#161b22] hover:bg-[#21262d] border border-[#30363d] text-slate-300 hover:text-white text-xs font-bold transition"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 hover:border-amber-400/40 text-slate-300 hover:text-white text-xs font-bold transition shadow-lg backdrop-blur-md"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Coding Arena</span>
+            <ArrowLeft className="w-4 h-4 text-amber-400" />
+            <span>Coding Arena</span>
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <Link
               to="/leaderboard"
-              className="px-3.5 py-1.5 rounded-xl bg-[#161b22] hover:bg-[#21262d] border border-[#30363d] text-amber-400 text-xs font-bold flex items-center gap-1.5 transition"
+              className="px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-400/10 via-yellow-400/15 to-transparent border border-amber-400/30 hover:border-amber-400 text-amber-300 hover:text-white text-xs font-black flex items-center gap-2 transition shadow-lg shadow-amber-500/10"
             >
-              <Trophy className="w-3.5 h-3.5" />
+              <Trophy className="w-4 h-4 text-amber-400" />
               <span>Leaderboard</span>
             </Link>
             <button
               onClick={handleLogout}
-              className="px-3 py-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/50 border border-rose-800 text-rose-300 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+              className="px-4 py-2 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 hover:text-rose-200 text-xs font-bold flex items-center gap-2 transition cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Sign Out</span>
@@ -236,85 +341,102 @@ export default function ArenaProfile() {
           </div>
         </div>
 
-        {/* ─── Profile Hero Banner ────────────────────────────────────── */}
-        <div className="bg-[#0d1117] border border-[#30363d] rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+        {/* ─── Hero Profile Card (Yellow, White & Black Gradient) ─────────── */}
+        <div className="relative rounded-3xl p-7 sm:p-9 shadow-2xl overflow-hidden border border-amber-400/30 bg-gradient-to-br from-[#12131a] via-[#0d0e14] to-[#09090b]">
+          {/* Internal Shimmer Highlights */}
+          <div className="absolute top-0 right-0 w-[450px] h-[450px] bg-gradient-to-bl from-amber-400/15 via-yellow-300/5 to-transparent rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-amber-300/80 to-transparent" />
 
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 relative z-10">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-7 relative z-10">
             
-            {/* Avatar with glow & photo upload trigger */}
+            {/* Student Avatar with Gold Ring & Camera Edit Trigger */}
             <div className="relative group flex-shrink-0">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl overflow-hidden border-2 border-emerald-500/60 bg-[#161b22] shadow-[0_0_25px_rgba(16,185,129,0.25)] flex items-center justify-center">
+              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl overflow-hidden border-2 border-amber-400/80 bg-[#161722] shadow-[0_0_35px_rgba(251,191,36,0.3)] flex items-center justify-center relative">
                 {student?.photo ? (
                   <img src={student.photo} alt={student.name} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-3xl font-black text-emerald-400 bg-emerald-950/40">
+                  <div className="w-full h-full flex items-center justify-center text-4xl font-black text-amber-300 bg-gradient-to-br from-amber-950/60 to-black">
                     {student?.name?.slice(0, 2).toUpperCase() || 'ST'}
                   </div>
                 )}
+                {/* Golden Corner Accent */}
+                <div className="absolute top-1.5 right-1.5 p-1 rounded-full bg-amber-400/90 text-black shadow-md">
+                  <Sparkles className="w-3 h-3" />
+                </div>
               </div>
               <button
                 onClick={() => setIsEditing(true)}
-                className="absolute -bottom-2 -right-2 p-2 rounded-xl bg-emerald-500 text-black shadow-lg hover:scale-105 transition cursor-pointer"
-                title="Edit Profile"
+                className="absolute -bottom-2 -right-2 p-2.5 rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-black font-black shadow-lg shadow-amber-500/30 hover:scale-105 transition cursor-pointer border border-white/40"
+                title="Edit Student Profile"
               >
-                <Camera className="w-3.5 h-3.5" />
+                <Camera className="w-4 h-4" />
               </button>
             </div>
 
             {/* Profile Info */}
-            <div className="flex-1 text-center sm:text-left space-y-2 min-w-0">
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold inline-flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3" />
-                  Verified Student Coder
+            <div className="flex-1 text-center sm:text-left space-y-3 min-w-0">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
+                <span className="text-xs px-3 py-1 rounded-full bg-gradient-to-r from-amber-400/20 to-yellow-400/20 text-amber-300 border border-amber-400/40 font-black inline-flex items-center gap-1.5 shadow-sm">
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                  Verified Student Candidate
                 </span>
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 font-bold inline-flex items-center gap-1">
-                  <Flame className="w-3 h-3" />
-                  3-Day Streak
+                {student?.college && (
+                  <span className="text-xs px-3 py-1 rounded-full bg-white/[0.06] text-white border border-white/15 font-semibold inline-flex items-center gap-1.5 truncate max-w-[280px]">
+                    🎓 {student.college}
+                  </span>
+                )}
+                <span className="text-xs px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 font-bold inline-flex items-center gap-1">
+                  <Flame className="w-3.5 h-3.5" />
+                  Exam Certified
                 </span>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                {student?.name || 'Student'}
-              </h1>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white flex items-center justify-center sm:justify-start gap-3">
+                  <span className="bg-gradient-to-r from-white via-amber-100 to-yellow-300 bg-clip-text text-transparent">
+                    {student?.name || 'Student Candidate'}
+                  </span>
+                </h1>
+                {student?.rollNo && (
+                  <div className="text-xs font-mono text-amber-400/80 mt-1">
+                    Roll No / Student ID: <span className="text-white font-bold">{student.rollNo}</span>
+                  </div>
+                )}
+              </div>
 
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs text-slate-400 font-medium">
-                <div className="flex items-center gap-1.5">
-                  <Mail className="w-3.5 h-3.5 text-slate-500" />
-                  <span>{student?.email}</span>
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs text-slate-300 font-medium">
+                <div className="flex items-center gap-1.5 bg-black/30 px-2.5 py-1 rounded-lg border border-white/5">
+                  <Mail className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="text-slate-200">{student?.email}</span>
                 </div>
                 {student?.dob && (
-                  <div className="flex items-center gap-1.5 font-mono">
-                    <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                  <div className="flex items-center gap-1.5 bg-black/30 px-2.5 py-1 rounded-lg border border-white/5 font-mono">
+                    <Calendar className="w-3.5 h-3.5 text-amber-400" />
                     <span>DOB: {student.dob}</span>
                   </div>
                 )}
-                {student?.createdAt && (
-                  <div className="flex items-center gap-1.5 text-slate-500">
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>Joined: {new Date(student.createdAt).toLocaleDateString()}</span>
-                  </div>
-                )}
+                <div className="flex items-center gap-1.5 bg-black/30 px-2.5 py-1 rounded-lg border border-white/5">
+                  <Award className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Certificates: <strong className="text-amber-300">{certificates.length}</strong></span>
+                </div>
               </div>
 
               <div className="pt-2 flex flex-wrap items-center justify-center sm:justify-start gap-3">
-                <Link
-                  to="/arena"
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black font-black text-xs inline-flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition cursor-pointer"
-                >
-                  <Terminal className="w-3.5 h-3.5" />
-                  <span>Open Coding Arena</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="px-4 py-2.5 rounded-xl bg-[#161b22] hover:bg-[#21262d] border border-[#30363d] text-slate-300 hover:text-white text-xs font-bold inline-flex items-center gap-2 transition cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/15 hover:border-amber-400/50 text-white text-xs font-bold inline-flex items-center gap-2 transition cursor-pointer shadow-md"
                 >
-                  <Edit3 className="w-3.5 h-3.5 text-slate-400" />
+                  <Edit3 className="w-3.5 h-3.5 text-amber-400" />
                   <span>Edit Profile</span>
                 </button>
+                <Link
+                  to="/arena"
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-300 text-black font-black text-xs inline-flex items-center gap-2 shadow-lg shadow-amber-500/25 transition cursor-pointer"
+                >
+                  <Terminal className="w-3.5 h-3.5" />
+                  <span>Enter Coding Arena</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
             </div>
 
@@ -322,185 +444,722 @@ export default function ArenaProfile() {
 
         </div>
 
-        {/* ─── Metric Cards Grid ──────────────────────────────────────── */}
+        {/* ─── Metric Cards Grid ────────────────────────────────────────── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           
-          <div className="bg-[#0d1117] border border-[#30363d] rounded-2xl p-4 shadow-xl">
-            <div className="flex items-center justify-between text-xs text-slate-400 font-bold mb-1">
-              <span>Total Solved</span>
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          {/* Card 1: Certificates Earned */}
+          <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-amber-400/30 hover:border-amber-400/70 rounded-2xl p-4 shadow-xl backdrop-blur-md transition group">
+            <div className="flex items-center justify-between text-xs text-slate-300 font-bold mb-1">
+              <span>Exam Certificates</span>
+              <Award className="w-4 h-4 text-amber-400 group-hover:scale-110 transition" />
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-white font-mono">{solvedCount}</div>
-            <div className="text-[11px] text-slate-500 mt-1">out of {totalProblems} available</div>
+            <div className="text-2xl sm:text-3xl font-black text-amber-300 font-mono">
+              {certificates.length}
+            </div>
+            <div className="text-[11px] text-slate-400 mt-1">Admin verified & issued</div>
           </div>
 
-          <div className="bg-[#0d1117] border border-[#30363d] rounded-2xl p-4 shadow-xl">
-            <div className="flex items-center justify-between text-xs text-slate-400 font-bold mb-1">
-              <span>Total XP</span>
-              <Zap className="w-4 h-4 text-amber-400" />
+          {/* Card 2: Exams Attended */}
+          <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-white/10 hover:border-amber-400/50 rounded-2xl p-4 shadow-xl backdrop-blur-md transition group">
+            <div className="flex items-center justify-between text-xs text-slate-300 font-bold mb-1">
+              <span>Exams Attended</span>
+              <FileText className="w-4 h-4 text-yellow-400 group-hover:scale-110 transition" />
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-amber-400 font-mono">{student?.score || 0}</div>
-            <div className="text-[11px] text-slate-500 mt-1">ranking points earned</div>
+            <div className="text-2xl sm:text-3xl font-black text-white font-mono">
+              {examAttempts.length}
+            </div>
+            <div className="text-[11px] text-slate-400 mt-1">
+              {examAttempts.filter(a => a.passed).length} passed successfully
+            </div>
           </div>
 
-          <div className="bg-[#0d1117] border border-[#30363d] rounded-2xl p-4 shadow-xl">
-            <div className="flex items-center justify-between text-xs text-slate-400 font-bold mb-1">
+          {/* Card 3: Total Score / XP */}
+          <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-amber-400/30 hover:border-amber-400/70 rounded-2xl p-4 shadow-xl backdrop-blur-md transition group">
+            <div className="flex items-center justify-between text-xs text-slate-300 font-bold mb-1">
+              <span>Ranking XP</span>
+              <Zap className="w-4 h-4 text-amber-400 group-hover:scale-110 transition" />
+            </div>
+            <div className="text-2xl sm:text-3xl font-black text-amber-400 font-mono">
+              {student?.score || student?.xp || 0}
+            </div>
+            <div className="text-[11px] text-slate-400 mt-1">earned across exams & arena</div>
+          </div>
+
+          {/* Card 4: Global Rank */}
+          <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-white/10 hover:border-amber-400/50 rounded-2xl p-4 shadow-xl backdrop-blur-md transition group">
+            <div className="flex items-center justify-between text-xs text-slate-300 font-bold mb-1">
               <span>Global Rank</span>
-              <Trophy className="w-4 h-4 text-cyan-400" />
+              <Trophy className="w-4 h-4 text-yellow-300 group-hover:scale-110 transition" />
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-cyan-400 font-mono">
+            <div className="text-2xl sm:text-3xl font-black text-white font-mono">
               {leaderboardRank ? `#${leaderboardRank}` : '--'}
             </div>
-            <div className="text-[11px] text-slate-500 mt-1">across all registered coders</div>
-          </div>
-
-          <div className="bg-[#0d1117] border border-[#30363d] rounded-2xl p-4 shadow-xl">
-            <div className="flex items-center justify-between text-xs text-slate-400 font-bold mb-1">
-              <span>Submissions</span>
-              <Terminal className="w-4 h-4 text-purple-400" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-purple-400 font-mono">{submissions.length}</div>
-            <div className="text-[11px] text-slate-500 mt-1">total code attempts</div>
+            <div className="text-[11px] text-slate-400 mt-1">across all students</div>
           </div>
 
         </div>
 
-        {/* ─── Detailed Stats & LeetCode Meters ───────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* LeetCode Difficulty Breakdown (1 col) */}
-          <div className="bg-[#0d1117] border border-[#30363d] rounded-3xl p-6 shadow-xl space-y-4">
-            <h3 className="text-sm font-black text-white flex items-center gap-2">
-              <Layers className="w-4 h-4 text-emerald-400" />
-              <span>Difficulty Progress</span>
-            </h3>
+        {/* ─── Profile Navigation Tabs ──────────────────────────────────── */}
+        <div className="flex items-center gap-2 border-b border-amber-400/20 pb-2 overflow-x-auto scrollbar-none">
+          <button
+            onClick={() => setActiveTab('certificates')}
+            className={`px-5 py-2.5 rounded-2xl text-xs font-black flex items-center gap-2.5 transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'certificates'
+                ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-black shadow-lg shadow-amber-500/20 scale-[1.02]'
+                : 'bg-white/[0.04] text-slate-300 hover:text-white hover:bg-white/[0.08] border border-white/5'
+            }`}
+          >
+            <Award className="w-4 h-4" />
+            <span>My Certificates</span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
+              activeTab === 'certificates' ? 'bg-black text-amber-300' : 'bg-white/10 text-white'
+            }`}>
+              {certificates.length}
+            </span>
+          </button>
 
-            {/* Easy Bar */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-[#00b8a3]">Easy</span>
-                <span className="text-slate-400 font-mono">{easySolved} / {easyTotal}</span>
-              </div>
-              <div className="w-full h-2 bg-[#21262d] rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-[#00b8a3]" 
-                  style={{ width: `${easyTotal > 0 ? (easySolved / easyTotal) * 100 : 0}%` }}
-                />
-              </div>
-            </div>
+          <button
+            onClick={() => setActiveTab('exams')}
+            className={`px-5 py-2.5 rounded-2xl text-xs font-black flex items-center gap-2.5 transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'exams'
+                ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-black shadow-lg shadow-amber-500/20 scale-[1.02]'
+                : 'bg-white/[0.04] text-slate-300 hover:text-white hover:bg-white/[0.08] border border-white/5'
+            }`}
+          >
+            <BookOpen className="w-4 h-4" />
+            <span>Exam Results & Mistakes Review</span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
+              activeTab === 'exams' ? 'bg-black text-amber-300' : 'bg-white/10 text-white'
+            }`}>
+              {examAttempts.length}
+            </span>
+          </button>
 
-            {/* Medium Bar */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-[#ffa116]">Medium</span>
-                <span className="text-slate-400 font-mono">{medSolved} / {medTotal}</span>
-              </div>
-              <div className="w-full h-2 bg-[#21262d] rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-[#ffa116]" 
-                  style={{ width: `${medTotal > 0 ? (medSolved / medTotal) * 100 : 0}%` }}
-                />
-              </div>
-            </div>
+          <button
+            onClick={() => setActiveTab('arena')}
+            className={`px-5 py-2.5 rounded-2xl text-xs font-black flex items-center gap-2.5 transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'arena'
+                ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-black shadow-lg shadow-amber-500/20 scale-[1.02]'
+                : 'bg-white/[0.04] text-slate-300 hover:text-white hover:bg-white/[0.08] border border-white/5'
+            }`}
+          >
+            <Terminal className="w-4 h-4" />
+            <span>Coding Arena & Practice</span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
+              activeTab === 'arena' ? 'bg-black text-amber-300' : 'bg-white/10 text-white'
+            }`}>
+              {solvedCount} solved
+            </span>
+          </button>
+        </div>
 
-            {/* Hard Bar */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-[#ff375f]">Hard</span>
-                <span className="text-slate-400 font-mono">{hardSolved} / {hardTotal}</span>
-              </div>
-              <div className="w-full h-2 bg-[#21262d] rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-[#ff375f]" 
-                  style={{ width: `${hardTotal > 0 ? (hardSolved / hardTotal) * 100 : 0}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="p-3 rounded-xl bg-[#161b22] border border-[#30363d] text-[11px] text-slate-400 leading-relaxed">
-              💡 <strong>Pro Tip:</strong> Solving harder problems awards significantly more XP points and boosts your global standing on the leaderboard!
-            </div>
-          </div>
-
-          {/* Submissions Activity History (2 cols) */}
-          <div className="lg:col-span-2 bg-[#0d1117] border border-[#30363d] rounded-3xl p-6 shadow-xl space-y-4">
+        {/* ─── TAB 1: CERTIFICATES ──────────────────────────────────────── */}
+        {activeTab === 'certificates' && (
+          <div className="space-y-6 animate-fadeIn">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-black text-white flex items-center gap-2">
-                <Clock className="w-4 h-4 text-indigo-400" />
-                <span>Recent Submissions Activity</span>
-              </h3>
-              <Link to="/arena" className="text-xs text-emerald-400 hover:underline font-bold">
-                Solve More
+              <div>
+                <h2 className="text-xl font-black text-white flex items-center gap-2">
+                  <Award className="w-5 h-5 text-amber-400" />
+                  <span>Admin-Issued Official Exam Certificates</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Certificates generated by admin for exams attended with verifiable cryptographic credentials.
+                </p>
+              </div>
+              <Link
+                to="/verify-certificate"
+                className="text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1.5 transition"
+              >
+                <span>Verification Portal</span>
+                <ExternalLink className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            {submissions.length === 0 ? (
-              <div className="text-center py-12 text-slate-500 space-y-2">
-                <Code2 className="w-10 h-10 mx-auto opacity-40 text-slate-400" />
-                <p className="text-xs font-medium">No code submissions recorded yet.</p>
+            {certificates.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-amber-400/30 p-12 text-center bg-white/[0.02] space-y-4">
+                <div className="w-16 h-16 mx-auto rounded-3xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center text-amber-400">
+                  <Award className="w-8 h-8" />
+                </div>
+                <div className="max-w-md mx-auto space-y-1">
+                  <h3 className="text-base font-bold text-white">No Exam Certificates Issued Yet</h3>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Once you attend an examination and the administrator generates or releases your certificate, it will appear here with an official certificate number, grade, and verifiable link.
+                  </p>
+                </div>
                 <Link
-                  to="/arena"
-                  className="inline-block px-4 py-2 rounded-xl bg-emerald-500 text-black font-bold text-xs mt-2"
+                  to="/assessments"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 text-black font-black text-xs hover:scale-105 transition shadow-lg shadow-amber-500/20 cursor-pointer"
                 >
-                  Start Solving in Arena
+                  <BookOpen className="w-4 h-4" />
+                  <span>View Available Exams</span>
                 </Link>
               </div>
             ) : (
-              <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
-                {submissions.map((sub) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {certificates.map((cert) => (
                   <div
-                    key={sub.id}
-                    className="p-3 rounded-2xl bg-[#161b22] border border-[#30363d] flex items-center justify-between text-xs hover:border-[#484f58] transition"
+                    key={cert.certificateNumber}
+                    className="relative rounded-3xl p-6 bg-gradient-to-br from-[#12131c] via-[#0d0e14] to-[#09090b] border-2 border-amber-400/40 hover:border-amber-400 shadow-2xl transition group overflow-hidden"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      {sub.status === 'Accepted' ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                      ) : (
-                        <XCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
-                      )}
-                      <div className="truncate">
-                        <Link
-                          to={`/arena/problem/${sub.problemId}`}
-                          className="font-bold text-white hover:text-emerald-400 transition truncate block"
-                        >
-                          {sub.problemTitle || sub.problemId}
-                        </Link>
-                        <div className="text-[10px] text-slate-500 font-mono mt-0.5">
-                          {new Date(sub.submittedAt).toLocaleTimeString()} • {new Date(sub.submittedAt).toLocaleDateString()}
-                        </div>
-                      </div>
+                    {/* Golden Ornamental Header Bar */}
+                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-500" />
+                    <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                      <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase tracking-wide flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" />
+                        Official & Valid
+                      </span>
                     </div>
 
-                    <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-                      <span className="font-mono text-[10px] uppercase px-2 py-0.5 rounded bg-[#0d1117] border border-[#30363d] text-slate-300">
-                        {sub.language}
-                      </span>
-                      <span className={`font-black text-xs ${
-                        sub.status === 'Accepted' ? 'text-emerald-400' : 'text-rose-400'
-                      }`}>
-                        {sub.status}
-                      </span>
+                    <div className="space-y-4">
+                      {/* Certificate Identifier */}
+                      <div className="flex items-center gap-2">
+                        <Award className="w-7 h-7 text-amber-400 flex-shrink-0" />
+                        <div>
+                          <div className="text-[10px] uppercase font-bold text-amber-400/80 tracking-wider">
+                            Certificate ID
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-sm font-black text-white tracking-wide">
+                              {cert.certificateNumber}
+                            </span>
+                            <button
+                              onClick={() => copyToClipboard(cert.certificateNumber, 'Certificate Number')}
+                              className="p-1 rounded-md text-slate-400 hover:text-amber-300 hover:bg-white/10 transition cursor-pointer"
+                              title="Copy Certificate Number"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Course / Exam Title */}
+                      <div>
+                        <h3 className="text-lg font-black text-white group-hover:text-amber-200 transition">
+                          {cert.internshipName || 'Certification Examination'}
+                        </h3>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          Awarded to <strong className="text-slate-200">{cert.studentName}</strong>
+                        </p>
+                      </div>
+
+                      {/* Stats Pills: Grade, Score, Percentage */}
+                      <div className="grid grid-cols-3 gap-2.5 p-3 rounded-2xl bg-white/[0.03] border border-white/10 text-center">
+                        <div>
+                          <div className="text-[10px] text-slate-400 font-bold">Grade</div>
+                          <div className="text-lg font-black text-amber-400 font-mono">
+                            {cert.grade || 'A+'}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] text-slate-400 font-bold">Score</div>
+                          <div className="text-lg font-black text-white font-mono">
+                            {cert.score} <span className="text-xs text-slate-500 font-normal">/ {cert.totalMarks || 100}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] text-slate-400 font-bold">Percentage</div>
+                          <div className="text-lg font-black text-emerald-400 font-mono">
+                            {Math.round(cert.percentage)}%
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Issue Date & Verification Actions */}
+                      <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs">
+                        <div className="text-slate-400 flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                          <span>
+                            {cert.issueDate ? new Date(cert.issueDate).toLocaleDateString(undefined, {
+                              year: 'numeric', month: 'short', day: 'numeric'
+                            }) : 'Recently Issued'}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Link
+                            to={`/verify-certificate/${cert.certificateNumber}`}
+                            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-black font-black text-xs inline-flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>View & Print</span>
+                          </Link>
+                        </div>
+                      </div>
+
                     </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
+        )}
 
-        </div>
+        {/* ─── TAB 2: EXAM RESULTS & MISTAKES REVIEW ─────────────────────── */}
+        {activeTab === 'exams' && (
+          <div className="space-y-6 animate-fadeIn">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-black text-white flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-amber-400" />
+                  <span>Exam Results & Question Mistake Review</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Review your attended exams, final declared results, and analyze wrong questions with explanations.
+                </p>
+              </div>
+
+              {/* Integrity Notice Badge */}
+              <div className="px-3.5 py-2 rounded-2xl bg-amber-400/10 border border-amber-400/30 text-amber-300 text-[11px] font-semibold flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                <span>Mistakes & Solutions unlocked strictly post-submission upon declared result</span>
+              </div>
+            </div>
+
+            {examAttempts.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-white/10 p-12 text-center bg-white/[0.02] space-y-4">
+                <FileText className="w-12 h-12 text-slate-500 mx-auto" />
+                <div className="max-w-md mx-auto space-y-1">
+                  <h3 className="text-base font-bold text-white">No Exam Attempts Recorded</h3>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    You have not submitted any examination under this student email yet. Attend scheduled exams to see full scorecards and questions review here.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {examAttempts.map((attempt) => {
+                  const isExpanded = expandedExamId === attempt.id;
+                  const questionsList = attempt.questions || [];
+                  const wrongQuestions = questionsList.filter(q => !q.isCorrect);
+                  const correctQuestions = questionsList.filter(q => q.isCorrect);
+
+                  let filteredQuestions = questionsList;
+                  if (questionFilter === 'wrong') filteredQuestions = wrongQuestions;
+                  if (questionFilter === 'correct') filteredQuestions = correctQuestions;
+
+                  return (
+                    <div
+                      key={attempt.id}
+                      className="rounded-3xl bg-gradient-to-b from-[#13141f] to-[#0c0d13] border border-white/10 hover:border-amber-400/40 shadow-2xl transition overflow-hidden"
+                    >
+                      {/* Exam Header Banner */}
+                      <div className="p-6 sm:p-7 flex flex-col md:flex-row md:items-center justify-between gap-5 border-b border-white/5">
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-center gap-2.5">
+                            <span className={`text-[11px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
+                              attempt.passed
+                                ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                                : 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+                            }`}>
+                              {attempt.passed ? 'Passed ✅' : 'Needs Improvement ❌'}
+                            </span>
+                            <span className="text-[11px] font-mono text-slate-400 bg-white/[0.05] px-2.5 py-0.5 rounded-full border border-white/10">
+                              Status: {attempt.status}
+                            </span>
+                            {attempt.certificateNumber && (
+                              <span className="text-[11px] font-mono text-amber-300 bg-amber-400/10 border border-amber-400/30 px-2.5 py-0.5 rounded-full">
+                                🎓 Cert #{attempt.certificateNumber}
+                              </span>
+                            )}
+                          </div>
+
+                          <h3 className="text-xl font-black text-white">
+                            {attempt.title}
+                          </h3>
+
+                          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
+                            <div className="flex items-center gap-1.5">
+                              <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                              <span>{attempt.submittedAt ? new Date(attempt.submittedAt).toLocaleDateString() : 'N/A'}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5 text-amber-400" />
+                              <span>Time: {Math.round(attempt.timeTaken / 60)} mins</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                              <span>{attempt.correctCount} Correct</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <XCircle className="w-3.5 h-3.5 text-rose-400" />
+                              <span>{attempt.wrongCount} Wrong</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Score & Toggle Review Button */}
+                        <div className="flex items-center justify-between md:justify-end gap-5">
+                          <div className="text-right">
+                            <div className="text-3xl font-black text-amber-400 font-mono">
+                              {attempt.score} <span className="text-xs text-slate-400 font-normal">/ {attempt.totalMarks}</span>
+                            </div>
+                            <div className="text-xs font-bold text-slate-400 mt-0.5">
+                              Percentage: <span className="text-white font-mono font-bold">{Math.round(attempt.percentage)}%</span>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => setExpandedExamId(isExpanded ? null : attempt.id)}
+                            className={`px-4 py-2.5 rounded-2xl text-xs font-black inline-flex items-center gap-2 transition cursor-pointer ${
+                              isExpanded
+                                ? 'bg-amber-400 text-black shadow-lg shadow-amber-500/20'
+                                : 'bg-white/[0.08] hover:bg-white/[0.15] text-white border border-white/10'
+                            }`}
+                          >
+                            <span>{isExpanded ? 'Hide Review' : 'Review Mistakes & Solutions'}</span>
+                            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Expandable Question-by-Question Review with Mistake Filter */}
+                      {isExpanded && (
+                        <div className="p-6 sm:p-7 space-y-6 bg-black/40">
+                          
+                          {/* Filter Tabs for Questions */}
+                          <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-white/[0.03] border border-white/10">
+                            <div className="flex items-center gap-2">
+                              <Filter className="w-4 h-4 text-amber-400" />
+                              <span className="text-xs font-bold text-slate-300">Filter Questions:</span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => setQuestionFilter('all')}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                                  questionFilter === 'all'
+                                    ? 'bg-white text-black font-black'
+                                    : 'bg-white/5 text-slate-400 hover:text-white'
+                                }`}
+                              >
+                                All Questions ({questionsList.length})
+                              </button>
+                              <button
+                                onClick={() => setQuestionFilter('wrong')}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                                  questionFilter === 'wrong'
+                                    ? 'bg-rose-500 text-white font-black shadow-md shadow-rose-500/25'
+                                    : 'bg-rose-500/10 text-rose-300 hover:bg-rose-500/20'
+                                }`}
+                              >
+                                <XCircle className="w-3.5 h-3.5" />
+                                <span>Wrong Questions ({wrongQuestions.length})</span>
+                              </button>
+                              <button
+                                onClick={() => setQuestionFilter('correct')}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                                  questionFilter === 'correct'
+                                    ? 'bg-emerald-500 text-black font-black shadow-md shadow-emerald-500/25'
+                                    : 'bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
+                                }`}
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Correct ({correctQuestions.length})</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Notice if exam results are locked during active test */}
+                          {!attempt.resultDeclared && (
+                            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-3">
+                              <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                              <span>
+                                The administrator has kept detailed question answers confidential until all submissions are completed and results are officially published.
+                              </span>
+                            </div>
+                          )}
+
+                          {filteredQuestions.length === 0 ? (
+                            <div className="text-center py-8 text-slate-400 text-xs">
+                              No questions match the selected filter.
+                            </div>
+                          ) : (
+                            <div className="space-y-4">
+                              {filteredQuestions.map((q) => (
+                                <div
+                                  key={q.questionId || q.index}
+                                  className={`rounded-2xl p-5 border transition ${
+                                    q.isCorrect
+                                      ? 'bg-emerald-950/15 border-emerald-500/30'
+                                      : 'bg-rose-950/20 border-rose-500/40 shadow-lg shadow-rose-500/5'
+                                  }`}
+                                >
+                                  {/* Question Head */}
+                                  <div className="flex items-center justify-between gap-3 mb-3">
+                                    <div className="flex items-center gap-2">
+                                      <span className="px-2.5 py-0.5 rounded-lg bg-white/10 text-white font-mono text-xs font-bold">
+                                        Q{q.index}
+                                      </span>
+                                      <span className="text-xs font-semibold text-slate-400 bg-black/40 px-2 py-0.5 rounded-md">
+                                        {q.topic}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                      <span className={`text-xs font-black px-2.5 py-0.5 rounded-full flex items-center gap-1 ${
+                                        q.isCorrect
+                                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                                          : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                                      }`}>
+                                        {q.isCorrect ? (
+                                          <>
+                                            <CheckCircle2 className="w-3.5 h-3.5" />
+                                            <span>Correct (+{q.marks} pts)</span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <XCircle className="w-3.5 h-3.5" />
+                                            <span>Incorrect (0 / {q.maxMarks} pts)</span>
+                                          </>
+                                        )}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Question Prompt */}
+                                  <p className="text-sm font-bold text-white mb-4 leading-relaxed">
+                                    {q.questionText}
+                                  </p>
+
+                                  {/* MCQ Options Display */}
+                                  {q.options && q.options.length > 0 && (
+                                    <div className="space-y-2 mb-4">
+                                      {q.options.map((opt, oIdx) => {
+                                        const optText = typeof opt === 'object' ? (opt.text || opt.label) : String(opt);
+                                        const isSelected = String(q.studentAnswer).trim() === optText.trim();
+                                        const isRightAnswer = String(q.correctAnswer).trim() === optText.trim();
+
+                                        let style = 'bg-white/[0.03] border-white/10 text-slate-300';
+                                        let badge = null;
+
+                                        if (isSelected && isRightAnswer) {
+                                          style = 'bg-emerald-500/20 border-emerald-500 text-emerald-200 font-bold';
+                                          badge = (
+                                            <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded bg-emerald-500 text-black flex items-center gap-1">
+                                              <CheckCircle2 className="w-3 h-3" />
+                                              Your Answer (Correct)
+                                            </span>
+                                          );
+                                        } else if (isSelected && !isRightAnswer) {
+                                          style = 'bg-rose-500/20 border-rose-500 text-rose-200 font-bold';
+                                          badge = (
+                                            <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded bg-rose-500 text-white flex items-center gap-1">
+                                              <XCircle className="w-3 h-3" />
+                                              Your Selection (Wrong)
+                                            </span>
+                                          );
+                                        } else if (isRightAnswer) {
+                                          style = 'bg-emerald-950/30 border-emerald-500/80 text-emerald-300 font-bold';
+                                          badge = (
+                                            <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded bg-emerald-500/30 border border-emerald-500/50 text-emerald-300 flex items-center gap-1">
+                                              <Check className="w-3 h-3" />
+                                              Correct Answer
+                                            </span>
+                                          );
+                                        }
+
+                                        return (
+                                          <div
+                                            key={oIdx}
+                                            className={`p-3 rounded-xl border text-xs flex items-center gap-2.5 transition ${style}`}
+                                          >
+                                            <span className="w-5 h-5 rounded-full bg-black/40 flex items-center justify-center font-mono text-[11px] font-bold text-slate-300 flex-shrink-0">
+                                              {String.fromCharCode(65 + oIdx)}
+                                            </span>
+                                            <span className="flex-1">{optText}</span>
+                                            {badge}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+
+                                  {/* Non-MCQ student and correct answers */}
+                                  {(!q.options || q.options.length === 0) && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 text-xs font-mono">
+                                      <div className="p-3 rounded-xl bg-black/40 border border-white/10">
+                                        <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">Your Submitted Answer:</div>
+                                        <div className={q.isCorrect ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+                                          {q.studentAnswer}
+                                        </div>
+                                      </div>
+                                      <div className="p-3 rounded-xl bg-black/40 border border-emerald-500/40">
+                                        <div className="text-[10px] uppercase font-bold text-emerald-400 mb-1">Correct Answer:</div>
+                                        <div className="text-emerald-300 font-bold">
+                                          {q.correctAnswer}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Concept & Explanation Card */}
+                                  <div className="p-3.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-transparent border border-amber-400/30 text-xs text-amber-200/90 leading-relaxed flex items-start gap-2.5">
+                                    <HelpCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                                    <div>
+                                      <strong className="text-amber-300 font-bold block mb-0.5">Solution & Concept Explanation:</strong>
+                                      {q.explanation}
+                                    </div>
+                                  </div>
+
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ─── TAB 3: CODING ARENA & PRACTICE ────────────────────────────── */}
+        {activeTab === 'arena' && (
+          <div className="space-y-6 animate-fadeIn">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              {/* LeetCode Difficulty Breakdown (1 col) */}
+              <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-amber-400/30 rounded-3xl p-6 shadow-xl space-y-4">
+                <h3 className="text-sm font-black text-white flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-amber-400" />
+                  <span>Difficulty Progress</span>
+                </h3>
+
+                {/* Easy Bar */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-[#00b8a3]">Easy</span>
+                    <span className="text-slate-400 font-mono">{easySolved} / {easyTotal}</span>
+                  </div>
+                  <div className="w-full h-2 bg-[#21262d] rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-[#00b8a3]" 
+                      style={{ width: `${easyTotal > 0 ? (easySolved / easyTotal) * 100 : 0}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Medium Bar */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-[#ffa116]">Medium</span>
+                    <span className="text-slate-400 font-mono">{medSolved} / {medTotal}</span>
+                  </div>
+                  <div className="w-full h-2 bg-[#21262d] rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-[#ffa116]" 
+                      style={{ width: `${medTotal > 0 ? (medSolved / medTotal) * 100 : 0}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Hard Bar */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-[#ff375f]">Hard</span>
+                    <span className="text-slate-400 font-mono">{hardSolved} / {hardTotal}</span>
+                  </div>
+                  <div className="w-full h-2 bg-[#21262d] rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-[#ff375f]" 
+                      style={{ width: `${hardTotal > 0 ? (hardSolved / hardTotal) * 100 : 0}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-white/[0.04] border border-amber-400/20 text-[11px] text-amber-200/80 leading-relaxed">
+                  💡 <strong>Pro Tip:</strong> Solving harder problems in the Coding Arena multiplies your XP score and ranks you higher on the global leaderboard!
+                </div>
+              </div>
+
+              {/* Submissions Activity History (2 cols) */}
+              <div className="lg:col-span-2 bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-white/10 rounded-3xl p-6 shadow-xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-black text-white flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-amber-400" />
+                    <span>Recent Arena Submissions</span>
+                  </h3>
+                  <Link to="/arena" className="text-xs text-amber-400 hover:underline font-bold">
+                    Solve More Problems
+                  </Link>
+                </div>
+
+                {submissions.length === 0 ? (
+                  <div className="text-center py-12 text-slate-500 space-y-2">
+                    <Code2 className="w-10 h-10 mx-auto opacity-40 text-slate-400" />
+                    <p className="text-xs font-medium">No code submissions recorded yet.</p>
+                    <Link
+                      to="/arena"
+                      className="inline-block px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 text-black font-bold text-xs mt-2 shadow-md cursor-pointer"
+                    >
+                      Start Solving in Arena
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+                    {submissions.map((sub) => (
+                      <div
+                        key={sub.id}
+                        className="p-3 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-between text-xs hover:border-amber-400/50 transition"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          {sub.status === 'Accepted' ? (
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                          ) : (
+                            <XCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+                          )}
+                          <div className="truncate">
+                            <Link
+                              to={`/arena/problem/${sub.problemId}`}
+                              className="font-bold text-white hover:text-amber-400 transition truncate block"
+                            >
+                              {sub.problemTitle || sub.problemId}
+                            </Link>
+                            <div className="text-[10px] text-slate-500 font-mono mt-0.5">
+                              {new Date(sub.submittedAt).toLocaleTimeString()} • {new Date(sub.submittedAt).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                          <span className="font-mono text-[10px] uppercase px-2 py-0.5 rounded bg-black/40 border border-white/10 text-slate-300">
+                            {sub.language}
+                          </span>
+                          <span className={`font-black text-xs ${
+                            sub.status === 'Accepted' ? 'text-emerald-400' : 'text-rose-400'
+                          }`}>
+                            {sub.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+            </div>
+          </div>
+        )}
 
       </div>
 
       {/* ─── Edit Profile Modal ────────────────────────────────────────── */}
       {isEditing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="relative w-full max-w-md bg-[#0d1117] rounded-3xl shadow-2xl border border-[#30363d] overflow-hidden text-slate-100 p-6 space-y-4">
+          <div className="relative w-full max-w-md bg-[#0f1017] rounded-3xl shadow-2xl border-2 border-amber-400/40 overflow-hidden text-slate-100 p-6 space-y-4">
             
-            <div className="flex items-center justify-between pb-3 border-b border-[#30363d]">
-              <h3 className="text-base font-black text-white">Edit Student Profile</h3>
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <h3 className="text-base font-black text-white flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span>Edit Student Profile</span>
+              </h3>
               <button
                 onClick={() => setIsEditing(false)}
-                className="text-xs text-slate-400 hover:text-white cursor-pointer"
+                className="text-xs text-slate-400 hover:text-white cursor-pointer px-2 py-1 rounded-lg hover:bg-white/10"
               >
                 ✕ Close
               </button>
@@ -508,8 +1167,8 @@ export default function ArenaProfile() {
 
             <form onSubmit={handleSaveProfile} className="space-y-4">
               {/* Photo selector */}
-              <div className="flex items-center gap-4 p-3 rounded-2xl bg-[#161b22] border border-[#30363d]">
-                <div className="w-14 h-14 rounded-2xl overflow-hidden border border-emerald-500/50 bg-[#0d1117] flex items-center justify-center flex-shrink-0">
+              <div className="flex items-center gap-4 p-3 rounded-2xl bg-white/[0.04] border border-white/10">
+                <div className="w-14 h-14 rounded-2xl overflow-hidden border border-amber-400/50 bg-[#09090b] flex items-center justify-center flex-shrink-0">
                   {editPhoto ? (
                     <img src={editPhoto} alt="Preview" className="w-full h-full object-cover" />
                   ) : (
@@ -528,9 +1187,9 @@ export default function ArenaProfile() {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="mt-1 px-3 py-1 rounded-lg bg-[#21262d] border border-[#30363d] hover:border-emerald-500 text-xs font-semibold text-slate-200 flex items-center gap-1.5 cursor-pointer"
+                    className="mt-1 px-3 py-1 rounded-lg bg-white/10 border border-white/10 hover:border-amber-400 text-xs font-semibold text-slate-200 flex items-center gap-1.5 cursor-pointer"
                   >
-                    <Camera className="w-3 h-3 text-emerald-400" />
+                    <Camera className="w-3 h-3 text-amber-400" />
                     <span>Upload New Photo</span>
                   </button>
                 </div>
@@ -544,7 +1203,19 @@ export default function ArenaProfile() {
                   required
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-[#0d1117] border border-[#30363d] rounded-xl text-xs text-white outline-none focus:border-emerald-500"
+                  className="w-full px-3.5 py-2.5 bg-black/50 border border-white/10 rounded-xl text-xs text-white outline-none focus:border-amber-400"
+                />
+              </div>
+
+              {/* College / Institution */}
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">College / Institution</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Ajay Kumar Garg Engineering College"
+                  value={editCollege}
+                  onChange={(e) => setEditCollege(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-black/50 border border-white/10 rounded-xl text-xs text-white outline-none focus:border-amber-400"
                 />
               </div>
 
@@ -553,11 +1224,10 @@ export default function ArenaProfile() {
                 <label className="block text-xs font-bold text-slate-300 mb-1">Date of Birth (DOB)</label>
                 <input
                   type="date"
-                  required
                   value={editDob}
                   onChange={(e) => setEditDob(e.target.value)}
                   style={{ colorScheme: 'dark' }}
-                  className="w-full px-3.5 py-2.5 bg-[#0d1117] border border-[#30363d] rounded-xl text-xs text-white outline-none focus:border-emerald-500"
+                  className="w-full px-3.5 py-2.5 bg-black/50 border border-white/10 rounded-xl text-xs text-white outline-none focus:border-amber-400"
                 />
               </div>
 
@@ -565,14 +1235,14 @@ export default function ArenaProfile() {
                 <button
                   type="button"
                   onClick={() => setIsEditing(false)}
-                  className="px-4 py-2 rounded-xl bg-[#21262d] text-slate-300 text-xs font-bold hover:bg-[#30363d] cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-white/10 text-slate-300 text-xs font-bold hover:bg-white/20 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-black text-xs hover:from-emerald-400 hover:to-teal-400 cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-black font-black text-xs hover:from-amber-300 hover:to-yellow-300 cursor-pointer disabled:opacity-50 shadow-md shadow-amber-500/20"
                 >
                   {saving ? 'Saving...' : 'Save Profile'}
                 </button>
@@ -586,4 +1256,3 @@ export default function ArenaProfile() {
     </div>
   );
 }
-

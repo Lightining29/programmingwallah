@@ -4,7 +4,7 @@ import {
   Trophy, Medal, Award, Search, Bell, Filter, RefreshCw, 
   TrendingUp, Sparkles, Star, Crown, Flag, ShieldCheck, 
   CheckCircle2, ExternalLink, ChevronDown, GraduationCap, 
-  User, ArrowUpRight, Flame
+  User, ArrowUpRight, Flame, X, Zap, BookOpen, Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -15,6 +15,9 @@ export default function Leaderboard() {
   const [podium, setPodium] = useState({ first: null, second: null, third: null });
   const [assessments, setAssessments] = useState([]);
   const [stats, setStats] = useState({ totalPassed: 0, topScore: 0, avgScore: 0, uniqueColleges: 0 });
+
+  // Profile Modal State
+  const [selectedStudent, setSelectedStudent] = useState(null);
 
   // Filters
   const [selectedAssessment, setSelectedAssessment] = useState('all');
@@ -314,7 +317,11 @@ export default function Leaderboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="order-2 md:order-1 relative rounded-[28px] bg-white border-2 border-blue-200/90 p-6 text-center shadow-[0_12px_35px_rgba(59,130,246,0.08)] hover:shadow-[0_16px_45px_rgba(59,130,246,0.15)] transition-all flex flex-col items-center justify-between min-h-[290px]"
+              onClick={() => setSelectedStudent(secondPlace)}
+              role="button"
+              tabIndex={0}
+              title="Click to view student profile & achievements"
+              className="order-2 md:order-1 relative rounded-[28px] bg-white border-2 border-blue-200/90 p-6 text-center shadow-[0_12px_35px_rgba(59,130,246,0.08)] hover:shadow-[0_20px_50px_rgba(59,130,246,0.2)] transition-all flex flex-col items-center justify-between min-h-[290px] cursor-pointer hover:scale-[1.02] active:scale-[0.98] group"
             >
               {/* Top Badge: 2 */}
               <div className="w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-black flex items-center justify-center shadow-md shadow-blue-500/30 ring-4 ring-blue-100">
@@ -323,7 +330,7 @@ export default function Leaderboard() {
 
               {/* Avatar with Circular Blue Border */}
               <div className="relative my-3">
-                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full p-1 bg-gradient-to-tr from-blue-500 via-sky-400 to-indigo-500 shadow-xl ring-4 ring-blue-100/80 mx-auto overflow-hidden">
+                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full p-1 bg-gradient-to-tr from-blue-500 via-sky-400 to-indigo-500 shadow-xl ring-4 ring-blue-100/80 mx-auto overflow-hidden group-hover:ring-blue-300 transition-all">
                   {secondPlace.photo ? (
                     <img
                       src={secondPlace.photo}
@@ -340,7 +347,7 @@ export default function Leaderboard() {
 
               {/* Name & XP */}
               <div className="w-full">
-                <h3 className="font-extrabold text-slate-900 text-lg sm:text-xl truncate">
+                <h3 className="font-extrabold text-slate-900 text-lg sm:text-xl truncate group-hover:text-blue-600 transition-colors">
                   {secondPlace.candidateName}
                 </h3>
                 <p className="text-xs text-slate-400 truncate mt-0.5">
@@ -348,6 +355,10 @@ export default function Leaderboard() {
                 </p>
                 <div className="text-base sm:text-lg font-black text-blue-600 mt-2">
                   {secondPlace.xp}
+                </div>
+                <div className="mt-2 text-[10px] font-bold text-blue-500 bg-blue-50 rounded-full py-0.5 px-2 inline-flex items-center gap-1 border border-blue-100 opacity-80 group-hover:opacity-100">
+                  <span>View Profile</span>
+                  <span>→</span>
                 </div>
               </div>
             </motion.div>
@@ -359,7 +370,11 @@ export default function Leaderboard() {
               initial={{ opacity: 0, y: 30, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.55 }}
-              className="order-1 md:order-2 relative rounded-[32px] bg-white border-2 border-amber-400 p-7 text-center shadow-[0_18px_50px_rgba(245,158,11,0.18)] hover:shadow-[0_24px_65px_rgba(245,158,11,0.25)] transition-all flex flex-col items-center justify-between min-h-[330px] md:-translate-y-4 z-10 ring-4 ring-amber-100/70"
+              onClick={() => setSelectedStudent(firstPlace)}
+              role="button"
+              tabIndex={0}
+              title="Click to view #1 Champion profile & certificate"
+              className="order-1 md:order-2 relative rounded-[32px] bg-white border-2 border-amber-400 p-7 text-center shadow-[0_18px_50px_rgba(245,158,11,0.22)] hover:shadow-[0_26px_70px_rgba(245,158,11,0.35)] transition-all flex flex-col items-center justify-between min-h-[330px] md:-translate-y-4 z-10 ring-4 ring-amber-100/70 hover:ring-amber-300 cursor-pointer hover:scale-[1.03] active:scale-[0.98] group"
             >
               {/* Top Badge: 1 */}
               <div className="w-7 h-7 rounded-full bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 text-xs font-black flex items-center justify-center shadow-md shadow-amber-500/30 ring-4 ring-amber-100">
@@ -377,7 +392,7 @@ export default function Leaderboard() {
                 </motion.div>
 
                 {/* Avatar with Radiant Gold Border */}
-                <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full p-1.5 bg-gradient-to-tr from-amber-400 via-yellow-300 to-amber-500 shadow-2xl ring-4 ring-amber-200/80 mx-auto overflow-hidden">
+                <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full p-1.5 bg-gradient-to-tr from-amber-400 via-yellow-300 to-amber-500 shadow-2xl ring-4 ring-amber-200/80 mx-auto overflow-hidden group-hover:ring-amber-400 transition-all">
                   {firstPlace.photo ? (
                     <img
                       src={firstPlace.photo}
@@ -394,7 +409,7 @@ export default function Leaderboard() {
 
               {/* Name & XP */}
               <div className="w-full">
-                <h3 className="font-black text-slate-900 text-xl sm:text-2xl truncate">
+                <h3 className="font-black text-slate-900 text-xl sm:text-2xl truncate group-hover:text-amber-600 transition-colors">
                   {firstPlace.candidateName}
                 </h3>
                 <p className="text-xs text-amber-700/80 font-semibold truncate mt-0.5">
@@ -402,6 +417,10 @@ export default function Leaderboard() {
                 </p>
                 <div className="text-lg sm:text-xl font-black text-amber-600 mt-2">
                   {firstPlace.xp}
+                </div>
+                <div className="mt-2 text-[10px] font-black uppercase tracking-wider text-amber-700 bg-amber-100/90 rounded-full py-1 px-3 inline-flex items-center gap-1 shadow-sm border border-amber-300">
+                  <span>👑 View Champion Profile</span>
+                  <span>→</span>
                 </div>
               </div>
             </motion.div>
@@ -413,7 +432,11 @@ export default function Leaderboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="order-3 md:order-3 relative rounded-[28px] bg-white border-2 border-purple-200/90 p-6 text-center shadow-[0_12px_35px_rgba(168,85,247,0.08)] hover:shadow-[0_16px_45px_rgba(168,85,247,0.15)] transition-all flex flex-col items-center justify-between min-h-[290px]"
+              onClick={() => setSelectedStudent(thirdPlace)}
+              role="button"
+              tabIndex={0}
+              title="Click to view student profile & achievements"
+              className="order-3 md:order-3 relative rounded-[28px] bg-white border-2 border-purple-200/90 p-6 text-center shadow-[0_12px_35px_rgba(168,85,247,0.08)] hover:shadow-[0_20px_50px_rgba(168,85,247,0.2)] transition-all flex flex-col items-center justify-between min-h-[290px] cursor-pointer hover:scale-[1.02] active:scale-[0.98] group"
             >
               {/* Top Badge: 3 */}
               <div className="w-7 h-7 rounded-full bg-purple-600 text-white text-xs font-black flex items-center justify-center shadow-md shadow-purple-500/30 ring-4 ring-purple-100">
@@ -422,7 +445,7 @@ export default function Leaderboard() {
 
               {/* Avatar with Circular Purple Border */}
               <div className="relative my-3">
-                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full p-1 bg-gradient-to-tr from-purple-500 via-pink-400 to-indigo-500 shadow-xl ring-4 ring-purple-100/80 mx-auto overflow-hidden">
+                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full p-1 bg-gradient-to-tr from-purple-500 via-pink-400 to-indigo-500 shadow-xl ring-4 ring-purple-100/80 mx-auto overflow-hidden group-hover:ring-purple-300 transition-all">
                   {thirdPlace.photo ? (
                     <img
                       src={thirdPlace.photo}
@@ -439,7 +462,7 @@ export default function Leaderboard() {
 
               {/* Name & XP */}
               <div className="w-full">
-                <h3 className="font-extrabold text-slate-900 text-lg sm:text-xl truncate">
+                <h3 className="font-extrabold text-slate-900 text-lg sm:text-xl truncate group-hover:text-purple-600 transition-colors">
                   {thirdPlace.candidateName}
                 </h3>
                 <p className="text-xs text-slate-400 truncate mt-0.5">
@@ -447,6 +470,10 @@ export default function Leaderboard() {
                 </p>
                 <div className="text-base sm:text-lg font-black text-purple-600 mt-2">
                   {thirdPlace.xp}
+                </div>
+                <div className="mt-2 text-[10px] font-bold text-purple-500 bg-purple-50 rounded-full py-0.5 px-2 inline-flex items-center gap-1 border border-purple-100 opacity-80 group-hover:opacity-100">
+                  <span>View Profile</span>
+                  <span>→</span>
                 </div>
               </div>
             </motion.div>
@@ -559,7 +586,11 @@ export default function Leaderboard() {
                     key={student.id || student.rank}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="grid grid-cols-12 gap-3 px-5 sm:px-8 py-4 items-center hover:bg-slate-50/70 transition-colors"
+                    onClick={() => setSelectedStudent(student)}
+                    role="button"
+                    tabIndex={0}
+                    title="Click to view candidate profile & achievements"
+                    className="grid grid-cols-12 gap-3 px-5 sm:px-8 py-4 items-center hover:bg-amber-50/60 transition-all cursor-pointer group"
                   >
                     {/* Col 1: Rank Indicator */}
                     <div className="col-span-2 sm:col-span-1 flex items-center">
@@ -685,6 +716,160 @@ export default function Leaderboard() {
         </section>
 
       </div>
+
+      {/* ─── 6. CENTERED STUDENT PROFILE MODAL (YELLOW, WHITE & BLACK GRADIENT) ─── */}
+      <AnimatePresence>
+        {selectedStudent && (
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto"
+            onClick={() => setSelectedStudent(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.88, y: 24 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.88, y: 24 }}
+              transition={{ type: 'spring', damping: 26, stiffness: 320 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-lg rounded-[36px] bg-gradient-to-b from-[#1c1917] via-[#09090b] to-[#000000] border-2 border-amber-400/90 shadow-[0_0_70px_rgba(251,191,36,0.32)] p-6 sm:p-8 text-white overflow-hidden my-6"
+            >
+              {/* Shimmering Yellow & White Ambient Accents */}
+              <div className="absolute -top-28 -left-28 w-64 h-64 bg-amber-400/25 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-28 -right-28 w-64 h-64 bg-yellow-300/20 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-80 h-80 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+
+              {/* Close Button */}
+              <button
+                onClick={() => setSelectedStudent(null)}
+                className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 hover:bg-amber-400/20 border border-white/10 hover:border-amber-400/40 text-slate-300 hover:text-amber-300 flex items-center justify-center transition-all cursor-pointer z-30"
+                title="Close Profile"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              {/* Rank Pill Badge */}
+              <div className="flex items-center justify-center mb-3">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/20 via-yellow-400/25 to-amber-500/20 border border-amber-400/60 shadow-sm shadow-amber-500/25 text-xs font-black text-amber-300 tracking-wide">
+                  {selectedStudent.rank === 1 ? '👑 Ranked #1 Global Champion' : (selectedStudent.rank === 2 ? '🥈 Ranked #2 Runner Up' : (selectedStudent.rank === 3 ? '🥉 Ranked #3 Achiever' : `⭐ Rank #${selectedStudent.rank || 'N/A'}`))}
+                </div>
+              </div>
+
+              {/* Avatar Section with Circular Gold Aura */}
+              <div className="text-center relative">
+                <div className="relative inline-block my-2">
+                  {selectedStudent.rank === 1 && (
+                    <motion.div 
+                      animate={{ y: [0, -5, 0] }}
+                      transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
+                      className="text-4xl absolute -top-6 left-1/2 -translate-x-1/2 filter drop-shadow-[0_4px_12px_rgba(234,179,8,0.6)] z-10"
+                    >
+                      👑
+                    </motion.div>
+                  )}
+                  <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full p-1.5 bg-gradient-to-tr from-amber-400 via-yellow-200 to-amber-500 shadow-2xl ring-4 ring-amber-400/50 mx-auto overflow-hidden">
+                    {selectedStudent.photo ? (
+                      <img
+                        src={selectedStudent.photo}
+                        alt={selectedStudent.candidateName}
+                        className="w-full h-full rounded-full object-cover bg-slate-900"
+                      />
+                    ) : (
+                      <div className="w-full h-full rounded-full bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center font-black text-slate-950 text-3xl">
+                        {getInitials(selectedStudent.candidateName)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Candidate Name */}
+                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight mt-2">
+                  {selectedStudent.candidateName}
+                </h2>
+
+                {/* College & Examination */}
+                <p className="text-sm font-bold text-amber-400/90 mt-1 max-w-md mx-auto">
+                  {selectedStudent.college || 'Certified Software Engineer'}
+                </p>
+                {selectedStudent.assessmentTitle && (
+                  <p className="text-xs text-slate-300 mt-1">
+                    Assessment: <span className="text-white font-semibold">{selectedStudent.assessmentTitle}</span>
+                  </p>
+                )}
+              </div>
+
+              {/* High-Contrast Yellow/White/Black Metric Stats Grid */}
+              <div className="grid grid-cols-3 gap-2.5 sm:gap-3 my-5">
+                <div className="rounded-2xl bg-white/[0.05] border border-amber-400/40 p-3 text-center shadow-sm">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-amber-400 mb-0.5">Total XP</div>
+                  <div className="text-lg sm:text-xl font-black text-amber-400 font-mono">
+                    {selectedStudent.xp || `${((selectedStudent.percentage || 90) * 250).toLocaleString()} XP`}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl bg-white/[0.05] border border-white/15 p-3 text-center shadow-sm">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-0.5">Score / Win Rate</div>
+                  <div className="text-lg sm:text-xl font-black text-white font-mono">
+                    {selectedStudent.percentage || 90}%
+                  </div>
+                </div>
+
+                <div className="rounded-2xl bg-white/[0.05] border border-white/15 p-3 text-center shadow-sm">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-0.5">Badge Tier</div>
+                  <div className="text-sm sm:text-base font-black text-yellow-300 flex items-center justify-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <span>{selectedStudent.badge || 'Pro'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Certificate & Verified Credentials */}
+              {selectedStudent.certificateNumber ? (
+                <div className="mb-5 p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-yellow-400/10 to-amber-500/15 border border-amber-400/50 flex items-center justify-between gap-3 shadow-inner">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-amber-400/25 text-amber-300 flex items-center justify-center flex-shrink-0">
+                      <Award className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-amber-300">Official Exam Certificate</div>
+                      <div className="text-[11px] text-white font-mono font-semibold truncate">{selectedStudent.certificateNumber}</div>
+                    </div>
+                  </div>
+                  <Link
+                    to={`/verify-certificate/${selectedStudent.certificateNumber}`}
+                    className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-slate-950 text-xs font-black flex items-center gap-1.5 transition flex-shrink-0 shadow-md shadow-amber-400/20"
+                  >
+                    <span>Verify</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              ) : (
+                <div className="mb-5 p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center gap-3">
+                  <ShieldCheck className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                  <div className="text-xs text-slate-300 leading-snug">
+                    Officially verified exam participant. Certificate generated upon exam completion and admin review.
+                  </div>
+                </div>
+              )}
+
+              {/* Modal Buttons */}
+              <div className="flex items-center gap-3 pt-1">
+                <Link
+                  to="/student/profile"
+                  className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black text-xs sm:text-sm text-center shadow-lg shadow-amber-500/30 transition cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <span>Go to Student Profile Dashboard</span>
+                  <ArrowUpRight className="w-4 h-4" />
+                </Link>
+                <button
+                  onClick={() => setSelectedStudent(null)}
+                  className="py-3 px-5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-xs sm:text-sm transition cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

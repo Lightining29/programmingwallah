@@ -3034,4 +3034,249 @@ router.get('/result/:attemptId', async (req, res) => {
   }
 });
 
+// Student Profile: Certificates, Attended Exams, and Detailed Wrong Question Review
+router.get('/student/profile-exams', async (req, res) => {
+  try {
+    const rawEmail = req.query.email;
+    if (!rawEmail) {
+      return res.status(400).json({ success: false, error: 'Student email is required.' });
+    }
+    const cleanEmail = String(rawEmail).toLowerCase().trim();
+
+    // 1. Fetch Student Profile Information from assessment_candidates or attempts
+    let studentProfile = {
+      email: cleanEmail,
+      name: 'Student',
+      college: '',
+      rollNo: '',
+      dob: '',
+      phone: '',
+      photo: ''
+    };
+
+    try {
+      const pool = getMySQLPool();
+      const [candRows] = await pool.query(
+        'SELECT * FROM assessment_candidates WHERE LOWER(email) = ? ORDER BY registered_at DESC LIMIT 1',
+        [cleanEmail]
+      );
+      if (candRows && candRows.length > 0) {
+        const cr = candRows[0];
+        studentProfile.name = cr.name || studentProfile.name;
+        studentProfile.college = cr.college || studentProfile.college;
+        studentProfile.rollNo = cr.roll_no || studentProfile.rollNo;
+        studentProfile.dob = cr.dob || studentProfile.dob;
+        studentProfile.phone = cr.phone || studentProfile.phone;
+        studentProfile.photo = cr.photo_url || studentProfile.photo;
+      }
+    } catch (e) {}
+
+    // 2. Fetch all certificates earned by this student
+    const certsMap = new Map();
+
+    // From MySQL certificates table
+    try {
+      const pool = getMySQLPool();
+      const [certRows] = await pool.query(
+        'SELECT * FROM certificates WHERE LOWER(candidate_email) = ? ORDER BY id DESC',
+        [cleanEmail]
+      );
+      for (const cr of (certRows || [])) {
+        if (cr.certificate_number) {
+          certsMap.set(cr.certificate_number.toUpperCase(), {
+            certificateNumber: cr.certificate_number,
+            studentName: cr.student_name || studentProfile.name,
+            candidateEmail: cr.candidate_email,
+            internshipName: cr.internship_name || 'Online Certification Exam',
+            grade: cr.grade || 'A',
+            percentage: Number(cr.percentage) || 0,
+            score: Number(cr.score) || 0,
+            totalMarks: Number(cr.total_marks) || 0,
+            issueDate: cr.issue_date,
+            startDate: cr.start_date,
+            endDate: cr.end_date,
+            description: cr.description || '',
+            status: cr.status || 'valid'
+          });
+        }
+      }
+    } catch (e) {}
+
+    // From mockStore certificates
+    if (Array.isArray(mockStore.certificates)) {
+      for (const cr of mockStore.certificates) {
+        if (String(cr.candidateEmail || cr.email || '').toLowerCase().trim() === cleanEmail && cr.certificateNumber) {
+          const key = cr.certificateNumber.toUpperCase();
+          if (!certsMap.has(key)) {
+            certsMap.set(key, { ...cr, status: cr.status || 'valid' });
+          }
+        }
+      }
+    }
+
+    // 3. Fetch all exam attempts for this student
+    const attemptsMap = new Map();
+
+    // From mockStore attempts
+    const storeAttempts = getAttemptsFromStore();
+    for (const att of storeAttempts) {
+      if (String(att.candidateEmail || att.candidate?.email || '').toLowerCase().trim() === cleanEmail) {
+        attemptsMap.set(String(att._id || att.id), att);
+      }
+    }
+
+    // From Hostinger MySQL assessment_attempts
+    try {
+      const pool = getMySQLPool();
+      const [attRows] = await pool.query(
+        'SELECT * FROM assessment_attempts WHERE LOWER(candidate_email) = ? ORDER BY submitted_at DESC, started_at DESC',
+        [cleanEmail]
+      );
+      for (const r of (attRows || [])) {
+        const attId = String(r.id);
+        let ans = [];
+        let viols = [];
+        try { ans = typeof r.answers_json === 'string' ? JSON.parse(r.answers_json) : (r.answers_json || []); } catch(e){}
+        try { viols = typeof r.violations_json === 'string' ? JSON.parse(r.violations_json) : (r.violations_json || []); } catch(e){}
+
+        if (r.candidate_name && studentProfile.name === 'Student') studentProfile.name = r.candidate_name;
+        if (r.candidate_college && !studentProfile.college) studentProfile.college = r.candidate_college;
+        if (r.candidate_photo && !studentProfile.photo) studentProfile.photo = r.candidate_photo;
+        if (r.candidate_roll_no && !studentProfile.rollNo) studentProfile.rollNo = r.candidate_roll_no;
+        if (r.candidate_dob && !studentProfile.dob) studentProfile.dob = r.candidate_dob;
+
+        attemptsMap.set(attId, {
+          _id: r.id,
+          assessment: r.assessment_id,
+          candidateEmail: r.candidate_email,
+          candidateName: r.candidate_name,
+          candidatePhoto: r.candidate_photo || '',
+          candidateCollege: r.candidate_college || '',
+          candidateDob: r.candidate_dob || '',
+          candidateRollNo: r.candidate_roll_no || '',
+          answers: ans,
+          score: Number(r.score) || 0,
+          totalMarks: Number(r.total_marks) || 0,
+          percentage: Number(r.percentage) || 0,
+          passed: Boolean(r.passed),
+          timeTaken: Number(r.time_taken) || 0,
+          status: r.status,
+          certificateNumber: r.certificate_number || '',
+          startedAt: r.started_at,
+          submittedAt: r.submitted_at
+        });
+
+        // Also check if attempt has certificate_number and not yet in certsMap
+        if (r.certificate_number && !certsMap.has(r.certificate_number.toUpperCase())) {
+          certsMap.set(r.certificate_number.toUpperCase(), {
+            certificateNumber: r.certificate_number,
+            studentName: r.candidate_name || studentProfile.name,
+            candidateEmail: cleanEmail,
+            internshipName: 'Online Certification Exam',
+            grade: r.percentage >= 90 ? 'A+' : r.percentage >= 80 ? 'A' : r.percentage >= 70 ? 'B+' : r.percentage >= 60 ? 'B' : 'C',
+            percentage: Number(r.percentage) || 0,
+            score: Number(r.score) || 0,
+            totalMarks: Number(r.total_marks) || 0,
+            issueDate: r.submitted_at || new Date(),
+            status: 'valid'
+          });
+        }
+      }
+    } catch (e) {}
+
+    // 4. Format Exam Attempts with Post-Exam Question Analysis (Mistakes / Wrong Answers)
+    const formattedAttempts = [];
+    let calculatedXp = 0;
+
+    for (const att of attemptsMap.values()) {
+      const assId = String(att.assessment || att.assessmentId || '');
+      const assessment = await findAssessmentInDB(assId);
+      const isSubmitted = att.status === 'submitted';
+      const resultDeclared = isSubmitted && (assessment ? assessment.showResult !== false : true);
+
+      let questionReview = [];
+      let correctCount = 0;
+      let wrongCount = 0;
+
+      // Only reveal correct answers and questions AFTER exam is submitted and result declared
+      if (isSubmitted && resultDeclared && Array.isArray(att.answers)) {
+        const qMap = new Map();
+        if (assessment && Array.isArray(assessment.questions)) {
+          assessment.questions.forEach(q => qMap.set(String(q._id), q));
+        }
+
+        questionReview = att.answers.map((ans, idx) => {
+          const q = qMap.get(String(ans.questionId));
+          const isCorrect = Boolean(ans.isCorrect);
+          if (isCorrect) correctCount++; else wrongCount++;
+
+          const rawCorrect = q ? (q.type === 'theory' ? '(Manually Graded Theory Question)' : (q.correct || q.sqlExpected || '')) : '';
+          const expl = q?.explanation || (isCorrect ? 'Correct! Your solution matches the expected concept.' : 'Incorrect option chosen. Review the correct concept.');
+
+          return {
+            index: idx + 1,
+            questionId: ans.questionId,
+            questionText: q?.text || ans.questionText || `Question ${idx + 1}`,
+            type: q?.type || 'mcq',
+            options: q?.options || [],
+            studentAnswer: ans.answer !== undefined && ans.answer !== null ? String(ans.answer) : '(No answer selected)',
+            correctAnswer: rawCorrect,
+            isCorrect: isCorrect,
+            marks: ans.marks || (isCorrect ? (q?.marks || 1) : 0),
+            maxMarks: q?.marks || 1,
+            explanation: expl,
+            topic: q?.topic || 'General Concept'
+          };
+        });
+      }
+
+      if (isSubmitted) {
+        calculatedXp += Math.round((Number(att.percentage) || 0) * 250);
+      }
+
+      formattedAttempts.push({
+        id: att._id || att.id,
+        assessmentId: assId,
+        title: assessment?.title || 'Online Assessment',
+        description: assessment?.description || '',
+        duration: assessment?.duration || 30,
+        passingScore: assessment?.passingScore || 50,
+        score: att.score || 0,
+        totalMarks: att.totalMarks || 0,
+        percentage: att.percentage || 0,
+        passed: Boolean(att.passed),
+        status: att.status || 'submitted',
+        timeTaken: att.timeTaken || 0,
+        startedAt: att.startedAt,
+        submittedAt: att.submittedAt,
+        certificateNumber: att.certificateNumber || '',
+        resultDeclared,
+        totalQuestions: questionReview.length || (assessment?.questions?.length || 0),
+        correctCount,
+        wrongCount,
+        questions: questionReview
+      });
+    }
+
+    // Sort attempts by date descending
+    formattedAttempts.sort((a, b) => new Date(b.submittedAt || b.startedAt || 0) - new Date(a.submittedAt || a.startedAt || 0));
+
+    res.json({
+      success: true,
+      student: {
+        ...studentProfile,
+        xp: calculatedXp,
+        totalExams: formattedAttempts.length,
+        passedExams: formattedAttempts.filter(a => a.passed).length,
+        certificatesCount: certsMap.size
+      },
+      certificates: Array.from(certsMap.values()),
+      attempts: formattedAttempts
+    });
+  } catch (err) {
+    console.error('Error fetching student profile exams:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;
