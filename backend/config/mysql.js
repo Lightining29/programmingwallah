@@ -448,12 +448,20 @@ export const initMySQLTables = async () => {
         email VARCHAR(255),
         student_name VARCHAR(255),
         slug VARCHAR(100),
+        avatar_image LONGTEXT,
+        resume_pdf_url LONGTEXT,
+        resume_pdf_name VARCHAR(255) DEFAULT '',
         data_json LONGTEXT,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_port_slug (slug),
         INDEX idx_port_email (email)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
+
+    // Ensure columns exist on already created student_portfolios table
+    await connection.query(`ALTER TABLE student_portfolios ADD COLUMN avatar_image LONGTEXT;`).catch(() => {});
+    await connection.query(`ALTER TABLE student_portfolios ADD COLUMN resume_pdf_url LONGTEXT;`).catch(() => {});
+    await connection.query(`ALTER TABLE student_portfolios ADD COLUMN resume_pdf_name VARCHAR(255) DEFAULT '';`).catch(() => {});
 
     connection.release();
     return true;

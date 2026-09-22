@@ -22,7 +22,9 @@ import {
   Copy,
   FolderPlus,
   Sliders,
-  Rocket
+  Rocket,
+  FileText,
+  Download
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import Swal from 'sweetalert2';
@@ -33,6 +35,7 @@ export default function PortfolioBuilder() {
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
   const avatarInputRef = useRef(null);
+  const pdfInputRef = useRef(null);
 
   // Active Tab: 'hero' | 'projects' | 'experience' | 'skills' | 'about' | 'contact'
   const [activeTab, setActiveTab] = useState('hero');
@@ -56,6 +59,7 @@ export default function PortfolioBuilder() {
     description: "I'm currently accepting new projects and roles for"
   });
   const [resumeUrl, setResumeUrl] = useState('');
+  const [resumeFileName, setResumeFileName] = useState('');
 
   // State: Projects (with screenshots)
   const [projects, setProjects] = useState([
@@ -214,6 +218,7 @@ export default function PortfolioBuilder() {
             if (p.avatar || p.photoUrl) setAvatar(p.avatar || p.photoUrl);
             if (p.availability) setAvailability(p.availability);
             if (p.resumeUrl) setResumeUrl(p.resumeUrl);
+            if (p.resumeFileName || p.resumePdfName) setResumeFileName(p.resumeFileName || p.resumePdfName);
             if (Array.isArray(p.projects)) setProjects(p.projects);
             if (Array.isArray(p.experience)) setExperience(p.experience);
             if (Array.isArray(p.skills)) setSkills(p.skills);
@@ -247,6 +252,42 @@ export default function PortfolioBuilder() {
         title: 'Avatar updated!',
         showConfirmButton: false,
         timer: 1500
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Handle Resume PDF Upload
+  const handlePdfUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      Swal.fire({
+        icon: 'error',
+        title: 'PDF Format Required',
+        text: 'Please upload your resume in PDF format (.pdf).'
+      });
+      return;
+    }
+    if (file.size > 25 * 1024 * 1024) {
+      Swal.fire({
+        icon: 'error',
+        title: 'File Too Large',
+        text: 'PDF size should not exceed 25MB.'
+      });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setResumeUrl(ev.target.result);
+      setResumeFileName(file.name);
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: `Attached PDF: ${file.name}`,
+        showConfirmButton: false,
+        timer: 2000
       });
     };
     reader.readAsDataURL(file);
@@ -401,6 +442,7 @@ export default function PortfolioBuilder() {
         avatar,
         availability,
         resumeUrl,
+        resumeFileName,
         projects,
         experience,
         skills,
@@ -522,6 +564,7 @@ export default function PortfolioBuilder() {
     avatar,
     availability,
     resumeUrl,
+    resumeFileName,
     projects,
     experience,
     skills,
@@ -764,7 +807,7 @@ export default function PortfolioBuilder() {
                     </div>
                   </div>
 
-                  {/* Location & Resume Link */}
+                  {/* Location & Resume PDF (PDF Format Required) */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-[#B8ACA4] mb-1">Location</label>
@@ -776,14 +819,88 @@ export default function PortfolioBuilder() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-[#B8ACA4] mb-1">Resume Link (PDF / URL)</label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-semibold text-[#B8ACA4]">
+                          Student Resume <span className="text-[#E05A38] font-bold">(.PDF)</span>
+                        </label>
+                        {resumeUrl && (
+                          <span className="text-[10px] text-emerald-400 font-mono bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                            PDF Ready
+                          </span>
+                        )}
+                      </div>
+
                       <input
-                        type="text"
-                        value={resumeUrl}
-                        onChange={e => setResumeUrl(e.target.value)}
-                        placeholder="https://drive.google.com/..."
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#231F1D] border border-[#38312F] text-white text-sm focus:outline-none focus:border-[#E05A38]"
+                        ref={pdfInputRef}
+                        type="file"
+                        accept="application/pdf,.pdf"
+                        onChange={handlePdfUpload}
+                        className="hidden"
                       />
+
+                      {resumeUrl ? (
+                        <div className="p-2.5 rounded-xl bg-[#231F1D] border border-[#38312F] flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-8 h-8 rounded-lg bg-[#E05A38]/15 border border-[#E05A38]/30 flex items-center justify-center shrink-0">
+                              <FileText className="w-4 h-4 text-[#E05A38]" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-xs font-medium text-white truncate max-w-[140px] sm:max-w-[170px]">
+                                {resumeFileName || 'Resume.pdf'}
+                              </p>
+                              <span className="text-[10px] text-[#8E8078] block">
+                                PDF Document Attached
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (resumeUrl.startsWith('data:') || resumeUrl.startsWith('/uploads') || resumeUrl.startsWith('http')) {
+                                  window.open(resumeUrl, '_blank');
+                                } else {
+                                  Swal.fire('Resume', 'Preview not available directly', 'info');
+                                }
+                              }}
+                              className="p-1.5 rounded-lg bg-[#2E2825] hover:bg-[#38312E] text-white text-xs transition-colors"
+                              title="Preview PDF in new tab"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => pdfInputRef.current?.click()}
+                              className="p-1.5 rounded-lg bg-[#2E2825] hover:bg-[#38312E] text-[#B8ACA4] hover:text-white text-xs transition-colors"
+                              title="Change PDF"
+                            >
+                              <Upload className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setResumeUrl('');
+                                setResumeFileName('');
+                              }}
+                              className="p-1.5 rounded-lg bg-[#2E2825] hover:bg-red-500/20 text-[#B8ACA4] hover:text-red-400 text-xs transition-colors"
+                              title="Remove PDF"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => pdfInputRef.current?.click()}
+                          className="px-3.5 py-2.5 rounded-xl bg-[#231F1D] border border-dashed border-[#423936] hover:border-[#E05A38] cursor-pointer transition-colors flex items-center justify-center gap-2 group text-center"
+                        >
+                          <Upload className="w-4 h-4 text-[#E05A38] group-hover:scale-110 transition-transform" />
+                          <span className="text-xs font-medium text-[#B8ACA4] group-hover:text-white transition-colors">
+                            Upload Resume (PDF format)
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 

@@ -11,9 +11,34 @@ const __dirname = path.dirname(__filename);
 const DATA_DIR = path.join(__dirname, '../data');
 const PORTFOLIOS_FILE = path.join(DATA_DIR, 'portfolios.json');
 
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+// Ensure data and upload directories exist
+const UPLOADS_DIR = path.join(__dirname, '../uploads');
+const PORTFOLIO_UPLOADS_DIR = path.join(UPLOADS_DIR, 'portfolios');
+const RESUME_UPLOADS_DIR = path.join(UPLOADS_DIR, 'resumes');
+
+[DATA_DIR, UPLOADS_DIR, PORTFOLIO_UPLOADS_DIR, RESUME_UPLOADS_DIR].forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    try { fs.mkdirSync(dir, { recursive: true }); } catch (_) {}
+  }
+});
+
+// Helper to save base64 string to a static file and return public URL
+function saveBase64File(base64Data, prefix, extension, targetDir, publicDir) {
+  if (!base64Data || typeof base64Data !== 'string' || !base64Data.startsWith('data:')) {
+    return base64Data;
+  }
+  try {
+    const matches = base64Data.match(/^data:([A-Za-z-+/0-9.]+);base64,(.+)$/);
+    if (!matches || matches.length !== 3) return base64Data;
+    const buffer = Buffer.from(matches[2], 'base64');
+    const safeName = `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${extension}`;
+    const filePath = path.join(targetDir, safeName);
+    fs.writeFileSync(filePath, buffer);
+    return `/uploads/${publicDir}/${safeName}`;
+  } catch (e) {
+    console.warn(`Error writing base64 ${prefix}:`, e.message);
+    return base64Data;
+  }
 }
 
 // Helper to load portfolios
@@ -49,10 +74,18 @@ async function ensurePortfolioTable() {
         email VARCHAR(255),
         student_name VARCHAR(255),
         slug VARCHAR(100),
+        avatar_image LONGTEXT,
+        resume_pdf_url LONGTEXT,
+        resume_pdf_name VARCHAR(255) DEFAULT '',
         data_json LONGTEXT,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_port_slug (slug),
+        INDEX idx_port_email (email)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
+    await pool.query(`ALTER TABLE student_portfolios ADD COLUMN avatar_image LONGTEXT;`).catch(() => {});
+    await pool.query(`ALTER TABLE student_portfolios ADD COLUMN resume_pdf_url LONGTEXT;`).catch(() => {});
+    await pool.query(`ALTER TABLE student_portfolios ADD COLUMN resume_pdf_name VARCHAR(255) DEFAULT '';`).catch(() => {});
   } catch (err) {
     console.warn('MySQL student_portfolios table check:', err.message);
   }
@@ -171,7 +204,50 @@ router.post('/ai-enhance', async (req, res) => {
 });
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   2. SAVE PORTFOLIO
+   2. UPLOAD RESUME (PDF FORMAT)
+   POST /api/portfolio/upload-pdf
+───────────────────────────────────────────────────────────────────────────── */
+router.post('/upload-pdf', async (req, res) => {
+  try {
+    const { pdfBase64, fileName, studentSlug } = req.body;
+    if (!pdfBase64) {
+      return res.status(400).json({ success: false, error: 'PDF data is required' });
+    }
+    const cleanSlug = (studentSlug || 'student').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const safeUrl = saveBase64File(pdfBase64, `resume-${cleanSlug}`, 'pdf', RESUME_UPLOADS_DIR, 'resumes');
+    return res.json({
+      success: true,
+      url: safeUrl,
+      fileName: fileName || `${cleanSlug}-resume.pdf`
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   3. UPLOAD IMAGE (AVATAR / PROJECT SCREENSHOT)
+   POST /api/portfolio/upload-image
+───────────────────────────────────────────────────────────────────────────── */
+router.post('/upload-image', async (req, res) => {
+  try {
+    const { imageBase64, prefix, studentSlug } = req.body;
+    if (!imageBase64) {
+      return res.status(400).json({ success: false, error: 'Image data is required' });
+    }
+    const cleanSlug = (studentSlug || 'student').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const safeUrl = saveBase64File(imageBase64, `${prefix || 'img'}-${cleanSlug}`, 'png', PORTFOLIO_UPLOADS_DIR, 'portfolios');
+    return res.json({
+      success: true,
+      url: safeUrl
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   4. SAVE / DEPLOY PORTFOLIO TO HOSTINGER MYSQL
    POST /api/portfolio/save
 ───────────────────────────────────────────────────────────────────────────── */
 router.post('/save', async (req, res) => {
@@ -186,10 +262,39 @@ router.post('/save', async (req, res) => {
     const studentName = portfolioData.name || 'Student Candidate';
     const slug = portfolioData.slug || studentName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || id;
 
+    // Process Avatar (store static file + keep in MySQL)
+    let avatarImage = portfolioData.avatar || '';
+    if (avatarImage && typeof avatarImage === 'string' && avatarImage.startsWith('data:image/')) {
+      const savedAvatarUrl = saveBase64File(avatarImage, `avatar-${slug}`, 'png', PORTFOLIO_UPLOADS_DIR, 'portfolios');
+      portfolioData.avatar = savedAvatarUrl;
+    }
+
+    // Process Resume PDF (store static file + keep in MySQL)
+    let resumePdfUrl = portfolioData.resumeUrl || '';
+    const resumePdfName = portfolioData.resumeFileName || portfolioData.resumePdfName || `${slug}-resume.pdf`;
+    if (resumePdfUrl && typeof resumePdfUrl === 'string' && resumePdfUrl.startsWith('data:application/pdf')) {
+      const savedPdfUrl = saveBase64File(resumePdfUrl, `resume-${slug}`, 'pdf', RESUME_UPLOADS_DIR, 'resumes');
+      portfolioData.resumeUrl = savedPdfUrl;
+    }
+
+    // Process Project Screenshots (store static files + keep in MySQL)
+    if (Array.isArray(portfolioData.projects)) {
+      portfolioData.projects = portfolioData.projects.map((proj, idx) => {
+        if (proj.screenshot && typeof proj.screenshot === 'string' && proj.screenshot.startsWith('data:image/')) {
+          const savedScreenshot = saveBase64File(proj.screenshot, `proj-${slug}-${idx + 1}`, 'png', PORTFOLIO_UPLOADS_DIR, 'portfolios');
+          return { ...proj, screenshot: savedScreenshot };
+        }
+        return proj;
+      });
+    }
+
     const payload = {
       ...portfolioData,
       id,
       slug,
+      avatar: portfolioData.avatar,
+      resumeUrl: portfolioData.resumeUrl,
+      resumeFileName: resumePdfName,
       updatedAt: new Date().toISOString()
     };
 
@@ -199,20 +304,35 @@ router.post('/save', async (req, res) => {
     if (slug) diskMap[slug] = payload;
     savePortfoliosToDisk(diskMap);
 
-    // 2. Save to MySQL if connected
+    // 2. Save directly to Hostinger MySQL table student_portfolios
     const pool = getMySQLPool();
+    let mysqlSaved = false;
     if (pool) {
       try {
         await pool.query(
-          `INSERT INTO student_portfolios (id, email, student_name, slug, data_json)
-           VALUES (?, ?, ?, ?, ?)
+          `INSERT INTO student_portfolios (
+             id, email, student_name, slug, avatar_image, resume_pdf_url, resume_pdf_name, data_json
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
            ON DUPLICATE KEY UPDATE
              email = VALUES(email),
              student_name = VALUES(student_name),
              slug = VALUES(slug),
+             avatar_image = VALUES(avatar_image),
+             resume_pdf_url = VALUES(resume_pdf_url),
+             resume_pdf_name = VALUES(resume_pdf_name),
              data_json = VALUES(data_json)`,
-          [id, email, studentName, slug, JSON.stringify(payload)]
+          [
+            id,
+            email,
+            studentName,
+            slug,
+            avatarImage,
+            portfolioData.resumeUrl,
+            resumePdfName,
+            JSON.stringify(payload)
+          ]
         );
+        mysqlSaved = true;
       } catch (dbErr) {
         console.warn('Could not save portfolio to MySQL, cached locally:', dbErr.message);
       }
@@ -222,6 +342,7 @@ router.post('/save', async (req, res) => {
       success: true,
       id,
       slug,
+      mysqlSaved,
       portfolio: payload
     });
 

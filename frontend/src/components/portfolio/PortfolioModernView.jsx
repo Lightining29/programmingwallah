@@ -155,14 +155,28 @@ export default function PortfolioModernView({
               <a href="#contact" className="hover:text-[#1C1917] transition-colors">Contact</a>
             </nav>
 
-            {/* CTA Pill Button */}
-            <a
-              href="#contact"
-              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white/90 hover:bg-white text-[#1C1917] text-xs sm:text-sm font-semibold border border-[#ECD9CE] shadow-sm hover:shadow-md hover:border-[#E05A38]/30 transition-all hover:-translate-y-0.5"
-            >
-              <span>Let's talk</span>
-              <ArrowUpRight className="w-4 h-4 text-[#E05A38]" />
-            </a>
+            {/* CTA Pill Buttons */}
+            <div className="flex items-center gap-3">
+              {resumeUrl && resumeUrl !== '#' && (
+                <a
+                  href={resumeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#1C1917] hover:bg-black text-white text-xs sm:text-sm font-semibold shadow-sm hover:shadow transition-all hover:-translate-y-0.5"
+                >
+                  <FileText className="w-3.5 h-3.5 text-[#E05A38]" />
+                  <span>Resume (PDF)</span>
+                  <Download className="w-3.5 h-3.5 opacity-80" />
+                </a>
+              )}
+              <a
+                href="#contact"
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white/90 hover:bg-white text-[#1C1917] text-xs sm:text-sm font-semibold border border-[#ECD9CE] shadow-sm hover:shadow-md hover:border-[#E05A38]/30 transition-all hover:-translate-y-0.5"
+              >
+                <span>Let's talk</span>
+                <ArrowUpRight className="w-4 h-4 text-[#E05A38]" />
+              </a>
+            </div>
           </header>
 
           {/* ─────────────────────────────────────────────────────────────────────
@@ -213,6 +227,19 @@ export default function PortfolioModernView({
                     >
                       <span>Explore Experience</span>
                       <ArrowRight className="w-4 h-4" />
+                    </a>
+                  )}
+
+                  {resumeUrl && resumeUrl !== '#' && (
+                    <a
+                      href={resumeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-[#1C1917] hover:bg-black text-white text-sm sm:text-base font-semibold shadow-md shadow-stone-900/15 transition-all hover:-translate-y-0.5"
+                    >
+                      <FileText className="w-4 h-4 text-[#E05A38]" />
+                      <span>Resume (PDF)</span>
+                      <Download className="w-4 h-4 text-white/70" />
                     </a>
                   )}
 
