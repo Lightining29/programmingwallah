@@ -106,43 +106,11 @@ export default function PublicPortfolio() {
   }
 
   return (
-    <div className="min-h-screen bg-[#100E0D] text-[#EFECE6] font-sans py-6 px-3 sm:px-6 lg:px-8">
-      {/* Top Floating Showcase Navigation */}
-      <div className="max-w-6xl mx-auto flex items-center justify-between mb-6">
-        <Link
-          to="/arena"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1C1817] border border-[#2D2724] text-[#A69B95] hover:text-white text-xs font-bold transition"
-        >
-          <ArrowLeft className="w-4 h-4 text-[#E05A38]" />
-          <span>Student Arena</span>
-        </Link>
-
-        <div className="flex items-center gap-3">
-          <Link
-            to="/student/portfolio"
-            className="px-4 py-2 rounded-xl bg-[#E05A38] hover:bg-[#CF4E2C] text-white font-bold text-xs flex items-center gap-1.5 transition shadow-sm"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-white" />
-            <span>Create Your Portfolio</span>
-          </Link>
-
-          <button
-            onClick={handleShare}
-            className="p-2 rounded-xl bg-[#1C1817] hover:bg-[#282220] border border-[#2D2724] text-[#A69B95] hover:text-white transition cursor-pointer"
-            title="Copy Share Link"
-          >
-            <Share2 className="w-4 h-4 text-[#E05A38]" />
-          </button>
-        </div>
-      </div>
-
-      {/* Main Modern Showcase Render */}
-      <div className="max-w-6xl mx-auto">
-        <PortfolioModernView
-          data={portfolio}
-          showWindowMockup={true}
-        />
-      </div>
+    <div className="min-h-screen w-full font-sans antialiased bg-[#FFF7F3]">
+      <PortfolioModernView
+        data={portfolio}
+        showWindowMockup={false}
+      />
     </div>
   );
 }

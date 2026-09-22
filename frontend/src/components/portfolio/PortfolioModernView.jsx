@@ -27,7 +27,7 @@ export default function PortfolioModernView({
   data,
   isEditing = false,
   onEditSection = () => {},
-  showWindowMockup = true
+  showWindowMockup = false
 }) {
   const [selectedProject, setSelectedProject] = useState(null);
 
@@ -122,8 +122,8 @@ export default function PortfolioModernView({
 
   return (
     <div className="w-full font-sans antialiased text-[#1C1917] selection:bg-[#E05A38] selection:text-white">
-      {/* Outer Browser Window Mockup (matching reference design screenshot) */}
-      <div className={`${showWindowMockup ? 'rounded-[2.5rem] shadow-2xl border border-[#EADBCE] overflow-hidden bg-[#FFFDFB]' : ''}`}>
+      {/* Outer Browser Window Mockup (only if showWindowMockup is true) */}
+      <div className={showWindowMockup ? 'rounded-[2.5rem] shadow-2xl border border-[#EADBCE] overflow-hidden bg-[#FFFDFB]' : 'w-full'}>
         
         {/* Safari-Style Window Header */}
         {showWindowMockup && (
@@ -221,27 +221,33 @@ export default function PortfolioModernView({
 
                 {/* Hero Action Buttons */}
                 <div className="flex flex-wrap items-center gap-4 pt-2">
-                  {hasProjects ? (
-                    <a
-                      href="#work"
-                      className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-[#E05A38] hover:bg-[#CF4E2C] text-white text-sm sm:text-base font-semibold shadow-lg shadow-[#E05A38]/25 hover:shadow-xl hover:shadow-[#E05A38]/35 transition-all hover:-translate-y-0.5"
-                    >
-                      <span>View my work</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </a>
-                  ) : (
-                    <a
-                      href="#experience"
-                      className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-[#E05A38] hover:bg-[#CF4E2C] text-white text-sm sm:text-base font-semibold shadow-lg shadow-[#E05A38]/25 transition-all hover:-translate-y-0.5"
-                    >
-                      <span>Explore Experience</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </a>
-                  )}
+                  {/* Luxury Shiny Download Resume Button */}
+                  <a
+                    href={resumeUrl || '#contact'}
+                    target={resumeUrl ? '_blank' : '_self'}
+                    rel="noreferrer"
+                    className="relative inline-flex items-center gap-2.5 px-8 py-4 rounded-full font-bold text-sm sm:text-base text-white overflow-hidden group shadow-xl shadow-[#E05A38]/35 hover:shadow-2xl hover:shadow-[#E05A38]/55 transition-all duration-300 hover:-translate-y-1 active:translate-y-0 cursor-pointer select-none"
+                    style={{
+                      background: 'linear-gradient(135deg, #FF6F4C 0%, #E05A38 50%, #C44322 100%)'
+                    }}
+                  >
+                    {/* Sweeping Shiny Light Beam across button */}
+                    <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
+
+                    {/* Ambient subtle glowing pulsating ring */}
+                    <span className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-yellow-300/40 via-white/60 to-orange-400/40 opacity-75 blur-xs group-hover:opacity-100 transition-opacity pointer-events-none" />
+
+                    {/* Sparkle & Download Icons */}
+                    <Sparkles className="w-4 h-4 text-yellow-200 animate-pulse relative z-10 shrink-0" />
+                    <span className="relative z-10 tracking-wide font-extrabold uppercase text-xs sm:text-sm drop-shadow-sm">
+                      Download Resume
+                    </span>
+                    <Download className="w-4 h-4 text-white relative z-10 group-hover:translate-y-0.5 transition-transform shrink-0" />
+                  </a>
 
                   <a
                     href="#about"
-                    className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-white/80 hover:bg-white text-[#2C2320] text-sm sm:text-base font-semibold border border-[#E9DACF] shadow-sm hover:shadow transition-all hover:-translate-y-0.5"
+                    className="inline-flex items-center gap-2 px-6 py-4 rounded-full bg-white/80 hover:bg-white text-[#2C2320] text-sm sm:text-base font-semibold border border-[#E9DACF] shadow-sm hover:shadow transition-all hover:-translate-y-0.5"
                   >
                     <span>About me</span>
                     <User className="w-4 h-4 text-[#8C7B73]" />
@@ -249,7 +255,7 @@ export default function PortfolioModernView({
                 </div>
               </motion.div>
 
-              {/* Right Column: Circular Portrait & Floating Glassmorphism Status Card */}
+              {/* Right Column: Clean Circular Portrait (Clean & Unobstructed) */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -269,48 +275,6 @@ export default function PortfolioModernView({
                       className="w-full h-full object-cover object-center"
                     />
                   </div>
-
-                  {/* Floating Glassmorphism Availability Card (Overlapping bottom right) */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.35, duration: 0.5 }}
-                    className="absolute -bottom-6 -right-2 sm:-right-6 w-64 sm:w-72 p-5 rounded-3xl bg-white/85 backdrop-blur-xl border border-white/80 shadow-xl text-left space-y-3"
-                  >
-                    {/* Pulsing Status Dot */}
-                    <div className="flex items-center gap-2">
-                      <span className="relative flex h-2.5 w-2.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E05A38] opacity-75" />
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#E05A38]" />
-                      </span>
-                      <span className="text-xs font-semibold text-[#3D3430]">
-                        {availability.status || 'Available for work'}
-                      </span>
-                    </div>
-
-                    {/* Status Message */}
-                    <p className="text-xs text-[#6A5D57] leading-relaxed">
-                      {availability.description || "I'm currently accepting new projects for"}{' '}
-                      <strong className="text-[#1C1917] font-semibold">
-                        {availability.period || 'May 2026'}.
-                      </strong>
-                    </p>
-
-                    {/* Download Resume Pill */}
-                    {resumeUrl && (
-                      <a
-                        href={resumeUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-2 text-xs font-semibold text-[#1C1917] hover:text-[#E05A38] transition-colors pt-1 group"
-                      >
-                        <span className="w-5 h-5 rounded-full bg-[#F5ECE5] group-hover:bg-[#FFEAE0] flex items-center justify-center transition-colors">
-                          <ArrowRight className="w-3 h-3 text-[#E05A38]" />
-                        </span>
-                        <span>Download Resume</span>
-                      </a>
-                    )}
-                  </motion.div>
                 </div>
               </motion.div>
 

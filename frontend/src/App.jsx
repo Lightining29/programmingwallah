@@ -118,9 +118,29 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
   const isExamPage = location.pathname.startsWith('/test') || location.pathname.startsWith('/dashboard/admin/tests') || location.pathname.startsWith('/assessment-admin');
   const isAdminPage = location.pathname.startsWith('/dashboard/admin') || location.pathname.startsWith('/portal/admin');
   const isArenaProblem = location.pathname.startsWith('/arena/problem');
-  const isPortfolioBuilder = location.pathname.startsWith('/student/portfolio');
-  const hideHeaderFooter = isLoginPage || isExamPage || isArenaProblem || isPortfolioBuilder;
-  const hideChatbot = hideHeaderFooter || isAdminPage || isArenaProblem || location.pathname.startsWith('/portfolio/');
+
+  // List of standard school routes to distinguish from dynamic student portfolio URLs like /manishrajput
+  const KNOWN_STATIC_PREFIXES = [
+    '/about', '/admissions', '/programs', '/facilities', '/gallery',
+    '/calendar', '/meetings', '/fees', '/fee-structure', '/brochure', '/contact',
+    '/login', '/practice', '/arena', '/coding-arena', '/hackerrank',
+    '/leaderboard', '/tutorials', '/music', '/games', '/payment-demo',
+    '/verify-certificate', '/certificate', '/cert', '/manish-kumar', '/manish',
+    '/careers', '/job-roles', '/trending-tech-jobs', '/courses', '/courses-in-ghaziabad',
+    '/coaching-in-rdc-ghaziabad', '/coaching', '/jobs', '/lms', '/dashboard', '/portal',
+    '/test', '/assessment-admin'
+  ];
+
+  const isExactHome = location.pathname === '/' || location.pathname === '';
+  const isKnownStaticPage = isExactHome || KNOWN_STATIC_PREFIXES.some(prefix => location.pathname === prefix || location.pathname.startsWith(prefix + '/'));
+
+  const isPortfolioPage = location.pathname.startsWith('/portfolio') || 
+                          location.pathname.startsWith('/student/portfolio') || 
+                          location.pathname.startsWith('/p/') ||
+                          !isKnownStaticPage;
+
+  const hideHeaderFooter = isLoginPage || isExamPage || isArenaProblem || isPortfolioPage;
+  const hideChatbot = hideHeaderFooter || isAdminPage || isArenaProblem || isPortfolioPage;
 
   return (
     <div
