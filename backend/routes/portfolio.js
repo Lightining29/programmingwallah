@@ -66,7 +66,7 @@ ensurePortfolioTable().catch(() => {});
 router.post('/ai-enhance', async (req, res) => {
   try {
     const { field, text, name, role, focus } = req.body;
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GEMINI_KEY || process.env.VITE_GEMINI_API_KEY;
 
     // Build prompt based on field requested
     let systemInstruction = '';
