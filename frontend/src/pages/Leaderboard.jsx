@@ -826,10 +826,10 @@ export default function Leaderboard() {
                   </div>
                   <Link
                     to={`/verify-certificate/${selectedStudent.certificateNumber}`}
-                    className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold flex items-center gap-1 transition flex-shrink-0 shadow-sm"
+                    className="px-3 py-1.5 rounded-lg bg-yellow-400 hover:bg-yellow-500 border border-yellow-500 text-black text-xs font-black flex items-center gap-1 transition flex-shrink-0 shadow-sm"
                   >
                     <span>Verify</span>
-                    <ExternalLink className="w-3 h-3" />
+                    <ExternalLink className="w-3 h-3 text-black" />
                   </Link>
                 </div>
               ) : (
@@ -845,14 +845,14 @@ export default function Leaderboard() {
               <div className="flex items-center gap-2 pt-1">
                 <Link
                   to="/student/profile"
-                  className="flex-1 py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs text-center shadow-sm transition cursor-pointer flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-yellow-400 hover:bg-yellow-500 border border-yellow-500 text-black font-black text-xs text-center shadow-sm transition cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <span>Student Dashboard</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
+                  <ArrowUpRight className="w-3.5 h-3.5 text-black" />
                 </Link>
                 <button
                   onClick={() => setSelectedStudent(null)}
-                  className="py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
+                  className="py-2.5 px-4 rounded-xl bg-yellow-100 hover:bg-yellow-200 text-black font-black border border-yellow-300 text-xs transition cursor-pointer"
                 >
                   Close
                 </button>

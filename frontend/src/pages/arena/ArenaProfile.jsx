@@ -227,8 +227,8 @@ export default function ArenaProfile() {
         text: 'Your student details have been saved successfully.',
         timer: 2000,
         showConfirmButton: false,
-        background: '#09090b',
-        color: '#fef08a'
+        background: '#ffffff',
+        color: '#000000'
       });
     } catch (err) {
       Swal.fire({ icon: 'error', title: 'Update Error', text: err.message });
@@ -255,20 +255,20 @@ export default function ArenaProfile() {
       title: `${label} copied to clipboard!`,
       showConfirmButton: false,
       timer: 1800,
-      background: '#18181b',
-      color: '#fef08a'
+      background: '#ffffff',
+      color: '#000000'
     });
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#09090b] flex items-center justify-center text-slate-200">
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-yellow-50 flex items-center justify-center text-slate-900">
         <div className="text-center space-y-4">
           <div className="relative w-16 h-16 mx-auto">
-            <div className="absolute inset-0 rounded-full border-4 border-amber-400/20 animate-ping" />
-            <div className="w-16 h-16 border-4 border-amber-400 border-t-white rounded-full animate-spin" />
+            <div className="absolute inset-0 rounded-full border-4 border-yellow-400/30 animate-ping" />
+            <div className="w-16 h-16 border-4 border-yellow-400 border-t-amber-500 rounded-full animate-spin" />
           </div>
-          <p className="text-sm font-black tracking-wider uppercase bg-gradient-to-r from-amber-300 via-yellow-200 to-white bg-clip-text text-transparent">
+          <p className="text-sm font-black tracking-wider uppercase text-slate-900">
             Loading Student Profile & Certificates...
           </p>
         </div>
@@ -291,22 +291,22 @@ export default function ArenaProfile() {
   const hardSolved = problems.filter(p => p.difficulty === 'Hard' && solvedList.includes(p.id)).length;
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-slate-100 font-sans pb-28 selection:bg-amber-400/30 selection:text-amber-200 relative overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50/70 via-white to-yellow-50/80 text-slate-900 font-sans pb-28 selection:bg-yellow-300 selection:text-black relative overflow-x-hidden">
       
-      {/* ─── Luxury Yellow, White & Black Background Glows ─────────────────── */}
+      {/* ─── White & Warm Yellow Ambient Background ─────────────────── */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        {/* Radiant top-center amber/yellow bloom */}
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1100px] h-[550px] rounded-full bg-gradient-to-b from-amber-400/20 via-yellow-300/10 to-transparent blur-[150px]" />
-        {/* Soft white shimmer spotlight */}
-        <div className="absolute top-48 left-1/4 w-[600px] h-[400px] rounded-full bg-white/[0.04] blur-[120px]" />
-        {/* Subtle bottom golden ambient haze */}
-        <div className="absolute bottom-0 right-1/4 w-[700px] h-[450px] rounded-full bg-amber-500/10 blur-[160px]" />
-        {/* Mesh grid pattern */}
+        {/* Radiant top warm yellow bloom */}
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1100px] h-[550px] rounded-full bg-gradient-to-b from-yellow-300/30 via-amber-200/20 to-transparent blur-[140px]" />
+        {/* Soft amber shimmer spotlight */}
+        <div className="absolute top-48 left-1/4 w-[600px] h-[400px] rounded-full bg-yellow-200/25 blur-[120px]" />
+        {/* Bottom golden warm tone */}
+        <div className="absolute bottom-0 right-1/4 w-[700px] h-[450px] rounded-full bg-amber-300/20 blur-[150px]" />
+        {/* Subtle grid pattern */}
         <div 
-          className="absolute inset-0 opacity-[0.035]"
+          className="absolute inset-0 opacity-[0.03]"
           style={{
-            backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px)`,
-            backgroundSize: '28px 28px'
+            backgroundImage: `radial-gradient(#d97706 1px, transparent 1px)`,
+            backgroundSize: '24px 24px'
           }}
         />
       </div>
@@ -317,125 +317,123 @@ export default function ArenaProfile() {
         <div className="flex items-center justify-between">
           <Link
             to="/arena"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 hover:border-amber-400/40 text-slate-300 hover:text-white text-xs font-bold transition shadow-lg backdrop-blur-md"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-yellow-400 hover:bg-yellow-500 border-2 border-yellow-500 text-black text-xs font-black transition shadow-sm"
           >
-            <ArrowLeft className="w-4 h-4 text-amber-400" />
+            <ArrowLeft className="w-4 h-4 text-black" />
             <span>Coding Arena</span>
           </Link>
 
           <div className="flex items-center gap-2.5">
             <Link
               to="/leaderboard"
-              className="px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-400/10 via-yellow-400/15 to-transparent border border-amber-400/30 hover:border-amber-400 text-amber-300 hover:text-white text-xs font-black flex items-center gap-2 transition shadow-lg shadow-amber-500/10"
+              className="px-4 py-2 rounded-2xl bg-yellow-400 hover:bg-yellow-500 border-2 border-yellow-500 text-black text-xs font-black flex items-center gap-2 transition shadow-sm"
             >
-              <Trophy className="w-4 h-4 text-amber-400" />
+              <Trophy className="w-4 h-4 text-black" />
               <span>Leaderboard</span>
             </Link>
             <button
               onClick={handleLogout}
-              className="px-4 py-2 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 hover:text-rose-200 text-xs font-bold flex items-center gap-2 transition cursor-pointer"
+              className="px-4 py-2 rounded-2xl bg-yellow-400 hover:bg-yellow-500 border-2 border-yellow-500 text-black text-xs font-black flex items-center gap-2 transition cursor-pointer shadow-sm"
             >
-              <LogOut className="w-3.5 h-3.5" />
+              <LogOut className="w-3.5 h-3.5 text-black" />
               <span>Sign Out</span>
             </button>
           </div>
         </div>
 
-        {/* ─── Hero Profile Card (Yellow, White & Black Gradient) ─────────── */}
-        <div className="relative rounded-3xl p-7 sm:p-9 shadow-2xl overflow-hidden border border-amber-400/30 bg-gradient-to-br from-[#12131a] via-[#0d0e14] to-[#09090b]">
-          {/* Internal Shimmer Highlights */}
-          <div className="absolute top-0 right-0 w-[450px] h-[450px] bg-gradient-to-bl from-amber-400/15 via-yellow-300/5 to-transparent rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-amber-300/80 to-transparent" />
+        {/* ─── Hero Profile Card (White & Yellow Dashboard Theme) ─────────── */}
+        <div className="relative rounded-3xl p-7 sm:p-9 shadow-md overflow-hidden border-2 border-yellow-300 bg-white text-slate-900">
+          {/* Subtle Ambient Yellow Bloom */}
+          <div className="absolute top-0 right-0 w-[450px] h-[450px] bg-gradient-to-bl from-yellow-200/35 via-amber-100/15 to-transparent rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-yellow-400 via-amber-300 to-yellow-400" />
 
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-7 relative z-10">
             
             {/* Student Avatar with Gold Ring & Camera Edit Trigger */}
             <div className="relative group flex-shrink-0">
-              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl overflow-hidden border-2 border-amber-400/80 bg-[#161722] shadow-[0_0_35px_rgba(251,191,36,0.3)] flex items-center justify-center relative">
+              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl overflow-hidden border-2 border-yellow-400 bg-yellow-50 shadow-md flex items-center justify-center relative">
                 {student?.photo ? (
                   <img src={student.photo} alt={student.name} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-4xl font-black text-amber-300 bg-gradient-to-br from-amber-950/60 to-black">
+                  <div className="w-full h-full flex items-center justify-center text-4xl font-black text-yellow-950 bg-gradient-to-br from-yellow-200 to-amber-300">
                     {student?.name?.slice(0, 2).toUpperCase() || 'ST'}
                   </div>
                 )}
                 {/* Golden Corner Accent */}
-                <div className="absolute top-1.5 right-1.5 p-1 rounded-full bg-amber-400/90 text-black shadow-md">
+                <div className="absolute top-1.5 right-1.5 p-1 rounded-full bg-yellow-400 text-black shadow-sm">
                   <Sparkles className="w-3 h-3" />
                 </div>
               </div>
               <button
                 onClick={() => setIsEditing(true)}
-                className="absolute -bottom-2 -right-2 p-2.5 rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-black font-black shadow-lg shadow-amber-500/30 hover:scale-105 transition cursor-pointer border border-white/40"
+                className="absolute -bottom-2 -right-2 p-2.5 rounded-2xl bg-yellow-400 hover:bg-yellow-500 text-black font-black shadow-md border-2 border-white transition cursor-pointer"
                 title="Edit Student Profile"
               >
-                <Camera className="w-4 h-4" />
+                <Camera className="w-4 h-4 text-black" />
               </button>
             </div>
 
             {/* Profile Info */}
             <div className="flex-1 text-center sm:text-left space-y-3 min-w-0">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
-                <span className="text-xs px-3 py-1 rounded-full bg-gradient-to-r from-amber-400/20 to-yellow-400/20 text-amber-300 border border-amber-400/40 font-black inline-flex items-center gap-1.5 shadow-sm">
-                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-xs px-3 py-1 rounded-full bg-yellow-100 text-yellow-900 border border-yellow-300 font-extrabold inline-flex items-center gap-1.5 shadow-sm">
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
                   Verified Student Candidate
                 </span>
                 {student?.college && (
-                  <span className="text-xs px-3 py-1 rounded-full bg-white/[0.06] text-white border border-white/15 font-semibold inline-flex items-center gap-1.5 truncate max-w-[280px]">
+                  <span className="text-xs px-3 py-1 rounded-full bg-yellow-50 text-slate-800 border border-yellow-200 font-bold inline-flex items-center gap-1.5 truncate max-w-[280px]">
                     🎓 {student.college}
                   </span>
                 )}
-                <span className="text-xs px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 font-bold inline-flex items-center gap-1">
-                  <Flame className="w-3.5 h-3.5" />
+                <span className="text-xs px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-bold inline-flex items-center gap-1">
+                  <Flame className="w-3.5 h-3.5 text-amber-600" />
                   Exam Certified
                 </span>
               </div>
 
               <div>
-                <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white flex items-center justify-center sm:justify-start gap-3">
-                  <span className="bg-gradient-to-r from-white via-amber-100 to-yellow-300 bg-clip-text text-transparent">
-                    {student?.name || 'Student Candidate'}
-                  </span>
+                <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-950 flex items-center justify-center sm:justify-start gap-3">
+                  <span>{student?.name || 'Student Candidate'}</span>
                 </h1>
                 {student?.rollNo && (
-                  <div className="text-xs font-mono text-amber-400/80 mt-1">
-                    Roll No / Student ID: <span className="text-white font-bold">{student.rollNo}</span>
+                  <div className="text-xs font-mono text-slate-600 mt-1">
+                    Roll No / Student ID: <span className="text-slate-950 font-bold">{student.rollNo}</span>
                   </div>
                 )}
               </div>
 
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs text-slate-300 font-medium">
-                <div className="flex items-center gap-1.5 bg-black/30 px-2.5 py-1 rounded-lg border border-white/5">
-                  <Mail className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="text-slate-200">{student?.email}</span>
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 text-xs text-slate-700 font-medium">
+                <div className="flex items-center gap-1.5 bg-yellow-50 border border-yellow-200 px-3 py-1.5 rounded-xl">
+                  <Mail className="w-3.5 h-3.5 text-amber-600" />
+                  <span className="text-slate-900 font-bold">{student?.email}</span>
                 </div>
                 {student?.dob && (
-                  <div className="flex items-center gap-1.5 bg-black/30 px-2.5 py-1 rounded-lg border border-white/5 font-mono">
-                    <Calendar className="w-3.5 h-3.5 text-amber-400" />
-                    <span>DOB: {student.dob}</span>
+                  <div className="flex items-center gap-1.5 bg-yellow-50 border border-yellow-200 px-3 py-1.5 rounded-xl font-mono">
+                    <Calendar className="w-3.5 h-3.5 text-amber-600" />
+                    <span>DOB: <strong className="text-slate-900">{student.dob}</strong></span>
                   </div>
                 )}
-                <div className="flex items-center gap-1.5 bg-black/30 px-2.5 py-1 rounded-lg border border-white/5">
-                  <Award className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Certificates: <strong className="text-amber-300">{certificates.length}</strong></span>
+                <div className="flex items-center gap-1.5 bg-yellow-50 border border-yellow-200 px-3 py-1.5 rounded-xl">
+                  <Award className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Certificates: <strong className="text-slate-950 font-black">{certificates.length}</strong></span>
                 </div>
               </div>
 
               <div className="pt-2 flex flex-wrap items-center justify-center sm:justify-start gap-3">
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="px-4 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/15 hover:border-amber-400/50 text-white text-xs font-bold inline-flex items-center gap-2 transition cursor-pointer shadow-md"
+                  className="px-4 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-500 border-2 border-yellow-500 text-black text-xs font-black inline-flex items-center gap-2 transition cursor-pointer shadow-sm"
                 >
-                  <Edit3 className="w-3.5 h-3.5 text-amber-400" />
+                  <Edit3 className="w-3.5 h-3.5 text-black" />
                   <span>Edit Profile</span>
                 </button>
                 <Link
                   to="/arena"
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-300 text-black font-black text-xs inline-flex items-center gap-2 shadow-lg shadow-amber-500/25 transition cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-500 border-2 border-yellow-500 text-black font-black text-xs inline-flex items-center gap-2 shadow-sm transition cursor-pointer"
                 >
-                  <Terminal className="w-3.5 h-3.5" />
+                  <Terminal className="w-3.5 h-3.5 text-black" />
                   <span>Enter Coding Arena</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-3.5 h-3.5 text-black" />
                 </Link>
               </div>
             </div>
@@ -448,71 +446,71 @@ export default function ArenaProfile() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           
           {/* Card 1: Certificates Earned */}
-          <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-amber-400/30 hover:border-amber-400/70 rounded-2xl p-4 shadow-xl backdrop-blur-md transition group">
-            <div className="flex items-center justify-between text-xs text-slate-300 font-bold mb-1">
+          <div className="bg-white border-2 border-yellow-300 hover:border-yellow-400 rounded-2xl p-4 shadow-sm transition group">
+            <div className="flex items-center justify-between text-xs text-slate-700 font-bold mb-1">
               <span>Exam Certificates</span>
-              <Award className="w-4 h-4 text-amber-400 group-hover:scale-110 transition" />
+              <Award className="w-4 h-4 text-amber-600 group-hover:scale-110 transition" />
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-amber-300 font-mono">
+            <div className="text-2xl sm:text-3xl font-black text-slate-950 font-mono">
               {certificates.length}
             </div>
-            <div className="text-[11px] text-slate-400 mt-1">Admin verified & issued</div>
+            <div className="text-[11px] text-slate-600 mt-1">Admin verified & issued</div>
           </div>
 
           {/* Card 2: Exams Attended */}
-          <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-white/10 hover:border-amber-400/50 rounded-2xl p-4 shadow-xl backdrop-blur-md transition group">
-            <div className="flex items-center justify-between text-xs text-slate-300 font-bold mb-1">
+          <div className="bg-white border-2 border-yellow-300 hover:border-yellow-400 rounded-2xl p-4 shadow-sm transition group">
+            <div className="flex items-center justify-between text-xs text-slate-700 font-bold mb-1">
               <span>Exams Attended</span>
-              <FileText className="w-4 h-4 text-yellow-400 group-hover:scale-110 transition" />
+              <FileText className="w-4 h-4 text-amber-600 group-hover:scale-110 transition" />
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-white font-mono">
+            <div className="text-2xl sm:text-3xl font-black text-slate-950 font-mono">
               {examAttempts.length}
             </div>
-            <div className="text-[11px] text-slate-400 mt-1">
+            <div className="text-[11px] text-slate-600 mt-1">
               {examAttempts.filter(a => a.passed).length} passed successfully
             </div>
           </div>
 
           {/* Card 3: Total Score / XP */}
-          <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-amber-400/30 hover:border-amber-400/70 rounded-2xl p-4 shadow-xl backdrop-blur-md transition group">
-            <div className="flex items-center justify-between text-xs text-slate-300 font-bold mb-1">
+          <div className="bg-white border-2 border-yellow-300 hover:border-yellow-400 rounded-2xl p-4 shadow-sm transition group">
+            <div className="flex items-center justify-between text-xs text-slate-700 font-bold mb-1">
               <span>Ranking XP</span>
-              <Zap className="w-4 h-4 text-amber-400 group-hover:scale-110 transition" />
+              <Zap className="w-4 h-4 text-amber-600 group-hover:scale-110 transition" />
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-amber-400 font-mono">
+            <div className="text-2xl sm:text-3xl font-black text-amber-600 font-mono">
               {student?.score || student?.xp || 0}
             </div>
-            <div className="text-[11px] text-slate-400 mt-1">earned across exams & arena</div>
+            <div className="text-[11px] text-slate-600 mt-1">earned across exams & arena</div>
           </div>
 
           {/* Card 4: Global Rank */}
-          <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-white/10 hover:border-amber-400/50 rounded-2xl p-4 shadow-xl backdrop-blur-md transition group">
-            <div className="flex items-center justify-between text-xs text-slate-300 font-bold mb-1">
+          <div className="bg-white border-2 border-yellow-300 hover:border-yellow-400 rounded-2xl p-4 shadow-sm transition group">
+            <div className="flex items-center justify-between text-xs text-slate-700 font-bold mb-1">
               <span>Global Rank</span>
-              <Trophy className="w-4 h-4 text-yellow-300 group-hover:scale-110 transition" />
+              <Trophy className="w-4 h-4 text-amber-600 group-hover:scale-110 transition" />
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-white font-mono">
+            <div className="text-2xl sm:text-3xl font-black text-slate-950 font-mono">
               {leaderboardRank ? `#${leaderboardRank}` : '--'}
             </div>
-            <div className="text-[11px] text-slate-400 mt-1">across all students</div>
+            <div className="text-[11px] text-slate-600 mt-1">across all students</div>
           </div>
 
         </div>
 
         {/* ─── Profile Navigation Tabs ──────────────────────────────────── */}
-        <div className="flex items-center gap-2 border-b border-amber-400/20 pb-2 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-2 border-b-2 border-yellow-300/80 pb-2 overflow-x-auto scrollbar-none">
           <button
             onClick={() => setActiveTab('certificates')}
             className={`px-5 py-2.5 rounded-2xl text-xs font-black flex items-center gap-2.5 transition whitespace-nowrap cursor-pointer ${
               activeTab === 'certificates'
-                ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-black shadow-lg shadow-amber-500/20 scale-[1.02]'
-                : 'bg-white/[0.04] text-slate-300 hover:text-white hover:bg-white/[0.08] border border-white/5'
+                ? 'bg-yellow-400 text-black border-2 border-yellow-500 shadow-sm scale-[1.02]'
+                : 'bg-white text-black hover:bg-yellow-50 border-2 border-yellow-200'
             }`}
           >
-            <Award className="w-4 h-4" />
+            <Award className="w-4 h-4 text-black" />
             <span>My Certificates</span>
-            <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
-              activeTab === 'certificates' ? 'bg-black text-amber-300' : 'bg-white/10 text-white'
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-black ${
+              activeTab === 'certificates' ? 'bg-black text-yellow-300' : 'bg-yellow-100 text-black border border-yellow-300'
             }`}>
               {certificates.length}
             </span>
@@ -522,14 +520,14 @@ export default function ArenaProfile() {
             onClick={() => setActiveTab('exams')}
             className={`px-5 py-2.5 rounded-2xl text-xs font-black flex items-center gap-2.5 transition whitespace-nowrap cursor-pointer ${
               activeTab === 'exams'
-                ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-black shadow-lg shadow-amber-500/20 scale-[1.02]'
-                : 'bg-white/[0.04] text-slate-300 hover:text-white hover:bg-white/[0.08] border border-white/5'
+                ? 'bg-yellow-400 text-black border-2 border-yellow-500 shadow-sm scale-[1.02]'
+                : 'bg-white text-black hover:bg-yellow-50 border-2 border-yellow-200'
             }`}
           >
-            <BookOpen className="w-4 h-4" />
+            <BookOpen className="w-4 h-4 text-black" />
             <span>Exam Results & Mistakes Review</span>
-            <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
-              activeTab === 'exams' ? 'bg-black text-amber-300' : 'bg-white/10 text-white'
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-black ${
+              activeTab === 'exams' ? 'bg-black text-yellow-300' : 'bg-yellow-100 text-black border border-yellow-300'
             }`}>
               {examAttempts.length}
             </span>
@@ -539,14 +537,14 @@ export default function ArenaProfile() {
             onClick={() => setActiveTab('arena')}
             className={`px-5 py-2.5 rounded-2xl text-xs font-black flex items-center gap-2.5 transition whitespace-nowrap cursor-pointer ${
               activeTab === 'arena'
-                ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-black shadow-lg shadow-amber-500/20 scale-[1.02]'
-                : 'bg-white/[0.04] text-slate-300 hover:text-white hover:bg-white/[0.08] border border-white/5'
+                ? 'bg-yellow-400 text-black border-2 border-yellow-500 shadow-sm scale-[1.02]'
+                : 'bg-white text-black hover:bg-yellow-50 border-2 border-yellow-200'
             }`}
           >
-            <Terminal className="w-4 h-4" />
+            <Terminal className="w-4 h-4 text-black" />
             <span>Coding Arena & Practice</span>
-            <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
-              activeTab === 'arena' ? 'bg-black text-amber-300' : 'bg-white/10 text-white'
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-black ${
+              activeTab === 'arena' ? 'bg-black text-yellow-300' : 'bg-yellow-100 text-black border border-yellow-300'
             }`}>
               {solvedCount} solved
             </span>
@@ -558,17 +556,17 @@ export default function ArenaProfile() {
           <div className="space-y-6 animate-fadeIn">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-black text-white flex items-center gap-2">
-                  <Award className="w-5 h-5 text-amber-400" />
+                <h2 className="text-xl font-black text-slate-950 flex items-center gap-2">
+                  <Award className="w-5 h-5 text-amber-600" />
                   <span>Admin-Issued Official Exam Certificates</span>
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-600 mt-1">
                   Certificates generated by admin for exams attended with verifiable cryptographic credentials.
                 </p>
               </div>
               <Link
                 to="/verify-certificate"
-                className="text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1.5 transition"
+                className="text-xs font-black text-amber-700 hover:text-amber-900 flex items-center gap-1.5 transition"
               >
                 <span>Verification Portal</span>
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -576,21 +574,21 @@ export default function ArenaProfile() {
             </div>
 
             {certificates.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-amber-400/30 p-12 text-center bg-white/[0.02] space-y-4">
-                <div className="w-16 h-16 mx-auto rounded-3xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center text-amber-400">
+              <div className="rounded-3xl border-2 border-dashed border-yellow-300 p-12 text-center bg-white space-y-4 shadow-sm">
+                <div className="w-16 h-16 mx-auto rounded-3xl bg-yellow-100 border border-yellow-300 flex items-center justify-center text-amber-700">
                   <Award className="w-8 h-8" />
                 </div>
                 <div className="max-w-md mx-auto space-y-1">
-                  <h3 className="text-base font-bold text-white">No Exam Certificates Issued Yet</h3>
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <h3 className="text-base font-bold text-slate-900">No Exam Certificates Issued Yet</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
                     Once you attend an examination and the administrator generates or releases your certificate, it will appear here with an official certificate number, grade, and verifiable link.
                   </p>
                 </div>
                 <Link
                   to="/assessments"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 text-black font-black text-xs hover:scale-105 transition shadow-lg shadow-amber-500/20 cursor-pointer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-500 border-2 border-yellow-500 text-black font-black text-xs transition shadow-sm cursor-pointer"
                 >
-                  <BookOpen className="w-4 h-4" />
+                  <BookOpen className="w-4 h-4 text-black" />
                   <span>View Available Exams</span>
                 </Link>
               </div>
@@ -599,12 +597,12 @@ export default function ArenaProfile() {
                 {certificates.map((cert) => (
                   <div
                     key={cert.certificateNumber}
-                    className="relative rounded-3xl p-6 bg-gradient-to-br from-[#12131c] via-[#0d0e14] to-[#09090b] border-2 border-amber-400/40 hover:border-amber-400 shadow-2xl transition group overflow-hidden"
+                    className="relative rounded-3xl p-6 bg-white border-2 border-yellow-300 hover:border-yellow-400 shadow-md transition group overflow-hidden text-slate-900"
                   >
                     {/* Golden Ornamental Header Bar */}
-                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-500" />
+                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-yellow-400 via-amber-300 to-yellow-400" />
                     <div className="absolute top-4 right-4 flex items-center gap-1.5">
-                      <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase tracking-wide flex items-center gap-1">
+                      <span className="px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-800 text-[10px] font-black uppercase tracking-wide flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" />
                         Official & Valid
                       </span>
@@ -613,18 +611,18 @@ export default function ArenaProfile() {
                     <div className="space-y-4">
                       {/* Certificate Identifier */}
                       <div className="flex items-center gap-2">
-                        <Award className="w-7 h-7 text-amber-400 flex-shrink-0" />
+                        <Award className="w-7 h-7 text-amber-600 flex-shrink-0" />
                         <div>
-                          <div className="text-[10px] uppercase font-bold text-amber-400/80 tracking-wider">
+                          <div className="text-[10px] uppercase font-bold text-slate-600 tracking-wider">
                             Certificate ID
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <span className="font-mono text-sm font-black text-white tracking-wide">
+                            <span className="font-mono text-sm font-black text-slate-950 tracking-wide">
                               {cert.certificateNumber}
                             </span>
                             <button
                               onClick={() => copyToClipboard(cert.certificateNumber, 'Certificate Number')}
-                              className="p-1 rounded-md text-slate-400 hover:text-amber-300 hover:bg-white/10 transition cursor-pointer"
+                              className="p-1 rounded-md text-slate-500 hover:text-black hover:bg-yellow-100 transition cursor-pointer"
                               title="Copy Certificate Number"
                             >
                               <Copy className="w-3.5 h-3.5" />
@@ -635,40 +633,40 @@ export default function ArenaProfile() {
 
                       {/* Course / Exam Title */}
                       <div>
-                        <h3 className="text-lg font-black text-white group-hover:text-amber-200 transition">
+                        <h3 className="text-lg font-black text-slate-950 group-hover:text-amber-700 transition">
                           {cert.internshipName || 'Certification Examination'}
                         </h3>
-                        <p className="text-xs text-slate-400 mt-0.5">
-                          Awarded to <strong className="text-slate-200">{cert.studentName}</strong>
+                        <p className="text-xs text-slate-600 mt-0.5">
+                          Awarded to <strong className="text-slate-950">{cert.studentName}</strong>
                         </p>
                       </div>
 
                       {/* Stats Pills: Grade, Score, Percentage */}
-                      <div className="grid grid-cols-3 gap-2.5 p-3 rounded-2xl bg-white/[0.03] border border-white/10 text-center">
+                      <div className="grid grid-cols-3 gap-2.5 p-3 rounded-2xl bg-yellow-50/60 border border-yellow-200 text-center">
                         <div>
-                          <div className="text-[10px] text-slate-400 font-bold">Grade</div>
-                          <div className="text-lg font-black text-amber-400 font-mono">
+                          <div className="text-[10px] text-slate-600 font-bold">Grade</div>
+                          <div className="text-lg font-black text-amber-700 font-mono">
                             {cert.grade || 'A+'}
                           </div>
                         </div>
                         <div>
-                          <div className="text-[10px] text-slate-400 font-bold">Score</div>
-                          <div className="text-lg font-black text-white font-mono">
+                          <div className="text-[10px] text-slate-600 font-bold">Score</div>
+                          <div className="text-lg font-black text-slate-950 font-mono">
                             {cert.score} <span className="text-xs text-slate-500 font-normal">/ {cert.totalMarks || 100}</span>
                           </div>
                         </div>
                         <div>
-                          <div className="text-[10px] text-slate-400 font-bold">Percentage</div>
-                          <div className="text-lg font-black text-emerald-400 font-mono">
+                          <div className="text-[10px] text-slate-600 font-bold">Percentage</div>
+                          <div className="text-lg font-black text-emerald-700 font-mono">
                             {Math.round(cert.percentage)}%
                           </div>
                         </div>
                       </div>
 
                       {/* Issue Date & Verification Actions */}
-                      <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs">
-                        <div className="text-slate-400 flex items-center gap-1.5">
-                          <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                      <div className="pt-2 border-t border-yellow-200 flex items-center justify-between text-xs">
+                        <div className="text-slate-600 flex items-center gap-1.5 font-medium">
+                          <Calendar className="w-3.5 h-3.5 text-amber-600" />
                           <span>
                             {cert.issueDate ? new Date(cert.issueDate).toLocaleDateString(undefined, {
                               year: 'numeric', month: 'short', day: 'numeric'
@@ -679,9 +677,9 @@ export default function ArenaProfile() {
                         <div className="flex items-center gap-2">
                           <Link
                             to={`/verify-certificate/${cert.certificateNumber}`}
-                            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-black font-black text-xs inline-flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition cursor-pointer"
+                            className="px-3.5 py-1.5 rounded-xl bg-yellow-400 hover:bg-yellow-500 border-2 border-yellow-500 text-black font-black text-xs inline-flex items-center gap-1.5 shadow-sm transition cursor-pointer"
                           >
-                            <Eye className="w-3.5 h-3.5" />
+                            <Eye className="w-3.5 h-3.5 text-black" />
                             <span>View & Print</span>
                           </Link>
                         </div>
@@ -700,28 +698,28 @@ export default function ArenaProfile() {
           <div className="space-y-6 animate-fadeIn">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-black text-white flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-amber-400" />
+                <h2 className="text-xl font-black text-slate-950 flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-amber-600" />
                   <span>Exam Results & Question Mistake Review</span>
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-600 mt-1">
                   Review your attended exams, final declared results, and analyze wrong questions with explanations.
                 </p>
               </div>
 
               {/* Integrity Notice Badge */}
-              <div className="px-3.5 py-2 rounded-2xl bg-amber-400/10 border border-amber-400/30 text-amber-300 text-[11px] font-semibold flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-amber-400 flex-shrink-0" />
+              <div className="px-3.5 py-2 rounded-2xl bg-yellow-100 border border-yellow-300 text-yellow-950 text-[11px] font-bold flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-amber-600 flex-shrink-0" />
                 <span>Mistakes & Solutions unlocked strictly post-submission upon declared result</span>
               </div>
             </div>
 
             {examAttempts.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-white/10 p-12 text-center bg-white/[0.02] space-y-4">
-                <FileText className="w-12 h-12 text-slate-500 mx-auto" />
+              <div className="rounded-3xl border-2 border-dashed border-yellow-300 p-12 text-center bg-white space-y-4 shadow-sm">
+                <FileText className="w-12 h-12 text-amber-600 mx-auto" />
                 <div className="max-w-md mx-auto space-y-1">
-                  <h3 className="text-base font-bold text-white">No Exam Attempts Recorded</h3>
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <h3 className="text-base font-bold text-slate-900">No Exam Attempts Recorded</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
                     You have not submitted any examination under this student email yet. Attend scheduled exams to see full scorecards and questions review here.
                   </p>
                 </div>
@@ -741,49 +739,49 @@ export default function ArenaProfile() {
                   return (
                     <div
                       key={attempt.id}
-                      className="rounded-3xl bg-gradient-to-b from-[#13141f] to-[#0c0d13] border border-white/10 hover:border-amber-400/40 shadow-2xl transition overflow-hidden"
+                      className="rounded-3xl bg-white border-2 border-yellow-300 hover:border-yellow-400 shadow-md transition overflow-hidden text-slate-900"
                     >
                       {/* Exam Header Banner */}
-                      <div className="p-6 sm:p-7 flex flex-col md:flex-row md:items-center justify-between gap-5 border-b border-white/5">
+                      <div className="p-6 sm:p-7 flex flex-col md:flex-row md:items-center justify-between gap-5 border-b border-yellow-200">
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-center gap-2.5">
                             <span className={`text-[11px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
                               attempt.passed
-                                ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                                : 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                                : 'bg-rose-50 text-rose-800 border-rose-300'
                             }`}>
                               {attempt.passed ? 'Passed ✅' : 'Needs Improvement ❌'}
                             </span>
-                            <span className="text-[11px] font-mono text-slate-400 bg-white/[0.05] px-2.5 py-0.5 rounded-full border border-white/10">
+                            <span className="text-[11px] font-mono text-slate-700 bg-yellow-50 px-2.5 py-0.5 rounded-full border border-yellow-200 font-bold">
                               Status: {attempt.status}
                             </span>
                             {attempt.certificateNumber && (
-                              <span className="text-[11px] font-mono text-amber-300 bg-amber-400/10 border border-amber-400/30 px-2.5 py-0.5 rounded-full">
+                              <span className="text-[11px] font-mono text-yellow-950 bg-yellow-100 border border-yellow-300 px-2.5 py-0.5 rounded-full font-black">
                                 🎓 Cert #{attempt.certificateNumber}
                               </span>
                             )}
                           </div>
 
-                          <h3 className="text-xl font-black text-white">
+                          <h3 className="text-xl font-black text-slate-950">
                             {attempt.title}
                           </h3>
 
-                          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
+                          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600 font-medium">
                             <div className="flex items-center gap-1.5">
-                              <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                              <Calendar className="w-3.5 h-3.5 text-amber-600" />
                               <span>{attempt.submittedAt ? new Date(attempt.submittedAt).toLocaleDateString() : 'N/A'}</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                              <Clock className="w-3.5 h-3.5 text-amber-400" />
+                              <Clock className="w-3.5 h-3.5 text-amber-600" />
                               <span>Time: {Math.round(attempt.timeTaken / 60)} mins</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                              <span>{attempt.correctCount} Correct</span>
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              <span className="text-emerald-800 font-bold">{attempt.correctCount} Correct</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                              <XCircle className="w-3.5 h-3.5 text-rose-400" />
-                              <span>{attempt.wrongCount} Wrong</span>
+                              <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                              <span className="text-rose-800 font-bold">{attempt.wrongCount} Wrong</span>
                             </div>
                           </div>
                         </div>
@@ -791,70 +789,66 @@ export default function ArenaProfile() {
                         {/* Score & Toggle Review Button */}
                         <div className="flex items-center justify-between md:justify-end gap-5">
                           <div className="text-right">
-                            <div className="text-3xl font-black text-amber-400 font-mono">
-                              {attempt.score} <span className="text-xs text-slate-400 font-normal">/ {attempt.totalMarks}</span>
+                            <div className="text-3xl font-black text-amber-700 font-mono">
+                              {attempt.score} <span className="text-xs text-slate-500 font-normal">/ {attempt.totalMarks}</span>
                             </div>
-                            <div className="text-xs font-bold text-slate-400 mt-0.5">
-                              Percentage: <span className="text-white font-mono font-bold">{Math.round(attempt.percentage)}%</span>
+                            <div className="text-xs font-bold text-slate-600 mt-0.5">
+                              Percentage: <span className="text-slate-950 font-mono font-bold">{Math.round(attempt.percentage)}%</span>
                             </div>
                           </div>
 
                           <button
                             onClick={() => setExpandedExamId(isExpanded ? null : attempt.id)}
-                            className={`px-4 py-2.5 rounded-2xl text-xs font-black inline-flex items-center gap-2 transition cursor-pointer ${
-                              isExpanded
-                                ? 'bg-amber-400 text-black shadow-lg shadow-amber-500/20'
-                                : 'bg-white/[0.08] hover:bg-white/[0.15] text-white border border-white/10'
-                            }`}
+                            className="px-4 py-2.5 rounded-2xl text-xs font-black inline-flex items-center gap-2 transition cursor-pointer bg-yellow-400 hover:bg-yellow-500 border-2 border-yellow-500 text-black shadow-sm"
                           >
                             <span>{isExpanded ? 'Hide Review' : 'Review Mistakes & Solutions'}</span>
-                            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                            {isExpanded ? <ChevronUp className="w-4 h-4 text-black" /> : <ChevronDown className="w-4 h-4 text-black" />}
                           </button>
                         </div>
                       </div>
 
                       {/* Expandable Question-by-Question Review with Mistake Filter */}
                       {isExpanded && (
-                        <div className="p-6 sm:p-7 space-y-6 bg-black/40">
+                        <div className="p-6 sm:p-7 space-y-6 bg-yellow-50/30 border-t border-yellow-200">
                           
                           {/* Filter Tabs for Questions */}
-                          <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-white/[0.03] border border-white/10">
+                          <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-white border border-yellow-200 shadow-sm">
                             <div className="flex items-center gap-2">
-                              <Filter className="w-4 h-4 text-amber-400" />
-                              <span className="text-xs font-bold text-slate-300">Filter Questions:</span>
+                              <Filter className="w-4 h-4 text-amber-600" />
+                              <span className="text-xs font-black text-slate-900">Filter Questions:</span>
                             </div>
 
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={() => setQuestionFilter('all')}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                                className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
                                   questionFilter === 'all'
-                                    ? 'bg-white text-black font-black'
-                                    : 'bg-white/5 text-slate-400 hover:text-white'
+                                    ? 'bg-yellow-400 border-2 border-yellow-500 text-black shadow-sm'
+                                    : 'bg-white text-black font-bold border border-yellow-200 hover:bg-yellow-100'
                                 }`}
                               >
                                 All Questions ({questionsList.length})
                               </button>
                               <button
                                 onClick={() => setQuestionFilter('wrong')}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                                className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
                                   questionFilter === 'wrong'
-                                    ? 'bg-rose-500 text-white font-black shadow-md shadow-rose-500/25'
-                                    : 'bg-rose-500/10 text-rose-300 hover:bg-rose-500/20'
+                                    ? 'bg-yellow-400 border-2 border-yellow-500 text-black shadow-sm'
+                                    : 'bg-rose-50 text-rose-900 font-bold border border-rose-200 hover:bg-rose-100'
                                 }`}
                               >
-                                <XCircle className="w-3.5 h-3.5" />
+                                <XCircle className="w-3.5 h-3.5 text-rose-600" />
                                 <span>Wrong Questions ({wrongQuestions.length})</span>
                               </button>
                               <button
                                 onClick={() => setQuestionFilter('correct')}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                                className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
                                   questionFilter === 'correct'
-                                    ? 'bg-emerald-500 text-black font-black shadow-md shadow-emerald-500/25'
-                                    : 'bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
+                                    ? 'bg-yellow-400 border-2 border-yellow-500 text-black shadow-sm'
+                                    : 'bg-emerald-50 text-emerald-900 font-bold border border-emerald-200 hover:bg-emerald-100'
                                 }`}
                               >
-                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                                 <span>Correct ({correctQuestions.length})</span>
                               </button>
                             </div>
@@ -862,8 +856,8 @@ export default function ArenaProfile() {
 
                           {/* Notice if exam results are locked during active test */}
                           {!attempt.resultDeclared && (
-                            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-3">
-                              <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs flex items-center gap-3 font-medium">
+                              <AlertTriangle className="w-5 h-5 flex-shrink-0 text-amber-600" />
                               <span>
                                 The administrator has kept detailed question answers confidential until all submissions are completed and results are officially published.
                               </span>
@@ -871,7 +865,7 @@ export default function ArenaProfile() {
                           )}
 
                           {filteredQuestions.length === 0 ? (
-                            <div className="text-center py-8 text-slate-400 text-xs">
+                            <div className="text-center py-8 text-slate-500 text-xs font-medium">
                               No questions match the selected filter.
                             </div>
                           ) : (
@@ -879,37 +873,37 @@ export default function ArenaProfile() {
                               {filteredQuestions.map((q) => (
                                 <div
                                   key={q.questionId || q.index}
-                                  className={`rounded-2xl p-5 border transition ${
+                                  className={`rounded-2xl p-5 border-2 transition ${
                                     q.isCorrect
-                                      ? 'bg-emerald-950/15 border-emerald-500/30'
-                                      : 'bg-rose-950/20 border-rose-500/40 shadow-lg shadow-rose-500/5'
+                                      ? 'bg-emerald-50/70 border-emerald-300 shadow-sm'
+                                      : 'bg-rose-50/70 border-rose-300 shadow-sm'
                                   }`}
                                 >
                                   {/* Question Head */}
                                   <div className="flex items-center justify-between gap-3 mb-3">
                                     <div className="flex items-center gap-2">
-                                      <span className="px-2.5 py-0.5 rounded-lg bg-white/10 text-white font-mono text-xs font-bold">
+                                      <span className="px-2.5 py-0.5 rounded-lg bg-white border border-slate-300 text-slate-900 font-mono text-xs font-black">
                                         Q{q.index}
                                       </span>
-                                      <span className="text-xs font-semibold text-slate-400 bg-black/40 px-2 py-0.5 rounded-md">
+                                      <span className="text-xs font-bold text-slate-700 bg-yellow-100 px-2.5 py-0.5 rounded-md border border-yellow-300">
                                         {q.topic}
                                       </span>
                                     </div>
 
                                     <div className="flex items-center gap-2">
-                                      <span className={`text-xs font-black px-2.5 py-0.5 rounded-full flex items-center gap-1 ${
+                                      <span className={`text-xs font-black px-2.5 py-0.5 rounded-full flex items-center gap-1 border ${
                                         q.isCorrect
-                                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                                          : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                                          ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                                          : 'bg-rose-100 text-rose-900 border-rose-300'
                                       }`}>
                                         {q.isCorrect ? (
                                           <>
-                                            <CheckCircle2 className="w-3.5 h-3.5" />
+                                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                                             <span>Correct (+{q.marks} pts)</span>
                                           </>
                                         ) : (
                                           <>
-                                            <XCircle className="w-3.5 h-3.5" />
+                                            <XCircle className="w-3.5 h-3.5 text-rose-600" />
                                             <span>Incorrect (0 / {q.maxMarks} pts)</span>
                                           </>
                                         )}
@@ -918,7 +912,7 @@ export default function ArenaProfile() {
                                   </div>
 
                                   {/* Question Prompt */}
-                                  <p className="text-sm font-bold text-white mb-4 leading-relaxed">
+                                  <p className="text-sm font-bold text-slate-950 mb-4 leading-relaxed">
                                     {q.questionText}
                                   </p>
 
@@ -930,29 +924,29 @@ export default function ArenaProfile() {
                                         const isSelected = String(q.studentAnswer).trim() === optText.trim();
                                         const isRightAnswer = String(q.correctAnswer).trim() === optText.trim();
 
-                                        let style = 'bg-white/[0.03] border-white/10 text-slate-300';
+                                        let style = 'bg-white border-slate-200 text-slate-800';
                                         let badge = null;
 
                                         if (isSelected && isRightAnswer) {
-                                          style = 'bg-emerald-500/20 border-emerald-500 text-emerald-200 font-bold';
+                                          style = 'bg-emerald-100/90 border-2 border-emerald-500 text-emerald-950 font-bold';
                                           badge = (
-                                            <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded bg-emerald-500 text-black flex items-center gap-1">
+                                            <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded bg-emerald-600 text-white flex items-center gap-1">
                                               <CheckCircle2 className="w-3 h-3" />
                                               Your Answer (Correct)
                                             </span>
                                           );
                                         } else if (isSelected && !isRightAnswer) {
-                                          style = 'bg-rose-500/20 border-rose-500 text-rose-200 font-bold';
+                                          style = 'bg-rose-100/90 border-2 border-rose-500 text-rose-950 font-bold';
                                           badge = (
-                                            <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded bg-rose-500 text-white flex items-center gap-1">
+                                            <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded bg-rose-600 text-white flex items-center gap-1">
                                               <XCircle className="w-3 h-3" />
                                               Your Selection (Wrong)
                                             </span>
                                           );
                                         } else if (isRightAnswer) {
-                                          style = 'bg-emerald-950/30 border-emerald-500/80 text-emerald-300 font-bold';
+                                          style = 'bg-emerald-50 border-2 border-emerald-400 text-emerald-900 font-bold';
                                           badge = (
-                                            <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded bg-emerald-500/30 border border-emerald-500/50 text-emerald-300 flex items-center gap-1">
+                                            <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded bg-emerald-600 text-white flex items-center gap-1">
                                               <Check className="w-3 h-3" />
                                               Correct Answer
                                             </span>
@@ -964,7 +958,7 @@ export default function ArenaProfile() {
                                             key={oIdx}
                                             className={`p-3 rounded-xl border text-xs flex items-center gap-2.5 transition ${style}`}
                                           >
-                                            <span className="w-5 h-5 rounded-full bg-black/40 flex items-center justify-center font-mono text-[11px] font-bold text-slate-300 flex-shrink-0">
+                                            <span className="w-5 h-5 rounded-full bg-yellow-100 border border-yellow-300 flex items-center justify-center font-mono text-[11px] font-bold text-slate-900 flex-shrink-0">
                                               {String.fromCharCode(65 + oIdx)}
                                             </span>
                                             <span className="flex-1">{optText}</span>
@@ -978,15 +972,15 @@ export default function ArenaProfile() {
                                   {/* Non-MCQ student and correct answers */}
                                   {(!q.options || q.options.length === 0) && (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 text-xs font-mono">
-                                      <div className="p-3 rounded-xl bg-black/40 border border-white/10">
-                                        <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">Your Submitted Answer:</div>
-                                        <div className={q.isCorrect ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+                                      <div className="p-3 rounded-xl bg-white border border-slate-300">
+                                        <div className="text-[10px] uppercase font-bold text-slate-600 mb-1">Your Submitted Answer:</div>
+                                        <div className={q.isCorrect ? 'text-emerald-700 font-bold' : 'text-rose-700 font-bold'}>
                                           {q.studentAnswer}
                                         </div>
                                       </div>
-                                      <div className="p-3 rounded-xl bg-black/40 border border-emerald-500/40">
-                                        <div className="text-[10px] uppercase font-bold text-emerald-400 mb-1">Correct Answer:</div>
-                                        <div className="text-emerald-300 font-bold">
+                                      <div className="p-3 rounded-xl bg-emerald-50 border-2 border-emerald-400">
+                                        <div className="text-[10px] uppercase font-bold text-emerald-800 mb-1">Correct Answer:</div>
+                                        <div className="text-emerald-900 font-bold">
                                           {q.correctAnswer}
                                         </div>
                                       </div>
@@ -994,10 +988,10 @@ export default function ArenaProfile() {
                                   )}
 
                                   {/* Concept & Explanation Card */}
-                                  <div className="p-3.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-transparent border border-amber-400/30 text-xs text-amber-200/90 leading-relaxed flex items-start gap-2.5">
-                                    <HelpCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                                  <div className="p-3.5 rounded-xl bg-yellow-100 border-2 border-yellow-300 text-xs text-yellow-950 leading-relaxed flex items-start gap-2.5 shadow-sm">
+                                    <HelpCircle className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
                                     <div>
-                                      <strong className="text-amber-300 font-bold block mb-0.5">Solution & Concept Explanation:</strong>
+                                      <strong className="text-yellow-950 font-black block mb-0.5">Solution & Concept Explanation:</strong>
                                       {q.explanation}
                                     </div>
                                   </div>
@@ -1022,20 +1016,20 @@ export default function ArenaProfile() {
           <div className="space-y-6 animate-fadeIn">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
-              {/* LeetCode Difficulty Breakdown (1 col) */}
-              <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-amber-400/30 rounded-3xl p-6 shadow-xl space-y-4">
-                <h3 className="text-sm font-black text-white flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-amber-400" />
+              {/* Difficulty Breakdown (1 col) */}
+              <div className="bg-white border-2 border-yellow-300 rounded-3xl p-6 shadow-md space-y-4 text-slate-900">
+                <h3 className="text-sm font-black text-slate-950 flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-amber-600" />
                   <span>Difficulty Progress</span>
                 </h3>
 
                 {/* Easy Bar */}
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-[#00b8a3]">Easy</span>
-                    <span className="text-slate-400 font-mono">{easySolved} / {easyTotal}</span>
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="text-[#00b8a3]">Easy</span>
+                    <span className="text-slate-600 font-mono">{easySolved} / {easyTotal}</span>
                   </div>
-                  <div className="w-full h-2 bg-[#21262d] rounded-full overflow-hidden">
+                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                     <div 
                       className="h-full bg-[#00b8a3]" 
                       style={{ width: `${easyTotal > 0 ? (easySolved / easyTotal) * 100 : 0}%` }}
@@ -1045,11 +1039,11 @@ export default function ArenaProfile() {
 
                 {/* Medium Bar */}
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-[#ffa116]">Medium</span>
-                    <span className="text-slate-400 font-mono">{medSolved} / {medTotal}</span>
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="text-[#ffa116]">Medium</span>
+                    <span className="text-slate-600 font-mono">{medSolved} / {medTotal}</span>
                   </div>
-                  <div className="w-full h-2 bg-[#21262d] rounded-full overflow-hidden">
+                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                     <div 
                       className="h-full bg-[#ffa116]" 
                       style={{ width: `${medTotal > 0 ? (medSolved / medTotal) * 100 : 0}%` }}
@@ -1059,11 +1053,11 @@ export default function ArenaProfile() {
 
                 {/* Hard Bar */}
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-[#ff375f]">Hard</span>
-                    <span className="text-slate-400 font-mono">{hardSolved} / {hardTotal}</span>
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="text-[#ff375f]">Hard</span>
+                    <span className="text-slate-600 font-mono">{hardSolved} / {hardTotal}</span>
                   </div>
-                  <div className="w-full h-2 bg-[#21262d] rounded-full overflow-hidden">
+                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                     <div 
                       className="h-full bg-[#ff375f]" 
                       style={{ width: `${hardTotal > 0 ? (hardSolved / hardTotal) * 100 : 0}%` }}
@@ -1071,30 +1065,30 @@ export default function ArenaProfile() {
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-white/[0.04] border border-amber-400/20 text-[11px] text-amber-200/80 leading-relaxed">
+                <div className="p-3 rounded-xl bg-yellow-50 border border-yellow-300 text-[11px] text-yellow-950 leading-relaxed font-medium">
                   💡 <strong>Pro Tip:</strong> Solving harder problems in the Coding Arena multiplies your XP score and ranks you higher on the global leaderboard!
                 </div>
               </div>
 
               {/* Submissions Activity History (2 cols) */}
-              <div className="lg:col-span-2 bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-white/10 rounded-3xl p-6 shadow-xl space-y-4">
+              <div className="lg:col-span-2 bg-white border-2 border-yellow-300 rounded-3xl p-6 shadow-md space-y-4 text-slate-900">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-black text-white flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-amber-400" />
+                  <h3 className="text-sm font-black text-slate-950 flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-amber-600" />
                     <span>Recent Arena Submissions</span>
                   </h3>
-                  <Link to="/arena" className="text-xs text-amber-400 hover:underline font-bold">
+                  <Link to="/arena" className="text-xs text-amber-700 hover:underline font-bold">
                     Solve More Problems
                   </Link>
                 </div>
 
                 {submissions.length === 0 ? (
                   <div className="text-center py-12 text-slate-500 space-y-2">
-                    <Code2 className="w-10 h-10 mx-auto opacity-40 text-slate-400" />
+                    <Code2 className="w-10 h-10 mx-auto opacity-40 text-amber-600" />
                     <p className="text-xs font-medium">No code submissions recorded yet.</p>
                     <Link
                       to="/arena"
-                      className="inline-block px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 text-black font-bold text-xs mt-2 shadow-md cursor-pointer"
+                      className="inline-block px-4 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-500 border-2 border-yellow-500 text-black font-black text-xs mt-2 shadow-sm cursor-pointer"
                     >
                       Start Solving in Arena
                     </Link>
@@ -1104,18 +1098,18 @@ export default function ArenaProfile() {
                     {submissions.map((sub) => (
                       <div
                         key={sub.id}
-                        className="p-3 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-between text-xs hover:border-amber-400/50 transition"
+                        className="p-3 rounded-2xl bg-yellow-50/40 border border-yellow-200 flex items-center justify-between text-xs hover:border-yellow-400 transition"
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           {sub.status === 'Accepted' ? (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                           ) : (
-                            <XCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+                            <XCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
                           )}
                           <div className="truncate">
                             <Link
                               to={`/arena/problem/${sub.problemId}`}
-                              className="font-bold text-white hover:text-amber-400 transition truncate block"
+                              className="font-bold text-slate-950 hover:text-amber-700 transition truncate block"
                             >
                               {sub.problemTitle || sub.problemId}
                             </Link>
@@ -1126,11 +1120,11 @@ export default function ArenaProfile() {
                         </div>
 
                         <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-                          <span className="font-mono text-[10px] uppercase px-2 py-0.5 rounded bg-black/40 border border-white/10 text-slate-300">
+                          <span className="font-mono text-[10px] uppercase px-2 py-0.5 rounded bg-yellow-100 border border-yellow-300 text-slate-900 font-bold">
                             {sub.language}
                           </span>
                           <span className={`font-black text-xs ${
-                            sub.status === 'Accepted' ? 'text-emerald-400' : 'text-rose-400'
+                            sub.status === 'Accepted' ? 'text-emerald-700' : 'text-rose-700'
                           }`}>
                             {sub.status}
                           </span>
@@ -1149,17 +1143,17 @@ export default function ArenaProfile() {
 
       {/* ─── Edit Profile Modal ────────────────────────────────────────── */}
       {isEditing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="relative w-full max-w-md bg-[#0f1017] rounded-3xl shadow-2xl border-2 border-amber-400/40 overflow-hidden text-slate-100 p-6 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
+          <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border-2 border-yellow-400 overflow-hidden text-slate-900 p-6 space-y-4">
             
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <h3 className="text-base font-black text-white flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-400" />
+            <div className="flex items-center justify-between pb-3 border-b border-yellow-200">
+              <h3 className="text-base font-black text-slate-950 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-600" />
                 <span>Edit Student Profile</span>
               </h3>
               <button
                 onClick={() => setIsEditing(false)}
-                className="text-xs text-slate-400 hover:text-white cursor-pointer px-2 py-1 rounded-lg hover:bg-white/10"
+                className="text-xs text-black font-bold cursor-pointer px-3 py-1 rounded-lg bg-yellow-100 hover:bg-yellow-200 border border-yellow-300 transition"
               >
                 ✕ Close
               </button>
@@ -1167,16 +1161,16 @@ export default function ArenaProfile() {
 
             <form onSubmit={handleSaveProfile} className="space-y-4">
               {/* Photo selector */}
-              <div className="flex items-center gap-4 p-3 rounded-2xl bg-white/[0.04] border border-white/10">
-                <div className="w-14 h-14 rounded-2xl overflow-hidden border border-amber-400/50 bg-[#09090b] flex items-center justify-center flex-shrink-0">
+              <div className="flex items-center gap-4 p-3 rounded-2xl bg-yellow-50/70 border border-yellow-200">
+                <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-yellow-400 bg-yellow-100 flex items-center justify-center flex-shrink-0">
                   {editPhoto ? (
                     <img src={editPhoto} alt="Preview" className="w-full h-full object-cover" />
                   ) : (
-                    <User className="w-6 h-6 text-slate-500" />
+                    <User className="w-6 h-6 text-amber-700" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs font-bold text-slate-200">Profile Picture</div>
+                  <div className="text-xs font-bold text-slate-900">Profile Picture</div>
                   <input
                     type="file"
                     ref={fileInputRef}
@@ -1187,9 +1181,9 @@ export default function ArenaProfile() {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="mt-1 px-3 py-1 rounded-lg bg-white/10 border border-white/10 hover:border-amber-400 text-xs font-semibold text-slate-200 flex items-center gap-1.5 cursor-pointer"
+                    className="mt-1 px-3 py-1.5 rounded-lg bg-yellow-400 hover:bg-yellow-500 border border-yellow-500 text-xs font-black text-black flex items-center gap-1.5 cursor-pointer shadow-sm transition"
                   >
-                    <Camera className="w-3 h-3 text-amber-400" />
+                    <Camera className="w-3 h-3 text-black" />
                     <span>Upload New Photo</span>
                   </button>
                 </div>
@@ -1197,37 +1191,36 @@ export default function ArenaProfile() {
 
               {/* Full Name */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">Full Name</label>
+                <label className="block text-xs font-bold text-slate-800 mb-1">Full Name</label>
                 <input
                   type="text"
                   required
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-black/50 border border-white/10 rounded-xl text-xs text-white outline-none focus:border-amber-400"
+                  className="w-full px-3.5 py-2.5 bg-yellow-50/30 border border-yellow-300 rounded-xl text-xs text-slate-950 font-medium outline-none focus:border-yellow-500 focus:bg-white transition"
                 />
               </div>
 
               {/* College / Institution */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">College / Institution</label>
+                <label className="block text-xs font-bold text-slate-800 mb-1">College / Institution</label>
                 <input
                   type="text"
                   placeholder="e.g. Ajay Kumar Garg Engineering College"
                   value={editCollege}
                   onChange={(e) => setEditCollege(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-black/50 border border-white/10 rounded-xl text-xs text-white outline-none focus:border-amber-400"
+                  className="w-full px-3.5 py-2.5 bg-yellow-50/30 border border-yellow-300 rounded-xl text-xs text-slate-950 font-medium outline-none focus:border-yellow-500 focus:bg-white transition"
                 />
               </div>
 
               {/* Date of Birth */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">Date of Birth (DOB)</label>
+                <label className="block text-xs font-bold text-slate-800 mb-1">Date of Birth (DOB)</label>
                 <input
                   type="date"
                   value={editDob}
                   onChange={(e) => setEditDob(e.target.value)}
-                  style={{ colorScheme: 'dark' }}
-                  className="w-full px-3.5 py-2.5 bg-black/50 border border-white/10 rounded-xl text-xs text-white outline-none focus:border-amber-400"
+                  className="w-full px-3.5 py-2.5 bg-yellow-50/30 border border-yellow-300 rounded-xl text-xs text-slate-950 font-medium outline-none focus:border-yellow-500 focus:bg-white transition"
                 />
               </div>
 
@@ -1235,14 +1228,14 @@ export default function ArenaProfile() {
                 <button
                   type="button"
                   onClick={() => setIsEditing(false)}
-                  className="px-4 py-2 rounded-xl bg-white/10 text-slate-300 text-xs font-bold hover:bg-white/20 cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-yellow-100 hover:bg-yellow-200 text-black text-xs font-black border border-yellow-300 cursor-pointer transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-black font-black text-xs hover:from-amber-300 hover:to-yellow-300 cursor-pointer disabled:opacity-50 shadow-md shadow-amber-500/20"
+                  className="px-5 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-500 border-2 border-yellow-500 text-black font-black text-xs cursor-pointer disabled:opacity-50 shadow-sm transition"
                 >
                   {saving ? 'Saving...' : 'Save Profile'}
                 </button>
