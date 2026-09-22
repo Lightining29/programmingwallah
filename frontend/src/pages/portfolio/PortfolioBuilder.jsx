@@ -21,9 +21,10 @@ import {
   Mail,
   Copy,
   FolderPlus,
-  RefreshCw,
-  Sliders
+  Sliders,
+  Rocket
 } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../context/AuthContext.jsx';
 import PortfolioModernView from '../../components/portfolio/PortfolioModernView.jsx';
@@ -173,6 +174,8 @@ export default function PortfolioBuilder() {
   // State: Operations
   const [saving, setSaving] = useState(false);
   const [savedSlug, setSavedSlug] = useState('');
+  const [customSlug, setCustomSlug] = useState('');
+  const [deployed, setDeployed] = useState(false);
   const [aiLoadingField, setAiLoadingField] = useState(null);
 
   // 1. Load initial student profile if available
@@ -219,7 +222,11 @@ export default function PortfolioBuilder() {
             if (p.email) setEmail(p.email);
             if (p.phone) setPhone(p.phone);
             if (p.socials) setSocials(p.socials);
-            if (p.slug) setSavedSlug(p.slug);
+            if (p.slug) {
+              setSavedSlug(p.slug);
+              setCustomSlug(p.slug);
+              setDeployed(true);
+            }
           }
         })
         .catch(() => {});
@@ -377,11 +384,15 @@ export default function PortfolioBuilder() {
     setExperience(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Save Portfolio
-  const handleSavePortfolio = async () => {
+  // Deploy Portfolio (stores data, triggers confetti & provides programmingwala.com/{student-name})
+  const handleDeployPortfolio = async () => {
     setSaving(true);
     try {
-      const generatedSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'portfolio';
+      const generatedSlug = (customSlug.trim() || name)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '') || 'portfolio';
+
       const payload = {
         name,
         role,
@@ -409,31 +420,79 @@ export default function PortfolioBuilder() {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to save portfolio');
+        throw new Error(data.error || 'Failed to deploy portfolio');
       }
 
       const finalSlug = data.slug || generatedSlug;
       setSavedSlug(finalSlug);
+      setCustomSlug(finalSlug);
+      setDeployed(true);
+
+      // Trigger celebratory confetti
+      try {
+        confetti({
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.6 }
+        });
+      } catch (e) {}
+
+      const publicUrl = `https://programmingwala.com/${finalSlug}`;
+      const localTestUrl = `/${finalSlug}`;
 
       Swal.fire({
         icon: 'success',
-        title: 'Portfolio Published!',
-        html: `<div class="space-y-3 text-sm text-stone-600 text-left">
-          <p>Your luxury editorial showcase portfolio is live and synchronized.</p>
-          <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 font-mono text-xs text-amber-900 break-all">
-            ${window.location.origin}/portfolio/${finalSlug}
+        title: '🎉 Portfolio Deployed Successfully!',
+        html: `
+          <div class="space-y-4 text-left font-sans">
+            <p class="text-sm text-stone-600">
+              Your personal portfolio is stored in the database and published live at your personalized URL:
+            </p>
+            
+            <div class="p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl border border-orange-200 text-center space-y-1">
+              <span class="text-[10px] font-bold uppercase tracking-widest text-[#E05A38] block">
+                Your Public Portfolio URL
+              </span>
+              <a href="${localTestUrl}" target="_blank" class="text-base sm:text-lg font-mono font-bold text-[#E05A38] hover:underline block break-all">
+                ${publicUrl}
+              </a>
+            </div>
+
+            <div class="flex flex-wrap gap-2.5 pt-2 justify-center">
+              <button
+                id="swal-copy-btn"
+                class="px-5 py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white font-bold text-xs transition inline-flex items-center gap-1.5 cursor-pointer shadow-sm"
+              >
+                <span>📋 Copy Live URL</span>
+              </button>
+              <a
+                href="${localTestUrl}"
+                target="_blank"
+                class="px-5 py-2.5 rounded-xl bg-[#E05A38] hover:bg-[#CF4E2C] text-white font-bold text-xs transition inline-flex items-center gap-1.5 shadow-md shadow-[#E05A38]/30 cursor-pointer"
+              >
+                <span>🚀 Visit Live Portfolio ↗</span>
+              </a>
+            </div>
           </div>
-          <div class="flex items-center gap-2 pt-2">
-            <a href="/portfolio/${finalSlug}" target="_blank" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-lg text-xs transition">
-              Open Live Showcase ↗
-            </a>
-          </div>
-        </div>`,
-        confirmButtonColor: '#E05A38'
+        `,
+        showConfirmButton: false,
+        showCloseButton: true,
+        didOpen: () => {
+          const btn = document.getElementById('swal-copy-btn');
+          if (btn) {
+            btn.onclick = () => {
+              navigator.clipboard.writeText(publicUrl);
+              btn.innerHTML = '<span>✔ Copied to Clipboard!</span>';
+              setTimeout(() => {
+                btn.innerHTML = '<span>📋 Copy Live URL</span>';
+              }, 2500);
+            };
+          }
+        }
       });
 
     } catch (err) {
-      Swal.fire({ icon: 'error', title: 'Save Failed', text: err.message });
+      Swal.fire({ icon: 'error', title: 'Deploy Failed', text: err.message });
     } finally {
       setSaving(false);
     }
@@ -441,16 +500,16 @@ export default function PortfolioBuilder() {
 
   // Copy share link
   const handleCopyLink = () => {
-    const slug = savedSlug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const url = `${window.location.origin}/portfolio/${slug}`;
+    const slug = savedSlug || customSlug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const url = `https://programmingwala.com/${slug}`;
     navigator.clipboard.writeText(url);
     Swal.fire({
       toast: true,
       position: 'top-end',
       icon: 'success',
-      title: 'Showcase link copied!',
+      title: `Copied: ${url}`,
       showConfirmButton: false,
-      timer: 1600
+      timer: 2000
     });
   };
 
@@ -542,31 +601,31 @@ export default function PortfolioBuilder() {
         <div className="flex items-center gap-2">
           {savedSlug && (
             <a
-              href={`/portfolio/${savedSlug}`}
+              href={`/${savedSlug}`}
               target="_blank"
               rel="noreferrer"
-              className="hidden sm:inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-[#25211F] hover:bg-[#332D2B] text-[#D8CCC4] text-xs font-semibold border border-[#3A3330] transition-colors"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 text-xs font-semibold border border-emerald-500/30 transition-colors"
             >
-              <span>Live Site</span>
-              <ExternalLink className="w-3.5 h-3.5 text-[#E05A38]" />
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Live Site ↗</span>
             </a>
           )}
 
           <button
             onClick={handleCopyLink}
             className="p-2 rounded-xl bg-[#25211F] hover:bg-[#332D2B] text-[#D8CCC4] text-xs font-semibold border border-[#3A3330] transition-colors"
-            title="Copy Shareable Showcase Link"
+            title="Copy Public URL"
           >
             <Share2 className="w-4 h-4 text-[#E05A38]" />
           </button>
 
           <button
-            onClick={handleSavePortfolio}
+            onClick={handleDeployPortfolio}
             disabled={saving}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#E05A38] hover:bg-[#CF4E2C] text-white text-xs font-bold shadow-md shadow-[#E05A38]/30 transition-all hover:-translate-y-0.5"
+            className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2 rounded-xl bg-gradient-to-r from-[#E05A38] to-[#F59E0B] hover:from-[#CF4E2C] hover:to-[#D97706] text-white text-xs font-bold shadow-lg shadow-[#E05A38]/30 transition-all hover:-translate-y-0.5 cursor-pointer"
           >
-            <Save className="w-3.5 h-3.5" />
-            <span>{saving ? 'Publishing...' : 'Save Portfolio'}</span>
+            <Rocket className="w-3.5 h-3.5" />
+            <span>{saving ? 'Deploying...' : '🚀 Deploy Portfolio'}</span>
           </button>
         </div>
       </header>
@@ -651,6 +710,36 @@ export default function PortfolioBuilder() {
                         />
                       </div>
                     </div>
+                  </div>
+
+                  {/* Custom Portfolio URL & Slug */}
+                  <div className="p-4 rounded-2xl bg-[#231F1D] border border-[#332D2B] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold uppercase tracking-wider text-[#A69B95] flex items-center gap-1.5">
+                        <Rocket className="w-3.5 h-3.5 text-[#E05A38]" />
+                        Your Public Portfolio URL
+                      </label>
+                      {deployed && (
+                        <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                          ● Deployed
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center rounded-xl bg-[#1A1716] border border-[#38312F] overflow-hidden focus-within:border-[#E05A38]">
+                      <span className="px-3 text-xs font-mono text-[#8E8078] bg-[#141211] py-2.5 border-r border-[#2C2725] select-none shrink-0">
+                        https://programmingwala.com/
+                      </span>
+                      <input
+                        type="text"
+                        placeholder={name.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'your-name'}
+                        value={customSlug}
+                        onChange={e => setCustomSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                        className="w-full px-3 py-2 text-xs font-mono text-white bg-transparent focus:outline-none"
+                      />
+                    </div>
+                    <p className="text-[11px] text-[#8E8078]">
+                      Clicking <strong className="text-[#E05A38]">🚀 Deploy Portfolio</strong> saves your data and makes it live at this address.
+                    </p>
                   </div>
 
                   {/* Name & Role */}

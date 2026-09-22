@@ -118,8 +118,9 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
   const isExamPage = location.pathname.startsWith('/test') || location.pathname.startsWith('/dashboard/admin/tests') || location.pathname.startsWith('/assessment-admin');
   const isAdminPage = location.pathname.startsWith('/dashboard/admin') || location.pathname.startsWith('/portal/admin');
   const isArenaProblem = location.pathname.startsWith('/arena/problem');
-  const hideHeaderFooter = isLoginPage || isExamPage || isArenaProblem;
-  const hideChatbot = hideHeaderFooter || isAdminPage || isArenaProblem;
+  const isPortfolioBuilder = location.pathname.startsWith('/student/portfolio');
+  const hideHeaderFooter = isLoginPage || isExamPage || isArenaProblem || isPortfolioBuilder;
+  const hideChatbot = hideHeaderFooter || isAdminPage || isArenaProblem || location.pathname.startsWith('/portfolio/');
 
   return (
     <div
@@ -241,6 +242,10 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
           {/* Admin Examination Control Suite */}
           <Route path="/dashboard/admin/tests" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><AdminExamSuite /></ProtectedRoute>} />
           <Route path="/dashboard/admin/tests/*" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><AdminExamSuite /></ProtectedRoute>} />
+
+          {/* Direct Personal Portfolio Root URL: https://programmingwala.com/{student-name} */}
+          <Route path="/p/:id" element={<PublicPortfolio />} />
+          <Route path="/:studentSlug" element={<PublicPortfolio />} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />

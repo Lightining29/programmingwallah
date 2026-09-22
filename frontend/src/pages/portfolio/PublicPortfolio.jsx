@@ -12,14 +12,15 @@ import Swal from 'sweetalert2';
 import PortfolioModernView from '../../components/portfolio/PortfolioModernView.jsx';
 
 export default function PublicPortfolio() {
-  const { id } = useParams();
+  const { id, studentSlug } = useParams();
+  const slug = id || studentSlug;
   const [loading, setLoading] = useState(true);
   const [portfolio, setPortfolio] = useState(null);
 
   useEffect(() => {
-    if (!id) return;
+    if (!slug) return;
     setLoading(true);
-    fetch(`/api/portfolio/${encodeURIComponent(id)}`)
+    fetch(`/api/portfolio/${encodeURIComponent(slug)}`)
       .then(res => res.json())
       .then(data => {
         if (data.success && data.portfolio) {
@@ -27,7 +28,7 @@ export default function PublicPortfolio() {
         } else {
           // Standard demo data matching Alex Morgan design
           setPortfolio({
-            name: id.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+            name: slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
             role: 'Brand & Web Designer',
             location: 'Toronto, Canada',
             bio: 'I help startups and creative brands build thoughtful identities and digital experiences that connect.',
@@ -76,17 +77,18 @@ export default function PublicPortfolio() {
       .finally(() => {
         setLoading(false);
       });
-  }, [id]);
+  }, [slug]);
 
   const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
+    const shareUrl = `https://programmingwala.com/${slug}`;
+    navigator.clipboard.writeText(shareUrl);
     Swal.fire({
       toast: true,
       position: 'top-end',
       icon: 'success',
-      title: 'Portfolio link copied to clipboard!',
+      title: `Copied: ${shareUrl}`,
       showConfirmButton: false,
-      timer: 1800
+      timer: 2000
     });
   };
 

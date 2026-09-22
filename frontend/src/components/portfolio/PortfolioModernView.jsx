@@ -138,7 +138,7 @@ export default function PortfolioModernView({
             {/* URL Bar Capsule */}
             <div className="px-6 py-1 rounded-full bg-[#352F2D] text-xs font-mono text-white/80 border border-white/10 flex items-center gap-2 max-w-sm w-full justify-center">
               <span className="text-[#E05A38]">https://</span>
-              <span>{slug}.design</span>
+              <span>programmingwala.com/{slug}</span>
             </div>
 
             <div className="w-12" />
