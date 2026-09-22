@@ -4,7 +4,7 @@ import {
   Trophy, Medal, Award, Search, Bell, Filter, RefreshCw, 
   TrendingUp, Sparkles, Star, Crown, Flag, ShieldCheck, 
   CheckCircle2, ExternalLink, ChevronDown, GraduationCap, 
-  User, ArrowUpRight, Flame, X, Zap, BookOpen, Check
+  User, ArrowUpRight, Flame, X, Zap, BookOpen, Check, Heart
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -18,6 +18,40 @@ export default function Leaderboard() {
 
   // Profile Modal State
   const [selectedStudent, setSelectedStudent] = useState(null);
+
+  // Student Likes State (persisted in localStorage)
+  const [likesMap, setLikesMap] = useState(() => {
+    try {
+      const saved = localStorage.getItem('leaderboard_student_likes');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  const getStudentLikeInfo = (student) => {
+    if (!student) return { count: 0, userLiked: false };
+    const key = String(student.id || student.email || student.candidateName);
+    if (likesMap[key]) return likesMap[key];
+    // Deterministic base like count based on student score/rank
+    const baseLikes = Math.max(12, Math.round(((student.score || 80) / 100) * 45) + Math.max(0, 35 - ((student.rank || 1) * 3)));
+    return { count: baseLikes, userLiked: false };
+  };
+
+  const handleToggleLike = (student) => {
+    if (!student) return;
+    const key = String(student.id || student.email || student.candidateName);
+    const current = getStudentLikeInfo(student);
+    const updated = {
+      count: current.userLiked ? Math.max(0, current.count - 1) : current.count + 1,
+      userLiked: !current.userLiked
+    };
+    const nextMap = { ...likesMap, [key]: updated };
+    setLikesMap(nextMap);
+    try {
+      localStorage.setItem('leaderboard_student_likes', JSON.stringify(nextMap));
+    } catch (e) {}
+  };
 
   // Filters
   const [selectedAssessment, setSelectedAssessment] = useState('all');
@@ -841,15 +875,31 @@ export default function Leaderboard() {
                 </div>
               )}
 
-              {/* Modal Buttons */}
+              {/* Modal Buttons: Like Button and Close Button */}
               <div className="flex items-center gap-2 pt-1">
-                <Link
-                  to="/student/profile"
-                  className="flex-1 py-2.5 px-3 rounded-xl bg-yellow-400 hover:bg-yellow-500 border border-yellow-500 text-black font-black text-xs text-center shadow-sm transition cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <span>Student Dashboard</span>
-                  <ArrowUpRight className="w-3.5 h-3.5 text-black" />
-                </Link>
+                {(() => {
+                  const likeInfo = getStudentLikeInfo(selectedStudent);
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => handleToggleLike(selectedStudent)}
+                      className="flex-1 py-2.5 px-4 rounded-xl bg-yellow-400 hover:bg-yellow-500 border-2 border-yellow-500 text-black font-black text-xs transition cursor-pointer shadow-sm flex items-center justify-center gap-2"
+                      title={likeInfo.userLiked ? 'Unlike this student' : 'Like this student'}
+                    >
+                      <Heart
+                        className={`w-4 h-4 transition-transform duration-200 ${
+                          likeInfo.userLiked
+                            ? 'fill-rose-600 text-rose-600 scale-125'
+                            : 'text-black hover:scale-110'
+                        }`}
+                      />
+                      <span>{likeInfo.userLiked ? 'Liked' : 'Like'}</span>
+                      <span className="px-2 py-0.5 rounded-full bg-black/10 text-black text-[11px] font-mono font-black">
+                        {likeInfo.count}
+                      </span>
+                    </button>
+                  );
+                })()}
                 <button
                   onClick={() => setSelectedStudent(null)}
                   className="py-2.5 px-4 rounded-xl bg-yellow-100 hover:bg-yellow-200 text-black font-black border border-yellow-300 text-xs transition cursor-pointer"
