@@ -717,63 +717,54 @@ export default function Leaderboard() {
 
       </div>
 
-      {/* ─── 6. CENTERED STUDENT PROFILE MODAL (YELLOW, WHITE & BLACK GRADIENT) ─── */}
+      {/* ─── 6. CENTERED STUDENT PROFILE MODAL (COMPACT CLEAN WHITE DESIGN) ─── */}
       <AnimatePresence>
         {selectedStudent && (
           <div 
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto"
             onClick={() => setSelectedStudent(null)}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.88, y: 24 }}
+              initial={{ opacity: 0, scale: 0.92, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.88, y: 24 }}
-              transition={{ type: 'spring', damping: 26, stiffness: 320 }}
+              exit={{ opacity: 0, scale: 0.92, y: 16 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-lg rounded-[36px] bg-gradient-to-b from-[#1c1917] via-[#09090b] to-[#000000] border-2 border-amber-400/90 shadow-[0_0_70px_rgba(251,191,36,0.32)] p-6 sm:p-8 text-white overflow-hidden my-6"
+              className="relative w-full max-w-[400px] rounded-3xl bg-white border border-slate-200 shadow-2xl p-5 sm:p-6 text-slate-900 overflow-hidden my-4"
             >
-              {/* Shimmering Yellow & White Ambient Accents */}
-              <div className="absolute -top-28 -left-28 w-64 h-64 bg-amber-400/25 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-28 -right-28 w-64 h-64 bg-yellow-300/20 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-80 h-80 bg-white/5 rounded-full blur-3xl pointer-events-none" />
-
               {/* Close Button */}
               <button
                 onClick={() => setSelectedStudent(null)}
-                className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 hover:bg-amber-400/20 border border-white/10 hover:border-amber-400/40 text-slate-300 hover:text-amber-300 flex items-center justify-center transition-all cursor-pointer z-30"
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer z-20"
                 title="Close Profile"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
 
               {/* Rank Pill Badge */}
-              <div className="flex items-center justify-center mb-3">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/20 via-yellow-400/25 to-amber-500/20 border border-amber-400/60 shadow-sm shadow-amber-500/25 text-xs font-black text-amber-300 tracking-wide">
+              <div className="flex items-center justify-center mb-2.5">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-xs font-bold text-amber-800">
                   {selectedStudent.rank === 1 ? '👑 Ranked #1 Global Champion' : (selectedStudent.rank === 2 ? '🥈 Ranked #2 Runner Up' : (selectedStudent.rank === 3 ? '🥉 Ranked #3 Achiever' : `⭐ Rank #${selectedStudent.rank || 'N/A'}`))}
                 </div>
               </div>
 
-              {/* Avatar Section with Circular Gold Aura */}
+              {/* Avatar Section */}
               <div className="text-center relative">
-                <div className="relative inline-block my-2">
+                <div className="relative inline-block my-1">
                   {selectedStudent.rank === 1 && (
-                    <motion.div 
-                      animate={{ y: [0, -5, 0] }}
-                      transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
-                      className="text-4xl absolute -top-6 left-1/2 -translate-x-1/2 filter drop-shadow-[0_4px_12px_rgba(234,179,8,0.6)] z-10"
-                    >
+                    <div className="text-2xl absolute -top-4 left-1/2 -translate-x-1/2 z-10">
                       👑
-                    </motion.div>
+                    </div>
                   )}
-                  <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full p-1.5 bg-gradient-to-tr from-amber-400 via-yellow-200 to-amber-500 shadow-2xl ring-4 ring-amber-400/50 mx-auto overflow-hidden">
+                  <div className="w-20 h-20 rounded-full p-1 bg-amber-100 border-2 border-amber-400 mx-auto overflow-hidden">
                     {selectedStudent.photo ? (
                       <img
                         src={selectedStudent.photo}
                         alt={selectedStudent.candidateName}
-                        className="w-full h-full rounded-full object-cover bg-slate-900"
+                        className="w-full h-full rounded-full object-cover bg-slate-100"
                       />
                     ) : (
-                      <div className="w-full h-full rounded-full bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center font-black text-slate-950 text-3xl">
+                      <div className="w-full h-full rounded-full bg-amber-200 text-amber-900 flex items-center justify-center font-black text-xl">
                         {getInitials(selectedStudent.candidateName)}
                       </div>
                     )}
@@ -781,41 +772,41 @@ export default function Leaderboard() {
                 </div>
 
                 {/* Candidate Name */}
-                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight mt-2">
+                <h2 className="text-xl font-black text-slate-900 tracking-tight mt-1.5">
                   {selectedStudent.candidateName}
                 </h2>
 
                 {/* College & Examination */}
-                <p className="text-sm font-bold text-amber-400/90 mt-1 max-w-md mx-auto">
-                  {selectedStudent.college || 'Certified Software Engineer'}
+                <p className="text-xs font-bold text-amber-600 mt-0.5 max-w-xs mx-auto truncate">
+                  {selectedStudent.college || 'Certified Student Candidate'}
                 </p>
                 {selectedStudent.assessmentTitle && (
-                  <p className="text-xs text-slate-300 mt-1">
-                    Assessment: <span className="text-white font-semibold">{selectedStudent.assessmentTitle}</span>
+                  <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                    Assessment: <span className="text-slate-700 font-semibold">{selectedStudent.assessmentTitle}</span>
                   </p>
                 )}
               </div>
 
-              {/* High-Contrast Yellow/White/Black Metric Stats Grid */}
-              <div className="grid grid-cols-3 gap-2.5 sm:gap-3 my-5">
-                <div className="rounded-2xl bg-white/[0.05] border border-amber-400/40 p-3 text-center shadow-sm">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-amber-400 mb-0.5">Total XP</div>
-                  <div className="text-lg sm:text-xl font-black text-amber-400 font-mono">
+              {/* Clean Metric Stats Grid */}
+              <div className="grid grid-cols-3 gap-2 my-4">
+                <div className="rounded-xl bg-slate-50 border border-slate-200 p-2.5 text-center">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-0.5">Total XP</div>
+                  <div className="text-base font-black text-amber-600 font-mono">
                     {selectedStudent.xp || `${((selectedStudent.percentage || 90) * 250).toLocaleString()} XP`}
                   </div>
                 </div>
 
-                <div className="rounded-2xl bg-white/[0.05] border border-white/15 p-3 text-center shadow-sm">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-0.5">Score / Win Rate</div>
-                  <div className="text-lg sm:text-xl font-black text-white font-mono">
+                <div className="rounded-xl bg-slate-50 border border-slate-200 p-2.5 text-center">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-0.5">Win Rate</div>
+                  <div className="text-base font-black text-slate-800 font-mono">
                     {selectedStudent.percentage || 90}%
                   </div>
                 </div>
 
-                <div className="rounded-2xl bg-white/[0.05] border border-white/15 p-3 text-center shadow-sm">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-0.5">Badge Tier</div>
-                  <div className="text-sm sm:text-base font-black text-yellow-300 flex items-center justify-center gap-1">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <div className="rounded-xl bg-slate-50 border border-slate-200 p-2.5 text-center">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-0.5">Badge</div>
+                  <div className="text-xs font-black text-slate-800 flex items-center justify-center gap-1 mt-1">
+                    <Sparkles className="w-3 h-3 text-amber-500" />
                     <span>{selectedStudent.badge || 'Pro'}</span>
                   </div>
                 </div>
@@ -823,45 +814,45 @@ export default function Leaderboard() {
 
               {/* Certificate & Verified Credentials */}
               {selectedStudent.certificateNumber ? (
-                <div className="mb-5 p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-yellow-400/10 to-amber-500/15 border border-amber-400/50 flex items-center justify-between gap-3 shadow-inner">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-amber-400/25 text-amber-300 flex items-center justify-center flex-shrink-0">
-                      <Award className="w-5 h-5" />
+                <div className="mb-4 p-3 rounded-xl bg-amber-50/70 border border-amber-200 flex items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-amber-200/70 text-amber-800 flex items-center justify-center flex-shrink-0">
+                      <Award className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-xs font-bold text-amber-300">Official Exam Certificate</div>
-                      <div className="text-[11px] text-white font-mono font-semibold truncate">{selectedStudent.certificateNumber}</div>
+                      <div className="text-[11px] font-bold text-amber-900">Official Exam Certificate</div>
+                      <div className="text-[10px] text-slate-600 font-mono font-semibold truncate">{selectedStudent.certificateNumber}</div>
                     </div>
                   </div>
                   <Link
                     to={`/verify-certificate/${selectedStudent.certificateNumber}`}
-                    className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-slate-950 text-xs font-black flex items-center gap-1.5 transition flex-shrink-0 shadow-md shadow-amber-400/20"
+                    className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold flex items-center gap-1 transition flex-shrink-0 shadow-sm"
                   >
                     <span>Verify</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
+                    <ExternalLink className="w-3 h-3" />
                   </Link>
                 </div>
               ) : (
-                <div className="mb-5 p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center gap-3">
-                  <ShieldCheck className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                  <div className="text-xs text-slate-300 leading-snug">
-                    Officially verified exam participant. Certificate generated upon exam completion and admin review.
+                <div className="mb-4 p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-2 text-left">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <div className="text-[11px] text-slate-600 leading-tight">
+                    Verified participant. Certificate is issued upon exam completion.
                   </div>
                 </div>
               )}
 
               {/* Modal Buttons */}
-              <div className="flex items-center gap-3 pt-1">
+              <div className="flex items-center gap-2 pt-1">
                 <Link
                   to="/student/profile"
-                  className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black text-xs sm:text-sm text-center shadow-lg shadow-amber-500/30 transition cursor-pointer flex items-center justify-center gap-2"
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs text-center shadow-sm transition cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <span>Go to Student Profile Dashboard</span>
-                  <ArrowUpRight className="w-4 h-4" />
+                  <span>Student Dashboard</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
                 </Link>
                 <button
                   onClick={() => setSelectedStudent(null)}
-                  className="py-3 px-5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-xs sm:text-sm transition cursor-pointer"
+                  className="py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
                 >
                   Close
                 </button>

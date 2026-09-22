@@ -488,18 +488,23 @@ async function findArenaStudent(email) {
   try {
     const pool = getMySQLPool();
     if (pool) {
-      // Ensure arena_students table exists
+      // Ensure arena_students table exists with college column
       await pool.query(`
         CREATE TABLE IF NOT EXISTS arena_students (
           id VARCHAR(64) PRIMARY KEY,
           email VARCHAR(191) UNIQUE NOT NULL,
           name VARCHAR(191) NOT NULL,
           dob VARCHAR(32) NOT NULL,
+          college VARCHAR(255) DEFAULT '',
           photo LONGTEXT,
           score INT DEFAULT 0,
           solved_problems_json TEXT,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `).catch(() => {});
+
+      await pool.query(`
+        ALTER TABLE arena_students ADD COLUMN college VARCHAR(255) DEFAULT '';
       `).catch(() => {});
 
       const [rows] = await pool.query('SELECT * FROM arena_students WHERE LOWER(email) = ?', [cleanEmail]);
@@ -512,6 +517,7 @@ async function findArenaStudent(email) {
           email: r.email,
           name: r.name,
           dob: r.dob,
+          college: r.college || '',
           photo: r.photo || '',
           score: Number(r.score) || 0,
           solvedProblems: solved,
@@ -523,17 +529,41 @@ async function findArenaStudent(email) {
     }
   } catch (e) {}
 
+  // Cross-lookup: if student participated in an exam or assessment
+  try {
+    const examCand = await findExamCandidate(cleanEmail);
+    if (examCand) {
+      const fallbackStudent = {
+        id: `arena_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+        email: cleanEmail,
+        name: examCand.name || 'Student Candidate',
+        dob: examCand.dob || '',
+        college: examCand.college || '',
+        photo: examCand.photo || '',
+        score: 0,
+        solvedProblems: [],
+        createdAt: new Date()
+      };
+      await saveArenaStudent(fallbackStudent);
+      return fallbackStudent;
+    }
+  } catch (e) {}
+
   return null;
 }
 
-// Save or Update Arena Student
+// Save or Update Arena Student across Hostinger MySQL database tables
 async function saveArenaStudent(student) {
+  if (!student || !student.email) return student;
+  const cleanEmail = String(student.email).trim().toLowerCase();
+
   // Update mockStore
-  const idx = (mockStore.arenaStudents || []).findIndex(
-    s => String(s.email).toLowerCase() === String(student.email).toLowerCase()
+  if (!Array.isArray(mockStore.arenaStudents)) mockStore.arenaStudents = [];
+  const idx = mockStore.arenaStudents.findIndex(
+    s => String(s.email).toLowerCase() === cleanEmail
   );
   if (idx !== -1) {
-    mockStore.arenaStudents[idx] = student;
+    mockStore.arenaStudents[idx] = { ...mockStore.arenaStudents[idx], ...student };
   } else {
     mockStore.arenaStudents.push(student);
   }
@@ -544,25 +574,69 @@ async function saveArenaStudent(student) {
     const pool = getMySQLPool();
     if (pool) {
       await pool.query(`
-        INSERT INTO arena_students (id, email, name, dob, photo, score, solved_problems_json)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ALTER TABLE arena_students ADD COLUMN college VARCHAR(255) DEFAULT '';
+      `).catch(() => {});
+
+      // 1. Save directly to arena_students
+      await pool.query(`
+        INSERT INTO arena_students (id, email, name, dob, college, photo, score, solved_problems_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
           name = VALUES(name),
           dob = VALUES(dob),
+          college = VALUES(college),
           photo = VALUES(photo),
           score = VALUES(score),
           solved_problems_json = VALUES(solved_problems_json);
       `, [
         student.id || `arena_${Date.now()}`,
-        student.email,
-        student.name,
-        student.dob,
+        cleanEmail,
+        student.name || 'Student Candidate',
+        student.dob || '',
+        student.college || '',
         student.photo || '',
-        student.score || 0,
+        Number(student.score) || 0,
         JSON.stringify(student.solvedProblems || [])
       ]);
+
+      // 2. Synchronize with assessment_candidates table
+      await pool.query(`
+        UPDATE assessment_candidates
+        SET name = COALESCE(NULLIF(?, ''), name),
+            dob = COALESCE(NULLIF(?, ''), dob),
+            college = COALESCE(NULLIF(?, ''), college),
+            photo_url = COALESCE(NULLIF(?, ''), photo_url)
+        WHERE LOWER(email) = ?
+      `, [student.name, student.dob, student.college, student.photo, cleanEmail]).catch(() => {});
+
+      // 3. Synchronize with assessment_attempts table
+      await pool.query(`
+        UPDATE assessment_attempts
+        SET candidate_name = COALESCE(NULLIF(?, ''), candidate_name),
+            candidate_dob = COALESCE(NULLIF(?, ''), candidate_dob),
+            candidate_college = COALESCE(NULLIF(?, ''), candidate_college),
+            candidate_photo = COALESCE(NULLIF(?, ''), candidate_photo)
+        WHERE LOWER(candidate_email) = ?
+      `, [student.name, student.dob, student.college, student.photo, cleanEmail]).catch(() => {});
+
+      // 4. Synchronize with certificates table
+      await pool.query(`
+        UPDATE certificates
+        SET student_name = COALESCE(NULLIF(?, ''), student_name)
+        WHERE LOWER(candidate_email) = ?
+      `, [student.name, cleanEmail]).catch(() => {});
+
+      // 5. Synchronize with users table
+      await pool.query(`
+        UPDATE users
+        SET name = COALESCE(NULLIF(?, ''), name),
+            profile_image = COALESCE(NULLIF(?, ''), profile_image)
+        WHERE LOWER(email) = ?
+      `, [student.name, student.photo, cleanEmail]).catch(() => {});
     }
-  } catch (e) {}
+  } catch (e) {
+    console.warn('MySQL saveArenaStudent sync error:', e.message);
+  }
 
   return student;
 }
@@ -861,6 +935,7 @@ router.get('/profile', async (req, res) => {
 });
 
 // PUT /api/arena/profile: Update profile info (photo, name, dob)
+// PUT /api/arena/profile: Update profile info (photo, name, dob, college)
 router.put('/profile', async (req, res) => {
   try {
     let email = req.body.email;
@@ -874,16 +949,29 @@ router.put('/profile', async (req, res) => {
     if (!email) {
       return res.status(400).json({ error: 'Email required to update profile.' });
     }
-    const student = await findArenaStudent(email);
+    const cleanEmail = String(email).trim().toLowerCase();
+    let student = await findArenaStudent(cleanEmail);
     if (!student) {
-      return res.status(404).json({ error: 'Student not found.' });
+      student = {
+        id: `arena_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+        email: cleanEmail,
+        name: req.body.name ? String(req.body.name).trim() : 'Student Candidate',
+        dob: req.body.dob ? normalizeDob(req.body.dob) : '',
+        college: req.body.college ? String(req.body.college).trim() : '',
+        photo: req.body.photo || '',
+        score: 0,
+        solvedProblems: [],
+        createdAt: new Date()
+      };
     }
     if (req.body.name) student.name = String(req.body.name).trim();
     if (req.body.dob) student.dob = normalizeDob(req.body.dob);
+    if (req.body.college !== undefined) student.college = String(req.body.college).trim();
     if (req.body.photo !== undefined) student.photo = req.body.photo;
+
     await saveArenaStudent(student);
     const token = generateArenaToken(student);
-    res.json({ success: true, message: 'Profile updated successfully!', student, token });
+    res.json({ success: true, message: 'Profile updated and saved to database successfully!', student, token });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

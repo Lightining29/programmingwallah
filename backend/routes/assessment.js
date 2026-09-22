@@ -443,98 +443,174 @@ export const findAssessmentInDB = async (id) => {
 export const saveAssessmentToDB = async (assessment) => {
   if (!assessment || !assessment._id) return;
 
-  // 1. In-memory and local disk persistence (instant sub-millisecond)
+  // 1. Hostinger MySQL persistence (with 15000ms safe timeout)
+  try {
+    const pool = getMySQLPool();
+    if (pool) {
+      // Look up existing candidates and questions in MySQL to PREVENT accidental loss
+      let existingCandidates = [];
+      let existingQuestions = [];
+
+      try {
+        const [existingRows] = await pool.query(
+          'SELECT questions_json, invited_candidates_json FROM assessments WHERE id = ? LIMIT 1',
+          [assessment._id]
+        );
+        if (existingRows && existingRows.length > 0) {
+          try {
+            existingQuestions = typeof existingRows[0].questions_json === 'string'
+              ? JSON.parse(existingRows[0].questions_json)
+              : (existingRows[0].questions_json || []);
+          } catch (_) {}
+          try {
+            existingCandidates = typeof existingRows[0].invited_candidates_json === 'string'
+              ? JSON.parse(existingRows[0].invited_candidates_json)
+              : (existingRows[0].invited_candidates_json || []);
+          } catch (_) {}
+        }
+      } catch (_) {}
+
+      // Also gather candidates from dedicated assessment_candidates table
+      try {
+        const [candRows] = await pool.query(
+          'SELECT id, assessment_id, name, email, dob, phone, college, roll_no, photo_url, access_code, registered_at FROM assessment_candidates WHERE assessment_id = ?',
+          [assessment._id]
+        );
+        if (candRows && candRows.length > 0) {
+          const exSet = new Set(existingCandidates.map(c => String(c.email || '').toLowerCase().trim()));
+          for (const cr of candRows) {
+            const em = String(cr.email || '').toLowerCase().trim();
+            if (!exSet.has(em)) {
+              existingCandidates.push({
+                _id: cr.id,
+                name: cr.name,
+                email: cr.email,
+                dob: cr.dob,
+                phone: cr.phone,
+                college: cr.college,
+                rollNo: cr.roll_no,
+                photo: cr.photo_url,
+                accessCode: cr.access_code,
+                registeredAt: cr.registered_at
+              });
+              exSet.add(em);
+            }
+          }
+        }
+      } catch (_) {}
+
+      // Merge candidates safely
+      let mergedCandidates = Array.isArray(assessment.invitedCandidates) && assessment.invitedCandidates.length > 0
+        ? [...assessment.invitedCandidates]
+        : [...existingCandidates];
+
+      if (existingCandidates.length > 0 && mergedCandidates !== existingCandidates) {
+        const emailSet = new Set(mergedCandidates.map(c => String(c.email || '').toLowerCase().trim()));
+        for (const ec of existingCandidates) {
+          const em = String(ec.email || '').toLowerCase().trim();
+          if (!emailSet.has(em)) {
+            mergedCandidates.push(ec);
+            emailSet.add(em);
+          }
+        }
+      }
+      assessment.invitedCandidates = mergedCandidates;
+
+      // Preserve questions if update didn't include them
+      if ((!Array.isArray(assessment.questions) || assessment.questions.length === 0) && existingQuestions.length > 0) {
+        assessment.questions = existingQuestions;
+      }
+
+      // Keep invited_candidates_json clean and compact for SQL storage
+      const sanitizedCandidates = (assessment.invitedCandidates || []).map(c => ({
+        ...c,
+        photo: typeof c.photo === 'string' && c.photo.length > 50000 ? c.photo.substring(0, 50000) : (c.photo || '')
+      }));
+
+      const queryPromise = pool.query(`
+        INSERT INTO assessments (
+          id, title, description, job_title, duration, passing_score, max_attempts,
+          shuffle_questions, shuffle_options, show_result, is_active, access_password,
+          questions_json, invited_candidates_json, scheduled_at, expires_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          title=VALUES(title),
+          description=VALUES(description),
+          job_title=VALUES(job_title),
+          duration=VALUES(duration),
+          passing_score=VALUES(passing_score),
+          max_attempts=VALUES(max_attempts),
+          shuffle_questions=VALUES(shuffle_questions),
+          shuffle_options=VALUES(shuffle_options),
+          show_result=VALUES(show_result),
+          is_active=VALUES(is_active),
+          access_password=VALUES(access_password),
+          questions_json=VALUES(questions_json),
+          invited_candidates_json=VALUES(invited_candidates_json)
+      `, [
+        assessment._id,
+        assessment.title || '',
+        assessment.description || '',
+        assessment.jobTitle || 'General',
+        Number(assessment.duration) || 30,
+        Number(assessment.passingScore) || 50,
+        Number(assessment.maxAttempts) || 1,
+        assessment.shuffleQuestions !== false ? 1 : 0,
+        assessment.shuffleOptions !== false ? 1 : 0,
+        assessment.showResult !== false ? 1 : 0,
+        assessment.isActive !== false ? 1 : 0,
+        assessment.accessPassword || '',
+        JSON.stringify(assessment.questions || []),
+        JSON.stringify(sanitizedCandidates),
+        assessment.scheduledAt ? new Date(assessment.scheduledAt) : null,
+        assessment.expiresAt ? new Date(assessment.expiresAt) : null
+      ]);
+
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('MySQL save timeout')), 15000));
+      await Promise.race([queryPromise, timeoutPromise]);
+
+      // Persist each candidate to dedicated assessment_candidates table
+      if (Array.isArray(assessment.invitedCandidates) && assessment.invitedCandidates.length > 0) {
+        for (const cand of assessment.invitedCandidates) {
+          if (!cand.email) continue;
+          const candId = String(cand._id || cand.candidateId || genId());
+          const candPhoto = typeof cand.photo === 'string' && cand.photo.length > 100000 ? cand.photo.substring(0, 100000) : (cand.photo || '');
+          await pool.query(`
+            INSERT INTO assessment_candidates (
+              id, assessment_id, name, email, dob, phone, college, roll_no, photo_url, access_code
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+              name=VALUES(name),
+              dob=VALUES(dob),
+              phone=VALUES(phone),
+              college=VALUES(college),
+              roll_no=VALUES(roll_no),
+              photo_url=VALUES(photo_url),
+              access_code=VALUES(access_code)
+          `, [
+            candId,
+            assessment._id,
+            cand.name || 'Candidate',
+            String(cand.email).toLowerCase().trim(),
+            normalizeDob(cand.dob || cand.dateOfBirth),
+            cand.phone || '',
+            cand.college || '',
+            cand.rollNo || '',
+            candPhoto,
+            cand.accessCode || assessment.accessPassword || 'EXAM'
+          ]).catch(() => {});
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('MySQL saveAssessmentToDB notice:', err.message);
+  }
+
+  // 2. In-memory and local disk persistence (instant sub-millisecond)
   const store = getAssessmentsFromStore();
   const idx = store.findIndex(x => String(x._id) === String(assessment._id));
   if (idx >= 0) store[idx] = assessment; else store.unshift(assessment);
   saveStore();
-
-  // 2. Hostinger MySQL persistence (with 15000ms safe timeout)
-  try {
-    const pool = getMySQLPool();
-    // Keep invited_candidates_json clean and compact for SQL storage
-    const sanitizedCandidates = (assessment.invitedCandidates || []).map(c => ({
-      ...c,
-      photo: typeof c.photo === 'string' && c.photo.length > 50000 ? c.photo.substring(0, 50000) : (c.photo || '')
-    }));
-
-    const queryPromise = pool.query(`
-      INSERT INTO assessments (
-        id, title, description, job_title, duration, passing_score, max_attempts,
-        shuffle_questions, shuffle_options, show_result, is_active, access_password,
-        questions_json, invited_candidates_json, scheduled_at, expires_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON DUPLICATE KEY UPDATE
-        title=VALUES(title),
-        description=VALUES(description),
-        job_title=VALUES(job_title),
-        duration=VALUES(duration),
-        passing_score=VALUES(passing_score),
-        max_attempts=VALUES(max_attempts),
-        shuffle_questions=VALUES(shuffle_questions),
-        shuffle_options=VALUES(shuffle_options),
-        show_result=VALUES(show_result),
-        is_active=VALUES(is_active),
-        access_password=VALUES(access_password),
-        questions_json=VALUES(questions_json),
-        invited_candidates_json=VALUES(invited_candidates_json)
-    `, [
-      assessment._id,
-      assessment.title || '',
-      assessment.description || '',
-      assessment.jobTitle || 'General',
-      Number(assessment.duration) || 30,
-      Number(assessment.passingScore) || 50,
-      Number(assessment.maxAttempts) || 1,
-      assessment.shuffleQuestions !== false ? 1 : 0,
-      assessment.shuffleOptions !== false ? 1 : 0,
-      assessment.showResult !== false ? 1 : 0,
-      assessment.isActive !== false ? 1 : 0,
-      assessment.accessPassword || '',
-      JSON.stringify(assessment.questions || []),
-      JSON.stringify(sanitizedCandidates),
-      assessment.scheduledAt ? new Date(assessment.scheduledAt) : null,
-      assessment.expiresAt ? new Date(assessment.expiresAt) : null
-    ]);
-
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('MySQL save timeout')), 15000));
-    await Promise.race([queryPromise, timeoutPromise]);
-
-    // Also persist candidates to dedicated assessment_candidates table
-    if (Array.isArray(assessment.invitedCandidates) && assessment.invitedCandidates.length > 0) {
-      for (const cand of assessment.invitedCandidates) {
-        if (!cand.email) continue;
-        const candId = String(cand._id || cand.candidateId || genId());
-        const candPhoto = typeof cand.photo === 'string' && cand.photo.length > 100000 ? cand.photo.substring(0, 100000) : (cand.photo || '');
-        await pool.query(`
-          INSERT INTO assessment_candidates (
-            id, assessment_id, name, email, dob, phone, college, roll_no, photo_url, access_code
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          ON DUPLICATE KEY UPDATE
-            name=VALUES(name),
-            dob=VALUES(dob),
-            phone=VALUES(phone),
-            college=VALUES(college),
-            roll_no=VALUES(roll_no),
-            photo_url=VALUES(photo_url),
-            access_code=VALUES(access_code)
-        `, [
-          candId,
-          assessment._id,
-          cand.name || 'Candidate',
-          String(cand.email).toLowerCase().trim(),
-          normalizeDob(cand.dob || cand.dateOfBirth),
-          cand.phone || '',
-          cand.college || '',
-          cand.rollNo || '',
-          candPhoto,
-          cand.accessCode || assessment.accessPassword || 'EXAM'
-        ]).catch(() => {});
-      }
-    }
-  } catch (err) {
-    console.warn('MySQL saveAssessment notice:', err.message);
-  }
 
   // 3. Mongoose safe upsert
   if (mongoose.connection?.readyState === 1) {
@@ -2491,6 +2567,17 @@ router.post('/:id/register', async (req, res) => {
         cleanPhoto,
         a.accessPassword || 'EXAM'
       ]);
+
+      // Also register or update arena_students in MySQL so candidate profile is globally unified
+      await pool.query(`
+        INSERT INTO arena_students (id, email, name, dob, college, photo, score, solved_problems_json)
+        VALUES (?, ?, ?, ?, ?, ?, 0, '[]')
+        ON DUPLICATE KEY UPDATE
+          name=VALUES(name),
+          dob=VALUES(dob),
+          college=VALUES(college),
+          photo=COALESCE(NULLIF(VALUES(photo), ''), photo);
+      `, [genId(), cleanEmail, cleanName, cleanDob, cleanCollege, cleanPhoto]).catch(() => {});
     } catch (sqlCandErr) {
       console.warn('MySQL assessment_candidates insert notice:', sqlCandErr.message);
     }
