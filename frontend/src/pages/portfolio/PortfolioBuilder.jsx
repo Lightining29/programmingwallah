@@ -1,89 +1,187 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Sparkles, Download, Share2, Copy, RefreshCw, Eye, Edit3, 
-  Upload, Camera, ArrowLeft, ArrowRight, CheckCircle2, 
-  Layers, Palette, Quote, Briefcase, Mail, MapPin, Globe, 
-  Terminal, ShieldCheck, Heart, ExternalLink, Sliders
+import {
+  Sparkles,
+  Save,
+  Share2,
+  ExternalLink,
+  ArrowLeft,
+  Plus,
+  Trash2,
+  Upload,
+  Image as ImageIcon,
+  CheckCircle2,
+  Eye,
+  Edit3,
+  Layers,
+  Briefcase,
+  Code2,
+  User,
+  Quote as QuoteIcon,
+  Mail,
+  Copy,
+  FolderPlus,
+  RefreshCw,
+  Sliders
 } from 'lucide-react';
 import Swal from 'sweetalert2';
-import html2canvas from 'html2canvas';
 import { useAuth } from '../../context/AuthContext.jsx';
-import PortfolioSlicedImage from '../../components/portfolio/PortfolioSlicedImage.jsx';
+import PortfolioModernView from '../../components/portfolio/PortfolioModernView.jsx';
 
 export default function PortfolioBuilder() {
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
-  const posterRef = useRef(null);
-  const fileInputRef = useRef(null);
+  const avatarInputRef = useRef(null);
 
-  // Active student identity
-  const [student, setStudent] = useState(null);
+  // Active Tab: 'hero' | 'projects' | 'experience' | 'skills' | 'about' | 'contact'
+  const [activeTab, setActiveTab] = useState('hero');
 
-  // Portfolio Editable State
+  // View Mode: 'split' | 'editor' | 'preview'
+  const [viewMode, setViewMode] = useState('split');
+
+  // State: Hero & Identity
   const [name, setName] = useState('Alex Morgan');
-  const [role, setRole] = useState('SOFTWARE ARCHITECT');
-  const [headlinePart1, setHeadlinePart1] = useState('Code');
-  const [headlinePart2, setHeadlinePart2] = useState('With');
-  const [headlinePart3, setHeadlinePart3] = useState('Purpose.');
+  const [role, setRole] = useState('Brand & Web Designer');
+  const [location, setLocation] = useState('Toronto, Canada');
   const [bio, setBio] = useState(
-    'I engineer minimal, resilient and impactful systems that elevate products and inspire people.'
+    'I help startups and creative brands build thoughtful identities and digital experiences that connect.'
   );
-  const [quote, setQuote] = useState('GOOD ARCHITECTURE IS STRATEGY MADE EXECUTABLE.');
-  const [year, setYear] = useState('2026');
-  const [visionTag, setVisionTag] = useState('CREATIVE VISION');
-  const [brandTagline, setBrandTagline] = useState('THOUGHTFUL CODE • LASTING IMPACT');
-  const [email, setEmail] = useState('alex.morgan@dev.io');
-  const [location, setLocation] = useState('BASED IN NEW DELHI, INDIA');
-  const [availability, setAvailability] = useState('AVAILABLE FOR FULL-TIME & CONTRACT');
-  
-  // Photo & Effect Controls
-  const [photoUrl, setPhotoUrl] = useState(
-    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=85'
+  const [avatar, setAvatar] = useState(
+    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80'
   );
-  const [zoom, setZoom] = useState(1);
-  const [panX, setPanX] = useState(0);
-  const [panY, setPanY] = useState(0);
-  const [theme, setTheme] = useState('terracotta'); // 'terracotta' | 'amber' | 'obsidian' | 'emerald'
+  const [availability, setAvailability] = useState({
+    status: 'Available for work',
+    period: 'May 2026',
+    description: "I'm currently accepting new projects and roles for"
+  });
+  const [resumeUrl, setResumeUrl] = useState('');
 
-  // Services / Skills (4 Capsules)
-  const [services, setServices] = useState([
+  // State: Projects (with screenshots)
+  const [projects, setProjects] = useState([
     {
-      id: 1,
-      title: 'BACKEND ARCHITECTURE',
-      desc: 'Scalable microservices, fault-tolerant pipelines and high-concurrency systems.'
+      id: 'proj-1',
+      title: 'ROSE Skincare',
+      category: 'Branding',
+      subtitle: 'Visual Identity & E-Commerce',
+      screenshot: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=800&q=80',
+      description: 'A tactile, minimalist brand identity and bespoke digital storefront for luxury organic skincare. Engineered for high conversion with fluid interactive transitions.',
+      highlights: [
+        'Designed custom design system with 40+ atomic components.',
+        'Increased checkout speed by 45% using headless architecture.'
+      ],
+      tags: ['React', 'Next.js', 'Tailwind CSS', 'Shopify Storefront API'],
+      liveUrl: 'https://example.com/rose-skincare',
+      repoUrl: 'https://github.com/example/rose-skincare'
     },
     {
-      id: 2,
-      title: 'CLOUD & DEVOPS',
-      desc: 'Automated CI/CD workflows, Docker containerization and AWS infrastructure.'
+      id: 'proj-2',
+      title: 'Helix SaaS',
+      category: 'Web Design',
+      subtitle: 'Website Design & Interactive App',
+      screenshot: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80',
+      description: 'High-throughput analytics platform website featuring real-time interactive charts, customer conversion funnels, and enterprise security compliance.',
+      highlights: [
+        'Interactive real-time SVG charting engine with 60fps animations.',
+        'Automated multi-tenant onboarding pipeline.'
+      ],
+      tags: ['TypeScript', 'Vite', 'Chart.js', 'Node.js', 'PostgreSQL'],
+      liveUrl: 'https://example.com/helix-saas',
+      repoUrl: 'https://github.com/example/helix-saas'
     },
     {
-      id: 3,
-      title: 'DATA STRUCTURES & DSA',
-      desc: 'Optimized algorithmic problem solving with clean, benchmarked complexity.'
-    },
-    {
-      id: 4,
-      title: 'FULL-STACK DELIVERY',
-      desc: 'Interactive, hyper-responsive web interfaces paired with robust REST APIs.'
+      id: 'proj-3',
+      title: 'Momentum',
+      category: 'UI/UX',
+      subtitle: 'Mobile Application & Design System',
+      screenshot: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80',
+      description: 'An intuitive productivity companion designed to eliminate friction in daily sprint tracking, habit formation, and collaborative team boards.',
+      highlights: [
+        'Awarded Best Utility App concept at Global Design Showcase.',
+        'Offline-first synchronization with zero data loss.'
+      ],
+      tags: ['React Native', 'Figma', 'GraphQL', 'Tailwind CSS'],
+      liveUrl: 'https://example.com/momentum-app',
+      repoUrl: 'https://github.com/example/momentum-app'
     }
   ]);
 
-  // UI state
-  const [previewTab, setPreviewTab] = useState('split'); // 'split' | 'edit' | 'preview'
-  const [aiLoadingField, setAiLoadingField] = useState(null); // 'headline' | 'bio' | 'quote' | 'skills' | 'all'
-  const [saving, setSaving] = useState(false);
-  const [downloading, setDownloading] = useState(false);
-  const [savedSlug, setSavedSlug] = useState('');
+  // State: Experience
+  const [experience, setExperience] = useState([
+    {
+      id: 'exp-1',
+      role: 'Senior Product Designer & Developer',
+      company: 'Studio Helix',
+      period: '2024 — Present',
+      location: 'Remote',
+      description: 'Lead end-to-end design systems and engineered high-performance web applications with React and Tailwind CSS.',
+      achievements: [
+        'Boosted page conversion rates by 38% through streamlined checkout flows.',
+        'Architected reusable component library used across 12 product teams.'
+      ]
+    },
+    {
+      id: 'exp-2',
+      role: 'Frontend Engineer & UI Specialist',
+      company: 'Vanguard Labs',
+      period: '2022 — 2024',
+      location: 'Toronto, Canada',
+      description: 'Collaborated with engineering leads to build resilient SaaS dashboards and accessible client experiences.',
+      achievements: [
+        'Reduced bundle size by 42% via code-splitting and asset optimization.',
+        'Delivered responsive dashboard with 99.9% uptime.'
+      ]
+    }
+  ]);
 
-  // 1. Initial Data Load from Student Session / Profile
+  // State: Skills
+  const [skills, setSkills] = useState([
+    {
+      category: 'Core Engineering',
+      items: ['React.js', 'Next.js', 'JavaScript / TypeScript', 'Node.js', 'REST APIs', 'MySQL / PostgreSQL']
+    },
+    {
+      category: 'Design & Systems',
+      items: ['UI / UX Architecture', 'Figma', 'Design Systems', 'Responsive Motion', 'Wireframing & Prototyping']
+    },
+    {
+      category: 'Cloud & Tooling',
+      items: ['Git & GitHub', 'Tailwind CSS', 'Docker Basics', 'Vite', 'Postman', 'Performance Tuning']
+    }
+  ]);
+
+  // State: About & Quote
+  const [aboutText, setAboutText] = useState(
+    'I help startups and creative brands build thoughtful identities and digital experiences that connect with human intent and engineering precision.'
+  );
+  const [quote, setQuote] = useState({
+    text: 'Alex is an exceptional designer who delivers clean, strategic work that elevates our brand every single time.',
+    author: 'James Carter',
+    role: 'Founder, Helix',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80'
+  });
+
+  // State: Contact & Socials
+  const [email, setEmail] = useState('hello@alexmorgan.design');
+  const [phone, setPhone] = useState('+1 (647) 555-0198');
+  const [socials, setSocials] = useState({
+    linkedin: 'https://linkedin.com',
+    github: 'https://github.com',
+    dribbble: 'https://dribbble.com',
+    instagram: 'https://instagram.com'
+  });
+
+  // State: Operations
+  const [saving, setSaving] = useState(false);
+  const [savedSlug, setSavedSlug] = useState('');
+  const [aiLoadingField, setAiLoadingField] = useState(null);
+
+  // 1. Load initial student profile if available
   useEffect(() => {
     let activeEmail = null;
     if (authUser && authUser.email) {
       activeEmail = authUser.email;
       if (authUser.name) setName(authUser.name);
-      if (authUser.photo) setPhotoUrl(authUser.photo);
+      if (authUser.photo) setAvatar(authUser.photo);
       setEmail(authUser.email);
     } else {
       const saved = localStorage.getItem('arena_student') || localStorage.getItem('user');
@@ -93,7 +191,7 @@ export default function PortfolioBuilder() {
           if (parsed.email) {
             activeEmail = parsed.email;
             if (parsed.name) setName(parsed.name);
-            if (parsed.photo) setPhotoUrl(parsed.photo);
+            if (parsed.photo) setAvatar(parsed.photo);
             setEmail(parsed.email);
           }
         } catch (e) {}
@@ -101,7 +199,6 @@ export default function PortfolioBuilder() {
     }
 
     if (activeEmail) {
-      // Check if student already has a saved portfolio
       fetch(`/api/portfolio/${encodeURIComponent(activeEmail)}`)
         .then(res => res.json())
         .then(res => {
@@ -109,16 +206,19 @@ export default function PortfolioBuilder() {
             const p = res.portfolio;
             if (p.name) setName(p.name);
             if (p.role) setRole(p.role);
-            if (p.headlinePart1) setHeadlinePart1(p.headlinePart1);
-            if (p.headlinePart2) setHeadlinePart2(p.headlinePart2);
-            if (p.headlinePart3) setHeadlinePart3(p.headlinePart3);
-            if (p.bio) setBio(p.bio);
-            if (p.quote) setQuote(p.quote);
-            if (p.theme) setTheme(p.theme);
-            if (p.photoUrl) setPhotoUrl(p.photoUrl);
-            if (p.services && p.services.length) setServices(p.services);
             if (p.location) setLocation(p.location);
+            if (p.bio) setBio(p.bio);
+            if (p.avatar || p.photoUrl) setAvatar(p.avatar || p.photoUrl);
             if (p.availability) setAvailability(p.availability);
+            if (p.resumeUrl) setResumeUrl(p.resumeUrl);
+            if (Array.isArray(p.projects)) setProjects(p.projects);
+            if (Array.isArray(p.experience)) setExperience(p.experience);
+            if (Array.isArray(p.skills)) setSkills(p.skills);
+            if (p.aboutText) setAboutText(p.aboutText);
+            if (p.quote) setQuote(p.quote);
+            if (p.email) setEmail(p.email);
+            if (p.phone) setPhone(p.phone);
+            if (p.socials) setSocials(p.socials);
             if (p.slug) setSavedSlug(p.slug);
           }
         })
@@ -126,34 +226,57 @@ export default function PortfolioBuilder() {
     }
   }, [authUser]);
 
-  // Photo Upload Handler
-  const handlePhotoUpload = (e) => {
+  // Handle Avatar Upload
+  const handleAvatarUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
-      setPhotoUrl(ev.target.result);
+      setAvatar(ev.target.result);
       Swal.fire({
         toast: true,
         position: 'top-end',
         icon: 'success',
-        title: 'Photo updated with sliced effect!',
+        title: 'Avatar updated!',
         showConfirmButton: false,
-        timer: 1600
+        timer: 1500
       });
     };
     reader.readAsDataURL(file);
   };
 
-  // 2. AI Text Enhancement Trigger
-  const handleAiEnhance = async (field) => {
-    setAiLoadingField(field);
+  // Handle Project Screenshot Upload
+  const handleProjectScreenshotUpload = (index, e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const updated = [...projects];
+      updated[index].screenshot = ev.target.result;
+      setProjects(updated);
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Project screenshot uploaded!',
+        showConfirmButton: false,
+        timer: 1500
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // AI Text Enhancement with Gemini
+  const handleAiEnhance = async (field, index = null) => {
+    const loadingKey = index !== null ? `${field}-${index}` : field;
+    setAiLoadingField(loadingKey);
     try {
       let draftText = '';
-      if (field === 'headline') draftText = `${headlinePart1} ${headlinePart2} ${headlinePart3}`;
-      else if (field === 'bio') draftText = bio;
-      else if (field === 'quote') draftText = quote;
-      else if (field === 'skills') draftText = services.map(s => `${s.title}: ${s.desc}`).join(', ');
+      if (field === 'bio') draftText = bio;
+      else if (field === 'headline') draftText = role;
+      else if (field === 'project' && index !== null) draftText = projects[index]?.description || projects[index]?.title;
+      else if (field === 'experience' && index !== null) draftText = experience[index]?.description;
+      else if (field === 'quote') draftText = quote.text;
 
       const res = await fetch('/api/portfolio/ai-enhance', {
         method: 'POST',
@@ -171,80 +294,110 @@ export default function PortfolioBuilder() {
         throw new Error(data.error || 'AI enhancement failed');
       }
 
-      if (field === 'headline') {
-        const fullTitle = data.data.title || 'Code With Purpose.';
-        const words = fullTitle.trim().split(' ');
-        if (words.length >= 3) {
-          setHeadlinePart1(words[0]);
-          setHeadlinePart2(words.slice(1, -1).join(' '));
-          setHeadlinePart3(words[words.length - 1]);
-        } else if (words.length === 2) {
-          setHeadlinePart1(words[0]);
-          setHeadlinePart2('');
-          setHeadlinePart3(words[1]);
-        } else {
-          setHeadlinePart1('Code');
-          setHeadlinePart2('With');
-          setHeadlinePart3('Purpose.');
-        }
-        if (data.data.subtitle) setBio(data.data.subtitle);
-      } else if (field === 'bio') {
-        if (data.data.bio) setBio(data.data.bio);
-      } else if (field === 'quote') {
-        if (data.data.quote) setQuote(data.data.quote.toUpperCase());
-      } else if (field === 'skills') {
-        if (Array.isArray(data.data.skills) && data.data.skills.length >= 4) {
-          setServices(data.data.skills.slice(0, 4).map((s, idx) => ({
-            id: idx + 1,
-            title: s.title || `SKILL ${idx + 1}`,
-            desc: s.description || s.desc || ''
-          })));
-        }
+      if (field === 'bio' && data.data?.bio) {
+        setBio(data.data.bio);
+      } else if (field === 'headline' && data.data?.subtitle) {
+        setBio(data.data.subtitle);
+      } else if (field === 'project' && index !== null) {
+        const updated = [...projects];
+        if (data.data?.title && !updated[index].title) updated[index].title = data.data.title;
+        if (data.data?.category) updated[index].category = data.data.category;
+        if (data.data?.subtitle) updated[index].subtitle = data.data.subtitle;
+        if (data.data?.description) updated[index].description = data.data.description;
+        setProjects(updated);
+      } else if (field === 'experience' && index !== null) {
+        const updated = [...experience];
+        if (data.data?.description) updated[index].description = data.data.description;
+        setExperience(updated);
+      } else if (field === 'quote' && data.data?.quote) {
+        setQuote(prev => ({ ...prev, text: data.data.quote }));
       }
 
       Swal.fire({
         toast: true,
         position: 'top-end',
         icon: 'success',
-        title: `AI Enhanced ${field.toUpperCase()}!`,
+        title: '✨ AI Enhanced Copy!',
         showConfirmButton: false,
-        timer: 1800
+        timer: 1600
       });
 
     } catch (err) {
-      console.error('AI error:', err);
+      console.error('AI Enhance error:', err);
       Swal.fire({
         icon: 'error',
-        title: 'AI Enhancement Note',
-        text: err.message || 'Could not enhance text at this moment.'
+        title: 'AI Note',
+        text: err.message || 'Could not enhance text right now.'
       });
     } finally {
       setAiLoadingField(null);
     }
   };
 
-  // 3. Save Portfolio to Server
+  // Add New Project
+  const handleAddProject = () => {
+    const newProject = {
+      id: `proj-${Date.now()}`,
+      title: 'New Featured Project',
+      category: 'Web Design',
+      subtitle: 'Modern Digital Application',
+      screenshot: '',
+      description: 'Engineered an intuitive and performant digital experience focusing on speed, clean UI patterns, and accessibility.',
+      highlights: ['Achieved 99+ Lighthouse performance score.'],
+      tags: ['React', 'Tailwind CSS'],
+      liveUrl: '',
+      repoUrl: ''
+    };
+    setProjects(prev => [...prev, newProject]);
+    setActiveTab('projects');
+  };
+
+  // Remove Project
+  const handleRemoveProject = (index) => {
+    setProjects(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Add New Experience
+  const handleAddExperience = () => {
+    const newExp = {
+      id: `exp-${Date.now()}`,
+      role: 'Full Stack Engineer',
+      company: 'Tech Solutions Inc.',
+      period: '2024 — Present',
+      location: 'Remote',
+      description: 'Developed scalable features and maintained microservices architecture with automated CI/CD deployment.',
+      achievements: ['Optimized query performance and reduced API response time by 30%.']
+    };
+    setExperience(prev => [...prev, newExp]);
+    setActiveTab('experience');
+  };
+
+  // Remove Experience
+  const handleRemoveExperience = (index) => {
+    setExperience(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Save Portfolio
   const handleSavePortfolio = async () => {
     setSaving(true);
     try {
-      const generatedSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'student-portfolio';
+      const generatedSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'portfolio';
       const payload = {
         name,
         role,
-        headlinePart1,
-        headlinePart2,
-        headlinePart3,
-        bio,
-        quote,
-        year,
-        visionTag,
-        brandTagline,
-        email,
         location,
+        bio,
+        avatar,
         availability,
-        photoUrl,
-        theme,
-        services,
+        resumeUrl,
+        projects,
+        experience,
+        skills,
+        aboutText,
+        quote,
+        email,
+        phone,
+        socials,
         slug: generatedSlug
       };
 
@@ -259,735 +412,953 @@ export default function PortfolioBuilder() {
         throw new Error(data.error || 'Failed to save portfolio');
       }
 
-      setSavedSlug(data.slug || generatedSlug);
+      const finalSlug = data.slug || generatedSlug;
+      setSavedSlug(finalSlug);
+
       Swal.fire({
         icon: 'success',
-        title: 'Portfolio Saved!',
-        html: `Your personal editorial portfolio is live and saved successfully.<br/><br/>
-               <a href="/portfolio/${data.slug || generatedSlug}" target="_blank" class="text-amber-600 font-bold underline">
-                 View Live Portfolio Link ↗
-               </a>`,
-        confirmButtonColor: '#eab308'
+        title: 'Portfolio Published!',
+        html: `<div class="space-y-3 text-sm text-stone-600 text-left">
+          <p>Your luxury editorial showcase portfolio is live and synchronized.</p>
+          <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 font-mono text-xs text-amber-900 break-all">
+            ${window.location.origin}/portfolio/${finalSlug}
+          </div>
+          <div class="flex items-center gap-2 pt-2">
+            <a href="/portfolio/${finalSlug}" target="_blank" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-lg text-xs transition">
+              Open Live Showcase ↗
+            </a>
+          </div>
+        </div>`,
+        confirmButtonColor: '#E05A38'
       });
+
     } catch (err) {
-      Swal.fire({ icon: 'error', title: 'Save Error', text: err.message });
+      Swal.fire({ icon: 'error', title: 'Save Failed', text: err.message });
     } finally {
       setSaving(false);
     }
   };
 
-  // 4. Download HD Poster via html2canvas
-  const handleDownloadPoster = async () => {
-    if (!posterRef.current) return;
-    setDownloading(true);
-    try {
-      Swal.fire({
-        title: 'Rendering High-Resolution Poster...',
-        html: 'Applying graphic sliced ribbons, typography and contrast.',
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
-      });
-
-      const canvas = await html2canvas(posterRef.current, {
-        scale: 2.5,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: theme === 'terracotta' ? '#f6f0ea' : (theme === 'amber' ? '#fffdf7' : (theme === 'obsidian' ? '#0d0e14' : '#f0fdf4')),
-        logging: false
-      });
-
-      const dataUrl = canvas.toDataURL('image/png', 1.0);
-      const link = document.createElement('a');
-      link.download = `${name.replace(/\s+/g, '_')}_Editorial_Portfolio_2026.png`;
-      link.href = dataUrl;
-      link.click();
-
-      Swal.fire({
-        icon: 'success',
-        title: 'HD Poster Downloaded!',
-        text: 'Your high-resolution editorial portfolio has been saved to your device.',
-        timer: 2000,
-        showConfirmButton: false
-      });
-    } catch (err) {
-      console.error('Download error:', err);
-      Swal.fire({ icon: 'error', title: 'Export Failed', text: err.message });
-    } finally {
-      setDownloading(false);
-    }
-  };
-
   // Copy share link
   const handleCopyLink = () => {
-    const slug = savedSlug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'portfolio';
-    const fullUrl = `${window.location.origin}/portfolio/${slug}`;
-    navigator.clipboard.writeText(fullUrl);
+    const slug = savedSlug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const url = `${window.location.origin}/portfolio/${slug}`;
+    navigator.clipboard.writeText(url);
     Swal.fire({
       toast: true,
       position: 'top-end',
       icon: 'success',
-      title: 'Portfolio link copied to clipboard!',
+      title: 'Showcase link copied!',
       showConfirmButton: false,
-      timer: 1800
+      timer: 1600
     });
   };
 
-  // Theme Styling Presets
-  const themeStyles = {
-    terracotta: {
-      bg: 'bg-[#f7f2ec]',
-      textPrimary: 'text-[#1d1d20]',
-      textAccent: 'text-[#c97a5b]',
-      borderLine: 'border-[#dfd7cc]',
-      capsuleBg: 'bg-[#ede5dc]/60',
-      capsuleBorder: 'border-[#ded4c7]',
-      capsuleIconBg: 'bg-[#c97a5b] text-white',
-      badgeBg: 'bg-[#c97a5b]/10 text-[#c97a5b] border-[#c97a5b]/30'
-    },
-    amber: {
-      bg: 'bg-[#fffdf8]',
-      textPrimary: 'text-[#0f172a]',
-      textAccent: 'text-[#d97706]',
-      borderLine: 'border-[#fef08a]',
-      capsuleBg: 'bg-[#fef9c3]/50',
-      capsuleBorder: 'border-[#fde047]',
-      capsuleIconBg: 'bg-[#eab308] text-black',
-      badgeBg: 'bg-[#fef3c7] text-[#92400e] border-[#fcd34d]'
-    },
-    obsidian: {
-      bg: 'bg-[#0e0f15]',
-      textPrimary: 'text-[#f8fafc]',
-      textAccent: 'text-[#fbbf24]',
-      borderLine: 'border-[#27272a]',
-      capsuleBg: 'bg-[#18181b]/80',
-      capsuleBorder: 'border-[#3f3f46]',
-      capsuleIconBg: 'bg-[#fbbf24] text-black',
-      badgeBg: 'bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/30'
-    },
-    emerald: {
-      bg: 'bg-[#f0fdf4]',
-      textPrimary: 'text-[#064e3b]',
-      textAccent: 'text-[#059669]',
-      borderLine: 'border-[#bbf7d0]',
-      capsuleBg: 'bg-[#dcfce7]/60',
-      capsuleBorder: 'border-[#86efac]',
-      capsuleIconBg: 'bg-[#059669] text-white',
-      badgeBg: 'bg-[#d1fae5] text-[#065f46] border-[#6ee7b7]'
-    }
+  // Aggregate current portfolio data for live preview
+  const livePortfolioData = {
+    name,
+    role,
+    location,
+    bio,
+    avatar,
+    availability,
+    resumeUrl,
+    projects,
+    experience,
+    skills,
+    aboutText,
+    quote,
+    email,
+    phone,
+    socials,
+    slug: savedSlug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
   };
 
-  const t = themeStyles[theme] || themeStyles.terracotta;
-
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-yellow-400 selection:text-black">
+    <div className="min-h-screen bg-[#141211] text-[#EFECE6] font-sans">
       
-      {/* ─── Top Control Toolbar ─────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 sm:px-6 py-3.5">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-          
-          <div className="flex items-center gap-3">
-            <Link
-              to="/student/profile"
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition flex items-center gap-1.5 text-xs font-bold"
-            >
-              <ArrowLeft className="w-4 h-4 text-yellow-400" />
-              <span>Back to Profile</span>
-            </Link>
-            <div>
-              <h1 className="text-sm sm:text-base font-black text-white flex items-center gap-2">
-                <span>AI Editorial Portfolio Generator</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-400/20 text-yellow-300 border border-yellow-400/40 font-mono font-bold">
-                  2026 Edition
-                </span>
+      {/* ─────────────────────────────────────────────────────────────────────
+          TOP CONTROL BAR
+      ───────────────────────────────────────────────────────────────────── */}
+      <header className="sticky top-0 z-30 bg-[#1A1716]/95 backdrop-blur-md border-b border-[#2C2725] px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+        
+        {/* Left: Back & Title */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/arena')}
+            className="p-2 rounded-xl bg-[#25211F] hover:bg-[#332D2B] text-[#A69B95] hover:text-white transition-colors"
+            title="Back to Student Arena"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#E05A38] animate-pulse" />
+              <h1 className="text-sm font-bold text-white tracking-tight font-serif">
+                Alex Morgan Style Portfolio Creator
               </h1>
             </div>
+            <p className="text-[11px] text-[#8C8079]">
+              Editorial showcase • Projects, Experience & Skills
+            </p>
           </div>
+        </div>
 
-          {/* View Toggles & Actions */}
-          <div className="flex flex-wrap items-center gap-2">
-            
-            {/* Split / Edit / Preview Toggle */}
-            <div className="hidden sm:flex items-center p-1 rounded-xl bg-slate-800 border border-slate-700 text-xs font-bold">
-              <button
-                onClick={() => setPreviewTab('split')}
-                className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
-                  previewTab === 'split' ? 'bg-yellow-400 text-black font-black' : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                Split View
-              </button>
-              <button
-                onClick={() => setPreviewTab('edit')}
-                className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
-                  previewTab === 'edit' ? 'bg-yellow-400 text-black font-black' : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                Edit Only
-              </button>
-              <button
-                onClick={() => setPreviewTab('preview')}
-                className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
-                  previewTab === 'preview' ? 'bg-yellow-400 text-black font-black' : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                Preview Poster
-              </button>
-            </div>
+        {/* Center: View Switcher (Desktop) */}
+        <div className="hidden md:flex items-center bg-[#25211F] p-1 rounded-xl border border-[#332D2B] text-xs">
+          <button
+            onClick={() => setViewMode('split')}
+            className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+              viewMode === 'split'
+                ? 'bg-[#E05A38] text-white shadow-sm'
+                : 'text-[#A69B95] hover:text-white'
+            }`}
+          >
+            Split View
+          </button>
+          <button
+            onClick={() => setViewMode('editor')}
+            className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+              viewMode === 'editor'
+                ? 'bg-[#E05A38] text-white shadow-sm'
+                : 'text-[#A69B95] hover:text-white'
+            }`}
+          >
+            Editor Only
+          </button>
+          <button
+            onClick={() => setViewMode('preview')}
+            className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+              viewMode === 'preview'
+                ? 'bg-[#E05A38] text-white shadow-sm'
+                : 'text-[#A69B95] hover:text-white'
+            }`}
+          >
+            Live Showcase
+          </button>
+        </div>
 
-            {/* Copy Link */}
-            <button
-              onClick={handleCopyLink}
-              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
-              title="Copy shareable link"
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2">
+          {savedSlug && (
+            <a
+              href={`/portfolio/${savedSlug}`}
+              target="_blank"
+              rel="noreferrer"
+              className="hidden sm:inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-[#25211F] hover:bg-[#332D2B] text-[#D8CCC4] text-xs font-semibold border border-[#3A3330] transition-colors"
             >
-              <Copy className="w-3.5 h-3.5 text-yellow-400" />
-              <span className="hidden sm:inline">Share Link</span>
-            </button>
+              <span>Live Site</span>
+              <ExternalLink className="w-3.5 h-3.5 text-[#E05A38]" />
+            </a>
+          )}
 
-            {/* Download HD Poster Button */}
-            <button
-              onClick={handleDownloadPoster}
-              disabled={downloading}
-              className="px-4 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-500 border-2 border-yellow-500 text-black font-black text-xs flex items-center gap-1.5 transition cursor-pointer shadow-sm disabled:opacity-50"
-            >
-              <Download className="w-4 h-4 text-black" />
-              <span>{downloading ? 'Rendering...' : 'Download HD Poster'}</span>
-            </button>
+          <button
+            onClick={handleCopyLink}
+            className="p-2 rounded-xl bg-[#25211F] hover:bg-[#332D2B] text-[#D8CCC4] text-xs font-semibold border border-[#3A3330] transition-colors"
+            title="Copy Shareable Showcase Link"
+          >
+            <Share2 className="w-4 h-4 text-[#E05A38]" />
+          </button>
 
-            {/* Save Button */}
-            <button
-              onClick={handleSavePortfolio}
-              disabled={saving}
-              className="px-4 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-500 border-2 border-yellow-500 text-black font-black text-xs flex items-center gap-1.5 transition cursor-pointer shadow-sm disabled:opacity-50"
-            >
-              <CheckCircle2 className="w-4 h-4 text-black" />
-              <span>{saving ? 'Saving...' : 'Save Online'}</span>
-            </button>
-
-          </div>
-
+          <button
+            onClick={handleSavePortfolio}
+            disabled={saving}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#E05A38] hover:bg-[#CF4E2C] text-white text-xs font-bold shadow-md shadow-[#E05A38]/30 transition-all hover:-translate-y-0.5"
+          >
+            <Save className="w-3.5 h-3.5" />
+            <span>{saving ? 'Publishing...' : 'Save Portfolio'}</span>
+          </button>
         </div>
       </header>
 
-      {/* ─── Main Content Workspace ──────────────────────────────────────── */}
-      <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* ═════════════════════════════════════════════════════════════════
-             LEFT COLUMN: Customization & AI Enhancement Studio (5 Cols)
-          ═════════════════════════════════════════════════════════════════ */}
-          {(previewTab === 'split' || previewTab === 'edit') && (
-            <div className={`${previewTab === 'split' ? 'lg:col-span-5' : 'lg:col-span-12 max-w-3xl mx-auto'} space-y-6`}>
-              
-              {/* Theme Selector Pill Bar */}
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
-                <label className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <Palette className="w-4 h-4 text-yellow-400" />
-                    Color Aesthetics Theme
-                  </span>
-                  <span className="text-[10px] text-slate-500 font-mono">Select Preset</span>
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      {/* ─────────────────────────────────────────────────────────────────────
+          MAIN WORKSPACE (SPLIT OR FOCUSED VIEW)
+      ───────────────────────────────────────────────────────────────────── */}
+      <div className="flex h-[calc(100vh-61px)] overflow-hidden">
+        
+        {/* =================================================================
+            LEFT: EDITOR PANEL
+        ================================================================= */}
+        {(viewMode === 'split' || viewMode === 'editor') && (
+          <aside className={`${viewMode === 'split' ? 'w-full lg:w-[480px] xl:w-[540px]' : 'w-full max-w-4xl mx-auto'} bg-[#1A1716] border-r border-[#2C2725] flex flex-col h-full z-20 shrink-0`}>
+            
+            {/* Editor Tab Navigation */}
+            <div className="flex items-center gap-1 p-2 bg-[#171413] border-b border-[#2C2725] overflow-x-auto text-xs scrollbar-none">
+              {[
+                { id: 'hero', label: 'Hero & Bio', icon: User },
+                { id: 'projects', label: `Projects (${projects.length})`, icon: Layers },
+                { id: 'experience', label: `Experience (${experience.length})`, icon: Briefcase },
+                { id: 'skills', label: 'Skills', icon: Code2 },
+                { id: 'about', label: 'About & Quote', icon: QuoteIcon },
+                { id: 'contact', label: 'Contact', icon: Mail }
+              ].map(tab => {
+                const Icon = tab.icon;
+                const active = activeTab === tab.id;
+                return (
                   <button
-                    onClick={() => setTheme('terracotta')}
-                    className={`p-2.5 rounded-xl border text-xs font-bold transition flex flex-col items-center gap-1.5 cursor-pointer ${
-                      theme === 'terracotta'
-                        ? 'bg-[#c97a5b]/20 border-[#c97a5b] text-[#c97a5b] shadow-sm'
-                        : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:text-white'
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`px-3 py-2 rounded-xl font-semibold flex items-center gap-1.5 whitespace-nowrap transition-all ${
+                      active
+                        ? 'bg-[#E05A38] text-white shadow-sm'
+                        : 'text-[#8E8078] hover:text-[#EFECE6] hover:bg-[#25211F]'
                     }`}
                   >
-                    <span className="w-4 h-4 rounded-full bg-[#c97a5b] border border-white/40" />
-                    <span>Terracotta</span>
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{tab.label}</span>
                   </button>
-
-                  <button
-                    onClick={() => setTheme('amber')}
-                    className={`p-2.5 rounded-xl border text-xs font-bold transition flex flex-col items-center gap-1.5 cursor-pointer ${
-                      theme === 'amber'
-                        ? 'bg-yellow-400/20 border-yellow-400 text-yellow-300 shadow-sm'
-                        : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <span className="w-4 h-4 rounded-full bg-yellow-400 border border-white/40" />
-                    <span>Warm Amber</span>
-                  </button>
-
-                  <button
-                    onClick={() => setTheme('obsidian')}
-                    className={`p-2.5 rounded-xl border text-xs font-bold transition flex flex-col items-center gap-1.5 cursor-pointer ${
-                      theme === 'obsidian'
-                        ? 'bg-amber-400/20 border-amber-400 text-amber-300 shadow-sm'
-                        : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <span className="w-4 h-4 rounded-full bg-[#18181b] border border-amber-400" />
-                    <span>Obsidian</span>
-                  </button>
-
-                  <button
-                    onClick={() => setTheme('emerald')}
-                    className={`p-2.5 rounded-xl border text-xs font-bold transition flex flex-col items-center gap-1.5 cursor-pointer ${
-                      theme === 'emerald'
-                        ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300 shadow-sm'
-                        : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <span className="w-4 h-4 rounded-full bg-emerald-500 border border-white/40" />
-                    <span>Emerald</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Photo & Sliced Effect Settings */}
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                    <Camera className="w-4 h-4 text-yellow-400" />
-                    Portrait Photo & Sliced Effect
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="px-3 py-1 rounded-lg bg-yellow-400 hover:bg-yellow-500 border border-yellow-500 text-black text-xs font-black flex items-center gap-1 cursor-pointer transition"
-                  >
-                    <Upload className="w-3 h-3 text-black" />
-                    <span>Upload Photo</span>
-                  </button>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    accept="image/*"
-                    onChange={handlePhotoUpload}
-                    className="hidden"
-                  />
-                </div>
-
-                {/* Photo Zoom & Pan Sliders */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs text-slate-400 font-bold">
-                    <span>Photo Zoom</span>
-                    <span className="font-mono text-white">{Math.round(zoom * 100)}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0.75"
-                    max="1.6"
-                    step="0.05"
-                    value={zoom}
-                    onChange={(e) => setZoom(parseFloat(e.target.value))}
-                    className="w-full accent-yellow-400 cursor-pointer"
-                  />
-                </div>
-              </div>
-
-              {/* Editorial Headline with AI Enhance */}
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-black uppercase tracking-wider text-slate-400">
-                    Editorial Headline (3 Lines)
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => handleAiEnhance('headline')}
-                    disabled={aiLoadingField === 'headline'}
-                    className="px-3 py-1 rounded-lg bg-yellow-400 hover:bg-yellow-500 border border-yellow-500 text-black text-xs font-black flex items-center gap-1 cursor-pointer transition disabled:opacity-50"
-                  >
-                    <Sparkles className="w-3 h-3 text-black" />
-                    <span>{aiLoadingField === 'headline' ? 'Enhancing...' : 'AI Enhance'}</span>
-                  </button>
-                </div>
-                
-                <div className="grid grid-cols-3 gap-2">
-                  <input
-                    type="text"
-                    value={headlinePart1}
-                    onChange={(e) => setHeadlinePart1(e.target.value)}
-                    placeholder="Code"
-                    className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white outline-none focus:border-yellow-400"
-                  />
-                  <input
-                    type="text"
-                    value={headlinePart2}
-                    onChange={(e) => setHeadlinePart2(e.target.value)}
-                    placeholder="With"
-                    className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white outline-none focus:border-yellow-400"
-                  />
-                  <input
-                    type="text"
-                    value={headlinePart3}
-                    onChange={(e) => setHeadlinePart3(e.target.value)}
-                    placeholder="Purpose."
-                    className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white outline-none focus:border-yellow-400"
-                  />
-                </div>
-              </div>
-
-              {/* Bio / Impact Summary with AI Enhance */}
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-black uppercase tracking-wider text-slate-400">
-                    Bio & Value Summary
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => handleAiEnhance('bio')}
-                    disabled={aiLoadingField === 'bio'}
-                    className="px-3 py-1 rounded-lg bg-yellow-400 hover:bg-yellow-500 border border-yellow-500 text-black text-xs font-black flex items-center gap-1 cursor-pointer transition disabled:opacity-50"
-                  >
-                    <Sparkles className="w-3 h-3 text-black" />
-                    <span>{aiLoadingField === 'bio' ? 'Enhancing...' : 'AI Enhance'}</span>
-                  </button>
-                </div>
-                <textarea
-                  rows={3}
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  placeholder="Enter a short, confident summary of what you build..."
-                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white outline-none focus:border-yellow-400 leading-relaxed"
-                />
-              </div>
-
-              {/* Services / Skills Capsules with AI Enhance */}
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                    <Briefcase className="w-4 h-4 text-yellow-400" />
-                    4 Service & Skill Capsules
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => handleAiEnhance('skills')}
-                    disabled={aiLoadingField === 'skills'}
-                    className="px-3 py-1 rounded-lg bg-yellow-400 hover:bg-yellow-500 border border-yellow-500 text-black text-xs font-black flex items-center gap-1 cursor-pointer transition disabled:opacity-50"
-                  >
-                    <Sparkles className="w-3 h-3 text-black" />
-                    <span>{aiLoadingField === 'skills' ? 'Enhancing...' : 'AI Enhance'}</span>
-                  </button>
-                </div>
-
-                <div className="space-y-2.5">
-                  {services.map((srv, idx) => (
-                    <div key={srv.id} className="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700 space-y-1.5">
-                      <input
-                        type="text"
-                        value={srv.title}
-                        onChange={(e) => {
-                          const updated = [...services];
-                          updated[idx].title = e.target.value;
-                          setServices(updated);
-                        }}
-                        placeholder={`Capsule ${idx + 1} Title`}
-                        className="w-full px-2.5 py-1 bg-slate-900/90 border border-slate-700 rounded-lg text-xs font-bold text-yellow-300 outline-none focus:border-yellow-400 uppercase"
-                      />
-                      <input
-                        type="text"
-                        value={srv.desc}
-                        onChange={(e) => {
-                          const updated = [...services];
-                          updated[idx].desc = e.target.value;
-                          setServices(updated);
-                        }}
-                        placeholder="Brief 1-sentence description"
-                        className="w-full px-2.5 py-1 bg-slate-900/90 border border-slate-700 rounded-lg text-[11px] text-slate-200 outline-none focus:border-yellow-400"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Personal Quote with AI Enhance */}
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                    <Quote className="w-4 h-4 text-yellow-400" />
-                    Philosophy / Engineering Quote
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => handleAiEnhance('quote')}
-                    disabled={aiLoadingField === 'quote'}
-                    className="px-3 py-1 rounded-lg bg-yellow-400 hover:bg-yellow-500 border border-yellow-500 text-black text-xs font-black flex items-center gap-1 cursor-pointer transition disabled:opacity-50"
-                  >
-                    <Sparkles className="w-3 h-3 text-black" />
-                    <span>{aiLoadingField === 'quote' ? 'Enhancing...' : 'AI Enhance'}</span>
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  value={quote}
-                  onChange={(e) => setQuote(e.target.value.toUpperCase())}
-                  placeholder="e.g. GOOD ARCHITECTURE IS STRATEGY MADE EXECUTABLE."
-                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono uppercase outline-none focus:border-yellow-400"
-                />
-              </div>
-
-              {/* Student Name & Footer Details */}
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
-                <label className="text-xs font-black uppercase tracking-wider text-slate-400">
-                  Student Wordmark & Contact Details
-                </label>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div>
-                    <span className="text-[10px] text-slate-400 block mb-1">Brand Name / Wordmark</span>
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white outline-none focus:border-yellow-400 uppercase font-bold"
-                    />
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block mb-1">Target Role Category</span>
-                    <input
-                      type="text"
-                      value={role}
-                      onChange={(e) => setRole(e.target.value.toUpperCase())}
-                      className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white outline-none focus:border-yellow-400 uppercase font-bold"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <div>
-                    <span className="text-[10px] text-slate-400 block mb-1">Contact Email</span>
-                    <input
-                      type="text"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white outline-none focus:border-yellow-400"
-                    />
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block mb-1">Location</span>
-                    <input
-                      type="text"
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value.toUpperCase())}
-                      className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white outline-none focus:border-yellow-400 uppercase"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <span className="text-[10px] text-slate-400 block mb-1">Availability Status</span>
-                  <input
-                    type="text"
-                    value={availability}
-                    onChange={(e) => setAvailability(e.target.value.toUpperCase())}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white outline-none focus:border-yellow-400 uppercase"
-                  />
-                </div>
-              </div>
-
+                );
+              })}
             </div>
-          )}
 
-          {/* ═════════════════════════════════════════════════════════════════
-             RIGHT COLUMN: Live High-End Editorial Poster Canvas (7 Cols)
-          ═════════════════════════════════════════════════════════════════ */}
-          {(previewTab === 'split' || previewTab === 'preview') && (
-            <div className={`${previewTab === 'split' ? 'lg:col-span-7' : 'lg:col-span-12 max-w-4xl mx-auto'} flex flex-col items-center`}>
+            {/* Scrollable Form Content */}
+            <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
               
-              {/* Poster Frame / Canvas Container */}
-              <div
-                ref={posterRef}
-                className={`w-full max-w-[720px] aspect-[1/1.46] ${t.bg} ${t.textPrimary} rounded-3xl p-6 sm:p-10 lg:p-12 shadow-2xl relative overflow-hidden transition-colors duration-500 select-none flex flex-col justify-between`}
-                style={{
-                  fontFamily: '"Cinzel", "Playfair Display", Georgia, serif'
-                }}
-              >
-                {/* Subtle vintage texture overlay */}
-                <div 
-                  className="absolute inset-0 pointer-events-none opacity-[0.035]"
-                  style={{
-                    backgroundImage: `radial-gradient(#000 1px, transparent 1px)`,
-                    backgroundSize: '16px 16px'
-                  }}
-                />
+              {/* ─────────────────────────────────────────────────────────────
+                  TAB 1: HERO & BIO
+              ───────────────────────────────────────────────────────────── */}
+              {activeTab === 'hero' && (
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-bold uppercase tracking-wider text-[#A69B95] flex items-center gap-2">
+                      <User className="w-4 h-4 text-[#E05A38]" />
+                      Hero & Visual Identity
+                    </h2>
+                  </div>
 
-                {/* ─── 1. TOP EDITORIAL BAR ───────────────────────────── */}
-                <div className="flex items-start justify-between relative z-10">
-                  {/* Left: Cross, Category & Vertical Line */}
-                  <div className="space-y-3">
-                    <div className="text-xs font-mono font-bold opacity-60 flex items-center gap-1.5">
-                      <span>+</span>
+                  {/* Circular Avatar Selector */}
+                  <div className="p-4 rounded-2xl bg-[#231F1D] border border-[#332D2B] flex items-center gap-4">
+                    <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-[#E05A38] shadow-md bg-[#2F2927] shrink-0">
+                      <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
                     </div>
-                    <div className="w-[1px] h-6 bg-current opacity-40" />
-                    <div className="text-[11px] font-sans font-black uppercase tracking-[0.25em] opacity-80">
-                      {role || 'GRAPHIC DESIGNER'}
+                    <div className="space-y-1.5">
+                      <span className="text-xs font-semibold text-white block">Profile Picture</span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => avatarInputRef.current?.click()}
+                          className="px-3 py-1.5 rounded-lg bg-[#E05A38] hover:bg-[#CF4E2C] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                        >
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Upload Photo</span>
+                        </button>
+                        <input
+                          ref={avatarInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAvatarUpload}
+                          className="hidden"
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  {/* Right: Big Year & Vision Tag */}
-                  <div className="text-right space-y-1">
-                    <div className="flex items-center justify-end gap-1.5 opacity-60 text-xs font-mono">
-                      <span>• • •</span>
+                  {/* Name & Role */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-[#B8ACA4] mb-1">Full Name</label>
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={e => setName(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#231F1D] border border-[#38312F] text-white text-sm focus:outline-none focus:border-[#E05A38]"
+                      />
                     </div>
-                    <div className="text-3xl sm:text-4xl font-black font-mono tracking-tighter leading-none">
-                      {year}
+                    <div>
+                      <label className="block text-xs font-semibold text-[#B8ACA4] mb-1">Headline Role</label>
+                      <input
+                        type="text"
+                        value={role}
+                        onChange={e => setRole(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#231F1D] border border-[#38312F] text-white text-sm focus:outline-none focus:border-[#E05A38]"
+                      />
                     </div>
-                    <div className="text-[9px] font-sans font-bold uppercase tracking-[0.2em] opacity-70">
-                      {visionTag || 'CREATIVE VISION'}
+                  </div>
+
+                  {/* Location & Resume Link */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-[#B8ACA4] mb-1">Location</label>
+                      <input
+                        type="text"
+                        value={location}
+                        onChange={e => setLocation(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#231F1D] border border-[#38312F] text-white text-sm focus:outline-none focus:border-[#E05A38]"
+                      />
                     </div>
-                    <div className="w-[1px] h-6 bg-current opacity-40 ml-auto" />
+                    <div>
+                      <label className="block text-xs font-semibold text-[#B8ACA4] mb-1">Resume Link (PDF / URL)</label>
+                      <input
+                        type="text"
+                        value={resumeUrl}
+                        onChange={e => setResumeUrl(e.target.value)}
+                        placeholder="https://drive.google.com/..."
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#231F1D] border border-[#38312F] text-white text-sm focus:outline-none focus:border-[#E05A38]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Bio Tagline with AI button */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-semibold text-[#B8ACA4]">Hero Bio Tagline</label>
+                      <button
+                        type="button"
+                        onClick={() => handleAiEnhance('bio')}
+                        disabled={aiLoadingField === 'bio'}
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-[#E05A38] hover:text-[#FFA285] transition-colors"
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        <span>{aiLoadingField === 'bio' ? 'Enhancing...' : 'AI Enhance'}</span>
+                      </button>
+                    </div>
+                    <textarea
+                      rows={3}
+                      value={bio}
+                      onChange={e => setBio(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#231F1D] border border-[#38312F] text-white text-sm focus:outline-none focus:border-[#E05A38] leading-relaxed"
+                    />
+                  </div>
+
+                  {/* Floating Availability Card Settings */}
+                  <div className="p-4 rounded-2xl bg-[#231F1D] border border-[#332D2B] space-y-3">
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#A69B95] block">
+                      Floating Availability Card
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] text-[#8E8078] mb-1">Status Badge</label>
+                        <input
+                          type="text"
+                          value={availability.status}
+                          onChange={e => setAvailability({ ...availability, status: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] text-[#8E8078] mb-1">Target Period</label>
+                        <input
+                          type="text"
+                          value={availability.period}
+                          onChange={e => setAvailability({ ...availability, period: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
+              )}
 
-                {/* ─── 2. MAIN HERO & SLICED IMAGE ROW ────────────────── */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center my-auto relative z-10">
-                  
-                  {/* Left Hero Column: Headline, Bio & Services (6 Cols) */}
-                  <div className="md:col-span-6 space-y-6">
-                    
-                    {/* Editorial Display Headline */}
-                    <div className="space-y-1">
-                      <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05]">
-                        <span className="block">{headlinePart1}</span>
-                        <span className={`block ${t.textAccent}`}>
-                          {headlinePart2} {headlinePart3}
-                        </span>
+              {/* ─────────────────────────────────────────────────────────────
+                  TAB 2: PROJECTS & SCREENSHOTS
+                  Crucial rule: If 0 projects, don't show project section!
+              ───────────────────────────────────────────────────────────── */}
+              {activeTab === 'projects' && (
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-sm font-bold uppercase tracking-wider text-[#A69B95] flex items-center gap-2">
+                        <Layers className="w-4 h-4 text-[#E05A38]" />
+                        Selected Work & Projects
                       </h2>
-                      <div className="w-10 h-[2px] bg-current opacity-40 mt-3" />
+                      <p className="text-[11px] text-[#8E8078]">
+                        If no projects are added, the work section is automatically hidden.
+                      </p>
                     </div>
 
-                    {/* Bio / Value Proposition */}
-                    <p className="font-sans text-xs sm:text-sm font-medium leading-relaxed opacity-85 max-w-[280px]">
-                      {bio}
-                    </p>
+                    <button
+                      type="button"
+                      onClick={handleAddProject}
+                      className="px-3 py-1.5 rounded-xl bg-[#E05A38] hover:bg-[#CF4E2C] text-white text-xs font-bold flex items-center gap-1 transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Project</span>
+                    </button>
+                  </div>
 
-                    {/* Services / Skills Capsules */}
-                    <div className="space-y-3 pt-2">
-                      <div className="text-[10px] font-sans font-black uppercase tracking-[0.25em] opacity-70 flex items-center gap-2">
-                        <span>SERVICES</span>
-                        <span className="w-4 h-[1px] bg-current opacity-40" />
-                      </div>
+                  {projects.length === 0 ? (
+                    <div className="p-8 rounded-2xl bg-[#231F1D] border border-dashed border-[#3A3330] text-center space-y-3">
+                      <Layers className="w-10 h-10 text-[#8E8078] mx-auto opacity-50" />
+                      <p className="text-sm font-semibold text-white">No projects added yet</p>
+                      <p className="text-xs text-[#8E8078] max-w-sm mx-auto">
+                        The Selected Work section is currently hidden from your live portfolio. Click below to add your first showcase project!
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleAddProject}
+                        className="px-4 py-2 rounded-xl bg-[#E05A38] text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-sm"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Add First Project</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {projects.map((proj, idx) => (
+                        <div
+                          key={proj.id || idx}
+                          className="p-5 rounded-2xl bg-[#231F1D] border border-[#332D2B] space-y-4 relative"
+                        >
+                          {/* Project Header */}
+                          <div className="flex items-center justify-between border-b border-[#332D2B] pb-3">
+                            <span className="text-xs font-bold uppercase tracking-wider text-[#E05A38] flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-[#E05A38]" />
+                              Project #{idx + 1}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveProject(idx)}
+                              className="text-[#8E8078] hover:text-red-400 text-xs flex items-center gap-1 transition-colors"
+                              title="Delete project"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Remove</span>
+                            </button>
+                          </div>
 
-                      <div className="space-y-2.5">
-                        {services.map((srv, idx) => (
-                          <div key={srv.id} className="flex items-start gap-3 group">
-                            <div className="relative flex-shrink-0 mt-0.5">
-                              <div className={`w-6 h-6 rounded-full ${t.capsuleIconBg} flex items-center justify-center text-[10px] font-mono font-bold shadow-sm`}>
-                                {idx === 0 ? '✦' : (idx === 1 ? '▲' : (idx === 2 ? '◼' : '●'))}
-                              </div>
-                              {idx < services.length - 1 && (
-                                <div className="absolute top-6 left-1/2 -translate-x-1/2 w-[1px] h-3 bg-current opacity-20" />
+                          {/* Screenshot Uploader or URL */}
+                          <div>
+                            <label className="block text-xs font-semibold text-[#B8ACA4] mb-1.5">
+                              Project Screenshot / Preview
+                            </label>
+                            
+                            <div className="flex flex-col sm:flex-row gap-3 items-center">
+                              {proj.screenshot ? (
+                                <div className="w-24 h-18 rounded-xl overflow-hidden bg-[#171413] border border-[#3A3330] shrink-0">
+                                  <img src={proj.screenshot} alt="Preview" className="w-full h-full object-cover" />
+                                </div>
+                              ) : (
+                                <div className="w-24 h-18 rounded-xl bg-[#171413] border border-dashed border-[#3A3330] flex flex-col items-center justify-center text-[10px] text-[#8E8078] shrink-0">
+                                  <ImageIcon className="w-5 h-5 mb-1 opacity-50" />
+                                  <span>No Image</span>
+                                </div>
                               )}
-                            </div>
-                            <div className="min-w-0">
-                              <div className="font-sans text-[11px] font-black uppercase tracking-wider">
-                                {srv.title}
-                              </div>
-                              <div className="font-sans text-[10px] opacity-75 leading-tight line-clamp-1">
-                                {srv.desc}
+
+                              <div className="flex-1 w-full space-y-2">
+                                <input
+                                  type="text"
+                                  placeholder="Enter Image URL or upload below..."
+                                  value={proj.screenshot}
+                                  onChange={e => {
+                                    const updated = [...projects];
+                                    updated[idx].screenshot = e.target.value;
+                                    setProjects(updated);
+                                  }}
+                                  className="w-full px-3 py-1.5 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs focus:outline-none focus:border-[#E05A38]"
+                                />
+
+                                <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2E2825] hover:bg-[#38312E] text-white text-xs font-medium cursor-pointer border border-[#423936] transition-colors">
+                                  <Upload className="w-3.5 h-3.5 text-[#E05A38]" />
+                                  <span>Upload Local Screenshot</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={e => handleProjectScreenshotUpload(idx, e)}
+                                    className="hidden"
+                                  />
+                                </label>
                               </div>
                             </div>
                           </div>
-                        ))}
-                      </div>
+
+                          {/* Title & Category */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-semibold text-[#B8ACA4] mb-1">Title</label>
+                              <input
+                                type="text"
+                                value={proj.title}
+                                onChange={e => {
+                                  const updated = [...projects];
+                                  updated[idx].title = e.target.value;
+                                  setProjects(updated);
+                                }}
+                                className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold text-[#B8ACA4] mb-1">Category Badge</label>
+                              <input
+                                type="text"
+                                value={proj.category}
+                                placeholder="Branding, Web Design, UI/UX..."
+                                onChange={e => {
+                                  const updated = [...projects];
+                                  updated[idx].category = e.target.value;
+                                  setProjects(updated);
+                                }}
+                                className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Subtitle */}
+                          <div>
+                            <label className="block text-xs font-semibold text-[#B8ACA4] mb-1">Subtitle / Descriptor</label>
+                            <input
+                              type="text"
+                              value={proj.subtitle || ''}
+                              placeholder="Visual Identity & E-Commerce"
+                              onChange={e => {
+                                const updated = [...projects];
+                                updated[idx].subtitle = e.target.value;
+                                setProjects(updated);
+                              }}
+                              className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs"
+                            />
+                          </div>
+
+                          {/* Description with AI Polish */}
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <label className="text-xs font-semibold text-[#B8ACA4]">
+                                About This Project (Shown in Modal)
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => handleAiEnhance('project', idx)}
+                                disabled={aiLoadingField === `project-${idx}`}
+                                className="inline-flex items-center gap-1 text-[11px] font-bold text-[#E05A38] hover:text-[#FFA285] transition-colors"
+                              >
+                                <Sparkles className="w-3 h-3" />
+                                <span>{aiLoadingField === `project-${idx}` ? 'Polishing...' : '✨ AI Polish'}</span>
+                              </button>
+                            </div>
+                            <textarea
+                              rows={3}
+                              value={proj.description}
+                              onChange={e => {
+                                const updated = [...projects];
+                                updated[idx].description = e.target.value;
+                                setProjects(updated);
+                              }}
+                              className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs leading-relaxed"
+                            />
+                          </div>
+
+                          {/* Tech Tags */}
+                          <div>
+                            <label className="block text-xs font-semibold text-[#B8ACA4] mb-1">
+                              Tech Stack (Comma-separated)
+                            </label>
+                            <input
+                              type="text"
+                              value={(proj.tags || []).join(', ')}
+                              placeholder="React, Next.js, Tailwind CSS, Node.js"
+                              onChange={e => {
+                                const updated = [...projects];
+                                updated[idx].tags = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                                setProjects(updated);
+                              }}
+                              className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs"
+                            />
+                          </div>
+
+                          {/* Links: Live & Repo */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-semibold text-[#B8ACA4] mb-1">Live Demo URL</label>
+                              <input
+                                type="text"
+                                placeholder="https://..."
+                                value={proj.liveUrl || ''}
+                                onChange={e => {
+                                  const updated = [...projects];
+                                  updated[idx].liveUrl = e.target.value;
+                                  setProjects(updated);
+                                }}
+                                className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold text-[#B8ACA4] mb-1">GitHub / Source URL</label>
+                              <input
+                                type="text"
+                                placeholder="https://github.com/..."
+                                value={proj.repoUrl || ''}
+                                onChange={e => {
+                                  const updated = [...projects];
+                                  updated[idx].repoUrl = e.target.value;
+                                  setProjects(updated);
+                                }}
+                                className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ─────────────────────────────────────────────────────────────
+                  TAB 3: EXPERIENCE BLOCK
+              ───────────────────────────────────────────────────────────── */}
+              {activeTab === 'experience' && (
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-sm font-bold uppercase tracking-wider text-[#A69B95] flex items-center gap-2">
+                        <Briefcase className="w-4 h-4 text-[#E05A38]" />
+                        Work & Career Milestones
+                      </h2>
+                      <p className="text-[11px] text-[#8E8078]">
+                        Rendered in a clean, dedicated timeline section.
+                      </p>
                     </div>
 
+                    <button
+                      type="button"
+                      onClick={handleAddExperience}
+                      className="px-3 py-1.5 rounded-xl bg-[#E05A38] hover:bg-[#CF4E2C] text-white text-xs font-bold flex items-center gap-1 transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Experience</span>
+                    </button>
                   </div>
 
-                  {/* Right Column: Sliced Photo Stage + Quote Capsule (6 Cols) */}
-                  <div className="md:col-span-6 relative flex flex-col items-center justify-center">
-                    
-                    {/* The Signature Sliced Photo Effect */}
-                    <PortfolioSlicedImage
-                      photoUrl={photoUrl}
-                      theme={theme}
-                      zoom={zoom}
-                      panX={panX}
-                      panY={panY}
+                  <div className="space-y-4">
+                    {experience.map((exp, idx) => (
+                      <div
+                        key={exp.id || idx}
+                        className="p-5 rounded-2xl bg-[#231F1D] border border-[#332D2B] space-y-3"
+                      >
+                        <div className="flex items-center justify-between border-b border-[#332D2B] pb-2">
+                          <span className="text-xs font-bold text-[#E05A38]">Experience #{idx + 1}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveExperience(idx)}
+                            className="text-[#8E8078] hover:text-red-400 text-xs flex items-center gap-1"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Remove</span>
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] text-[#8E8078] mb-1">Role Title</label>
+                            <input
+                              type="text"
+                              value={exp.role}
+                              onChange={e => {
+                                const updated = [...experience];
+                                updated[idx].role = e.target.value;
+                                setExperience(updated);
+                              }}
+                              className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] text-[#8E8078] mb-1">Company / Organization</label>
+                            <input
+                              type="text"
+                              value={exp.company}
+                              onChange={e => {
+                                const updated = [...experience];
+                                updated[idx].company = e.target.value;
+                                setExperience(updated);
+                              }}
+                              className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] text-[#8E8078] mb-1">Period (e.g. 2024 — Present)</label>
+                            <input
+                              type="text"
+                              value={exp.period}
+                              onChange={e => {
+                                const updated = [...experience];
+                                updated[idx].period = e.target.value;
+                                setExperience(updated);
+                              }}
+                              className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] text-[#8E8078] mb-1">Location / Remote</label>
+                            <input
+                              type="text"
+                              value={exp.location || ''}
+                              onChange={e => {
+                                const updated = [...experience];
+                                updated[idx].location = e.target.value;
+                                setExperience(updated);
+                              }}
+                              className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-[11px] text-[#8E8078]">Responsibilities & Description</label>
+                            <button
+                              type="button"
+                              onClick={() => handleAiEnhance('experience', idx)}
+                              disabled={aiLoadingField === `experience-${idx}`}
+                              className="inline-flex items-center gap-1 text-[11px] font-bold text-[#E05A38] hover:text-[#FFA285] transition-colors"
+                            >
+                              <Sparkles className="w-3 h-3" />
+                              <span>{aiLoadingField === `experience-${idx}` ? 'Polishing...' : 'AI Enhance'}</span>
+                            </button>
+                          </div>
+                          <textarea
+                            rows={2}
+                            value={exp.description}
+                            onChange={e => {
+                              const updated = [...experience];
+                              updated[idx].description = e.target.value;
+                              setExperience(updated);
+                            }}
+                            className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs leading-relaxed"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ─────────────────────────────────────────────────────────────
+                  TAB 4: SKILLS BLOCK
+              ───────────────────────────────────────────────────────────── */}
+              {activeTab === 'skills' && (
+                <div className="space-y-5">
+                  <div>
+                    <h2 className="text-sm font-bold uppercase tracking-wider text-[#A69B95] flex items-center gap-2">
+                      <Code2 className="w-4 h-4 text-[#E05A38]" />
+                      Technical Skills & Architecture
+                    </h2>
+                    <p className="text-[11px] text-[#8E8078]">
+                      Organized into separate categorized capability blocks.
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    {skills.map((group, idx) => (
+                      <div
+                        key={idx}
+                        className="p-4 rounded-2xl bg-[#231F1D] border border-[#332D2B] space-y-3"
+                      >
+                        <div>
+                          <label className="block text-[11px] text-[#8E8078] mb-1">Category Name</label>
+                          <input
+                            type="text"
+                            value={group.category}
+                            onChange={e => {
+                              const updated = [...skills];
+                              updated[idx].category = e.target.value;
+                              setSkills(updated);
+                            }}
+                            className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] text-[#8E8078] mb-1">
+                            Skills (Comma-separated)
+                          </label>
+                          <input
+                            type="text"
+                            value={(group.items || []).join(', ')}
+                            onChange={e => {
+                              const updated = [...skills];
+                              updated[idx].items = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                              setSkills(updated);
+                            }}
+                            className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ─────────────────────────────────────────────────────────────
+                  TAB 5: ABOUT & QUOTE
+              ───────────────────────────────────────────────────────────── */}
+              {activeTab === 'about' && (
+                <div className="space-y-5">
+                  <div>
+                    <h2 className="text-sm font-bold uppercase tracking-wider text-[#A69B95] flex items-center gap-2">
+                      <QuoteIcon className="w-4 h-4 text-[#E05A38]" />
+                      About Me & Endorsement Quote
+                    </h2>
+                  </div>
+
+                  {/* Extended Story */}
+                  <div>
+                    <label className="block text-xs font-semibold text-[#B8ACA4] mb-1">
+                      Extended Personal Narrative / About Story
+                    </label>
+                    <textarea
+                      rows={4}
+                      value={aboutText}
+                      onChange={e => setAboutText(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#231F1D] border border-[#38312F] text-white text-sm focus:outline-none focus:border-[#E05A38] leading-relaxed"
                     />
-
-                    {/* Right-aligned Quote Capsule */}
-                    <div className="w-full flex justify-end mt-4">
-                      <div className="text-right max-w-[180px] space-y-1">
-                        <div className={`text-2xl font-serif leading-none ${t.textAccent}`}>
-                          “
-                        </div>
-                        <div className="text-[10px] font-sans font-black uppercase tracking-wider leading-snug">
-                          {quote}
-                        </div>
-                        <div className={`w-8 h-[2px] ml-auto mt-1 ${theme === 'terracotta' ? 'bg-[#c97a5b]' : 'bg-yellow-500'}`} />
-                      </div>
-                    </div>
-
                   </div>
 
+                  {/* Quote / Endorsement Card */}
+                  <div className="p-4 rounded-2xl bg-[#231F1D] border border-[#332D2B] space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#E05A38]">
+                        Client / Peer Quote Block
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleAiEnhance('quote')}
+                        disabled={aiLoadingField === 'quote'}
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-[#E05A38] hover:text-[#FFA285] transition-colors"
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        <span>{aiLoadingField === 'quote' ? 'Enhancing...' : 'AI Enhance'}</span>
+                      </button>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] text-[#8E8078] mb-1">Quote Text</label>
+                      <textarea
+                        rows={2}
+                        value={quote.text}
+                        onChange={e => setQuote({ ...quote, text: e.target.value })}
+                        className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs leading-relaxed"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] text-[#8E8078] mb-1">Author Name</label>
+                        <input
+                          type="text"
+                          value={quote.author}
+                          onChange={e => setQuote({ ...quote, author: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] text-[#8E8078] mb-1">Author Role / Company</label>
+                        <input
+                          type="text"
+                          value={quote.role}
+                          onChange={e => setQuote({ ...quote, role: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              )}
 
-                {/* ─── 3. BRAND WORDMARK BAR ──────────────────────────── */}
-                <div className={`pt-6 border-t ${t.borderLine} relative z-10 space-y-4`}>
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                    
-                    {/* Huge Luxury Brand Wordmark */}
-                    <div>
-                      <div className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-[0.25em] uppercase">
-                        {name || 'ZYLYRA'}
-                      </div>
-                      <div className="text-[10px] font-sans font-bold tracking-[0.3em] uppercase opacity-70 mt-0.5">
-                        {role || 'GRAPHIC DESIGNER'}
-                      </div>
-                    </div>
-
-                    {/* Circular Impact Stamp */}
-                    <div className="flex items-center gap-3">
-                      <div className="relative w-12 h-12 rounded-full border border-current opacity-70 flex items-center justify-center">
-                        <Sparkles className={`w-4 h-4 ${t.textAccent}`} />
-                      </div>
-                      <div className="text-left font-sans">
-                        <div className="text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
-                          <span>LET'S CREATE SOMETHING AMAZING.</span>
-                          <ArrowRight className="w-3 h-3" />
-                        </div>
-                        <div className="text-[9px] opacity-60 tracking-wider font-mono">
-                          {brandTagline || 'THOUGHTFUL CODE • LASTING IMPACT'}
-                        </div>
-                      </div>
-                    </div>
-
+              {/* ─────────────────────────────────────────────────────────────
+                  TAB 6: CONTACT & SOCIALS
+              ───────────────────────────────────────────────────────────── */}
+              {activeTab === 'contact' && (
+                <div className="space-y-5">
+                  <div>
+                    <h2 className="text-sm font-bold uppercase tracking-wider text-[#A69B95] flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-[#E05A38]" />
+                      Contact & Social Profiles
+                    </h2>
                   </div>
 
-                  {/* ─── 4. DENSE FOOTER CONTACT BAR ──────────────────── */}
-                  <div className={`pt-3 border-t ${t.borderLine} flex flex-wrap items-center justify-between gap-3 text-[10px] font-sans font-bold opacity-80`}>
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${theme === 'terracotta' ? 'bg-[#c97a5b]' : 'bg-yellow-500'}`} />
-                      <span className="font-mono">{email}</span>
-                    </div>
-
-                    <div className="hidden sm:inline opacity-40">|</div>
-
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <span>{location}</span>
+                      <label className="block text-xs font-semibold text-[#B8ACA4] mb-1">Direct Email</label>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#231F1D] border border-[#38312F] text-white text-sm"
+                      />
                     </div>
-
-                    <div className="hidden sm:inline opacity-40">|</div>
-
                     <div>
-                      <span>{availability}</span>
-                    </div>
-
-                    <div className="font-mono text-[9px] opacity-50 tracking-widest hidden md:inline">
-                      ::: ::: :::
+                      <label className="block text-xs font-semibold text-[#B8ACA4] mb-1">Phone / WhatsApp</label>
+                      <input
+                        type="text"
+                        value={phone}
+                        onChange={e => setPhone(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#231F1D] border border-[#38312F] text-white text-sm"
+                      />
                     </div>
                   </div>
 
+                  <div className="space-y-3 pt-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#A69B95] block">
+                      Social Profiles
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] text-[#8E8078] mb-1">LinkedIn Profile</label>
+                        <input
+                          type="text"
+                          value={socials.linkedin || ''}
+                          placeholder="https://linkedin.com/in/..."
+                          onChange={e => setSocials({ ...socials, linkedin: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] text-[#8E8078] mb-1">GitHub Profile</label>
+                        <input
+                          type="text"
+                          value={socials.github || ''}
+                          placeholder="https://github.com/..."
+                          onChange={e => setSocials({ ...socials, github: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] text-[#8E8078] mb-1">Instagram Handle</label>
+                        <input
+                          type="text"
+                          value={socials.instagram || ''}
+                          placeholder="https://instagram.com/..."
+                          onChange={e => setSocials({ ...socials, instagram: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] text-[#8E8078] mb-1">Personal Portfolio / Website</label>
+                        <input
+                          type="text"
+                          value={socials.dribbble || ''}
+                          placeholder="https://..."
+                          onChange={e => setSocials({ ...socials, dribbble: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-[#1A1716] border border-[#332D2B] text-white text-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-
-              </div>
-
-              {/* Bottom Canvas Control Quick Links */}
-              <div className="mt-4 flex flex-wrap items-center gap-3 text-xs font-bold text-slate-400">
-                <span>💡 Tip: Click "AI Enhance" next to any section to elevate your text with Gemini AI.</span>
-              </div>
+              )}
 
             </div>
-          )}
+          </aside>
+        )}
 
-        </div>
-      </main>
+        {/* =================================================================
+            RIGHT: LIVE INTERACTIVE PREVIEW
+        ================================================================= */}
+        {(viewMode === 'split' || viewMode === 'preview') && (
+          <main className="flex-1 bg-[#100E0D] overflow-y-auto p-4 sm:p-6 lg:p-8 flex justify-center items-start">
+            <div className="w-full max-w-5xl">
+              <PortfolioModernView
+                data={livePortfolioData}
+                isEditing={true}
+                showWindowMockup={true}
+              />
+            </div>
+          </main>
+        )}
+
+      </div>
 
     </div>
   );

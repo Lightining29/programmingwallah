@@ -75,6 +75,12 @@ router.post('/ai-enhance', async (req, res) => {
     if (field === 'headline') {
       systemInstruction = 'You are an elite creative director and editorial copywriter. Generate a high-impact, two-part editorial headline (Title + Subtitle) for a portfolio poster. The first part must be 2-4 punchy words (e.g., "Design With Purpose.", "Code With Vision.", "Architecting The Future."). The second part must be a single elegant subtitle phrase. Return ONLY valid JSON with keys "title" and "subtitle".';
       userPrompt = `Student Name: ${name || 'Student'}\nTarget Role: ${role || 'Full Stack Engineer'}\nDraft: "${text || focus || 'creative developer'}"`;
+    } else if (field === 'project') {
+      systemInstruction = 'You are a senior tech lead and portfolio curator. Polish the student\'s project description into an articulate, impressive showcase summary (30-50 words) highlighting technical execution, architecture, and impact. Return ONLY valid JSON with keys "title" (cleaned 2-4 word project title), "category" (e.g., "Full Stack", "AI / ML", "Mobile App", "Cloud SaaS"), "subtitle" (e.g., "Scalable Distributed System"), and "description".';
+      userPrompt = `Project Draft: "${text}"\nRole: ${role || 'Developer'}`;
+    } else if (field === 'experience') {
+      systemInstruction = 'You are an executive resume writer and career coach. Polish the work/internship experience description into 2-3 high-impact, bullet-style action sentences focusing on achievements, performance metrics, and tech stack impact. Return ONLY valid JSON with key "description".';
+      userPrompt = `Experience Draft: "${text}"\nRole/Title: ${role || 'Software Engineer'}`;
     } else if (field === 'quote') {
       systemInstruction = 'You are an inspirational tech and design philosopher. Create a memorable, powerful one-sentence personal philosophy or engineering quote (maximum 12 words) that sounds confident and iconic (like "GOOD DESIGN IS STRATEGY MADE VISIBLE" or "CLEAN ARCHITECTURE IS SILENT EXCELLENCE"). Return ONLY valid JSON with key "quote".';
       userPrompt = `Student Role: ${role || 'Developer'}\nStudent Draft / Theme: "${text || 'passion for code and design'}"`;
