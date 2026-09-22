@@ -1441,7 +1441,7 @@ export default function PortfolioBuilder() {
               <PortfolioModernView
                 data={livePortfolioData}
                 isEditing={true}
-                showWindowMockup={true}
+                showWindowMockup={false}
               />
             </div>
           </main>

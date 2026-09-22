@@ -122,33 +122,10 @@ export default function PortfolioModernView({
 
   return (
     <div className="w-full font-sans antialiased text-[#1C1917] selection:bg-[#E05A38] selection:text-white">
-      {/* Outer Browser Window Mockup (matching reference design screenshot) */}
-      <div className={`${showWindowMockup ? 'rounded-[2.5rem] shadow-2xl border border-[#EADBCE] overflow-hidden bg-[#FFFDFB]' : ''}`}>
-        
-        {/* Safari-Style Window Header */}
-        {showWindowMockup && (
-          <div className="bg-[#241F1E] px-6 py-3.5 flex items-center justify-between text-white/70 select-none">
-            {/* Mac Traffic Light Buttons */}
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-[#FF5F56] border border-[#E0443E]/50 inline-block" />
-              <span className="w-3 h-3 rounded-full bg-[#FFBD2E] border border-[#DEA123]/50 inline-block" />
-              <span className="w-3 h-3 rounded-full bg-[#27C93F] border border-[#1AAB29]/50 inline-block" />
-            </div>
-
-            {/* URL Bar Capsule */}
-            <div className="px-6 py-1 rounded-full bg-[#352F2D] text-xs font-mono text-white/80 border border-white/10 flex items-center gap-2 max-w-sm w-full justify-center">
-              <span className="text-[#E05A38]">https://</span>
-              <span>programmingwala.com/{slug}</span>
-            </div>
-
-            <div className="w-12" />
-          </div>
-        )}
-
-        {/* =========================================================================
-            PORTFOLIO BODY (Warm Peach & Coral Radial Theme)
-        ========================================================================= */}
-        <div className="relative min-h-screen bg-gradient-to-br from-[#FFF7F3] via-[#FFFBF9] to-[#FFEDE3] overflow-hidden">
+      {/* =========================================================================
+          PORTFOLIO BODY (Warm Peach & Coral Radial Theme)
+      ========================================================================= */}
+      <div className="relative min-h-screen bg-gradient-to-br from-[#FFF7F3] via-[#FFFBF9] to-[#FFEDE3] overflow-hidden">
           
           {/* Ambient Glow Orbs */}
           <div className="absolute top-0 right-0 w-[550px] h-[550px] bg-gradient-to-bl from-[#FF8865]/25 via-[#FFA88B]/15 to-transparent rounded-full blur-3xl pointer-events-none -mr-40 -mt-20" />
@@ -269,48 +246,6 @@ export default function PortfolioModernView({
                       className="w-full h-full object-cover object-center"
                     />
                   </div>
-
-                  {/* Floating Glassmorphism Availability Card (Overlapping bottom right) */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.35, duration: 0.5 }}
-                    className="absolute -bottom-6 -right-2 sm:-right-6 w-64 sm:w-72 p-5 rounded-3xl bg-white/85 backdrop-blur-xl border border-white/80 shadow-xl text-left space-y-3"
-                  >
-                    {/* Pulsing Status Dot */}
-                    <div className="flex items-center gap-2">
-                      <span className="relative flex h-2.5 w-2.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E05A38] opacity-75" />
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#E05A38]" />
-                      </span>
-                      <span className="text-xs font-semibold text-[#3D3430]">
-                        {availability.status || 'Available for work'}
-                      </span>
-                    </div>
-
-                    {/* Status Message */}
-                    <p className="text-xs text-[#6A5D57] leading-relaxed">
-                      {availability.description || "I'm currently accepting new projects for"}{' '}
-                      <strong className="text-[#1C1917] font-semibold">
-                        {availability.period || 'May 2026'}.
-                      </strong>
-                    </p>
-
-                    {/* Download Resume Pill */}
-                    {resumeUrl && (
-                      <a
-                        href={resumeUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-2 text-xs font-semibold text-[#1C1917] hover:text-[#E05A38] transition-colors pt-1 group"
-                      >
-                        <span className="w-5 h-5 rounded-full bg-[#F5ECE5] group-hover:bg-[#FFEAE0] flex items-center justify-center transition-colors">
-                          <ArrowRight className="w-3 h-3 text-[#E05A38]" />
-                        </span>
-                        <span>Download Resume</span>
-                      </a>
-                    )}
-                  </motion.div>
                 </div>
               </motion.div>
 
@@ -688,7 +623,6 @@ export default function PortfolioModernView({
           </footer>
 
         </div>
-      </div>
 
       {/* Interactive Project Details Modal */}
       <ProjectModal
