@@ -111,23 +111,6 @@ function CanonicalManager() {
   return null;
 }
 
-// Known standard application routes (anything else is treated as a direct student portfolio)
-const STANDARD_APP_ROUTES = [
-  '/about', '/admissions', '/programs', '/facilities', '/gallery', '/calendar',
-  '/meetings', '/fees', '/fee-structure', '/brochure', '/contact', '/login', '/practice',
-  '/arena', '/coding-arena', '/hackerrank', '/leaderboard', '/tutorials', '/music',
-  '/games', '/payment-demo', '/verify-certificate', '/certificate', '/cert', '/manish-kumar',
-  '/profile/manish-kumar', '/manish', '/careers', '/job-roles', '/trending-tech-jobs',
-  '/courses-in-ghaziabad', '/coaching-in-rdc-ghaziabad', '/courses', '/coaching',
-  '/lms', '/dashboard', '/portal', '/student/profile', '/student/dashboard', '/student-portal',
-  '/test', '/assessment-admin'
-];
-
-function isStandardRoute(pathname) {
-  if (pathname === '/' || pathname === '') return true;
-  return STANDARD_APP_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/') || pathname.startsWith(r + '?'));
-}
-
 // Inner layout — must be inside <Router> so useLocation works
 function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
   const location = useLocation();
@@ -135,26 +118,40 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
   const isExamPage = location.pathname.startsWith('/test') || location.pathname.startsWith('/dashboard/admin/tests') || location.pathname.startsWith('/assessment-admin');
   const isAdminPage = location.pathname.startsWith('/dashboard/admin') || location.pathname.startsWith('/portal/admin');
   const isArenaProblem = location.pathname.startsWith('/arena/problem');
-  const isPortfolioPage = 
-    location.pathname.startsWith('/student/portfolio') ||
-    location.pathname.startsWith('/portfolio') ||
-    location.pathname.startsWith('/p/') ||
-    !isStandardRoute(location.pathname);
 
-  const hideHeaderFooter = isLoginPage || isExamPage || isArenaProblem || isPortfolioPage;
-  const hideChatbot = hideHeaderFooter || isAdminPage || isArenaProblem || isPortfolioPage;
+  // List of standard known root paths that belong to the school portal / main website
+  const standardRootPaths = new Set([
+    '', 'about', 'admissions', 'programs', 'facilities', 'gallery', 'calendar', 'meetings',
+    'fees', 'fee-structure', 'brochure', 'contact', 'login', 'practice', 'arena', 'coding-arena',
+    'hackerrank', 'leaderboard', 'tutorials', 'music', 'games', 'payment-demo', 'verify-certificate',
+    'certificate', 'cert', 'manish-kumar', 'profile', 'manish', 'careers', 'job-roles', 'trending-tech-jobs',
+    'courses-in-ghaziabad', 'coaching-in-rdc-ghaziabad', 'courses', 'coaching', 'lms', 'student',
+    'student-portal', 'dashboard', 'portal', 'test', 'assessment', 'assessment-admin'
+  ]);
+
+  const pathSegments = location.pathname.split('/').filter(Boolean);
+  const firstSegment = (pathSegments[0] || '').toLowerCase();
+  
+  // A portfolio route is /portfolio/*, /p/*, /student/portfolio, OR any single slug like /manishrajput
+  const isPortfolioRoute = location.pathname.startsWith('/portfolio') ||
+                           location.pathname.startsWith('/p/') ||
+                           location.pathname === '/student/portfolio' ||
+                           (pathSegments.length === 1 && !standardRootPaths.has(firstSegment));
+
+  const hideHeaderFooter = isLoginPage || isExamPage || isArenaProblem || isPortfolioRoute;
+  const hideChatbot = hideHeaderFooter || isAdminPage || isPortfolioRoute;
 
   return (
     <div
       onMouseMove={onPointerMove}
       className={`relative flex min-h-screen flex-col overflow-x-hidden transition-colors duration-300 ${
-        isPortfolioPage
-          ? 'bg-transparent text-slate-800'
-          : (isDark ? 'bg-slate-950 text-white' : 'bg-brandCream text-slate-800')
+        isPortfolioRoute
+          ? 'bg-transparent text-[#1C1917]'
+          : isDark ? 'bg-slate-950 text-white' : 'bg-brandCream text-slate-800'
       }`}
     >
       <CanonicalManager />
-      {!isPortfolioPage && (
+      {!isPortfolioRoute && (
         <>
           <motion.div
             aria-hidden="true"
@@ -178,7 +175,7 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
         </>
       )}
       {!hideHeaderFooter && <Navbar />}
-      <main className="relative z-10 flex-grow w-full">
+      <main className={`relative z-10 flex-grow ${isPortfolioRoute ? 'p-0 m-0 w-full min-h-screen' : ''}`}>
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Home />} />

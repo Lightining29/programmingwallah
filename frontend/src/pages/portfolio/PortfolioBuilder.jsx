@@ -1436,12 +1436,12 @@ export default function PortfolioBuilder() {
             RIGHT: LIVE INTERACTIVE PREVIEW
         ================================================================= */}
         {(viewMode === 'split' || viewMode === 'preview') && (
-          <main className={`flex-1 overflow-y-auto ${viewMode === 'preview' ? 'p-0 bg-transparent' : 'bg-[#100E0D] p-3 sm:p-5 flex justify-center items-start'}`}>
-            <div className={`w-full ${viewMode === 'preview' ? '' : 'max-w-5xl rounded-3xl overflow-hidden shadow-2xl border border-[#332D2B]'}`}>
+          <main className="flex-1 bg-[#100E0D] overflow-y-auto p-4 sm:p-6 lg:p-8 flex justify-center items-start">
+            <div className="w-full max-w-5xl">
               <PortfolioModernView
                 data={livePortfolioData}
                 isEditing={true}
-                showWindowMockup={false}
+                showWindowMockup={true}
               />
             </div>
           </main>

@@ -130,6 +130,74 @@ function normalizeDob(dob) {
   return s;
 }
 
+// Permanent Student Registry helper (ensures student profiles are stored and never lost on exam deletion)
+export const upsertStudentToRegistry = async (student) => {
+  if (!student || !student.email) return;
+  const cleanEmail = String(student.email).trim().toLowerCase();
+  const cleanName = student.name || student.studentName || 'Candidate';
+  const cleanDob = normalizeDob(student.dob || student.dateOfBirth);
+  const cleanPhone = student.phone || '';
+  const cleanCollege = student.college || '';
+  const cleanRollNo = student.rollNo || student.roll_no || '';
+  const cleanPhoto = typeof student.photo === 'string' && student.photo.length > 80000 
+    ? student.photo.substring(0, 80000) 
+    : (student.photo || student.photo_url || '');
+  const cleanAccessCode = student.accessCode || student.access_code || '';
+
+  // 1. Permanent Hostinger MySQL persistence in students_registry
+  try {
+    const pool = getMySQLPool();
+    if (pool) {
+      await pool.query(`
+        INSERT INTO students_registry (
+          email, name, dob, phone, college, roll_no, photo_url, access_code
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          name = VALUES(name),
+          dob = COALESCE(NULLIF(VALUES(dob), ''), dob),
+          phone = COALESCE(NULLIF(VALUES(phone), ''), phone),
+          college = COALESCE(NULLIF(VALUES(college), ''), college),
+          roll_no = COALESCE(NULLIF(VALUES(roll_no), ''), roll_no),
+          photo_url = COALESCE(NULLIF(VALUES(photo_url), ''), photo_url),
+          access_code = COALESCE(NULLIF(VALUES(access_code), ''), access_code)
+      `, [cleanEmail, cleanName, cleanDob, cleanPhone, cleanCollege, cleanRollNo, cleanPhoto, cleanAccessCode]);
+
+      // Also ensure student profile is reflected in arena_students
+      await pool.query(`
+        INSERT INTO arena_students (id, email, name, dob, college, photo, score, solved_problems_json)
+        VALUES (?, ?, ?, ?, ?, ?, 0, '[]')
+        ON DUPLICATE KEY UPDATE
+          name = VALUES(name),
+          dob = COALESCE(NULLIF(VALUES(dob), ''), dob),
+          college = COALESCE(NULLIF(VALUES(college), ''), college),
+          photo = COALESCE(NULLIF(VALUES(photo), ''), photo)
+      `, [genId(), cleanEmail, cleanName, cleanDob, cleanCollege, cleanPhoto]).catch(() => {});
+    }
+  } catch (err) {
+    console.warn('MySQL upsertStudentToRegistry notice:', err.message);
+  }
+
+  // 2. Keep in mockStore.studentsRegistry in-memory cache
+  if (!Array.isArray(mockStore.studentsRegistry)) mockStore.studentsRegistry = [];
+  const existingIdx = mockStore.studentsRegistry.findIndex(s => String(s.email).toLowerCase().trim() === cleanEmail);
+  const entry = {
+    email: cleanEmail,
+    name: cleanName,
+    dob: cleanDob,
+    phone: cleanPhone,
+    college: cleanCollege,
+    rollNo: cleanRollNo,
+    photo: cleanPhoto,
+    accessCode: cleanAccessCode,
+    updatedAt: new Date().toISOString()
+  };
+  if (existingIdx >= 0) {
+    mockStore.studentsRegistry[existingIdx] = { ...mockStore.studentsRegistry[existingIdx], ...entry };
+  } else {
+    mockStore.studentsRegistry.push(entry);
+  }
+};
+
 // Dual-persistence helpers
 const getAssessmentsFromStore = () => {
   if (!Array.isArray(mockStore.assessments)) mockStore.assessments = [];
@@ -599,6 +667,18 @@ export const saveAssessmentToDB = async (assessment) => {
             candPhoto,
             cand.accessCode || assessment.accessPassword || 'EXAM'
           ]).catch(() => {});
+
+          // Permanently store in students_registry table so student is never lost
+          await upsertStudentToRegistry({
+            email: cand.email,
+            name: cand.name,
+            dob: cand.dob || cand.dateOfBirth,
+            phone: cand.phone,
+            college: cand.college,
+            rollNo: cand.rollNo,
+            photo: candPhoto,
+            accessCode: cand.accessCode || assessment.accessPassword
+          }).catch(() => {});
         }
       }
     }
@@ -899,8 +979,20 @@ router.get('/admin/list', adminGuard, async (req, res) => {
         }
       } catch (candTableErr) {}
 
-      mockStore.assessments = list;
-      saveStore();
+      if (list.length === 0) {
+        const fallbackList = getAssessmentsFromStore();
+        if (fallbackList && fallbackList.length > 0) {
+          list = fallbackList;
+          for (const item of list) {
+            saveAssessmentToDB(item).catch(() => {});
+          }
+        }
+      }
+
+      if (list.length > 0) {
+        mockStore.assessments = list;
+        saveStore();
+      }
       return res.json(list);
     } catch (mysqlErr) {
       console.warn('MySQL admin/list query notice:', mysqlErr.message);
@@ -1136,36 +1228,105 @@ router.get('/admin/candidates-pool', adminGuard, async (req, res) => {
     const candidates = [];
     const seenEmails = new Set();
 
-    // 1. Users collection
-    const users = Array.isArray(mockStore.users) ? mockStore.users : [];
-    users.forEach(u => {
-      const email = String(u.email || '').toLowerCase().trim();
-      if (email && !seenEmails.has(email)) {
-        seenEmails.add(email);
-        candidates.push({
-          _id: u._id || u.id,
-          first_name: (u.name || '').split(' ')[0] || 'User',
-          last_name: (u.name || '').split(' ').slice(1).join(' ') || '',
-          email,
-          job_title: u.role ? `Role: ${u.role}` : 'Registered User'
-        });
+    const addCand = (id, name, email, roleOrDetail, extra = {}) => {
+      const em = String(email || '').toLowerCase().trim();
+      if (!em || seenEmails.has(em)) return;
+      seenEmails.add(em);
+      const nameParts = String(name || 'Student').trim().split(/\s+/);
+      const first_name = nameParts[0] || 'Student';
+      const last_name = nameParts.slice(1).join(' ') || '';
+      candidates.push({
+        _id: String(id || genId()),
+        first_name,
+        last_name,
+        name: String(name || 'Student').trim(),
+        email: em,
+        job_title: roleOrDetail || 'Registered Student',
+        dob: extra.dob || '',
+        phone: extra.phone || '',
+        college: extra.college || '',
+        roll_no: extra.roll_no || extra.rollNo || '',
+        photo: extra.photo || extra.photo_url || ''
+      });
+    };
+
+    // 1. Query Hostinger MySQL permanent tables
+    try {
+      const pool = getMySQLPool();
+      if (pool) {
+        // A. Permanent students_registry
+        const [regRows] = await pool.query(
+          'SELECT email, name, dob, phone, college, roll_no, photo_url FROM students_registry ORDER BY updated_at DESC'
+        ).catch(() => [[]]);
+        for (const r of (regRows || [])) {
+          addCand(r.email, r.name, r.email, r.college ? `College: ${r.college}` : 'Registered Student', {
+            dob: r.dob,
+            phone: r.phone,
+            college: r.college,
+            roll_no: r.roll_no,
+            photo: r.photo_url
+          });
+        }
+
+        // B. Dedicated assessment_candidates
+        const [candRows] = await pool.query(
+          'SELECT id, name, email, dob, phone, college, roll_no, photo_url FROM assessment_candidates ORDER BY registered_at DESC'
+        ).catch(() => [[]]);
+        for (const c of (candRows || [])) {
+          addCand(c.id, c.name, c.email, c.college ? `Candidate (${c.college})` : 'Exam Candidate', {
+            dob: c.dob,
+            phone: c.phone,
+            college: c.college,
+            roll_no: c.roll_no,
+            photo: c.photo_url
+          });
+        }
+
+        // C. arena_students
+        const [arenaRows] = await pool.query(
+          'SELECT id, name, email, dob, college, photo FROM arena_students'
+        ).catch(() => [[]]);
+        for (const a of (arenaRows || [])) {
+          addCand(a.id, a.name, a.email, a.college ? `Arena: ${a.college}` : 'Arena Student', {
+            dob: a.dob,
+            college: a.college,
+            photo: a.photo
+          });
+        }
+
+        // D. MySQL users
+        const [userRows] = await pool.query(
+          'SELECT id, name, email, role, profile_image FROM users'
+        ).catch(() => [[]]);
+        for (const u of (userRows || [])) {
+          addCand(u.id, u.name, u.email, u.role ? `Role: ${u.role}` : 'User', {
+            photo: u.profile_image
+          });
+        }
       }
+    } catch (mysqlErr) {
+      console.warn('candidates-pool MySQL query notice:', mysqlErr.message);
+    }
+
+    // 2. In-memory studentsRegistry
+    const memReg = Array.isArray(mockStore.studentsRegistry) ? mockStore.studentsRegistry : [];
+    memReg.forEach(r => {
+      addCand(r.email, r.name, r.email, r.college ? `College: ${r.college}` : 'Student Registry', r);
     });
 
-    // 2. Admissions
+    // 3. In-memory users
+    const users = Array.isArray(mockStore.users) ? mockStore.users : [];
+    users.forEach(u => {
+      addCand(u._id || u.id, u.name, u.email, u.role ? `Role: ${u.role}` : 'Registered User', { photo: u.profileImage });
+    });
+
+    // 4. In-memory admissions
     const admissions = Array.isArray(mockStore.admissions) ? mockStore.admissions : [];
     admissions.forEach(a => {
-      const email = String(a.parentDetails?.email || a.email || '').toLowerCase().trim();
-      if (email && !seenEmails.has(email)) {
-        seenEmails.add(email);
-        candidates.push({
-          _id: a._id || a.id,
-          first_name: a.studentDetails?.name || a.student_name || 'Applicant',
-          last_name: '',
-          email,
-          job_title: a.studentDetails?.class ? `Class: ${a.studentDetails.class}` : 'Admission Applicant'
-        });
-      }
+      const email = a.parentDetails?.email || a.email;
+      const name = a.studentDetails?.name || a.student_name || 'Applicant';
+      const roleStr = a.studentDetails?.class ? `Class: ${a.studentDetails.class}` : 'Admission Applicant';
+      addCand(a._id || a.id, name, email, roleStr);
     });
 
     res.json(candidates);
@@ -1278,8 +1439,18 @@ router.delete('/admin/:id', adminGuard, async (req, res) => {
 
     try {
       const pool = getMySQLPool();
+      // Ensure all candidates who were registered in this exam are preserved in permanent students_registry
+      const [candidatesToPreserve] = await pool.query(
+        'SELECT name, email, dob, phone, college, roll_no, photo_url, access_code FROM assessment_candidates WHERE assessment_id = ?',
+        [targetId]
+      ).catch(() => [[]]);
+
+      for (const cand of (candidatesToPreserve || [])) {
+        await upsertStudentToRegistry(cand).catch(() => {});
+      }
+
+      // Delete only the attempts and the assessment itself (Preserve student data!)
       await pool.query('DELETE FROM assessment_attempts WHERE assessment_id = ?', [targetId]);
-      await pool.query('DELETE FROM assessment_candidates WHERE assessment_id = ?', [targetId]);
       await pool.query('DELETE FROM assessments WHERE id = ?', [targetId]);
     } catch (err) {
       console.warn('MySQL delete assessment notice:', err.message);
@@ -2578,6 +2749,18 @@ router.post('/:id/register', async (req, res) => {
           college=VALUES(college),
           photo=COALESCE(NULLIF(VALUES(photo), ''), photo);
       `, [genId(), cleanEmail, cleanName, cleanDob, cleanCollege, cleanPhoto]).catch(() => {});
+
+      // Permanent registration in students_registry table
+      await upsertStudentToRegistry({
+        email: cleanEmail,
+        name: cleanName,
+        dob: cleanDob,
+        phone: cleanPhone,
+        college: cleanCollege,
+        rollNo: cleanRollNo,
+        photo: cleanPhoto,
+        accessCode: a.accessPassword || 'EXAM'
+      }).catch(() => {});
     } catch (sqlCandErr) {
       console.warn('MySQL assessment_candidates insert notice:', sqlCandErr.message);
     }

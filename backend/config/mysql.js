@@ -408,6 +408,53 @@ export const initMySQLTables = async () => {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
+    // Create permanent students_registry table in Hostinger MySQL (never deleted when exams are deleted)
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS students_registry (
+        email VARCHAR(255) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        dob VARCHAR(50) DEFAULT '',
+        phone VARCHAR(50) DEFAULT '',
+        college VARCHAR(255) DEFAULT '',
+        roll_no VARCHAR(100) DEFAULT '',
+        photo_url LONGTEXT,
+        access_code VARCHAR(100) DEFAULT '',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_reg_name (name)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // Create arena_students table in Hostinger MySQL
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS arena_students (
+        id VARCHAR(100) PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        dob VARCHAR(50) DEFAULT '',
+        college VARCHAR(255) DEFAULT '',
+        photo LONGTEXT,
+        score INT DEFAULT 0,
+        solved_problems_json LONGTEXT,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_arena_email (email)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // Create student_portfolios table in Hostinger MySQL
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS student_portfolios (
+        id VARCHAR(100) PRIMARY KEY,
+        email VARCHAR(255),
+        student_name VARCHAR(255),
+        slug VARCHAR(100),
+        data_json LONGTEXT,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_port_slug (slug),
+        INDEX idx_port_email (email)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
     connection.release();
     return true;
   } catch (error) {

@@ -9,9 +9,24 @@ const parentHash = bcrypt.hashSync('parent123', salt);
 const teacherHash = bcrypt.hashSync('teacher123', salt);
 const studentHash = bcrypt.hashSync('student123', salt);
 
+import { fileURLToPath } from 'url';
 import { getMySQLPool } from './mysql.js';
 
-const DATA_FILE = path.join(process.cwd(), 'mockData.json');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const BACKEND_DIR = path.resolve(__dirname, '..');
+
+const resolveDataFiles = () => {
+  const primary = path.join(BACKEND_DIR, 'mockData.json');
+  const candidates = [
+    primary,
+    path.join(process.cwd(), 'backend', 'mockData.json'),
+    path.join(process.cwd(), 'mockData.json')
+  ];
+  return { primary, candidates };
+};
+
+const { primary: DATA_FILE, candidates: ALL_DATA_FILES } = resolveDataFiles();
 
 async function syncRelationalMySQL(pool, collectionName, items) {
   try {
@@ -209,7 +224,13 @@ function saveToDisk(store, targetCollection = null) {
         }
       }
     }
-    fs.writeFileSync(DATA_FILE, JSON.stringify(dataToSave, null, 2), 'utf8');
+    const jsonStr = JSON.stringify(dataToSave, null, 2);
+    fs.writeFileSync(DATA_FILE, jsonStr, 'utf8');
+    for (const altPath of ALL_DATA_FILES) {
+      if (altPath !== DATA_FILE && fs.existsSync(altPath)) {
+        try { fs.writeFileSync(altPath, jsonStr, 'utf8'); } catch (_) {}
+      }
+    }
   } catch (err) {
     // Ignore error
   }
@@ -217,13 +238,19 @@ function saveToDisk(store, targetCollection = null) {
 
 function loadFromDisk(store) {
   try {
-    if (fs.existsSync(DATA_FILE)) {
-      const raw = fs.readFileSync(DATA_FILE, 'utf8');
-      const loaded = JSON.parse(raw);
-      for (let key in loaded) {
-        if (Array.isArray(loaded[key]) && loaded[key].length > 0) {
-          store[key] = loaded[key];
-        }
+    for (const filePath of ALL_DATA_FILES) {
+      if (fs.existsSync(filePath)) {
+        try {
+          const raw = fs.readFileSync(filePath, 'utf8');
+          const loaded = JSON.parse(raw);
+          if (loaded && typeof loaded === 'object') {
+            for (let key in loaded) {
+              if (Array.isArray(loaded[key]) && loaded[key].length > 0) {
+                store[key] = loaded[key];
+              }
+            }
+          }
+        } catch (_) {}
       }
     }
     // Attempt loading from MySQL asynchronously
@@ -235,6 +262,7 @@ function loadFromDisk(store) {
 
 const mockStore = {
   isMock: true, // Default to true: uses Hostinger MySQL / unified store without MongoDB Atlas
+  studentsRegistry: [],
 
   users: [
     {
