@@ -205,10 +205,33 @@ class KbcSoundManager {
     } catch (e) {}
   }
 
-  // 5. Correct Answer Victory Chime
+  // 5. Correct Answer Victory Chime (Plays authentic KBC Correct Answer MP3)
   playCorrect() {
     if (this.isMuted) return;
     this.stopClock();
+    this.init();
+    this.stopDrone();
+    try {
+      if (this.currentAudio) {
+        try { this.currentAudio.pause(); } catch (e) {}
+        this.currentAudio = null;
+      }
+      const audio = new Audio('/kbc-correct.mp3');
+      audio.volume = 0.95;
+      this.currentAudio = audio;
+      const p = audio.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch(() => {
+          this.playCorrectSynth();
+        });
+      }
+    } catch (e) {
+      this.playCorrectSynth();
+    }
+  }
+
+  playCorrectSynth() {
+    if (this.isMuted) return;
     this.init();
     if (!this.ctx) return;
 

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { KBC_PRIZE_LADDER, DEFAULT_MERN_SQL_QUESTIONS } from '../../data/kbcQuestions.js';
+import { kbcAudio } from '../../utils/kbcAudio.js';
 
 export default function AdminKbcManager() {
   const [activeSubTab, setActiveSubTab] = useState('live'); // 'live' | 'questions' | 'teams'
@@ -237,8 +238,9 @@ export default function AdminKbcManager() {
     });
   };
 
-  // Reveal Correct Answer on Laptop screens
+  // Reveal Correct Answer on Laptop screens & play authentic victory fanfare
   const handleAdminReveal = (correctIdx) => {
+    kbcAudio.playCorrect();
     handleUpdateLiveRound({
       revealed_correct: correctIdx
     });
