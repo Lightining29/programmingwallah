@@ -37,8 +37,10 @@ import {
   HelpCircle,
   FileText,
   Database,
-  Server
+  Server,
+  Trophy
 } from 'lucide-react';
+import AdminKbcManager from './AdminKbcManager.jsx';
 
 export default function AdminExamSuite() {
   const [activeTab, setActiveTab] = useState('exams'); // 'exams', 'questions', 'access', 'colleges', 'results'
@@ -1089,7 +1091,8 @@ export default function AdminExamSuite() {
             { id: 'questions', label: 'Question Bank', icon: BookOpen },
             { id: 'access', label: 'Candidates & Passwords', icon: Users },
             { id: 'colleges', label: 'Colleges & Institutions', icon: Building2 },
-            { id: 'results', label: 'Results & Evaluation', icon: Award }
+            { id: 'results', label: 'Results & Evaluation', icon: Award },
+            { id: 'kbc', label: 'KBC Quiz (MERN & SQL)', icon: Trophy }
           ].map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -1613,7 +1616,10 @@ export default function AdminExamSuite() {
           </div>
         )}
 
-        {/* ══════════ MODAL: CREATE EXAM ══════════ */}
+        {/* ══════════ TAB 6: KBC QUIZ (MERN & SQL) ══════════ */}
+        {activeTab === 'kbc' && (
+          <AdminKbcManager />
+        )}
         {showCreateExamModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl text-slate-900 dark:text-white">

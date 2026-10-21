@@ -32,6 +32,7 @@ export default function Navbar() {
     { name: 'CAREERS', path: '/careers', icon: Briefcase },
     { name: 'COURSES', path: '/programs', icon: GraduationCap },
     { name: 'CODING ARENA', path: '/arena', icon: Terminal },
+    { name: 'KBC QUIZ', path: '/kbc', icon: Trophy, isBadge: true },
     { name: 'LEADERBOARD', path: '/leaderboard', icon: Trophy },
     { name: 'TUTORIALS', path: '/tutorials', icon: Code2 },
     { name: 'GALLERY', path: '/gallery', icon: Image },
@@ -107,7 +108,14 @@ export default function Navbar() {
                 className={`font-quicksand font-extrabold text-xs tracking-wider relative py-1 transition-colors duration-200 hover:text-brandCoral ${isActive ? 'text-brandCoral' : isDark ? 'text-slate-200' : 'text-slate-600'
                   }`}
               >
-                {link.name}
+                <span className="inline-flex items-center gap-1">
+                  {link.name}
+                  {link.isBadge && (
+                    <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-amber-500 text-slate-950 font-black shadow-xs animate-pulse">
+                      HOT
+                    </span>
+                  )}
+                </span>
                 {isActive && (
                   <motion.div
                     layoutId="activeUnderline"
@@ -315,7 +323,14 @@ export default function Navbar() {
                                   : (isDark ? 'text-brandCoral' : 'text-brandCoral-dark')
                               }`} />
                             )}
-                            <span className="tracking-wide">{link.name}</span>
+                            <span className="tracking-wide flex items-center gap-1.5">
+                              {link.name}
+                              {link.isBadge && (
+                                <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-amber-500 text-slate-950 font-black">
+                                  HOT
+                                </span>
+                              )}
+                            </span>
                           </span>
                           {isActive ? (
                             <span className="w-2 h-2 rounded-full bg-brandCoral shadow-[0_0_10px_rgba(255,112,67,1)]" />

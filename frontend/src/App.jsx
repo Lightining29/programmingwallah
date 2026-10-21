@@ -50,6 +50,8 @@ import AdminExamSuite from './portals/examAdmin/AdminExamSuite.jsx';
 import TakeTest from './pages/exam/TakeTest.jsx';
 import StudentRegister from './pages/exam/StudentRegister.jsx';
 import AssessmentAdmin from './pages/AssessmentAdmin.jsx';
+import KbcExam from './pages/exam/KbcExam.jsx';
+import AdminKbcManager from './portals/examAdmin/AdminKbcManager.jsx';
 import ArenaHub from './pages/arena/ArenaHub.jsx';
 import ArenaProblem from './pages/arena/ArenaProblem.jsx';
 import ArenaProfile from './pages/arena/ArenaProfile.jsx';
@@ -115,7 +117,7 @@ function CanonicalManager() {
 function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
-  const isExamPage = location.pathname.startsWith('/test') || location.pathname.startsWith('/dashboard/admin/tests') || location.pathname.startsWith('/assessment-admin');
+  const isExamPage = location.pathname.startsWith('/test') || location.pathname.startsWith('/kbc') || location.pathname.startsWith('/dashboard/admin/tests') || location.pathname.startsWith('/assessment-admin');
   const isAdminPage = location.pathname.startsWith('/dashboard/admin') || location.pathname.startsWith('/portal/admin');
   const isArenaProblem = location.pathname.startsWith('/arena/problem');
 
@@ -126,7 +128,7 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
     'hackerrank', 'leaderboard', 'tutorials', 'music', 'games', 'payment-demo', 'verify-certificate',
     'certificate', 'cert', 'manish-kumar', 'profile', 'manish', 'careers', 'job-roles', 'trending-tech-jobs',
     'courses-in-ghaziabad', 'coaching-in-rdc-ghaziabad', 'courses', 'coaching', 'lms', 'student',
-    'student-portal', 'dashboard', 'portal', 'test', 'assessment', 'assessment-admin'
+    'student-portal', 'dashboard', 'portal', 'test', 'assessment', 'assessment-admin', 'kbc'
   ]);
 
   const pathSegments = location.pathname.split('/').filter(Boolean);
@@ -258,6 +260,12 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
           <Route path="/assessment/register/:id" element={<StudentRegister />} />
           <Route path="/test/:id" element={<TakeTest />} />
           <Route path="/test" element={<Navigate to="/test/login" replace />} />
+
+          {/* Kaun Banega Crorepati (KBC) MERN & SQL Quiz Arena */}
+          <Route path="/kbc" element={<KbcExam />} />
+          <Route path="/test/kbc" element={<KbcExam />} />
+          <Route path="/exam/kbc" element={<KbcExam />} />
+          <Route path="/dashboard/admin/kbc" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><AdminKbcManager /></ProtectedRoute>} />
 
           {/* Assessment Management Suite */}
           <Route path="/assessment-admin" element={<AssessmentAdmin />} />

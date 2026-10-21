@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import { BrainCircuit, Code2, FileText, Trophy, UserCircle, Sparkles, Download } from 'lucide-react';
 
@@ -339,6 +340,36 @@ export default function Practice() {
               Score: {score} / {quizQuestions.length}
             </span>
           </div>
+        </section>
+
+        {/* Kaun Banega Crorepati Hotseat Banner */}
+        <section className="rounded-[32px] bg-gradient-to-r from-indigo-950 via-slate-900 to-amber-950 p-6 sm:p-7 border-2 border-amber-400/50 shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl p-1 bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 shadow-lg shadow-amber-500/20 shrink-0">
+              <img
+                src="/kbc-host.jpg"
+                alt="KBC Hotseat"
+                className="w-full h-full object-cover rounded-xl"
+              />
+            </div>
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-[10px] font-black uppercase tracking-wider mb-1">
+                <Trophy className="w-3 h-3 text-amber-400" /> LIVE HOTSEAT ARENA
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-white">
+                Kaun Banega Crorepati — MERN & SQL Edition
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-300">
+                16 levels ladder to ₹7 Crore, 4 lifelines (50:50, Audience Poll, Expert Advice, Flip Question), and Tik-Tiki Ji timer!
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/kbc"
+            className="shrink-0 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-sm tracking-wider uppercase shadow-xl shadow-amber-500/30 transition transform hover:scale-105 inline-flex items-center gap-2"
+          >
+            Play Real KBC →
+          </Link>
         </section>
 
         {/* ── 2-COLUMN SECTION: QUIZ & LEADERBOARD ── */}

@@ -19,7 +19,9 @@ import {
   ChevronRight,
   ExternalLink,
   Lock,
-  Layers
+  Layers,
+  Trophy,
+  Sparkles
 } from 'lucide-react';
 
 export default function ExamDashboard() {
@@ -168,6 +170,43 @@ export default function ExamDashboard() {
             </div>
           </div>
         )}
+
+        {/* Kaun Banega Crorepati (KBC) Hotseat Challenge Section */}
+        <div className="mb-8 rounded-3xl bg-gradient-to-r from-amber-950/40 via-purple-950/40 to-slate-900 border-2 border-amber-400/50 p-6 sm:p-7 shadow-2xl relative overflow-hidden">
+          <div className="absolute -right-10 -bottom-10 w-60 h-60 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-5">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl p-1 bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 shadow-xl shadow-amber-500/20 shrink-0">
+                <img
+                  src="/kbc-host.jpg"
+                  alt="KBC Hotseat"
+                  className="w-full h-full object-cover rounded-xl"
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+              </div>
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-[11px] font-black uppercase tracking-wider">
+                  <Sparkles className="w-3 h-3 text-amber-400" /> NEW EXAM ARENA
+                </div>
+                <h4 className="text-xl sm:text-2xl font-black text-white tracking-wide">
+                  Kaun Banega Crorepati — MERN & SQL Hotseat
+                </h4>
+                <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+                  Experience real TV-style KBC with 16 money ladder levels (up to ₹7 Crore), 4 lifelines (50:50, Audience Poll, Expert Advice, Flip Question), and Tik-Tiki Ji timer!
+                </p>
+              </div>
+            </div>
+
+            <div className="shrink-0 w-full md:w-auto">
+              <Link
+                to="/kbc"
+                className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-sm tracking-wider uppercase shadow-xl shadow-amber-500/30 transition transform hover:scale-105"
+              >
+                <Trophy className="w-4 h-4 text-slate-950" /> Play KBC Hotseat →
+              </Link>
+            </div>
+          </div>
+        </div>
 
         {/* Section Title */}
         <div className="flex items-center justify-between mb-6">
