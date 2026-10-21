@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { LayoutDashboard, ClipboardList, Users, User, CreditCard, Bell, Image as ImageIcon, MessageCircle, CheckCircle, XCircle, Trash2, Plus, Clock, Search, FileText, Printer, Edit, Download, Contact, X, Sparkles, BookOpen, Video, Wallet, Eye, EyeOff, Upload, AlertCircle, ChevronDown, ChevronUp, Play, Pause, RotateCcw, Award, ShieldCheck, Share2, Check, ExternalLink, Sun, CloudSun, Wind, Radio, Volume2, VolumeX, Send, Globe, SkipBack, SkipForward, CloudRain, Droplets, MapPin, AlertTriangle } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, Users, User, CreditCard, Bell, Image as ImageIcon, MessageCircle, CheckCircle, XCircle, Trash2, Plus, Clock, Search, FileText, Printer, Edit, Download, Contact, X, Sparkles, BookOpen, Video, Wallet, Eye, EyeOff, Upload, AlertCircle, ChevronDown, ChevronUp, Play, Pause, RotateCcw, Award, ShieldCheck, Share2, Check, ExternalLink, Sun, CloudSun, Wind, Radio, Volume2, VolumeX, Send, Globe, SkipBack, SkipForward, CloudRain, Droplets, MapPin, AlertTriangle, Trophy } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import ConfirmModal from '../components/ConfirmModal.jsx';
 import FeeStructureMaster from '../components/FeeStructureMaster.jsx';
@@ -9,6 +9,7 @@ import CollectPaymentModal from '../components/CollectPaymentModal.jsx';
 import CertificateModal from '../components/CertificateModal.jsx';
 import AdminExamSuite from './examAdmin/AdminExamSuite.jsx';
 import AssessmentAdmin from '../pages/AssessmentAdmin.jsx';
+import AdminKbcManager from './examAdmin/AdminKbcManager.jsx';
 
 const COURSE_OPTIONS = ['Java Development', 'MERN Developer', 'Python Developer', 'Frontend Developer'];
 
@@ -2836,6 +2837,7 @@ export default function AdminDashboard() {
           <div className="bg-white/60 border border-slate-200/80 p-1.5 rounded-full flex flex-wrap items-center justify-center gap-1 shadow-sm backdrop-blur-md">
             {[
               { id: 'stats', label: 'Dashboard' },
+              { id: 'kbc', label: '🏆 KBC Live Quiz', isBadge: true },
               { id: 'admissions', label: 'Admissions' },
               { id: 'users', label: 'People' },
               { id: 'courses', label: 'Courses' },
@@ -2850,13 +2852,18 @@ export default function AdminDashboard() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                   activeTab === tab.id
                     ? 'bg-[#1c1d21] text-white shadow-sm scale-[1.02]'
+                    : tab.isBadge
+                    ? 'bg-amber-100/90 text-amber-950 border border-amber-300 hover:bg-amber-200 shadow-2xs font-extrabold'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
                 }`}
               >
-                {tab.label}
+                <span>{tab.label}</span>
+                {tab.isBadge && activeTab !== tab.id && (
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                )}
               </button>
             ))}
           </div>
@@ -2949,6 +2956,54 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+            </div>
+
+            {/* ── KBC HOTSEAT LIVE CONTROL BANNER (Prominent Admin CTA) ── */}
+            <div className="bg-gradient-to-r from-[#170e33] via-[#0e1630] to-[#0a1122] border-2 border-amber-400/80 rounded-3xl p-5 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+              
+              <div className="flex items-center gap-3.5 relative z-10">
+                <span className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 font-black flex items-center justify-center text-xl shadow-lg shrink-0">
+                  ₹
+                </span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-full border border-amber-400/40">
+                      Live Hotseat Control
+                    </span>
+                    <span className="text-[10px] text-emerald-400 font-mono font-bold">
+                      Hostinger MySQL
+                    </span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-black tracking-wide text-white mt-0.5">
+                    Kaun Banega Crorepati — Host Screen & Laptop Team Manager
+                  </h3>
+                  <p className="text-xs text-slate-300">
+                    Control live questions, reveal answers, add classroom laptop teams, and toggle Navbar visibility in real-time.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5 shrink-0 w-full md:w-auto relative z-10">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('kbc')}
+                  className="w-full md:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/30 transition transform hover:scale-105 cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Trophy className="w-4 h-4 text-slate-950" />
+                  <span>Open KBC Control Screen →</span>
+                </button>
+                <a
+                  href="/kbc"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 transition flex items-center gap-1.5"
+                  title="Open Contestant Laptop Hotseat"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Laptop View</span>
+                </a>
+              </div>
             </div>
 
             {/* ── 3. BENTO GRID (TOP ROW) ── */}
@@ -6688,6 +6743,13 @@ export default function AdminDashboard() {
         {activeTab === 'tests' && (
           <div className="pt-2 animate-in fade-in duration-300">
             <AssessmentAdmin />
+          </div>
+        )}
+
+        {/* ── KBC LIVE HOST TAB ── */}
+        {activeTab === 'kbc' && (
+          <div className="pt-2 animate-in fade-in duration-300">
+            <AdminKbcManager />
           </div>
         )}
 

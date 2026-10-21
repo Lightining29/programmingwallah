@@ -822,6 +822,14 @@ export default function AssessmentAdmin() {
           ))}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+          <button 
+            type="button"
+            className="aa-btn" 
+            style={{ background: 'linear-gradient(135deg, #f59e0b, #eab308)', color: '#0f172a', fontWeight: 'bold' }} 
+            onClick={() => navigate('/dashboard/admin/kbc')}
+          >
+            🏆 KBC Live Host
+          </button>
           <button className="aa-btn aa-btn-outline" onClick={() => navigate('/portal/admin')}>
             <LogOut size={14} /> Back to Portal
           </button>

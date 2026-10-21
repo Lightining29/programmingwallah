@@ -121,7 +121,7 @@ export default function Navbar() {
 
         {/* Desktop Links (Clean list with sliding active underline) */}
         <div className="items-center hidden space-x-5 lg:flex">
-          {navLinks.filter(l => l.name !== 'KBC QUIZ' || isKbcLive).map((link) => {
+          {navLinks.filter(l => l.name !== 'KBC QUIZ' || isKbcLive || (user && (user.role === 'admin' || user.role === 'teacher'))).map((link) => {
             const isActive = location.pathname === link.path;
             return (
               <Link
@@ -166,6 +166,16 @@ export default function Navbar() {
           </button>
           {user ? (
             <>
+              {user.role === 'admin' && (
+                <Link
+                  to="/dashboard/admin?tab=kbc"
+                  className="flex items-center space-x-1.5 font-quicksand font-extrabold text-xs rounded-full border border-amber-400/80 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 px-3.5 py-2.5 transition-all shadow-sm"
+                  title="Open KBC Live Host Screen"
+                >
+                  <Trophy className="w-4 h-4 text-amber-400" />
+                  <span>KBC HOST</span>
+                </Link>
+              )}
               <Link
                 to={getDashboardPath()}
                 className={`flex items-center space-x-1.5 font-quicksand font-bold text-xs rounded-full border px-5 py-2.5 hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 cursor-pointer ${
@@ -319,7 +329,7 @@ export default function Navbar() {
                     }`}>
                       NAVIGATION MENU
                     </span>
-                    {navLinks.filter(l => l.name !== 'KBC QUIZ' || isKbcLive).map((link) => {
+                    {navLinks.filter(l => l.name !== 'KBC QUIZ' || isKbcLive || (user && (user.role === 'admin' || user.role === 'teacher'))).map((link) => {
                       const isActive = location.pathname === link.path;
                       const Icon = link.icon;
                       return (
