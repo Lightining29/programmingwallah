@@ -482,6 +482,42 @@ export const initMySQLTables = async () => {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
+    // Create kbc_sessions table (Live session control state by Admin)
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS kbc_sessions (
+        id VARCHAR(50) PRIMARY KEY,
+        status ENUM('INACTIVE', 'WAITING', 'LIVE', 'COMPLETED') DEFAULT 'INACTIVE',
+        show_in_navbar TINYINT(1) DEFAULT 0,
+        current_level INT DEFAULT 1,
+        current_question_id VARCHAR(100) DEFAULT NULL,
+        is_locked TINYINT(1) DEFAULT 0,
+        locked_option INT DEFAULT NULL,
+        revealed_correct INT DEFAULT NULL,
+        active_team_id VARCHAR(100) DEFAULT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // Create kbc_teams table (Teams participating from their laptops)
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS kbc_teams (
+        id VARCHAR(100) PRIMARY KEY,
+        team_name VARCHAR(255) NOT NULL,
+        leader_name VARCHAR(255) NOT NULL,
+        access_code VARCHAR(50) NOT NULL UNIQUE,
+        current_level INT DEFAULT 1,
+        score_amount INT DEFAULT 0,
+        safe_amount INT DEFAULT 0,
+        status ENUM('REGISTERED', 'CONNECTED', 'HOTSEAT', 'ELIMINATED', 'WON') DEFAULT 'REGISTERED',
+        submitted_option INT DEFAULT NULL,
+        lifelines_used_json TEXT DEFAULT NULL,
+        laptop_info VARCHAR(255) DEFAULT '',
+        last_active_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_team_code (access_code)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
     connection.release();
     return true;
   } catch (error) {

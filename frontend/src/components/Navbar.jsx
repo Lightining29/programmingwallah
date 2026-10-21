@@ -19,6 +19,28 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isKbcLive, setIsKbcLive] = useState(false);
+
+  // Poll Admin KBC Live Session Status
+  useEffect(() => {
+    let isMounted = true;
+    const checkKbcStatus = async () => {
+      try {
+        const res = await fetch('/api/kbc/session/status');
+        const data = await res.json();
+        if (isMounted && data.success && data.session) {
+          setIsKbcLive(Boolean(data.session.show_in_navbar || data.session.status === 'LIVE'));
+        }
+      } catch (e) {}
+    };
+
+    checkKbcStatus();
+    const interval = setInterval(checkKbcStatus, 5000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -99,7 +121,7 @@ export default function Navbar() {
 
         {/* Desktop Links (Clean list with sliding active underline) */}
         <div className="items-center hidden space-x-5 lg:flex">
-          {navLinks.map((link) => {
+          {navLinks.filter(l => l.name !== 'KBC QUIZ' || isKbcLive).map((link) => {
             const isActive = location.pathname === link.path;
             return (
               <Link
@@ -297,7 +319,7 @@ export default function Navbar() {
                     }`}>
                       NAVIGATION MENU
                     </span>
-                    {navLinks.map((link) => {
+                    {navLinks.filter(l => l.name !== 'KBC QUIZ' || isKbcLive).map((link) => {
                       const isActive = location.pathname === link.path;
                       const Icon = link.icon;
                       return (

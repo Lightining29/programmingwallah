@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Trophy, Volume2, VolumeX, Clock, Users, PhoneCall, HelpCircle, 
   RotateCcw, Award, LogOut, CheckCircle2, XCircle, Sparkles, 
-  AlertTriangle, ArrowRight, Settings, Download, Printer, ShieldCheck
+  AlertTriangle, ArrowRight, Settings, Download, Printer, ShieldCheck,
+  Laptop, Radio, Wifi, UserCheck, Flame
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { kbcAudio } from '../../utils/kbcAudio.js';
@@ -18,13 +19,44 @@ import {
 export default function KbcExam() {
   const navigate = useNavigate();
 
+  // ── Participation Mode: 'SOLO' (practice hotseat) vs 'TEAM' (Admin-controlled live laptop) ──
+  const [playMode, setPlayMode] = useState(() => {
+    return localStorage.getItem('kbc_team') ? 'TEAM' : 'SOLO';
+  });
+
+  // Team Laptop Session State
+  const [team, setTeam] = useState(() => {
+    try {
+      const saved = localStorage.getItem('kbc_team');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const [teamAccessCodeInput, setTeamAccessCodeInput] = useState('');
+  const [teamJoinLoading, setTeamJoinLoading] = useState(false);
+  const [teamJoinError, setTeamJoinError] = useState('');
+  const [teamAnswerSubmitted, setTeamAnswerSubmitted] = useState(false);
+
+  // Admin Live Session Polled State
+  const [adminSession, setAdminSession] = useState({
+    status: 'INACTIVE', // 'INACTIVE' | 'WAITING' | 'LIVE' | 'COMPLETED'
+    show_in_navbar: false,
+    current_level: 1,
+    current_question_id: null,
+    is_locked: false,
+    locked_option: null,
+    revealed_correct: null,
+    current_question: null
+  });
+
   // Questions State
   const [questions, setQuestions] = useState([]);
   const [flipPool, setFlipPool] = useState({});
   const [currentLevel, setCurrentLevel] = useState(1); // 1 to 16
   const [loading, setLoading] = useState(true);
 
-  // Player / Game State
+  // Player / Game State (Solo Mode)
   const [playerName, setPlayerName] = useState(() => {
     try {
       const stored = localStorage.getItem('exam_student') || localStorage.getItem('user');
@@ -70,7 +102,60 @@ export default function KbcExam() {
   const [hostQuote, setHostQuote] = useState(AMITABH_QUOTES.welcome[0]);
   const [isMuted, setIsMuted] = useState(false);
 
-  // Load Questions (from Admin API, with robust local fallback)
+  // ── Poll Live Session Status from Hostinger MySQL (Every 2.5s) ──
+  useEffect(() => {
+    let isMounted = true;
+    const fetchStatus = async () => {
+      try {
+        const res = await fetch('/api/kbc/session/status');
+        const data = await res.json();
+        if (isMounted && data.success && data.session) {
+          setAdminSession(data.session);
+
+          // If playing in team mode, synchronize level & host states
+          if (team) {
+            const sess = data.session;
+            if (sess.current_level && sess.current_level !== currentLevel) {
+              setCurrentLevel(sess.current_level);
+              setSelectedOption(null);
+              setIsLocked(false);
+              setAnswerStatus(null);
+              setRevealedCorrect(null);
+              setTeamAnswerSubmitted(false);
+            }
+
+            if (sess.is_locked) {
+              setIsLocked(true);
+              if (sess.locked_option !== null && sess.locked_option !== undefined) {
+                setSelectedOption(sess.locked_option);
+              }
+              setAnswerStatus('evaluating');
+            }
+
+            if (sess.revealed_correct !== null && sess.revealed_correct !== undefined) {
+              setRevealedCorrect(sess.revealed_correct);
+              const isCorrect = selectedOption === sess.revealed_correct;
+              setAnswerStatus(isCorrect ? 'correct' : 'wrong');
+              if (isCorrect) {
+                kbcAudio.playCorrect();
+              } else if (selectedOption !== null) {
+                kbcAudio.playWrong();
+              }
+            }
+          }
+        }
+      } catch (e) {}
+    };
+
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 2500);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [team, currentLevel, selectedOption]);
+
+  // Load Questions (from Hostinger MySQL API, with robust local fallback)
   useEffect(() => {
     fetchQuestions();
   }, []);
@@ -118,6 +203,74 @@ export default function KbcExam() {
     setFlipPool(pool);
   };
 
+  // ── Team Login from Contestant Laptop ──
+  const handleJoinTeam = async (e) => {
+    e.preventDefault();
+    setTeamJoinError('');
+    if (!teamAccessCodeInput.trim()) {
+      setTeamJoinError('Please enter your Team Access Code.');
+      return;
+    }
+
+    setTeamJoinLoading(true);
+    try {
+      const laptopInfo = `${navigator.platform || 'Laptop'} (${navigator.userAgent.includes('Chrome') ? 'Chrome' : 'Browser'})`;
+      const res = await fetch('/api/kbc/team/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          access_code: teamAccessCodeInput.trim().toUpperCase(),
+          laptop_info: laptopInfo
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.team) {
+        setTeam(data.team);
+        localStorage.setItem('kbc_team', JSON.stringify(data.team));
+        setPlayMode('TEAM');
+        kbcAudio.init();
+        kbcAudio.playLifeline();
+      } else {
+        setTeamJoinError(data.message || 'Invalid Team Access Code.');
+      }
+    } catch (err) {
+      setTeamJoinError('Unable to connect to live game server. Please try again.');
+    } finally {
+      setTeamJoinLoading(false);
+    }
+  };
+
+  const handleDisconnectTeam = () => {
+    localStorage.removeItem('kbc_team');
+    setTeam(null);
+    setPlayMode('SOLO');
+    setTeamAnswerSubmitted(false);
+  };
+
+  // ── Submit Laptop Option to Admin Monitor ──
+  const handleSubmitTeamOption = async (idx) => {
+    if (!team || isLocked) return;
+    setSelectedOption(idx);
+    kbcAudio.playSelect();
+
+    try {
+      const res = await fetch('/api/kbc/team/submit-answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          team_id: team.id,
+          option_index: idx
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTeamAnswerSubmitted(true);
+        const letter = String.fromCharCode(65 + idx);
+        setHostQuote(`Team ${team.team_name} ne Option ${letter} chuna hai! Admin monitor par aapka uttar darj ho chuka hai.`);
+      }
+    } catch (e) {}
+  };
+
   // Timer Effect
   useEffect(() => {
     if (!gameStarted || gameOver || gameWon || isLocked) {
@@ -163,8 +316,10 @@ export default function KbcExam() {
     finishGame(false, true);
   };
 
-  // Current Question Object
-  const currentQ = questions[currentLevel - 1] || null;
+  // Current Question Object (Live Host broadcast in Team mode or Level Question in Solo)
+  const currentQ = (team && adminSession.current_question) 
+    ? adminSession.current_question 
+    : (questions[currentLevel - 1] || null);
   const currentPrize = KBC_PRIZE_LADDER[currentLevel - 1] || KBC_PRIZE_LADDER[0];
 
   // Start the Game
@@ -182,7 +337,11 @@ export default function KbcExam() {
     kbcAudio.playSelect();
     setSelectedOption(idx);
     const letter = String.fromCharCode(65 + idx);
-    setHostQuote(AMITABH_QUOTES.optionSelected(letter, currentQ.options[idx]));
+    const optionText = currentQ?.options?.[idx] || '';
+    setHostQuote(AMITABH_QUOTES.optionSelected(letter, optionText));
+    if (team) {
+      handleSubmitTeamOption(idx);
+    }
   };
 
   // Confirm Lock Option ("Computer Ji, option [X] ko lock kiya jaye!")
@@ -194,7 +353,12 @@ export default function KbcExam() {
     const letter = String.fromCharCode(65 + selectedOption);
     setHostQuote(AMITABH_QUOTES.lockConfirmed(letter));
 
-    // Dramatic Suspense Beat (2.2 seconds suspense)
+    if (team) {
+      handleSubmitTeamOption(selectedOption);
+      return;
+    }
+
+    // Dramatic Suspense Beat (2.2 seconds suspense) in Solo Mode
     setTimeout(() => {
       evaluateAnswer();
     }, 2200);
@@ -484,10 +648,34 @@ export default function KbcExam() {
                 </span>
               </div>
             </Link>
+
+            {/* Team Laptop Connected Pill */}
+            {team && (
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-950/90 border border-amber-400/60 text-xs shadow-md">
+                <Laptop className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-slate-300">Team: <strong className="text-amber-300">{team.team_name}</strong></span>
+                <span className="text-[10px] bg-slate-900 px-2 py-0.5 rounded text-slate-400 font-mono font-bold">{team.access_code}</span>
+                <button
+                  onClick={handleDisconnectTeam}
+                  className="text-red-400 hover:text-red-300 text-[10px] font-bold ml-1 hover:underline cursor-pointer"
+                  title="Disconnect Laptop"
+                >
+                  Exit
+                </button>
+              </div>
+            )}
+
+            {/* Live Broadcast Indicator */}
+            {adminSession.status === 'LIVE' && (
+              <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-600/30 border border-red-500/60 text-red-300 text-[10px] font-black uppercase tracking-wider animate-pulse">
+                <span className="w-2 h-2 rounded-full bg-red-400 animate-ping" />
+                Live Broadcast
+              </span>
+            )}
           </div>
 
-          {/* 4 Lifelines (Real KBC Icons) */}
-          {gameStarted && !gameOver && (
+          {/* 4 Lifelines (Real KBC Icons - Active in Solo or Live Game) */}
+          {(gameStarted || (team && adminSession.status === 'LIVE')) && !gameOver && (
             <div className="flex items-center gap-2 md:gap-3">
               {/* 50:50 */}
               <button
@@ -569,7 +757,7 @@ export default function KbcExam() {
               <span className="hidden md:inline">Admin</span>
             </Link>
 
-            {gameStarted && !gameOver && (
+            {gameStarted && !gameOver && !team && (
               <button
                 onClick={() => setActiveModal('quit')}
                 disabled={isLocked}
@@ -585,9 +773,11 @@ export default function KbcExam() {
       {/* ── Main Arena: Host, Question, Options, and Money Ladder ── */}
       <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto p-4 flex flex-col justify-between">
         
-        {!gameStarted ? (
-          /* Welcome Hotseat Gate */
-          <div className="my-auto max-w-2xl mx-auto text-center space-y-6 bg-gradient-to-b from-[#0b132e]/90 to-[#060a1d]/95 border-2 border-amber-400/40 rounded-3xl p-8 shadow-2xl backdrop-blur-xl">
+        {/* CASE 1: Connected Team Waiting for Admin to start Live Broadcast */}
+        {team && adminSession.status !== 'LIVE' ? (
+          <div className="my-auto max-w-2xl mx-auto text-center space-y-6 bg-gradient-to-b from-[#0b132e]/95 to-[#060a1d]/95 border-2 border-amber-400/50 rounded-3xl p-8 shadow-2xl backdrop-blur-xl animate-fade-in">
+            
+            {/* Host Avatar with Live Broadcast Pulse */}
             <div className="relative inline-block mx-auto">
               <div className="w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 shadow-xl shadow-amber-500/30">
                 <img
@@ -603,58 +793,212 @@ export default function KbcExam() {
             </div>
 
             <div className="space-y-2">
-              <h1 className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-100">
-                KAUN BANEGA CROREPATI
-              </h1>
-              <p className="text-amber-400/90 font-bold text-sm tracking-widest uppercase">
-                MERN Stack & SQL Grand Championship
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-950 border border-indigo-500/50 text-indigo-300 text-xs font-bold uppercase tracking-wider">
+                <Wifi className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                Live Hotseat Broadcast Lounge
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-100">
+                Swagat Hai, {team.team_name}!
+              </h2>
+              <p className="text-amber-400/90 font-bold text-xs uppercase tracking-widest">
+                Team Leader: {team.leader_name} • Access Code: <span className="font-mono text-white bg-slate-900 px-2 py-0.5 rounded">{team.access_code}</span>
               </p>
-              <p className="text-slate-300 text-sm max-w-lg mx-auto pt-1 leading-relaxed">
-                Welcome to the hot seat! Face 16 levels of questions curated on <strong>MongoDB, Express.js, React, Node.js, and SQL</strong>. Use your 4 lifelines wisely, cross the safe padavs, and take home up to ₹7 Crore!
+            </div>
+
+            {/* Standby Status Card */}
+            <div className="bg-slate-950/80 border border-amber-500/30 rounded-2xl p-5 text-left space-y-3">
+              <div className="flex items-center justify-between border-b border-indigo-900/40 pb-3">
+                <span className="text-xs text-slate-400 font-bold">Broadcast Status:</span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold animate-pulse">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                  Standby / Waiting for Admin Host
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-400">Current Round in Queue:</span>
+                <span className="text-amber-300 font-black">
+                  Level {adminSession.current_level || 1} ({KBC_PRIZE_LADDER[(adminSession.current_level || 1) - 1]?.prize})
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-400">Your Connected Device:</span>
+                <span className="text-emerald-400 font-bold font-mono">
+                  {navigator.platform || 'Laptop'} (Live Synced)
+                </span>
+              </div>
+
+              <p className="text-xs text-slate-300 pt-2 leading-relaxed italic border-t border-indigo-900/40">
+                "Kripya screen par bane rahein. Jaise hi Admin apne screen se 'Confirm & Start KBC Live' par click karenge, prashna aapke laptop par seedha prakat ho jayega!"
               </p>
             </div>
 
-            {/* Candidate Name Input */}
-            <div className="max-w-xs mx-auto text-left">
-              <label className="block text-xs font-bold text-amber-300 mb-1.5 uppercase tracking-wider">
-                Contestant Name
-              </label>
-              <input
-                type="text"
-                value={playerName}
-                onChange={e => setPlayerName(e.target.value)}
-                className="w-full bg-slate-950/80 border border-amber-400/50 rounded-xl px-4 py-2.5 text-white font-bold text-sm focus:outline-none focus:border-amber-300"
-                placeholder="Enter your name"
-              />
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <button
+                onClick={() => {
+                  setPlayMode('SOLO');
+                  handleStartGame();
+                }}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-amber-400/40 text-amber-300 font-bold text-xs cursor-pointer transition"
+              >
+                Practice in Solo Hotseat Mode
+              </button>
+              <button
+                onClick={handleDisconnectTeam}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-300 font-bold text-xs cursor-pointer transition"
+              >
+                Disconnect Team
+              </button>
             </div>
+          </div>
+        ) : !gameStarted && !team ? (
+          /* CASE 2: Welcome Gate (Join as Team OR Play Solo) */
+          <div className="my-auto max-w-3xl mx-auto space-y-6">
+            
+            {/* Header / Amitabh Quote */}
+            <div className="text-center space-y-3 bg-gradient-to-b from-[#0b132e]/95 to-[#060a1d]/95 border-2 border-amber-400/40 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+              <div className="relative inline-block mx-auto">
+                <div className="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 shadow-xl shadow-amber-500/30">
+                  <img
+                    src="/kbc-host.jpg"
+                    alt="Amitabh Bachchan KBC Host"
+                    className="w-full h-full object-cover rounded-full"
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                </div>
+                <span className="absolute -bottom-1 -right-1 px-2.5 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black uppercase tracking-wider">
+                  Host
+                </span>
+              </div>
 
-            {/* Milestones Preview */}
-            <div className="grid grid-cols-3 gap-3 pt-2 text-xs">
-              <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800">
-                <span className="text-slate-400 block">Padav 1 (Safe)</span>
-                <span className="text-amber-300 font-bold">₹10,000</span>
+              <div className="space-y-1.5">
+                <h1 className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-100">
+                  KAUN BANEGA CROREPATI
+                </h1>
+                <p className="text-amber-400/90 font-bold text-xs tracking-widest uppercase">
+                  MERN Stack & SQL Grand Examination Hotseat
+                </p>
+                <p className="text-slate-300 text-xs sm:text-sm max-w-xl mx-auto pt-1 leading-relaxed">
+                  Participate live with your laptop in the Admin-controlled classroom competition, or take the solo 16-level hotseat challenge for ₹7 Crore!
+                </p>
               </div>
-              <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800">
-                <span className="text-slate-400 block">Padav 2 (Safe)</span>
-                <span className="text-amber-300 font-bold">₹3,20,000</span>
+
+              {/* Mode Toggle Tabs */}
+              <div className="grid grid-cols-2 gap-3 pt-3 max-w-md mx-auto">
+                <button
+                  type="button"
+                  onClick={() => setPlayMode('TEAM')}
+                  className={`py-2.5 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                    playMode === 'TEAM'
+                      ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-lg shadow-amber-500/20'
+                      : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  <Laptop className="w-4 h-4" />
+                  <span>Join Team via Laptop</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPlayMode('SOLO')}
+                  className={`py-2.5 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                    playMode === 'SOLO'
+                      ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-lg shadow-amber-500/20'
+                      : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  <Trophy className="w-4 h-4" />
+                  <span>Solo Hotseat Mode</span>
+                </button>
               </div>
-              <div className="p-2.5 rounded-xl bg-slate-900/60 border border-amber-500/40">
-                <span className="text-amber-400 block font-bold">Jackpot</span>
-                <span className="text-yellow-400 font-black">₹7 Crore</span>
-              </div>
+
+              {/* FORM: Team Access Code Entry */}
+              {playMode === 'TEAM' ? (
+                <form onSubmit={handleJoinTeam} className="pt-4 max-w-md mx-auto space-y-4 text-left">
+                  <div className="bg-slate-950/80 border border-amber-400/40 rounded-2xl p-5 space-y-3">
+                    <div>
+                      <label className="block text-xs font-bold text-amber-300 mb-1.5 uppercase tracking-wider">
+                        Enter Team Access Code
+                      </label>
+                      <input
+                        type="text"
+                        value={teamAccessCodeInput}
+                        onChange={e => setTeamAccessCodeInput(e.target.value)}
+                        placeholder="e.g. KBC-101"
+                        className="w-full bg-slate-900 border border-amber-400/50 rounded-xl px-4 py-3 text-white font-mono font-black text-center text-lg tracking-widest uppercase focus:outline-none focus:border-amber-300"
+                        autoFocus
+                      />
+                      <span className="text-[11px] text-slate-400 block mt-1.5">
+                        Ask your Exam Admin or Teacher for your Team Access Code.
+                      </span>
+                    </div>
+
+                    {teamJoinError && (
+                      <div className="p-2.5 rounded-lg bg-red-950/60 border border-red-500/40 text-red-300 text-xs font-semibold flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                        <span>{teamJoinError}</span>
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={teamJoinLoading}
+                      className="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-sm uppercase tracking-wider shadow-lg shadow-amber-500/30 transition transform hover:scale-[1.02] cursor-pointer"
+                    >
+                      {teamJoinLoading ? 'Connecting Laptop...' : 'Connect to Live Hotseat →'}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                /* FORM: Solo Hotseat Launch */
+                <div className="pt-4 max-w-md mx-auto space-y-4 text-left">
+                  <div className="bg-slate-950/80 border border-amber-400/40 rounded-2xl p-5 space-y-3">
+                    <div>
+                      <label className="block text-xs font-bold text-amber-300 mb-1.5 uppercase tracking-wider">
+                        Contestant Name
+                      </label>
+                      <input
+                        type="text"
+                        value={playerName}
+                        onChange={e => setPlayerName(e.target.value)}
+                        className="w-full bg-slate-900 border border-amber-400/50 rounded-xl px-4 py-2.5 text-white font-bold text-sm focus:outline-none focus:border-amber-300"
+                        placeholder="Enter your name"
+                      />
+                    </div>
+
+                    {/* Milestones Preview */}
+                    <div className="grid grid-cols-3 gap-2 pt-1 text-center text-xs">
+                      <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+                        <span className="text-slate-400 text-[10px] block">Padav 1</span>
+                        <span className="text-amber-300 font-bold">₹10,000</span>
+                      </div>
+                      <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+                        <span className="text-slate-400 text-[10px] block">Padav 2</span>
+                        <span className="text-amber-300 font-bold">₹3,20,000</span>
+                      </div>
+                      <div className="p-2 rounded-lg bg-slate-900 border border-amber-500/40">
+                        <span className="text-amber-400 text-[10px] block font-bold">Jackpot</span>
+                        <span className="text-yellow-400 font-black">₹7 Crore</span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleStartGame}
+                      disabled={loading}
+                      className="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-sm uppercase tracking-wider shadow-lg shadow-amber-500/30 transition transform hover:scale-[1.02] cursor-pointer"
+                    >
+                      {loading ? 'Preparing Hotseat...' : 'Aaiye Khelte Hain KBC! →'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
             </div>
-
-            {/* Launch Button */}
-            <button
-              onClick={handleStartGame}
-              disabled={loading}
-              className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-lg tracking-wider uppercase shadow-2xl shadow-amber-500/40 transition-all transform hover:scale-[1.02] cursor-pointer"
-            >
-              {loading ? 'Preparing Hotseat...' : 'Aaiye Khelte Hain KBC! →'}
-            </button>
           </div>
         ) : (
-          /* Live KBC Arena */
+          /* CASE 3: Live KBC Arena (Active in Solo OR when Team is LIVE) */
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 my-auto items-center">
             
             {/* Left 9 Columns: Host speech, Timer, Hexagonal Question, and Hexagonal 4 Options */}
@@ -816,14 +1160,17 @@ export default function KbcExam() {
               {/* ── "Lock Kiya Jaaye?" Confirmation Bar ── */}
               {selectedOption !== null && !isLocked && (
                 <div className="flex flex-wrap items-center justify-center gap-4 pt-3 animate-fade-in">
-                  <div className="text-xs text-amber-300 font-bold">
-                    Option {String.fromCharCode(65 + selectedOption)} chuna gaya hai.
+                  <div className="text-xs text-amber-300 font-bold flex items-center gap-2">
+                    {team && teamAnswerSubmitted && (
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                    )}
+                    Option {String.fromCharCode(65 + selectedOption)} chuna gaya hai {team ? '(Laptop se Admin monitor par live)' : ''}.
                   </div>
                   <button
                     onClick={handleLockOption}
                     className="px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-sm tracking-wider uppercase shadow-lg shadow-amber-500/30 transition transform hover:scale-105 cursor-pointer"
                   >
-                    Lock Kiya Jaaye! (Lock Answer) 🔒
+                    {team ? 'Confirm Team Choice 🔒' : 'Lock Kiya Jaaye! (Lock Answer) 🔒'}
                   </button>
                 </div>
               )}
