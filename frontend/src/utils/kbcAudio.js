@@ -7,6 +7,7 @@ class KbcSoundManager {
     this.droneOsc = null;
     this.droneGain = null;
     this.isMuted = false;
+    this.currentAudio = null;
   }
 
   init() {
@@ -203,8 +204,57 @@ class KbcSoundManager {
     } catch (e) {}
   }
 
-  // 6. Wrong Answer Dramatic Buzzer
+  // 6. Question Arrival Theme / Screen Entrance Music
+  playQuestionArrival() {
+    if (this.isMuted) return;
+    this.init();
+    this.stopDrone();
+    try {
+      if (this.currentAudio) {
+        try { this.currentAudio.pause(); } catch (e) {}
+        this.currentAudio = null;
+      }
+      const audio = new Audio('/kbc-question.mp3');
+      audio.volume = 0.85;
+      this.currentAudio = audio;
+      const p = audio.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch(() => {});
+      }
+      // Resume subtle drone after theme plays
+      setTimeout(() => {
+        this.startDrone();
+      }, 5500);
+    } catch (e) {
+      console.warn('Question arrival audio notice:', e);
+    }
+  }
+
+  // 7. Wrong Answer Sound Effect (Contestant Laptop & Hotseat)
   playWrong() {
+    if (this.isMuted) return;
+    this.init();
+    this.stopDrone();
+    try {
+      if (this.currentAudio) {
+        try { this.currentAudio.pause(); } catch (e) {}
+        this.currentAudio = null;
+      }
+      const audio = new Audio('/kbc-wrong.mp3');
+      audio.volume = 0.9;
+      this.currentAudio = audio;
+      const p = audio.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch(() => {
+          this.playWrongSynth();
+        });
+      }
+    } catch (e) {
+      this.playWrongSynth();
+    }
+  }
+
+  playWrongSynth() {
     if (this.isMuted) return;
     this.init();
     if (!this.ctx) return;

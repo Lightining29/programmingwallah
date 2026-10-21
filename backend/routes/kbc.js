@@ -977,7 +977,20 @@ router.get('/session/status', async (req, res) => {
         
         // Fetch current active question details
         let currentQuestion = null;
-        const [qRows] = await pool.query('SELECT * FROM kbc_questions WHERE level = ? AND is_active = 1 LIMIT 1', [s.current_level || 1]);
+        let query = 'SELECT * FROM kbc_questions WHERE level = ? AND is_active = 1 LIMIT 1';
+        let params = [s.current_level || 1];
+
+        if (s.current_question_id) {
+          query = 'SELECT * FROM kbc_questions WHERE id = ? LIMIT 1';
+          params = [s.current_question_id];
+        }
+
+        let [qRows] = await pool.query(query, params);
+        if (qRows.length === 0) {
+          const [fallbackRows] = await pool.query('SELECT * FROM kbc_questions WHERE level = ? LIMIT 1', [s.current_level || 1]);
+          qRows = fallbackRows;
+        }
+
         if (qRows.length > 0) {
           const q = qRows[0];
           currentQuestion = {
@@ -1093,9 +1106,9 @@ router.post('/admin/session/update', async (req, res) => {
         // Reset locked and revealed state for new question
         await pool.query(`
           UPDATE kbc_sessions 
-          SET is_locked = 0, locked_option = NULL, revealed_correct = NULL, current_level = ?
+          SET is_locked = 0, locked_option = NULL, revealed_correct = NULL, current_level = ?, current_question_id = ?
           WHERE id = 'main_session'
-        `, [current_level || 1]);
+        `, [current_level || 1, current_question_id || null]);
 
         // Also clear teams submitted options for the new round
         await pool.query('UPDATE kbc_teams SET submitted_option = NULL');

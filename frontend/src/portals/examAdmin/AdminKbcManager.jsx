@@ -293,6 +293,13 @@ export default function AdminKbcManager() {
       });
       const data = await res.json();
       if (data.success) {
+        if (selectedLevel === session.current_level) {
+          await handleUpdateLiveRound({
+            current_level: selectedLevel,
+            current_question_id: questionId,
+            reset_round: true
+          });
+        }
         fetchAdminKbcData();
         fetchSessionStatus();
         Swal.fire({

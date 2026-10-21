@@ -102,7 +102,15 @@ export default function KbcExam() {
   const [hostQuote, setHostQuote] = useState(AMITABH_QUOTES.welcome[0]);
   const [isMuted, setIsMuted] = useState(false);
 
-  // ── Poll Live Session Status from Hostinger MySQL (Every 2.5s) ──
+  // Track previous question and session state to detect arrival & answer reveal
+  const lastQuestionTrackRef = useRef({
+    level: null,
+    qId: null,
+    isLive: false,
+    lastRevealed: null
+  });
+
+  // ── Poll Live Session Status from Hostinger MySQL (Every 1.5s) ──
   useEffect(() => {
     let isMounted = true;
     const fetchStatus = async () => {
@@ -110,36 +118,74 @@ export default function KbcExam() {
         const res = await fetch('/api/kbc/session/status');
         const data = await res.json();
         if (isMounted && data.success && data.session) {
-          setAdminSession(data.session);
+          const sess = data.session;
+          setAdminSession(sess);
 
-          // If playing in team mode, synchronize level & host states
+          // If playing in team mode, synchronize level, new question arrival, and host states
           if (team) {
-            const sess = data.session;
-            if (sess.current_level && sess.current_level !== currentLevel) {
-              setCurrentLevel(sess.current_level);
+            const isNowLive = sess.status === 'LIVE';
+            const levelChanged = sess.current_level && sess.current_level !== lastQuestionTrackRef.current.level;
+            const qChanged = sess.current_question?.id && sess.current_question.id !== lastQuestionTrackRef.current.qId;
+            const justWentLive = isNowLive && !lastQuestionTrackRef.current.isLive;
+
+            // When a new question arrives on contestant laptop (Admin started or advanced round)
+            if (isNowLive && (levelChanged || qChanged || justWentLive)) {
+              const newLvl = sess.current_level || 1;
+              setCurrentLevel(newLvl);
               setSelectedOption(null);
               setIsLocked(false);
               setAnswerStatus(null);
               setRevealedCorrect(null);
               setTeamAnswerSubmitted(false);
+              setEliminatedOptions([]);
+
+              // Play Question Arrival Audio on contestant laptop!
+              kbcAudio.playQuestionArrival();
+
+              const prizeLabel = KBC_PRIZE_LADDER[newLvl - 1]?.prize || '₹1,000';
+              setHostQuote(AMITABH_QUOTES.questionIntro(newLvl, prizeLabel));
+
+              lastQuestionTrackRef.current.level = newLvl;
+              lastQuestionTrackRef.current.qId = sess.current_question?.id || null;
+              lastQuestionTrackRef.current.lastRevealed = null;
             }
 
-            if (sess.is_locked) {
-              setIsLocked(true);
-              if (sess.locked_option !== null && sess.locked_option !== undefined) {
-                setSelectedOption(sess.locked_option);
+            lastQuestionTrackRef.current.isLive = isNowLive;
+
+            if (isNowLive) {
+              // Admin locks the option
+              if (sess.is_locked && !isLocked) {
+                setIsLocked(true);
+                if (sess.locked_option !== null && sess.locked_option !== undefined) {
+                  setSelectedOption(sess.locked_option);
+                }
+                setAnswerStatus('evaluating');
+                kbcAudio.playLock();
               }
-              setAnswerStatus('evaluating');
-            }
 
-            if (sess.revealed_correct !== null && sess.revealed_correct !== undefined) {
-              setRevealedCorrect(sess.revealed_correct);
-              const isCorrect = selectedOption === sess.revealed_correct;
-              setAnswerStatus(isCorrect ? 'correct' : 'wrong');
-              if (isCorrect) {
-                kbcAudio.playCorrect();
-              } else if (selectedOption !== null) {
-                kbcAudio.playWrong();
+              // Admin reveals the correct answer
+              if (sess.revealed_correct !== null && sess.revealed_correct !== undefined) {
+                if (lastQuestionTrackRef.current.lastRevealed !== sess.revealed_correct) {
+                  lastQuestionTrackRef.current.lastRevealed = sess.revealed_correct;
+                  setRevealedCorrect(sess.revealed_correct);
+
+                  const isCorrect = selectedOption === sess.revealed_correct;
+                  setAnswerStatus(isCorrect ? 'correct' : 'wrong');
+
+                  if (isCorrect) {
+                    kbcAudio.playCorrect();
+                    const winAmount = KBC_PRIZE_LADDER[sess.current_level - 1]?.amount || 0;
+                    const winLabel = KBC_PRIZE_LADDER[sess.current_level - 1]?.prize || '₹0';
+                    setEarnedAmount(winAmount);
+                    setEarnedPrizeLabel(winLabel);
+                    triggerConfetti(0.5);
+                  } else {
+                    // Play uploaded wrong answer audio on contestant laptop!
+                    kbcAudio.playWrong();
+                    const correctLetter = String.fromCharCode(65 + sess.revealed_correct);
+                    setHostQuote(AMITABH_QUOTES.wrongAnswer(correctLetter));
+                  }
+                }
               }
             }
           }
@@ -148,12 +194,12 @@ export default function KbcExam() {
     };
 
     fetchStatus();
-    const interval = setInterval(fetchStatus, 2500);
+    const interval = setInterval(fetchStatus, 1500);
     return () => {
       isMounted = false;
       clearInterval(interval);
     };
-  }, [team, currentLevel, selectedOption]);
+  }, [team, currentLevel, selectedOption, isLocked]);
 
   // Load Questions (from Hostinger MySQL API, with robust local fallback)
   useEffect(() => {
@@ -325,10 +371,9 @@ export default function KbcExam() {
   // Start the Game
   const handleStartGame = () => {
     kbcAudio.init();
-    kbcAudio.playLifeline();
+    kbcAudio.playQuestionArrival();
     setGameStarted(true);
     setHostQuote(AMITABH_QUOTES.questionIntro(currentLevel, currentPrize.prize));
-    kbcAudio.startDrone();
   };
 
   // Option Click
@@ -425,6 +470,7 @@ export default function KbcExam() {
     setEliminatedOptions([]);
     const nextPrize = KBC_PRIZE_LADDER[nextLvl - 1];
     setHostQuote(AMITABH_QUOTES.questionIntro(nextLvl, nextPrize.prize));
+    kbcAudio.playQuestionArrival();
   };
 
   // Jackpot Win (₹7 Crore!)
