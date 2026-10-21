@@ -463,6 +463,25 @@ export const initMySQLTables = async () => {
     await connection.query(`ALTER TABLE student_portfolios ADD COLUMN resume_pdf_url LONGTEXT;`).catch(() => {});
     await connection.query(`ALTER TABLE student_portfolios ADD COLUMN resume_pdf_name VARCHAR(255) DEFAULT '';`).catch(() => {});
 
+    // Create kbc_questions table in Hostinger MySQL
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS kbc_questions (
+        id VARCHAR(100) PRIMARY KEY,
+        level INT NOT NULL,
+        topic VARCHAR(100) NOT NULL,
+        question TEXT NOT NULL,
+        options_json LONGTEXT NOT NULL,
+        correct INT NOT NULL,
+        explanation TEXT,
+        is_custom TINYINT(1) DEFAULT 0,
+        is_active TINYINT(1) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_kbc_level (level),
+        INDEX idx_kbc_active (is_active)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
     connection.release();
     return true;
   } catch (error) {

@@ -1,15 +1,9 @@
 import express from 'express';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { getMySQLPool } from '../config/mysql.js';
 
 const router = express.Router();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const DATA_DIR = path.join(__dirname, '../data');
-const CONFIG_FILE = path.join(DATA_DIR, 'kbc_config.json');
 
-// Default Curated MERN & SQL Questions for all 16 levels
+// ── Default Curated MERN & SQL Questions (16 Levels, 3 Questions Each = 48 Questions) ──
 export const DEFAULT_MERN_SQL_QUESTIONS = {
   1: [
     {
@@ -449,285 +443,413 @@ export const DEFAULT_MERN_SQL_QUESTIONS = {
   ]
 };
 
-// Helper: Ensure config file exists
-function loadKbcConfig() {
+// ── In-Memory Fallback State (Active only if Hostinger MySQL is momentarily unreachable during local development) ──
+let memoryStore = {
+  activeSelections: (() => {
+    const s = {};
+    for (let l = 1; l <= 16; l++) s[l] = DEFAULT_MERN_SQL_QUESTIONS[l][0].id;
+    return s;
+  })(),
+  customQuestions: {},
+  updatedAt: new Date().toISOString()
+};
+
+// ── Ensure Hostinger MySQL Table & Seed Default Questions ──
+let tableEnsured = false;
+async function ensureKbcTable() {
+  if (tableEnsured) return true;
+  const pool = getMySQLPool();
+  if (!pool) return false;
+
   try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    if (fs.existsSync(CONFIG_FILE)) {
-      const raw = fs.readFileSync(CONFIG_FILE, 'utf-8');
-      const data = JSON.parse(raw);
-      if (data && data.activeSelections && Object.keys(data.activeSelections).length >= 16) {
-        return data;
+    // 1. Create table with Hostinger MySQL standard engine
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS kbc_questions (
+        id VARCHAR(100) PRIMARY KEY,
+        level INT NOT NULL,
+        topic VARCHAR(100) NOT NULL,
+        question TEXT NOT NULL,
+        options_json LONGTEXT NOT NULL,
+        correct INT NOT NULL,
+        explanation TEXT,
+        is_custom TINYINT(1) DEFAULT 0,
+        is_active TINYINT(1) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_kbc_level (level),
+        INDEX idx_kbc_active (is_active)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // 2. Check if questions exist
+    const [rows] = await pool.query('SELECT COUNT(*) AS total FROM kbc_questions');
+    const total = rows[0]?.total || 0;
+
+    if (total === 0) {
+      console.log('Seeding initial 48 MERN & SQL questions into Hostinger MySQL kbc_questions table...');
+      for (let lvl = 1; lvl <= 16; lvl++) {
+        const list = DEFAULT_MERN_SQL_QUESTIONS[lvl] || [];
+        for (let i = 0; i < list.length; i++) {
+          const q = list[i];
+          const isActive = i === 0 ? 1 : 0; // First question of each level is active by default
+          await pool.query(`
+            INSERT INTO kbc_questions (id, level, topic, question, options_json, correct, explanation, is_custom, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)
+            ON DUPLICATE KEY UPDATE question = VALUES(question);
+          `, [q.id, lvl, q.topic, q.question, JSON.stringify(q.options), q.correct, q.explanation, isActive]);
+        }
       }
+      console.log('✔ Seeded 48 MERN & SQL questions into Hostinger MySQL successfully.');
     }
-  } catch (err) {
-    console.error('Error loading kbc_config.json:', err.message);
-  }
 
-  // Default active configuration: index 0 from each level of DEFAULT_MERN_SQL_QUESTIONS
-  const initialSelections = {};
-  for (let lvl = 1; lvl <= 16; lvl++) {
-    initialSelections[lvl] = DEFAULT_MERN_SQL_QUESTIONS[lvl][0].id;
-  }
-
-  const initialData = {
-    updatedAt: new Date().toISOString(),
-    updatedBy: 'Admin (Default MERN & SQL Set)',
-    activeSelections: initialSelections,
-    customQuestions: {}
-  };
-
-  try {
-    fs.writeFileSync(CONFIG_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
-  } catch (err) {
-    console.error('Error writing initial kbc_config.json:', err.message);
-  }
-
-  return initialData;
-}
-
-function saveKbcConfig(config) {
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    config.updatedAt = new Date().toISOString();
-    fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), 'utf-8');
+    tableEnsured = true;
     return true;
   } catch (err) {
-    console.error('Error saving kbc_config.json:', err.message);
+    console.warn('Hostinger MySQL kbc_questions table initialization notice:', err.message);
     return false;
   }
 }
 
-// ── 1. PUBLIC: Get Active KBC Exam Questions for Game ──
-router.get('/questions', (req, res) => {
+// Initial check on module load
+ensureKbcTable().catch(() => {});
+
+// ── 1. PUBLIC: Get Active 16 KBC Exam Questions for Game ──
+router.get('/questions', async (req, res) => {
+  const pool = getMySQLPool();
   try {
-    const config = loadKbcConfig();
-    const activeQuestions = [];
-    const flipPoolByLevel = {};
+    await ensureKbcTable();
 
-    for (let lvl = 1; lvl <= 16; lvl++) {
-      const activeId = config.activeSelections[lvl];
-      const levelQuestions = [
-        ...(DEFAULT_MERN_SQL_QUESTIONS[lvl] || []),
-        ...(config.customQuestions[lvl] || [])
-      ];
+    if (pool) {
+      // Fetch 16 active questions
+      const [activeRows] = await pool.query(`
+        SELECT id, level, topic, question, options_json, correct, explanation 
+        FROM kbc_questions 
+        WHERE is_active = 1 
+        ORDER BY level ASC
+      `);
 
-      let selected = levelQuestions.find(q => q.id === activeId);
-      if (!selected) {
-        selected = levelQuestions[0];
+      // Fetch alternates for Flip-the-Question lifeline
+      const [altRows] = await pool.query(`
+        SELECT id, level, topic, question, options_json, correct, explanation 
+        FROM kbc_questions 
+        WHERE is_active = 0 
+        ORDER BY level ASC, created_at ASC
+      `);
+
+      if (activeRows.length >= 16) {
+        const activeQuestions = activeRows.map(row => ({
+          level: row.level,
+          id: row.id,
+          topic: row.topic,
+          question: row.question,
+          options: typeof row.options_json === 'string' ? JSON.parse(row.options_json) : row.options_json,
+          correct: row.correct,
+          explanation: row.explanation
+        }));
+
+        const flipPool = {};
+        altRows.forEach(row => {
+          if (!flipPool[row.level]) {
+            flipPool[row.level] = {
+              level: row.level,
+              id: row.id,
+              topic: row.topic,
+              question: row.question,
+              options: typeof row.options_json === 'string' ? JSON.parse(row.options_json) : row.options_json,
+              correct: row.correct,
+              explanation: row.explanation
+            };
+          }
+        });
+
+        return res.json({
+          success: true,
+          questions: activeQuestions,
+          flipPool,
+          source: 'Hostinger MySQL Database'
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('MySQL /questions error, using fallback:', err.message);
+  }
+
+  // Fallback to in-memory MERN & SQL dataset
+  const activeQuestions = [];
+  const flipPool = {};
+  for (let lvl = 1; lvl <= 16; lvl++) {
+    const list = DEFAULT_MERN_SQL_QUESTIONS[lvl];
+    const activeId = memoryStore.activeSelections[lvl];
+    const customList = memoryStore.customQuestions[lvl] || [];
+    const all = [...list, ...customList];
+    const selected = all.find(q => q.id === activeId) || all[0];
+    const alternate = all.find(q => q.id !== selected.id) || null;
+
+    activeQuestions.push({
+      level: lvl,
+      id: selected.id,
+      topic: selected.topic,
+      question: selected.question,
+      options: selected.options,
+      correct: selected.correct,
+      explanation: selected.explanation
+    });
+    flipPool[lvl] = alternate;
+  }
+
+  return res.json({
+    success: true,
+    questions: activeQuestions,
+    flipPool,
+    source: 'Memory Fallback'
+  });
+});
+
+// ── 2. ADMIN: Get All Available Questions Pool & Active Selections from Hostinger MySQL ──
+router.get('/admin/all', async (req, res) => {
+  const pool = getMySQLPool();
+  try {
+    await ensureKbcTable();
+
+    if (pool) {
+      const [allRows] = await pool.query(`
+        SELECT id, level, topic, question, options_json, correct, explanation, is_custom, is_active, created_at 
+        FROM kbc_questions 
+        ORDER BY level ASC, is_active DESC, created_at ASC
+      `);
+
+      if (allRows && allRows.length > 0) {
+        const levels = {};
+        for (let lvl = 1; lvl <= 16; lvl++) {
+          const poolForLevel = allRows
+            .filter(r => r.level === lvl)
+            .map(r => ({
+              id: r.id,
+              level: r.level,
+              topic: r.topic,
+              question: r.question,
+              options: typeof r.options_json === 'string' ? JSON.parse(r.options_json) : r.options_json,
+              correct: r.correct,
+              explanation: r.explanation,
+              isCustom: Boolean(r.is_custom),
+              isActive: Boolean(r.is_active)
+            }));
+
+          const activeQ = poolForLevel.find(q => q.isActive) || poolForLevel[0];
+          levels[lvl] = {
+            level: lvl,
+            activeQuestionId: activeQ ? activeQ.id : null,
+            activeQuestion: activeQ,
+            pool: poolForLevel
+          };
+        }
+
+        return res.json({
+          success: true,
+          levels,
+          source: 'Hostinger MySQL Database'
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('MySQL /admin/all error, using fallback:', err.message);
+  }
+
+  // Fallback
+  const levels = {};
+  for (let lvl = 1; lvl <= 16; lvl++) {
+    const defaultPool = DEFAULT_MERN_SQL_QUESTIONS[lvl] || [];
+    const customPool = memoryStore.customQuestions[lvl] || [];
+    const allPool = [...defaultPool, ...customPool];
+    const activeId = memoryStore.activeSelections[lvl] || (allPool[0] ? allPool[0].id : null);
+
+    levels[lvl] = {
+      level: lvl,
+      activeQuestionId: activeId,
+      activeQuestion: allPool.find(q => q.id === activeId) || allPool[0],
+      pool: allPool
+    };
+  }
+
+  res.json({
+    success: true,
+    levels,
+    source: 'Memory Fallback'
+  });
+});
+
+// ── 3. ADMIN: Select which question is active for a level in Hostinger MySQL ──
+router.post('/admin/select', async (req, res) => {
+  const { level, questionId } = req.body;
+  const lvl = parseInt(level, 10);
+
+  if (!lvl || lvl < 1 || lvl > 16 || !questionId) {
+    return res.status(400).json({ success: false, message: 'Valid level (1-16) and questionId are required.' });
+  }
+
+  const pool = getMySQLPool();
+  try {
+    await ensureKbcTable();
+
+    if (pool) {
+      // Deactivate current active question for this level
+      await pool.query('UPDATE kbc_questions SET is_active = 0 WHERE level = ?', [lvl]);
+
+      // Activate the selected question
+      const [updateResult] = await pool.query(
+        'UPDATE kbc_questions SET is_active = 1 WHERE level = ? AND id = ?',
+        [lvl, String(questionId)]
+      );
+
+      if (updateResult.affectedRows > 0) {
+        return res.json({
+          success: true,
+          message: `Level ${lvl} question updated in Hostinger MySQL.`,
+          activeQuestionId: String(questionId),
+          database: 'Hostinger MySQL'
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('MySQL /admin/select query error:', err.message);
+  }
+
+  // Fallback update
+  memoryStore.activeSelections[lvl] = String(questionId);
+  return res.json({
+    success: true,
+    message: `Level ${lvl} question updated.`,
+    activeQuestionId: String(questionId),
+    database: 'Memory Fallback'
+  });
+});
+
+// ── 4. ADMIN: Add a New Custom MERN or SQL Question into Hostinger MySQL ──
+router.post('/admin/add-custom', async (req, res) => {
+  const { level, topic, question, options, correct, explanation, setAsActive } = req.body;
+  const lvl = parseInt(level, 10);
+
+  if (!lvl || lvl < 1 || lvl > 16) {
+    return res.status(400).json({ success: false, message: 'Level must be between 1 and 16.' });
+  }
+  if (!question || !question.trim()) {
+    return res.status(400).json({ success: false, message: 'Question text is required.' });
+  }
+  if (!Array.isArray(options) || options.length !== 4 || options.some(o => !o || !o.trim())) {
+    return res.status(400).json({ success: false, message: 'Exactly 4 non-empty options are required.' });
+  }
+  const correctIdx = parseInt(correct, 10);
+  if (isNaN(correctIdx) || correctIdx < 0 || correctIdx > 3) {
+    return res.status(400).json({ success: false, message: 'Correct option index must be 0, 1, 2, or 3.' });
+  }
+
+  const newId = `custom-${lvl}-${Date.now()}`;
+  const shouldActivate = Boolean(setAsActive);
+
+  const pool = getMySQLPool();
+  try {
+    await ensureKbcTable();
+
+    if (pool) {
+      if (shouldActivate) {
+        await pool.query('UPDATE kbc_questions SET is_active = 0 WHERE level = ?', [lvl]);
       }
 
-      // Format for client game
-      activeQuestions.push({
-        level: lvl,
-        id: selected.id,
-        topic: selected.topic || 'MERN & SQL',
-        question: selected.question,
-        options: selected.options,
-        correct: selected.correct,
-        explanation: selected.explanation
-      });
+      await pool.query(`
+        INSERT INTO kbc_questions (id, level, topic, question, options_json, correct, explanation, is_custom, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
+      `, [
+        newId,
+        lvl,
+        topic || 'MERN & SQL',
+        question.trim(),
+        JSON.stringify(options.map(o => o.trim())),
+        correctIdx,
+        (explanation || '').trim(),
+        shouldActivate ? 1 : 0
+      ]);
 
-      // Provide alternate question for "Flip the Question" lifeline
-      const alternates = levelQuestions.filter(q => q.id !== selected.id);
-      flipPoolByLevel[lvl] = alternates.length > 0 ? alternates[0] : null;
-    }
-
-    res.json({
-      success: true,
-      questions: activeQuestions,
-      flipPool: flipPoolByLevel,
-      updatedAt: config.updatedAt
-    });
-  } catch (err) {
-    console.error('Error generating KBC active questions:', err);
-    res.status(500).json({ success: false, message: 'Failed to load KBC questions.' });
-  }
-});
-
-// ── 2. ADMIN: Get All Available Questions Pool & Active Selections ──
-router.get('/admin/all', (req, res) => {
-  try {
-    const config = loadKbcConfig();
-    const levelsData = {};
-
-    for (let lvl = 1; lvl <= 16; lvl++) {
-      const defaultPool = DEFAULT_MERN_SQL_QUESTIONS[lvl] || [];
-      const customPool = config.customQuestions[lvl] || [];
-      const allPool = [...defaultPool, ...customPool];
-      const activeId = config.activeSelections[lvl] || (allPool[0] ? allPool[0].id : null);
-
-      levelsData[lvl] = {
-        level: lvl,
-        activeQuestionId: activeId,
-        activeQuestion: allPool.find(q => q.id === activeId) || allPool[0],
-        pool: allPool
-      };
-    }
-
-    res.json({
-      success: true,
-      levels: levelsData,
-      updatedAt: config.updatedAt,
-      updatedBy: config.updatedBy
-    });
-  } catch (err) {
-    console.error('Error fetching admin KBC questions pool:', err);
-    res.status(500).json({ success: false, message: 'Failed to fetch admin questions pool.' });
-  }
-});
-
-// ── 3. ADMIN: Select / Choose which question to activate for a level ──
-router.post('/admin/select', (req, res) => {
-  try {
-    const { level, questionId, adminName } = req.body;
-    const lvl = parseInt(level, 10);
-
-    if (!lvl || lvl < 1 || lvl > 16 || !questionId) {
-      return res.status(400).json({ success: false, message: 'Valid level (1-16) and questionId are required.' });
-    }
-
-    const config = loadKbcConfig();
-    config.activeSelections[lvl] = String(questionId);
-    config.updatedBy = adminName || 'Admin';
-
-    if (saveKbcConfig(config)) {
       return res.json({
         success: true,
-        message: `Level ${lvl} question updated successfully.`,
-        activeQuestionId: config.activeSelections[lvl]
+        message: `Custom question added to Level ${lvl} in Hostinger MySQL!`,
+        question: {
+          id: newId,
+          level: lvl,
+          topic: topic || 'MERN & SQL',
+          question: question.trim(),
+          options,
+          correct: correctIdx,
+          explanation: (explanation || '').trim(),
+          isCustom: true
+        },
+        database: 'Hostinger MySQL'
       });
-    } else {
-      return res.status(500).json({ success: false, message: 'Failed to save configuration.' });
     }
   } catch (err) {
-    console.error('Error setting active question:', err);
-    res.status(500).json({ success: false, message: 'Error updating active question.' });
+    console.warn('MySQL /admin/add-custom query error:', err.message);
   }
+
+  // Fallback
+  const fallbackQ = {
+    id: newId,
+    level: lvl,
+    topic: topic || 'MERN & SQL',
+    question: question.trim(),
+    options: options.map(o => o.trim()),
+    correct: correctIdx,
+    explanation: (explanation || '').trim(),
+    isCustom: true
+  };
+  if (!memoryStore.customQuestions[lvl]) memoryStore.customQuestions[lvl] = [];
+  memoryStore.customQuestions[lvl].push(fallbackQ);
+  if (shouldActivate) memoryStore.activeSelections[lvl] = newId;
+
+  return res.json({
+    success: true,
+    message: `Custom question added to Level ${lvl}.`,
+    question: fallbackQ,
+    database: 'Memory Fallback'
+  });
 });
 
-// ── 4. ADMIN: Batch Select Questions for multiple levels ──
-router.post('/admin/select-batch', (req, res) => {
+// ── 5. ADMIN: Reset to Factory Default MERN & SQL Set in Hostinger MySQL ──
+router.post('/admin/reset', async (req, res) => {
+  const pool = getMySQLPool();
   try {
-    const { selections, adminName } = req.body; // { 1: "q-1-2", 2: "q-2-3", ... }
-    if (!selections || typeof selections !== 'object') {
-      return res.status(400).json({ success: false, message: 'Invalid selections payload.' });
-    }
+    await ensureKbcTable();
 
-    const config = loadKbcConfig();
-    Object.entries(selections).forEach(([lvl, qid]) => {
-      const l = parseInt(lvl, 10);
-      if (l >= 1 && l <= 16 && qid) {
-        config.activeSelections[l] = String(qid);
+    if (pool) {
+      // Remove any custom questions
+      await pool.query('DELETE FROM kbc_questions WHERE is_custom = 1');
+      // Set all to inactive
+      await pool.query('UPDATE kbc_questions SET is_active = 0');
+
+      // Set the first default question of each level to active
+      for (let lvl = 1; lvl <= 16; lvl++) {
+        const firstDef = DEFAULT_MERN_SQL_QUESTIONS[lvl][0];
+        await pool.query('UPDATE kbc_questions SET is_active = 1 WHERE level = ? AND id = ?', [lvl, firstDef.id]);
       }
-    });
 
-    config.updatedBy = adminName || 'Admin';
-    if (saveKbcConfig(config)) {
       return res.json({
         success: true,
-        message: 'KBC questions saved successfully!',
-        activeSelections: config.activeSelections
+        message: 'KBC questions reset to default MERN & SQL master set in Hostinger MySQL!',
+        database: 'Hostinger MySQL'
       });
-    } else {
-      return res.status(500).json({ success: false, message: 'Failed to write config.' });
     }
   } catch (err) {
-    console.error('Error in batch question select:', err);
-    res.status(500).json({ success: false, message: 'Error saving batch questions.' });
+    console.warn('MySQL /admin/reset query error:', err.message);
   }
-});
 
-// ── 5. ADMIN: Add a New Custom MERN or SQL Question to a Level ──
-router.post('/admin/add-custom', (req, res) => {
-  try {
-    const { level, topic, question, options, correct, explanation, adminName, setAsActive } = req.body;
-    const lvl = parseInt(level, 10);
-
-    if (!lvl || lvl < 1 || lvl > 16) {
-      return res.status(400).json({ success: false, message: 'Level must be between 1 and 16.' });
-    }
-    if (!question || !question.trim()) {
-      return res.status(400).json({ success: false, message: 'Question text is required.' });
-    }
-    if (!Array.isArray(options) || options.length !== 4 || options.some(o => !o || !o.trim())) {
-      return res.status(400).json({ success: false, message: 'Exactly 4 non-empty options are required.' });
-    }
-    const correctIdx = parseInt(correct, 10);
-    if (isNaN(correctIdx) || correctIdx < 0 || correctIdx > 3) {
-      return res.status(400).json({ success: false, message: 'Correct option index must be 0, 1, 2, or 3.' });
-    }
-
-    const newQuestion = {
-      id: `custom-${lvl}-${Date.now()}`,
-      topic: topic || 'MERN & SQL',
-      question: question.trim(),
-      options: options.map(o => o.trim()),
-      correct: correctIdx,
-      explanation: (explanation || '').trim(),
-      isCustom: true,
-      createdAt: new Date().toISOString()
-    };
-
-    const config = loadKbcConfig();
-    if (!config.customQuestions[lvl]) {
-      config.customQuestions[lvl] = [];
-    }
-    config.customQuestions[lvl].push(newQuestion);
-
-    if (setAsActive) {
-      config.activeSelections[lvl] = newQuestion.id;
-    }
-    config.updatedBy = adminName || 'Admin';
-
-    if (saveKbcConfig(config)) {
-      return res.json({
-        success: true,
-        message: `Custom question added to Level ${lvl} successfully!`,
-        question: newQuestion,
-        activeQuestionId: config.activeSelections[lvl]
-      });
-    } else {
-      return res.status(500).json({ success: false, message: 'Failed to save question.' });
-    }
-  } catch (err) {
-    console.error('Error adding custom question:', err);
-    res.status(500).json({ success: false, message: 'Error adding custom question.' });
+  // Fallback reset
+  memoryStore.customQuestions = {};
+  for (let l = 1; l <= 16; l++) {
+    memoryStore.activeSelections[l] = DEFAULT_MERN_SQL_QUESTIONS[l][0].id;
   }
-});
-
-// ── 6. ADMIN: Reset to Factory Default MERN & SQL Set ──
-router.post('/admin/reset', (req, res) => {
-  try {
-    const initialSelections = {};
-    for (let lvl = 1; lvl <= 16; lvl++) {
-      initialSelections[lvl] = DEFAULT_MERN_SQL_QUESTIONS[lvl][0].id;
-    }
-
-    const resetData = {
-      updatedAt: new Date().toISOString(),
-      updatedBy: 'Admin (Reset to Default MERN & SQL Set)',
-      activeSelections: initialSelections,
-      customQuestions: {}
-    };
-
-    if (saveKbcConfig(resetData)) {
-      return res.json({
-        success: true,
-        message: 'KBC questions reset to default MERN & SQL master set successfully!',
-        activeSelections: initialSelections
-      });
-    } else {
-      return res.status(500).json({ success: false, message: 'Failed to reset questions.' });
-    }
-  } catch (err) {
-    console.error('Error resetting KBC questions:', err);
-    res.status(500).json({ success: false, message: 'Error resetting questions.' });
-  }
+  return res.json({
+    success: true,
+    message: 'KBC questions reset to default MERN & SQL master set.',
+    database: 'Memory Fallback'
+  });
 });
 
 export default router;

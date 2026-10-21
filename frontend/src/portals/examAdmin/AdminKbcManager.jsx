@@ -239,6 +239,9 @@ export default function AdminKbcManager() {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-bold uppercase tracking-wider mb-2">
               <Trophy className="w-3.5 h-3.5 text-amber-400" /> KBC Exam Control Suite
+              <span className="text-slate-500">•</span>
+              <Database className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-emerald-300">Hostinger MySQL</span>
             </div>
             <h2 className="text-2xl font-black text-white tracking-wide flex items-center gap-3">
               Kaun Banega Crorepati — MERN & SQL Question Curators
