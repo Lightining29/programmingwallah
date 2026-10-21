@@ -36,11 +36,13 @@ Generate ${count === 1 ? '1 high-quality multiple choice question' : `${count} h
 Target: KBC Level ${lvl} of 16 (Difficulty: ${difficultyContext}).
 
 Strict Rules:
-1. Every question must have exactly 4 clear options (Option A, B, C, D).
-2. "correct" must be the 0-based integer index of the correct option (0, 1, 2, or 3).
-3. "explanation" must be a concise, helpful explanation of why the correct option is right.
-4. "topic" must be a concise topic label (e.g., "SQL", "React", "Node.js", "Express", "MongoDB", "JavaScript").
-5. The question must be realistic, unambiguous, and technically accurate.
+1. Every question MUST have EXACTLY 4 distinct options (Option A, B, C, D).
+2. CRITICAL SINGLE-ANSWER RULE: EXACTLY ONE (1) OPTION MUST BE CORRECT. The other THREE (3) options MUST be completely incorrect, plausible technical distractors. There must NEVER be multiple correct answers, partial truths, or ambiguous options.
+3. FORBIDDEN META-OPTIONS: Do NOT use "All of the above", "None of the above", "Both A and B", or "Both A and C". Every single option must be a concrete, independent statement/value.
+4. "correct" MUST be the exact 0-based integer index of the single correct option (0 for Option A, 1 for Option B, 2 for Option C, or 3 for Option D).
+5. "explanation" must clearly explain why that one specific option is correct and why the other options are wrong.
+6. "topic" must be a concise topic label (e.g. "SQL", "React", "Node.js", "Express", "MongoDB", "JavaScript").
+7. The question and options must be technically accurate, realistic, and unambiguous.
 
 ${isMulti 
   ? `Return ONLY a valid JSON array of objects:
@@ -143,12 +145,18 @@ function sanitizeQuestion(raw, lvl, defaultTopic) {
     correct = 0;
   }
 
+  // Ensure all 4 options are distinct non-empty strings
+  const cleanedOptions = options.map((o, idx) => {
+    const val = String(o || '').trim();
+    return val || `Option ${String.fromCharCode(65 + idx)}`;
+  });
+
   return {
     level: lvl,
     topic: (raw.topic || defaultTopic || 'MERN & SQL').trim(),
     question: raw.question.trim(),
-    options: options.map(o => String(o).trim()),
-    correct,
+    options: cleanedOptions,
+    correct, // Strictly one correct option index (0, 1, 2, or 3)
     explanation: (raw.explanation || '').trim()
   };
 }

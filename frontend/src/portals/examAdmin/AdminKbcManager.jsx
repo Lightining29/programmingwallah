@@ -1228,35 +1228,58 @@ export default function AdminKbcManager() {
               </div>
 
               <div className="space-y-2.5">
-                <label className="block text-xs font-bold text-slate-300">4 Options & Mark Correct Answer</label>
-                {newOptions.map((opt, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <span className="w-7 h-7 rounded-lg bg-slate-800 text-amber-400 text-xs font-bold flex items-center justify-center shrink-0">
-                      {String.fromCharCode(65 + i)}
-                    </span>
-                    <input
-                      type="text"
-                      value={opt}
-                      onChange={e => {
-                        const copy = [...newOptions];
-                        copy[i] = e.target.value;
-                        setNewOptions(copy);
-                      }}
-                      placeholder={`Option ${String.fromCharCode(65 + i)}`}
-                      className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400"
-                      required
-                    />
-                    <label className="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer shrink-0">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-300">
+                    4 Options & Mark Correct Answer
+                  </label>
+                  <span className="text-[11px] text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-400/30">
+                    Strictly 1 Option Is Correct
+                  </span>
+                </div>
+
+                {newOptions.map((opt, i) => {
+                  const isThisCorrect = newCorrect === i;
+                  return (
+                    <div 
+                      key={i} 
+                      className={`flex items-center gap-2 p-2 rounded-2xl border transition ${
+                        isThisCorrect ? 'bg-emerald-950/40 border-emerald-500/60' : 'bg-slate-950/60 border-slate-800'
+                      }`}
+                    >
+                      <span className={`w-7 h-7 rounded-lg text-xs font-black flex items-center justify-center shrink-0 ${
+                        isThisCorrect ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-amber-400'
+                      }`}>
+                        {String.fromCharCode(65 + i)}
+                      </span>
                       <input
-                        type="radio"
-                        name="correctOpt"
-                        checked={newCorrect === i}
-                        onChange={() => setNewCorrect(i)}
+                        type="text"
+                        value={opt}
+                        onChange={e => {
+                          const copy = [...newOptions];
+                          copy[i] = e.target.value;
+                          setNewOptions(copy);
+                        }}
+                        placeholder={`Option ${String.fromCharCode(65 + i)}`}
+                        className="flex-1 bg-transparent border-0 px-2 py-1 text-sm text-white focus:outline-none"
+                        required
                       />
-                      <span>Correct</span>
-                    </label>
-                  </div>
-                ))}
+                      <label className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold cursor-pointer shrink-0 transition ${
+                        isThisCorrect 
+                          ? 'bg-emerald-500 text-slate-950 font-black shadow-md' 
+                          : 'bg-slate-800 text-slate-400 hover:text-white'
+                      }`}>
+                        <input
+                          type="radio"
+                          name="correctOpt"
+                          checked={isThisCorrect}
+                          onChange={() => setNewCorrect(i)}
+                          className="accent-emerald-500"
+                        />
+                        <span>{isThisCorrect ? '✓ Correct Answer' : 'Mark Correct'}</span>
+                      </label>
+                    </div>
+                  );
+                })}
               </div>
 
               <div>
