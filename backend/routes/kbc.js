@@ -956,6 +956,72 @@ router.post('/admin/ai-generate', async (req, res) => {
   }
 });
 
+// ── 4C. ADMIN: Delete Question from Hostinger MySQL ──
+router.post('/admin/question/delete', async (req, res) => {
+  const { questionId, level } = req.body;
+  const lvl = parseInt(level, 10);
+
+  if (!questionId) {
+    return res.status(400).json({ success: false, message: 'Question ID is required.' });
+  }
+
+  const pool = getMySQLPool();
+  try {
+    await ensureKbcTable();
+
+    if (pool) {
+      // Check if the question exists and if it was currently active
+      const [rows] = await pool.query('SELECT * FROM kbc_questions WHERE id = ?', [questionId]);
+      const wasActive = rows.length > 0 && Boolean(rows[0].is_active);
+      const questionLevel = rows.length > 0 ? rows[0].level : (lvl || 1);
+
+      // Delete the question from MySQL
+      await pool.query('DELETE FROM kbc_questions WHERE id = ?', [questionId]);
+
+      // If it was the active question, activate another question for that level
+      if (wasActive) {
+        const [remaining] = await pool.query(
+          'SELECT id FROM kbc_questions WHERE level = ? ORDER BY is_custom ASC, id ASC LIMIT 1',
+          [questionLevel]
+        );
+        if (remaining.length > 0) {
+          const nextActiveId = remaining[0].id;
+          await pool.query('UPDATE kbc_questions SET is_active = 1 WHERE id = ?', [nextActiveId]);
+
+          // Update live session if this level is currently on-screen
+          const [sessRows] = await pool.query('SELECT current_level, current_question_id FROM kbc_sessions WHERE id = "main_session"');
+          if (sessRows.length > 0 && (sessRows[0].current_level === questionLevel || sessRows[0].current_question_id === questionId)) {
+            await pool.query('UPDATE kbc_sessions SET current_question_id = ? WHERE id = "main_session"', [nextActiveId]);
+          }
+        }
+      }
+
+      return res.json({
+        success: true,
+        message: 'Question deleted successfully from Hostinger MySQL.',
+        database: 'Hostinger MySQL'
+      });
+    }
+  } catch (err) {
+    console.warn('MySQL /admin/question/delete query error:', err.message);
+  }
+
+  // Memory fallback
+  if (lvl && memoryStore.customQuestions[lvl]) {
+    memoryStore.customQuestions[lvl] = memoryStore.customQuestions[lvl].filter(q => q.id !== questionId);
+  }
+  if (lvl && memoryStore.activeSelections[lvl] === questionId) {
+    const defaultPool = DEFAULT_MERN_SQL_QUESTIONS[lvl] || [];
+    memoryStore.activeSelections[lvl] = defaultPool[0]?.id || null;
+  }
+
+  return res.json({
+    success: true,
+    message: 'Question deleted successfully.',
+    database: 'Memory Fallback'
+  });
+});
+
 // ── 5. ADMIN: Reset to Factory Default MERN & SQL Set in Hostinger MySQL ──
 router.post('/admin/reset', async (req, res) => {
   const pool = getMySQLPool();
@@ -1182,9 +1248,9 @@ router.get('/session/status', async (req, res) => {
   });
 });
 
-// ── 7. ADMIN: Confirm & Toggle KBC Session Live / Navbar Status ──
+// ── 7. ADMIN: Confirm & Toggle KBC Session Live / Navbar Status (With Reset from Starting) ──
 router.post('/admin/session/toggle', async (req, res) => {
-  const { status, show_in_navbar, level } = req.body;
+  const { status, show_in_navbar, level, restart_from_start } = req.body;
   const pool = getMySQLPool();
 
   try {
@@ -1192,22 +1258,45 @@ router.post('/admin/session/toggle', async (req, res) => {
 
     const newStatus = status || 'LIVE';
     const showNav = show_in_navbar !== undefined ? (show_in_navbar ? 1 : 0) : 1;
-    const currentLvl = level ? parseInt(level, 10) : 1;
+    const shouldRestart = Boolean(restart_from_start) || newStatus === 'LIVE';
+    const currentLvl = shouldRestart ? 1 : (level ? parseInt(level, 10) : 1);
 
     if (pool) {
-      await pool.query(`
-        UPDATE kbc_sessions 
-        SET status = ?, show_in_navbar = ?, current_level = ?
-        WHERE id = 'main_session'
-      `, [newStatus, showNav, currentLvl]);
+      if (shouldRestart) {
+        // Reset whole KBC from starting (Level 1, all rounds, locks, and revealed states cleared)
+        await pool.query(`
+          UPDATE kbc_sessions 
+          SET status = ?, show_in_navbar = ?, current_level = 1, current_question_id = NULL,
+              is_locked = 0, locked_option = NULL, revealed_correct = NULL
+          WHERE id = 'main_session'
+        `, [newStatus, showNav]);
+
+        // Reset all teams back to Level 1, 0 prize won, ready for round 1
+        await pool.query(`
+          UPDATE kbc_teams 
+          SET current_level = 1, score_amount = 0, safe_amount = 0, submitted_option = NULL,
+              status = 'CONNECTED', lifelines_used_json = NULL
+        `);
+      } else {
+        await pool.query(`
+          UPDATE kbc_sessions 
+          SET status = ?, show_in_navbar = ?, current_level = ?
+          WHERE id = 'main_session'
+        `, [newStatus, showNav, currentLvl]);
+      }
 
       return res.json({
         success: true,
-        message: `KBC session updated to ${newStatus}. Navbar visibility: ${showNav ? 'VISIBLE' : 'HIDDEN'}`,
+        message: shouldRestart
+          ? `KBC started from beginning (Level 1)! Session: ${newStatus}. Navbar visibility: ${showNav ? 'VISIBLE' : 'HIDDEN'}`
+          : `KBC session updated to ${newStatus}. Navbar visibility: ${showNav ? 'VISIBLE' : 'HIDDEN'}`,
         session: {
           status: newStatus,
           show_in_navbar: Boolean(showNav),
-          current_level: currentLvl
+          current_level: currentLvl,
+          is_locked: false,
+          locked_option: null,
+          revealed_correct: null
         },
         database: 'Hostinger MySQL'
       });
@@ -1219,7 +1308,20 @@ router.post('/admin/session/toggle', async (req, res) => {
   // Fallback
   memorySession.status = status || 'LIVE';
   memorySession.show_in_navbar = show_in_navbar !== undefined ? Boolean(show_in_navbar) : true;
-  if (level) memorySession.current_level = parseInt(level, 10);
+  if (restart_from_start || status === 'LIVE') {
+    memorySession.current_level = 1;
+    memorySession.current_question_id = null;
+    memorySession.is_locked = false;
+    memorySession.locked_option = null;
+    memorySession.revealed_correct = null;
+    memoryTeams.forEach(t => {
+      t.current_level = 1;
+      t.score_amount = 0;
+      t.submitted_option = null;
+    });
+  } else if (level) {
+    memorySession.current_level = parseInt(level, 10);
+  }
 
   return res.json({
     success: true,

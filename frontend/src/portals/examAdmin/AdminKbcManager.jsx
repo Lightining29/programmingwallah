@@ -117,7 +117,7 @@ export default function AdminKbcManager() {
 
   // ── LIVE SESSION CONTROLLER ACTIONS ──
 
-  // Start / Confirm Live Session (Enables Navbar option)
+  // Start / Confirm Live Session (Starts whole KBC from beginning Level 1)
   const handleToggleLiveSession = async (shouldBeLive) => {
     try {
       const res = await fetch('/api/kbc/admin/session/toggle', {
@@ -126,21 +126,32 @@ export default function AdminKbcManager() {
         body: JSON.stringify({
           status: shouldBeLive ? 'LIVE' : 'INACTIVE',
           show_in_navbar: shouldBeLive,
-          level: selectedLevel
+          level: 1,
+          restart_from_start: shouldBeLive
         })
       });
       const data = await res.json();
       if (data.success) {
+        if (shouldBeLive) {
+          setSelectedLevel(1);
+        }
         setSession(prev => ({
           ...prev,
           status: shouldBeLive ? 'LIVE' : 'INACTIVE',
-          show_in_navbar: shouldBeLive
+          show_in_navbar: shouldBeLive,
+          current_level: shouldBeLive ? 1 : prev.current_level,
+          is_locked: false,
+          locked_option: null,
+          revealed_correct: null
         }));
+        await fetchAdminKbcData();
+        await fetchSessionStatus();
+        await fetchTeams();
         Swal.fire({
           icon: shouldBeLive ? 'success' : 'info',
-          title: shouldBeLive ? '🎉 KBC is Now LIVE!' : 'Session Paused',
+          title: shouldBeLive ? '🎉 Whole KBC Started from Beginning (Level 1)!' : 'Session Paused',
           text: shouldBeLive 
-            ? 'The KBC Hotseat option is now visible in the Website Navbar! Contestants can participate from their laptops.'
+            ? 'The entire KBC has reset to Level 1 (₹1,000)! The Navbar option is active and contestant laptops are ready.'
             : 'Session stopped. KBC option removed from Navbar.',
           timer: 2500,
           showConfirmButton: false,
@@ -150,6 +161,20 @@ export default function AdminKbcManager() {
       }
     } catch (e) {
       Swal.fire('Error', 'Unable to toggle session state.', 'error');
+    }
+  };
+
+  const handleRestartFromBeginning = async () => {
+    const confirm = await Swal.fire({
+      title: 'Restart Whole KBC from Beginning?',
+      text: 'This will reset the entire game back to Level 1 (₹1,000) for all laptop teams and clear all answers.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Restart from Beginning',
+      confirmButtonColor: '#10b981'
+    });
+    if (confirm.isConfirmed) {
+      await handleToggleLiveSession(true);
     }
   };
 
@@ -320,6 +345,45 @@ export default function AdminKbcManager() {
     } catch (err) {}
   };
 
+  const handleDeleteQuestion = async (questionId, level) => {
+    const targetLevel = level || selectedLevel;
+    const confirm = await Swal.fire({
+      title: 'Delete Question?',
+      text: 'Are you sure you want to delete this question? It will be removed from Hostinger MySQL.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Delete',
+      confirmButtonColor: '#ef4444'
+    });
+
+    if (confirm.isConfirmed) {
+      try {
+        const res = await fetch('/api/kbc/admin/question/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ questionId, level: targetLevel })
+        });
+        const data = await res.json();
+        if (data.success) {
+          await fetchAdminKbcData();
+          await fetchSessionStatus();
+          Swal.fire({
+            icon: 'success',
+            title: 'Question Deleted!',
+            timer: 1500,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end'
+          });
+        } else {
+          Swal.fire('Error', data.message || 'Failed to delete question', 'error');
+        }
+      } catch (e) {
+        Swal.fire('Error', 'Unable to delete question', 'error');
+      }
+    }
+  };
+
   const handleAddCustomQuestion = async (e) => {
     e.preventDefault();
     if (!newQuestion.trim() || newOptions.some(o => !o.trim())) {
@@ -466,12 +530,21 @@ export default function AdminKbcManager() {
           {/* Master Live Action Buttons */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 w-full lg:w-auto">
             {isLiveNow ? (
-              <button
-                onClick={() => handleToggleLiveSession(false)}
-                className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white font-black text-sm uppercase tracking-wider shadow-xl shadow-red-600/30 transition transform hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <Square className="w-4 h-4 fill-white" /> Stop Live Session
-              </button>
+              <>
+                <button
+                  onClick={handleRestartFromBeginning}
+                  className="px-5 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-xl shadow-amber-500/20 transition transform hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer"
+                  title="Reset whole game and start from Level 1"
+                >
+                  <RotateCcw className="w-4 h-4 text-slate-950" /> Restart from Beginning
+                </button>
+                <button
+                  onClick={() => handleToggleLiveSession(false)}
+                  className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white font-black text-sm uppercase tracking-wider shadow-xl shadow-red-600/30 transition transform hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Square className="w-4 h-4 fill-white" /> Stop Live Session
+                </button>
+              </>
             ) : (
               <button
                 onClick={() => handleToggleLiveSession(true)}
@@ -643,6 +716,17 @@ export default function AdminKbcManager() {
                     className="flex-1 min-w-[200px] bg-black/60 border border-purple-400/50 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-amber-400 transition"
                   />
 
+                  {/* Store vs Live Toggle */}
+                  <label className="flex items-center gap-1.5 text-xs text-purple-200 cursor-pointer font-bold select-none shrink-0 bg-black/50 px-2.5 py-2 rounded-xl border border-purple-500/30">
+                    <input
+                      type="checkbox"
+                      checked={aiSetAsActive}
+                      onChange={(e) => setAiSetAsActive(e.target.checked)}
+                      className="accent-amber-400 w-3.5 h-3.5 rounded"
+                    />
+                    <span>{aiSetAsActive ? '⚡ Make Active Now' : '💾 Store in Bank for Later'}</span>
+                  </label>
+
                   {/* Action Button */}
                   <button
                     onClick={() => handleGenerateAiQuestion()}
@@ -794,6 +878,90 @@ export default function AdminKbcManager() {
                   No active question set for this level yet.
                 </div>
               )}
+            </div>
+
+            {/* ── STORED QUESTIONS BANK FOR LEVEL {selectedLevel} (Use Later & Delete) ── */}
+            <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                <div className="flex items-center gap-2">
+                  <Database className="w-4 h-4 text-amber-400" />
+                  <h4 className="text-sm font-bold text-white">
+                    Stored Questions Bank for Level {selectedLevel}
+                  </h4>
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-300 font-mono text-xs font-bold">
+                    {currentLevelData.pool?.length || 0} Saved
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-400 hidden sm:inline">
+                  Store for later use or delete any question anytime
+                </span>
+              </div>
+
+              <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                {(currentLevelData.pool || []).length === 0 ? (
+                  <p className="text-center text-xs text-slate-500 py-4">No questions stored for this level yet. Use the Gemini AI bar above to add questions!</p>
+                ) : (
+                  (currentLevelData.pool || []).map((q, idx) => {
+                    const isActive = q.id === currentLevelData.activeQuestionId;
+                    return (
+                      <div
+                        key={q.id || idx}
+                        className={`p-3.5 rounded-2xl border transition flex items-center justify-between gap-3 ${
+                          isActive
+                            ? 'bg-amber-950/30 border-amber-500/60 shadow-md'
+                            : 'bg-slate-950/80 border-slate-800/80 hover:border-slate-700'
+                        }`}
+                      >
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-mono font-bold">
+                              {q.topic}
+                            </span>
+                            {isActive ? (
+                              <span className="text-[11px] font-black text-amber-400 flex items-center gap-1">
+                                <Check className="w-3.5 h-3.5" /> LIVE ON HOTSEAT
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-slate-400 font-medium bg-slate-800/60 px-2 py-0.5 rounded">
+                                Stored in Bank
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs font-semibold text-slate-200 line-clamp-1">
+                            {q.question}
+                          </p>
+                          <p className="text-[11px] text-emerald-400 font-medium">
+                            ✓ Correct: {q.options[q.correct]}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          {isActive ? (
+                            <span className="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-bold inline-flex items-center gap-1">
+                              <Check className="w-3.5 h-3.5" /> Active
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleSelectQuestion(q.id)}
+                              className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-300 text-xs font-bold transition cursor-pointer"
+                              title="Broadcast this stored question to laptops"
+                            >
+                              Set Active
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeleteQuestion(q.id, selectedLevel)}
+                            className="p-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 hover:text-red-300 transition cursor-pointer"
+                            title="Delete this question from Hostinger MySQL"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </div>
 
           </div>
@@ -1116,6 +1284,18 @@ export default function AdminKbcManager() {
                 placeholder='Type phrase e.g. "sql inner join questions", "react state"...'
                 className="flex-1 bg-black/60 border border-purple-400/40 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-purple-300"
               />
+
+              {/* Store vs Active Toggle */}
+              <label className="flex items-center gap-1.5 text-xs text-purple-200 cursor-pointer font-bold select-none shrink-0 bg-black/50 px-2.5 py-1.5 rounded-xl border border-purple-500/30">
+                <input
+                  type="checkbox"
+                  checked={aiSetAsActive}
+                  onChange={(e) => setAiSetAsActive(e.target.checked)}
+                  className="accent-amber-400 w-3.5 h-3.5 rounded"
+                />
+                <span>{aiSetAsActive ? '⚡ Make Active Now' : '💾 Store for Later'}</span>
+              </label>
+
               <button
                 onClick={() => handleGenerateAiQuestion()}
                 disabled={aiLoading || !aiPrompt.trim()}
@@ -1161,7 +1341,7 @@ export default function AdminKbcManager() {
                         </div>
                       </div>
 
-                      <div className="shrink-0">
+                      <div className="flex items-center gap-2 shrink-0">
                         {isActive ? (
                           <span className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-bold inline-flex items-center gap-1">
                             <Check className="w-3.5 h-3.5" /> Active
@@ -1174,6 +1354,13 @@ export default function AdminKbcManager() {
                             Set as Active
                           </button>
                         )}
+                        <button
+                          onClick={() => handleDeleteQuestion(q.id, selectedLevel)}
+                          className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 hover:text-red-300 transition cursor-pointer"
+                          title="Delete this question from Hostinger MySQL"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
                   </div>

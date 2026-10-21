@@ -139,6 +139,14 @@ export default function KbcExam() {
               setTeamAnswerSubmitted(false);
               setEliminatedOptions([]);
 
+              // If restarting whole KBC from beginning (Level 1), reset earned prize
+              if (newLvl === 1) {
+                setEarnedAmount(0);
+                setEarnedPrizeLabel('₹0');
+                setSafeWonAmount(0);
+                setSafeWonPrizeLabel('₹0');
+              }
+
               // Play Question Arrival Audio on contestant laptop!
               kbcAudio.playQuestionArrival();
 
