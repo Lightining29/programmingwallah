@@ -8,6 +8,7 @@ class KbcSoundManager {
     this.droneGain = null;
     this.isMuted = false;
     this.currentAudio = null;
+    this.clockAudio = null;
   }
 
   init() {
@@ -26,12 +27,41 @@ class KbcSoundManager {
     this.isMuted = muted;
     if (muted) {
       this.stopDrone();
+      this.stopClock();
     }
   }
 
   toggleMute() {
     this.setMuted(!this.isMuted);
     return this.isMuted;
+  }
+
+  // 1. Clock Ticking Countdown Audio (Tik-Tiki Ji) using uploaded authentic KBC clock
+  startClock() {
+    if (this.isMuted) return;
+    this.stopClock();
+    try {
+      const audio = new Audio('/kbc-clock.mp3');
+      audio.volume = 0.9;
+      audio.loop = true;
+      this.clockAudio = audio;
+      const p = audio.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch(() => {});
+      }
+    } catch (e) {
+      console.warn('Clock audio play error:', e);
+    }
+  }
+
+  stopClock() {
+    if (this.clockAudio) {
+      try {
+        this.clockAudio.pause();
+        this.clockAudio.currentTime = 0;
+      } catch (e) {}
+      this.clockAudio = null;
+    }
   }
 
   // 1. Clock Tick sound (Tik-Tiki Ji)
@@ -178,6 +208,7 @@ class KbcSoundManager {
   // 5. Correct Answer Victory Chime
   playCorrect() {
     if (this.isMuted) return;
+    this.stopClock();
     this.init();
     if (!this.ctx) return;
 
@@ -207,6 +238,7 @@ class KbcSoundManager {
   // 6. Question Arrival Theme / Screen Entrance Music
   playQuestionArrival() {
     if (this.isMuted) return;
+    this.stopClock();
     this.init();
     this.stopDrone();
     try {
@@ -233,6 +265,7 @@ class KbcSoundManager {
   // 7. Wrong Answer Sound Effect (Contestant Laptop & Hotseat)
   playWrong() {
     if (this.isMuted) return;
+    this.stopClock();
     this.init();
     this.stopDrone();
     try {

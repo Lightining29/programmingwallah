@@ -491,8 +491,16 @@ export default function AdminKbcManager() {
                 )}
               </div>
 
-              {/* Host Navigation Buttons */}
-              <div className="flex items-center gap-2">
+              {/* Host Navigation Buttons & Quick Add */}
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md border border-indigo-400/30"
+                  title={`Add a new custom question for Level ${selectedLevel}`}
+                >
+                  <PlusCircle className="w-3.5 h-3.5 text-amber-300" />
+                  <span>➕ Add Question (L{selectedLevel})</span>
+                </button>
                 <button
                   onClick={handlePrevLevel}
                   disabled={selectedLevel <= 1}

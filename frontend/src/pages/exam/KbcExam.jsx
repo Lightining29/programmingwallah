@@ -317,33 +317,60 @@ export default function KbcExam() {
     } catch (e) {}
   };
 
-  // Timer Effect
+  // Current Question Object (Live Host broadcast in Team mode or Level Question in Solo)
+  const currentQ = (team && adminSession.current_question) 
+    ? adminSession.current_question 
+    : (questions[currentLevel - 1] || null);
+  const currentPrize = KBC_PRIZE_LADDER[currentLevel - 1] || KBC_PRIZE_LADDER[0];
+
+  // Helper to determine countdown seconds based on level (Tik-Tiki Ji)
+  const getLevelCountdown = (lvl) => {
+    if (lvl <= 5) return 30; // Level 1 to 5: 30 seconds
+    if (lvl <= 10) return 45; // Level 6 to 10: 45 seconds
+    return 0; // Level 11 to 16: No time limit (Timer stopped)
+  };
+
+  // Handle Timeout (Tik-Tiki Ji ends time)
+  const handleTimeOut = () => {
+    kbcAudio.stopClock();
+    kbcAudio.playWrong();
+    setIsLocked(true);
+    setAnswerStatus('wrong');
+    setHostQuote(AMITABH_QUOTES.timeOut);
+  };
+
+  // Real KBC Countdown Timer Effect (Active on Contestant Laptop when Round is LIVE)
   useEffect(() => {
-    if (!gameStarted || gameOver || gameWon || isLocked) {
+    // If not live, or already locked, or answer revealed -> stop timer and clock sound
+    if (!team || adminSession.status !== 'LIVE' || isLocked || revealedCorrect !== null) {
       if (timerRef.current) clearInterval(timerRef.current);
+      kbcAudio.stopClock();
       return;
     }
 
-    // No timer for Q11 to Q16 (Real KBC Rule)
-    if (currentLevel > 10) {
+    const maxTime = getLevelCountdown(currentLevel);
+    if (maxTime === 0) {
+      // Level 11 to 16: No time limit
       if (timerRef.current) clearInterval(timerRef.current);
+      kbcAudio.stopClock();
+      setTimeLeft(0);
       return;
     }
 
-    const maxTime = currentLevel <= 5 ? 45 : 60;
+    // Set initial countdown time for this level
     setTimeLeft(maxTime);
 
+    // Start authentic KBC clock ticking sound
+    kbcAudio.startClock();
+
+    if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(timerRef.current);
+          kbcAudio.stopClock();
           handleTimeOut();
           return 0;
-        }
-        if (prev <= 10) {
-          kbcAudio.playTick(true);
-        } else {
-          kbcAudio.playTick(false);
         }
         return prev - 1;
       });
@@ -351,22 +378,9 @@ export default function KbcExam() {
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      kbcAudio.stopClock();
     };
-  }, [gameStarted, currentLevel, isLocked, gameOver, gameWon]);
-
-  // Handle Timeout (Tik-Tiki Ji ends time)
-  const handleTimeOut = () => {
-    kbcAudio.playWrong();
-    setAnswerStatus('wrong');
-    setHostQuote(AMITABH_QUOTES.timeOut);
-    finishGame(false, true);
-  };
-
-  // Current Question Object (Live Host broadcast in Team mode or Level Question in Solo)
-  const currentQ = (team && adminSession.current_question) 
-    ? adminSession.current_question 
-    : (questions[currentLevel - 1] || null);
-  const currentPrize = KBC_PRIZE_LADDER[currentLevel - 1] || KBC_PRIZE_LADDER[0];
+  }, [adminSession.status, currentLevel, isLocked, revealedCorrect, currentQ?.id, team]);
 
   // Start the Game
   const handleStartGame = () => {
@@ -784,7 +798,7 @@ export default function KbcExam() {
             </div>
           )}
 
-          {/* Right Controls: Audio Mute, Admin Link, Quit */}
+          {/* Right Controls: Audio Mute */}
           <div className="flex items-center gap-2">
             <button
               onClick={toggleSound}
@@ -793,25 +807,6 @@ export default function KbcExam() {
             >
               {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-amber-400" />}
             </button>
-
-            <Link
-              to="/dashboard/admin/tests"
-              className="px-2.5 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-amber-300 border border-slate-800 text-xs font-semibold flex items-center gap-1 transition"
-              title="Admin Question Suite"
-            >
-              <Settings className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Admin</span>
-            </Link>
-
-            {gameStarted && !gameOver && !team && (
-              <button
-                onClick={() => setActiveModal('quit')}
-                disabled={isLocked}
-                className="px-3 py-1.5 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-300 text-xs font-bold transition cursor-pointer"
-              >
-                Quit / Chhodna
-              </button>
-            )}
           </div>
         </div>
       </header>
@@ -880,27 +875,19 @@ export default function KbcExam() {
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-              <button
-                onClick={() => {
-                  setPlayMode('SOLO');
-                  handleStartGame();
-                }}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-amber-400/40 text-amber-300 font-bold text-xs cursor-pointer transition"
-              >
-                Practice in Solo Hotseat Mode
-              </button>
+            <div className="flex items-center justify-center pt-2">
               <button
                 onClick={handleDisconnectTeam}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-300 font-bold text-xs cursor-pointer transition"
+                className="px-6 py-2.5 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-300 font-bold text-xs cursor-pointer transition flex items-center gap-2"
               >
-                Disconnect Team
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Disconnect Team / Change Code</span>
               </button>
             </div>
           </div>
-        ) : !gameStarted && !team ? (
-          /* CASE 2: Welcome Gate (Join as Team OR Play Solo) */
-          <div className="my-auto max-w-3xl mx-auto space-y-6">
+        ) : !team ? (
+          /* CASE 2: Welcome Gate (Join Team via Laptop ONLY - No Solo Hotseat) */
+          <div className="my-auto max-w-xl mx-auto space-y-6">
             
             {/* Header / Amitabh Quote */}
             <div className="text-center space-y-3 bg-gradient-to-b from-[#0b132e]/95 to-[#060a1d]/95 border-2 border-amber-400/40 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
@@ -925,121 +912,52 @@ export default function KbcExam() {
                 <p className="text-amber-400/90 font-bold text-xs tracking-widest uppercase">
                   MERN Stack & SQL Grand Examination Hotseat
                 </p>
-                <p className="text-slate-300 text-xs sm:text-sm max-w-xl mx-auto pt-1 leading-relaxed">
-                  Participate live with your laptop in the Admin-controlled classroom competition, or take the solo 16-level hotseat challenge for ₹7 Crore!
+                <p className="text-slate-300 text-xs sm:text-sm max-w-md mx-auto pt-1 leading-relaxed">
+                  Participate live with your laptop in the Admin-controlled classroom competition! Face the 16-level championship questions in real-time.
                 </p>
               </div>
 
-              {/* Mode Toggle Tabs */}
-              <div className="grid grid-cols-2 gap-3 pt-3 max-w-md mx-auto">
-                <button
-                  type="button"
-                  onClick={() => setPlayMode('TEAM')}
-                  className={`py-2.5 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
-                    playMode === 'TEAM'
-                      ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-lg shadow-amber-500/20'
-                      : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
-                  }`}
-                >
-                  <Laptop className="w-4 h-4" />
-                  <span>Join Team via Laptop</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPlayMode('SOLO')}
-                  className={`py-2.5 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
-                    playMode === 'SOLO'
-                      ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-lg shadow-amber-500/20'
-                      : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
-                  }`}
-                >
-                  <Trophy className="w-4 h-4" />
-                  <span>Solo Hotseat Mode</span>
-                </button>
-              </div>
-
-              {/* FORM: Team Access Code Entry */}
-              {playMode === 'TEAM' ? (
-                <form onSubmit={handleJoinTeam} className="pt-4 max-w-md mx-auto space-y-4 text-left">
-                  <div className="bg-slate-950/80 border border-amber-400/40 rounded-2xl p-5 space-y-3">
-                    <div>
-                      <label className="block text-xs font-bold text-amber-300 mb-1.5 uppercase tracking-wider">
-                        Enter Team Access Code
-                      </label>
-                      <input
-                        type="text"
-                        value={teamAccessCodeInput}
-                        onChange={e => setTeamAccessCodeInput(e.target.value)}
-                        placeholder="e.g. KBC-101"
-                        className="w-full bg-slate-900 border border-amber-400/50 rounded-xl px-4 py-3 text-white font-mono font-black text-center text-lg tracking-widest uppercase focus:outline-none focus:border-amber-300"
-                        autoFocus
-                      />
-                      <span className="text-[11px] text-slate-400 block mt-1.5">
-                        Ask your Exam Admin or Teacher for your Team Access Code.
-                      </span>
-                    </div>
-
-                    {teamJoinError && (
-                      <div className="p-2.5 rounded-lg bg-red-950/60 border border-red-500/40 text-red-300 text-xs font-semibold flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
-                        <span>{teamJoinError}</span>
-                      </div>
-                    )}
-
-                    <button
-                      type="submit"
-                      disabled={teamJoinLoading}
-                      className="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-sm uppercase tracking-wider shadow-lg shadow-amber-500/30 transition transform hover:scale-[1.02] cursor-pointer"
-                    >
-                      {teamJoinLoading ? 'Connecting Laptop...' : 'Connect to Live Hotseat →'}
-                    </button>
+              {/* FORM: Team Access Code Entry (Exclusive Entry Gate) */}
+              <form onSubmit={handleJoinTeam} className="pt-3 max-w-md mx-auto space-y-4 text-left">
+                <div className="bg-slate-950/80 border border-amber-400/40 rounded-2xl p-5 space-y-3 shadow-inner">
+                  <div className="flex items-center gap-2 pb-1 border-b border-indigo-900/40 text-amber-300 text-xs font-bold uppercase tracking-wider">
+                    <Laptop className="w-4 h-4 text-amber-400" />
+                    <span>Join Team via Laptop</span>
                   </div>
-                </form>
-              ) : (
-                /* FORM: Solo Hotseat Launch */
-                <div className="pt-4 max-w-md mx-auto space-y-4 text-left">
-                  <div className="bg-slate-950/80 border border-amber-400/40 rounded-2xl p-5 space-y-3">
-                    <div>
-                      <label className="block text-xs font-bold text-amber-300 mb-1.5 uppercase tracking-wider">
-                        Contestant Name
-                      </label>
-                      <input
-                        type="text"
-                        value={playerName}
-                        onChange={e => setPlayerName(e.target.value)}
-                        className="w-full bg-slate-900 border border-amber-400/50 rounded-xl px-4 py-2.5 text-white font-bold text-sm focus:outline-none focus:border-amber-300"
-                        placeholder="Enter your name"
-                      />
-                    </div>
 
-                    {/* Milestones Preview */}
-                    <div className="grid grid-cols-3 gap-2 pt-1 text-center text-xs">
-                      <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-                        <span className="text-slate-400 text-[10px] block">Padav 1</span>
-                        <span className="text-amber-300 font-bold">₹10,000</span>
-                      </div>
-                      <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-                        <span className="text-slate-400 text-[10px] block">Padav 2</span>
-                        <span className="text-amber-300 font-bold">₹3,20,000</span>
-                      </div>
-                      <div className="p-2 rounded-lg bg-slate-900 border border-amber-500/40">
-                        <span className="text-amber-400 text-[10px] block font-bold">Jackpot</span>
-                        <span className="text-yellow-400 font-black">₹7 Crore</span>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleStartGame}
-                      disabled={loading}
-                      className="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-sm uppercase tracking-wider shadow-lg shadow-amber-500/30 transition transform hover:scale-[1.02] cursor-pointer"
-                    >
-                      {loading ? 'Preparing Hotseat...' : 'Aaiye Khelte Hain KBC! →'}
-                    </button>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
+                      Enter Team Access Code
+                    </label>
+                    <input
+                      type="text"
+                      value={teamAccessCodeInput}
+                      onChange={e => setTeamAccessCodeInput(e.target.value)}
+                      placeholder="e.g. KBC-101"
+                      className="w-full bg-slate-900 border border-amber-400/50 rounded-xl px-4 py-3.5 text-white font-mono font-black text-center text-xl tracking-widest uppercase focus:outline-none focus:border-amber-300 shadow-inner"
+                      autoFocus
+                    />
+                    <span className="text-[11px] text-slate-400 block mt-2 text-center">
+                      Ask your Exam Admin / Host for your Team Access Code.
+                    </span>
                   </div>
+
+                  {teamJoinError && (
+                    <div className="p-2.5 rounded-lg bg-red-950/60 border border-red-500/40 text-red-300 text-xs font-semibold flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                      <span>{teamJoinError}</span>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={teamJoinLoading}
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-sm uppercase tracking-wider shadow-lg shadow-amber-500/30 transition transform hover:scale-[1.02] cursor-pointer"
+                  >
+                    {teamJoinLoading ? 'Connecting Laptop...' : 'Connect to Live Hotseat →'}
+                  </button>
                 </div>
-              )}
+              </form>
 
             </div>
           </div>
