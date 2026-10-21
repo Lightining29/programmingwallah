@@ -41,6 +41,11 @@ export default function AdminKbcManager() {
   const [newExplanation, setNewExplanation] = useState('');
   const [setImmediatelyActive, setSetImmediatelyActive] = useState(true);
 
+  // Gemini AI Question Generation State
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiSetAsActive, setAiSetAsActive] = useState(true);
+
   // Load KBC Admin Data & Poll Live Session
   useEffect(() => {
     fetchAdminKbcData();
@@ -346,6 +351,60 @@ export default function AdminKbcManager() {
     } catch (err) {}
   };
 
+  const handleGenerateAiQuestion = async (customTopic) => {
+    const topicToUse = (typeof customTopic === 'string' ? customTopic : aiPrompt).trim();
+    if (!topicToUse) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Topic Required',
+        text: 'Please enter a topic or phrase, e.g. "sql inner join questions" or "react useEffect".',
+        confirmButtonColor: '#7c3aed'
+      });
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const res = await fetch('/api/kbc/admin/ai-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          level: selectedLevel,
+          topicOrPhrase: topicToUse,
+          setAsActive: aiSetAsActive
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.question) {
+        setAiPrompt('');
+        await fetchAdminKbcData();
+        await fetchSessionStatus();
+        Swal.fire({
+          icon: 'success',
+          title: '✨ AI Question Added by Gemini!',
+          html: `
+            <div style="text-align: left; font-size: 13px; line-height: 1.5; color: #1e293b;">
+              <p style="font-weight: bold; margin-bottom: 6px; color: #0f172a;">${data.question.question}</p>
+              <div style="background: #f1f5f9; padding: 8px 12px; border-radius: 8px; margin-bottom: 8px;">
+                <span style="color: #059669; font-weight: bold;">✓ Correct Answer: </span>
+                <span>${data.question.options[data.question.correct]}</span>
+              </div>
+              <p style="color: #475569; font-size: 12px;"><strong>Explanation:</strong> ${data.question.explanation}</p>
+              <p style="margin-top: 8px; font-size: 11px; color: #6366f1;">Saved to Hostinger MySQL & ${aiSetAsActive ? 'activated live on contestant screens!' : 'added to level pool.'}</p>
+            </div>
+          `,
+          confirmButtonColor: '#7c3aed'
+        });
+      } else {
+        Swal.fire('AI Generation Failed', data.message || 'Error communicating with Gemini.', 'error');
+      }
+    } catch (err) {
+      Swal.fire('Error', 'Unable to reach Gemini AI generator.', 'error');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const resetForm = () => {
     setNewQuestion('');
     setNewOptions(['', '', '', '']);
@@ -495,11 +554,11 @@ export default function AdminKbcManager() {
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md border border-indigo-400/30"
-                  title={`Add a new custom question for Level ${selectedLevel}`}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md border border-slate-700"
+                  title={`Add a manual custom question for Level ${selectedLevel}`}
                 >
                   <PlusCircle className="w-3.5 h-3.5 text-amber-300" />
-                  <span>➕ Add Question (L{selectedLevel})</span>
+                  <span>Manual Form</span>
                 </button>
                 <button
                   onClick={handlePrevLevel}
@@ -515,6 +574,79 @@ export default function AdminKbcManager() {
                 >
                   Next Level <ArrowRight className="w-3.5 h-3.5" />
                 </button>
+              </div>
+            </div>
+
+            {/* ── AI QUESTION GENERATOR BAR (Powered by Gemini) ── */}
+            <div className="bg-gradient-to-r from-[#1f1147] via-[#161b3d] to-[#0c142b] border-2 border-purple-500/60 rounded-3xl p-4 sm:p-5 shadow-2xl relative overflow-hidden">
+              <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 shrink-0">
+                  <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-purple-600 to-amber-400 flex items-center justify-center text-white shadow-md shadow-purple-500/30">
+                    <Sparkles className="w-5 h-5 text-amber-200" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-black text-white flex items-center gap-2 tracking-wide">
+                      <span>Gemini AI Question Creator</span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-mono font-bold">
+                        Ultra Fast
+                      </span>
+                    </h4>
+                    <p className="text-[11px] text-purple-200/80">Give any topic/phrase & Gemini adds questions to Level {selectedLevel} in Hostinger MySQL!</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-1 items-center gap-2">
+                  <input
+                    type="text"
+                    value={aiPrompt}
+                    onChange={(e) => setAiPrompt(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleGenerateAiQuestion()}
+                    placeholder='e.g. "sql inner join questions", "react useEffect", "mongodb aggregation"...'
+                    className="flex-1 bg-black/60 border border-purple-400/50 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-amber-400 transition"
+                  />
+                  <button
+                    onClick={() => handleGenerateAiQuestion()}
+                    disabled={aiLoading || !aiPrompt.trim()}
+                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-500 hover:from-purple-500 hover:to-amber-400 text-white font-black text-xs flex items-center gap-2 shrink-0 cursor-pointer shadow-lg shadow-purple-900/40 disabled:opacity-40 transition-all"
+                  >
+                    {aiLoading ? (
+                      <>
+                        <RotateCcw className="w-3.5 h-3.5 animate-spin text-amber-300" />
+                        <span>Generating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                        <span>⚡ AI Add to KBC</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Topic Chips */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-3 mt-3 border-t border-purple-900/40 text-[11px]">
+                <span className="text-purple-300 text-[10px] font-black uppercase tracking-wider mr-1">Suggested:</span>
+                {[
+                  "sql inner join questions",
+                  "sql group by and having",
+                  "react useEffect lifecycle",
+                  "mongodb aggregation pipeline",
+                  "node.js event loop & libuv",
+                  "javascript closures & promises"
+                ].map((sample) => (
+                  <button
+                    key={sample}
+                    onClick={() => {
+                      setAiPrompt(sample);
+                      handleGenerateAiQuestion(sample);
+                    }}
+                    disabled={aiLoading}
+                    className="px-2.5 py-1 rounded-lg bg-purple-950/60 hover:bg-purple-800/80 border border-purple-400/30 text-purple-200 text-[11px] font-semibold transition cursor-pointer disabled:opacity-50 flex items-center gap-1"
+                  >
+                    <span>+</span> {sample}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -892,11 +1024,37 @@ export default function AdminKbcManager() {
                   {currentLevelInfo.prize}
                 </span>
               </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-slate-700"
+                >
+                  <PlusCircle className="w-3.5 h-3.5" /> Manual Add
+                </button>
+              </div>
+            </div>
+
+            {/* AI Generator Bar inside Question Curators Tab */}
+            <div className="bg-gradient-to-r from-purple-950/70 to-slate-900 border border-purple-500/50 rounded-2xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="flex items-center gap-2 shrink-0">
+                <Sparkles className="w-4 h-4 text-amber-300" />
+                <span className="text-xs font-black text-purple-200">AI Add (L{selectedLevel}):</span>
+              </div>
+              <input
+                type="text"
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleGenerateAiQuestion()}
+                placeholder='Type phrase e.g. "sql inner join questions", "react state"...'
+                className="flex-1 bg-black/60 border border-purple-400/40 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-purple-300"
+              />
               <button
-                onClick={() => setShowAddModal(true)}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-md"
+                onClick={() => handleGenerateAiQuestion()}
+                disabled={aiLoading || !aiPrompt.trim()}
+                className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs flex items-center justify-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-40"
               >
-                <PlusCircle className="w-4 h-4" /> Add Custom Question
+                {aiLoading ? <RotateCcw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-amber-300" />}
+                <span>{aiLoading ? 'Generating...' : '⚡ Generate with Gemini'}</span>
               </button>
             </div>
 
