@@ -109,12 +109,22 @@ ${isMulti
       const parsed = JSON.parse(cleaned);
 
       if (isMulti) {
+        let list = parsed;
         if (!Array.isArray(parsed)) {
+          if (parsed && Array.isArray(parsed.questions)) {
+            list = parsed.questions;
+          } else if (parsed && typeof parsed === 'object') {
+            list = Object.values(parsed).filter(v => v && typeof v === 'object' && v.question);
+          } else {
+            list = [parsed];
+          }
+        }
+        if (!Array.isArray(list) || list.length === 0) {
           throw new Error('Expected array of questions from AI');
         }
-        return parsed.map(q => sanitizeQuestion(q, lvl, topicOrPhrase));
+        return list.map(q => sanitizeQuestion(q, lvl, topicOrPhrase));
       } else {
-        const single = Array.isArray(parsed) ? parsed[0] : parsed;
+        const single = Array.isArray(parsed) ? parsed[0] : (parsed?.questions?.[0] || parsed);
         return sanitizeQuestion(single, lvl, topicOrPhrase);
       }
     } catch (err) {

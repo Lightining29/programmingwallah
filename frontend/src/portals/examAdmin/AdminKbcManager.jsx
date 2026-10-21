@@ -43,6 +43,7 @@ export default function AdminKbcManager() {
 
   // Gemini AI Question Generation State
   const [aiPrompt, setAiPrompt] = useState('');
+  const [aiCount, setAiCount] = useState(3);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiSetAsActive, setAiSetAsActive] = useState(true);
 
@@ -371,26 +372,35 @@ export default function AdminKbcManager() {
         body: JSON.stringify({
           level: selectedLevel,
           topicOrPhrase: topicToUse,
-          setAsActive: aiSetAsActive
+          setAsActive: aiSetAsActive,
+          count: aiCount
         })
       });
       const data = await res.json();
-      if (data.success && data.question) {
+      if (data.success && (data.questions || data.question)) {
         setAiPrompt('');
         await fetchAdminKbcData();
         await fetchSessionStatus();
+
+        const count = data.count || (data.questions ? data.questions.length : 1);
+        const qList = data.questions || [data.question];
+
         Swal.fire({
           icon: 'success',
-          title: '✨ AI Question Added by Gemini!',
+          title: `✨ ${count} AI Question${count > 1 ? 's' : ''} Added by Gemini!`,
           html: `
-            <div style="text-align: left; font-size: 13px; line-height: 1.5; color: #1e293b;">
-              <p style="font-weight: bold; margin-bottom: 6px; color: #0f172a;">${data.question.question}</p>
-              <div style="background: #f1f5f9; padding: 8px 12px; border-radius: 8px; margin-bottom: 8px;">
-                <span style="color: #059669; font-weight: bold;">✓ Correct Answer: </span>
-                <span>${data.question.options[data.question.correct]}</span>
-              </div>
-              <p style="color: #475569; font-size: 12px;"><strong>Explanation:</strong> ${data.question.explanation}</p>
-              <p style="margin-top: 8px; font-size: 11px; color: #6366f1;">Saved to Hostinger MySQL & ${aiSetAsActive ? 'activated live on contestant screens!' : 'added to level pool.'}</p>
+            <div style="text-align: left; font-size: 13px; line-height: 1.5; color: #1e293b; max-height: 280px; overflow-y: auto;">
+              <p style="font-weight: bold; margin-bottom: 8px; color: #0f172a; font-size: 12px;">Saved to Level ${selectedLevel} in Hostinger MySQL:</p>
+              ${qList.map((q, idx) => `
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 10px; margin-bottom: 8px;">
+                  <p style="font-weight: 700; color: #0f172a; font-size: 12px; margin-bottom: 4px;">Q${idx + 1}: ${q.question}</p>
+                  <p style="color: #059669; font-weight: bold; font-size: 11px; margin-bottom: 2px;">✓ Correct: ${q.options[q.correct]}</p>
+                  <p style="color: #64748b; font-size: 11px;">${q.explanation}</p>
+                </div>
+              `).join('')}
+              <p style="margin-top: 6px; font-size: 11px; color: #6366f1; font-weight: 600;">
+                ${aiSetAsActive ? '✓ Q1 is now active on laptop screens!' : '✓ Added to question pool.'}
+              </p>
             </div>
           `,
           confirmButtonColor: '#7c3aed'
@@ -595,29 +605,59 @@ export default function AdminKbcManager() {
                   </div>
                 </div>
 
-                <div className="flex flex-1 items-center gap-2">
+                <div className="flex flex-wrap lg:flex-nowrap items-center gap-2.5 flex-1">
+                  {/* Quantity selector */}
+                  <div className="flex items-center gap-1.5 bg-black/70 border border-purple-400/50 rounded-xl px-2.5 py-1.5 shrink-0">
+                    <span className="text-[11px] text-purple-200 font-bold">Qty:</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="15"
+                      value={aiCount}
+                      onChange={(e) => setAiCount(Math.max(1, Math.min(15, parseInt(e.target.value, 10) || 1)))}
+                      className="w-10 bg-purple-950/80 border border-purple-500/50 rounded-lg py-0.5 text-center text-xs font-black text-amber-300 focus:outline-none"
+                    />
+                    <div className="flex items-center gap-1">
+                      {[1, 3, 5, 10].map(n => (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setAiCount(n)}
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer transition ${
+                            aiCount === n ? 'bg-amber-400 text-slate-950 font-black shadow-sm' : 'bg-slate-800 text-slate-300 hover:text-white'
+                          }`}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Topic / Phrase input */}
                   <input
                     type="text"
                     value={aiPrompt}
                     onChange={(e) => setAiPrompt(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleGenerateAiQuestion()}
                     placeholder='e.g. "sql inner join questions", "react useEffect", "mongodb aggregation"...'
-                    className="flex-1 bg-black/60 border border-purple-400/50 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-amber-400 transition"
+                    className="flex-1 min-w-[200px] bg-black/60 border border-purple-400/50 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-amber-400 transition"
                   />
+
+                  {/* Action Button */}
                   <button
                     onClick={() => handleGenerateAiQuestion()}
                     disabled={aiLoading || !aiPrompt.trim()}
-                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-500 hover:from-purple-500 hover:to-amber-400 text-white font-black text-xs flex items-center gap-2 shrink-0 cursor-pointer shadow-lg shadow-purple-900/40 disabled:opacity-40 transition-all"
+                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-500 hover:from-purple-500 hover:to-amber-400 text-white font-black text-xs flex items-center justify-center gap-2 shrink-0 cursor-pointer shadow-lg shadow-purple-900/40 disabled:opacity-40 transition-all w-full lg:w-auto"
                   >
                     {aiLoading ? (
                       <>
                         <RotateCcw className="w-3.5 h-3.5 animate-spin text-amber-300" />
-                        <span>Generating...</span>
+                        <span>Generating {aiCount} Qs...</span>
                       </>
                     ) : (
                       <>
                         <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                        <span>⚡ AI Add to KBC</span>
+                        <span>⚡ AI Add ({aiCount} Qs)</span>
                       </>
                     )}
                   </button>
@@ -1035,11 +1075,39 @@ export default function AdminKbcManager() {
             </div>
 
             {/* AI Generator Bar inside Question Curators Tab */}
-            <div className="bg-gradient-to-r from-purple-950/70 to-slate-900 border border-purple-500/50 rounded-2xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="bg-gradient-to-r from-purple-950/70 to-slate-900 border border-purple-500/50 rounded-2xl p-4 flex flex-col md:flex-row items-stretch md:items-center gap-3">
               <div className="flex items-center gap-2 shrink-0">
                 <Sparkles className="w-4 h-4 text-amber-300" />
                 <span className="text-xs font-black text-purple-200">AI Add (L{selectedLevel}):</span>
               </div>
+
+              {/* Quantity selector */}
+              <div className="flex items-center gap-1.5 bg-black/60 border border-purple-400/40 rounded-xl px-2 py-1 shrink-0">
+                <span className="text-[11px] text-purple-300 font-bold">Qty:</span>
+                <input
+                  type="number"
+                  min="1"
+                  max="15"
+                  value={aiCount}
+                  onChange={(e) => setAiCount(Math.max(1, Math.min(15, parseInt(e.target.value, 10) || 1)))}
+                  className="w-10 bg-purple-950/80 border border-purple-500/40 rounded-lg py-0.5 text-center text-xs font-black text-amber-300 focus:outline-none"
+                />
+                <div className="flex items-center gap-1">
+                  {[1, 3, 5, 10].map(n => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setAiCount(n)}
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer transition ${
+                        aiCount === n ? 'bg-amber-400 text-slate-950 font-black' : 'bg-slate-800 text-slate-300 hover:text-white'
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <input
                 type="text"
                 value={aiPrompt}
@@ -1054,7 +1122,7 @@ export default function AdminKbcManager() {
                 className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs flex items-center justify-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-40"
               >
                 {aiLoading ? <RotateCcw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-amber-300" />}
-                <span>{aiLoading ? 'Generating...' : '⚡ Generate with Gemini'}</span>
+                <span>{aiLoading ? `Generating ${aiCount}...` : `⚡ Generate ${aiCount} with Gemini`}</span>
               </button>
             </div>
 
