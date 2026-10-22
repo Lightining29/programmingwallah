@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Trophy, CheckCircle2, PlusCircle, RotateCcw, Sparkles, ExternalLink, 
+  Search, Filter, BookOpen, Trophy, CheckCircle2, PlusCircle, RotateCcw, Sparkles, ExternalLink, 
   HelpCircle, Check, Database, Code2, Server, Globe, Cpu, Layers, AlertCircle,
   Radio, Play, Square, Lock, Eye, ArrowRight, ArrowLeft, Users, Laptop, 
   Copy, Trash2, ShieldCheck, Flame, RefreshCw
@@ -10,7 +10,19 @@ import { KBC_PRIZE_LADDER, DEFAULT_MERN_SQL_QUESTIONS } from '../../data/kbcQues
 import { kbcAudio } from '../../utils/kbcAudio.js';
 
 export default function AdminKbcManager() {
-  const [activeSubTab, setActiveSubTab] = useState('live'); // 'live' | 'questions' | 'teams'
+  const [activeSubTab, setActiveSubTab] = useState('live'); // 'live' | 'questions' | 'teams' | 'bank'
+  const [levelSearch, setLevelSearch] = useState('');
+
+  // 1,000 SQL Question Bank State
+  const [bankQuestions, setBankQuestions] = useState([]);
+  const [bankTotal, setBankTotal] = useState(0);
+  const [bankPage, setBankPage] = useState(1);
+  const [bankTotalPages, setBankTotalPages] = useState(1);
+  const [bankSearch, setBankSearch] = useState('');
+  const [bankLevel, setBankLevel] = useState('');
+  const [bankTopic, setBankTopic] = useState('');
+  const [bankTopicsList, setBankTopicsList] = useState([]);
+  const [bankLoading, setBankLoading] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState(1);
   const [levelsData, setLevelsData] = useState({});
   const [loading, setLoading] = useState(true);
@@ -53,6 +65,7 @@ export default function AdminKbcManager() {
     fetchAdminKbcData();
     fetchSessionStatus();
     fetchTeams();
+    fetchBankQuestions(1, '', '', '');
 
     const interval = setInterval(() => {
       fetchSessionStatus();
@@ -72,6 +85,57 @@ export default function AdminKbcManager() {
         }
       }
     } catch (e) {}
+  };
+
+  const fetchBankQuestions = async (p = 1, lvl = bankLevel, topic = bankTopic, search = bankSearch) => {
+    setBankLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set('page', p);
+      params.set('limit', 20);
+      if (lvl) params.set('level', lvl);
+      if (topic) params.set('topic', topic);
+      if (search) params.set('search', search);
+
+      const res = await fetch(`/api/kbc/admin/bank?${params.toString()}`);
+      const data = await res.json();
+      if (data.success) {
+        setBankQuestions(data.questions || []);
+        setBankTotal(data.total || 0);
+        setBankPage(data.page || 1);
+        setBankTotalPages(data.totalPages || 1);
+        if (data.topics) setBankTopicsList(data.topics);
+      }
+    } catch (e) {
+      console.warn('Bank fetch error:', e.message);
+    } finally {
+      setBankLoading(false);
+    }
+  };
+
+  const handleResetToSqlBank = async () => {
+    const confirm = await Swal.fire({
+      title: 'Reset to 1,000 Pure SQL Master Bank?',
+      text: 'This will restore the 1,000 pure SQL questions organized across all 16 levels in Hostinger MySQL.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Reset to 1,000 SQL Bank',
+      confirmButtonColor: '#3b82f6'
+    });
+    if (confirm.isConfirmed) {
+      try {
+        const res = await fetch('/api/kbc/admin/reset', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          await fetchAdminKbcData();
+          await fetchSessionStatus();
+          await fetchBankQuestions(1);
+          Swal.fire('Restored!', data.message || 'Reset complete.', 'success');
+        }
+      } catch (e) {
+        Swal.fire('Error', 'Reset failed.', 'error');
+      }
+    }
   };
 
   const fetchTeams = async () => {
@@ -314,7 +378,41 @@ export default function AdminKbcManager() {
 
   // ── QUESTION SELECTION & CREATION ──
 
-  const handleSelectQuestion = async (questionId) => {
+  const handleSelectQuestion = async (questionId, lvl = selectedLevel) => {
+    try {
+      const res = await fetch('/api/kbc/admin/select', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          level: lvl,
+          questionId
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (lvl === session.current_level) {
+          await handleUpdateLiveRound({
+            current_level: lvl,
+            current_question_id: questionId,
+            reset_round: true
+          });
+        }
+        fetchAdminKbcData();
+        fetchSessionStatus();
+        fetchBankQuestions();
+        Swal.fire({
+          icon: 'success',
+          title: `Question Activated for Level ${lvl} in Hostinger MySQL!`,
+          timer: 1500,
+          showConfirmButton: false,
+          toast: true,
+          position: 'top-end'
+        });
+      }
+    } catch (err) {}
+  };
+
+  const _old_handleSelectQuestion = async (dummy) => {
     try {
       const res = await fetch('/api/kbc/admin/select', {
         method: 'POST',
@@ -591,7 +689,8 @@ export default function AdminKbcManager() {
         {[
           { id: 'live', label: '🖥️ Admin Live Screen (Host Monitor)', count: null },
           { id: 'teams', label: '💻 Participating Laptop Teams', count: teams.length },
-          { id: 'questions', label: '📚 16-Level Question Curators', count: 16 }
+          { id: 'questions', label: '📚 16-Level Question Curators', count: 16 },
+          { id: 'bank', label: '🏛️ 1,000 SQL Question Bank', count: bankTotal || 1008 }
         ].map(tab => (
           <button
             key={tab.id}
@@ -1308,9 +1407,31 @@ export default function AdminKbcManager() {
               </button>
             </div>
 
+            {/* Search & Filter within Level Pool */}
+            <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="relative flex-1 w-full">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={levelSearch}
+                  onChange={(e) => setLevelSearch(e.target.value)}
+                  placeholder={`Search among ${(currentLevelData.pool || []).length} questions in Level ${selectedLevel} (e.g. JOIN, WHERE, INDEX)...`}
+                  className="w-full bg-black/60 border border-slate-700 rounded-lg pl-8 pr-7 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-amber-400"
+                />
+                {levelSearch && (
+                  <button onClick={() => setLevelSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs">✕</button>
+                )}
+              </div>
+              <span className="text-[11px] text-amber-300 font-mono shrink-0">
+                {`Showing ${(currentLevelData.pool || []).filter(q => !levelSearch.trim() || q.question.toLowerCase().includes(levelSearch.toLowerCase()) || q.topic.toLowerCase().includes(levelSearch.toLowerCase())).length} of ${(currentLevelData.pool || []).length} Stored Questions`}
+              </span>
+            </div>
+
             {/* Questions Pool */}
             <div className="space-y-3">
-              {(currentLevelData.pool || []).map((q, qIdx) => {
+              {(currentLevelData.pool || [])
+                .filter(q => !levelSearch.trim() || q.question.toLowerCase().includes(levelSearch.toLowerCase()) || q.topic.toLowerCase().includes(levelSearch.toLowerCase()))
+                .map((q, qIdx) => {
                 const isActive = q.id === currentLevelData.activeQuestionId;
                 return (
                   <div
@@ -1370,6 +1491,282 @@ export default function AdminKbcManager() {
               })}
             </div>
           </div>
+
+        </div>
+      )}
+
+      {/* ════════════ SUB-TAB 4: 1,000 SQL QUESTION BANK & STORED QUESTIONS ════════════ */}
+      {activeSubTab === 'bank' && (
+        <div className="space-y-5">
+          
+          {/* Bank Header & Controls */}
+          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-md bg-amber-500/20 border border-amber-400/40 text-amber-300 font-black text-xs">
+                    🏛️ COMPLETE QUESTION REPOSITORY
+                  </span>
+                  <span className="text-xs text-slate-400 font-mono">
+                    Hostinger MySQL • 16 Levels • 100% Pure SQL
+                  </span>
+                </div>
+                <h3 className="text-xl font-black text-white mt-1">
+                  1,000 SQL Question Bank & Stored Questions
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Browse, search, and activate any stored question for any level of KBC. Admin can also generate new questions via Gemini AI.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={handleResetToSqlBank}
+                  className="px-3.5 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 font-bold text-xs flex items-center gap-1.5 border border-blue-500/30 transition cursor-pointer"
+                  title="Reset table to the factory 1,000 SQL master bank"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" /> Reset to 1,000 SQL Bank
+                </button>
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 transition cursor-pointer shadow-md"
+                >
+                  <PlusCircle className="w-3.5 h-3.5" /> Create Custom Question
+                </button>
+              </div>
+            </div>
+
+            {/* Filters Row: Search, Level, Topic */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+              {/* Keyword Search */}
+              <div className="md:col-span-5 relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={bankSearch}
+                  onChange={(e) => setBankSearch(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && fetchBankQuestions(1, bankLevel, bankTopic, bankSearch)}
+                  placeholder="Search 1,000 questions (e.g. JOIN, HAVING, B-Tree, ACID, NULL)..."
+                  className="w-full bg-black/60 border border-slate-700 rounded-xl pl-9 pr-8 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-amber-400"
+                />
+                {bankSearch && (
+                  <button onClick={() => { setBankSearch(''); fetchBankQuestions(1, bankLevel, bankTopic, ''); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs">✕</button>
+                )}
+              </div>
+
+              {/* Level Dropdown */}
+              <div className="md:col-span-3">
+                <select
+                  value={bankLevel}
+                  onChange={(e) => {
+                    setBankLevel(e.target.value);
+                    fetchBankQuestions(1, e.target.value, bankTopic, bankSearch);
+                  }}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400 cursor-pointer"
+                >
+                  <option value="">All 16 Levels (1 to 16)</option>
+                  {KBC_PRIZE_LADDER.map(step => (
+                    <option key={step.level} value={step.level}>
+                      Level {step.level} ({step.prize}){step.isSafe ? ' ★ Padav' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Topic Dropdown */}
+              <div className="md:col-span-3">
+                <select
+                  value={bankTopic}
+                  onChange={(e) => {
+                    setBankTopic(e.target.value);
+                    fetchBankQuestions(1, bankLevel, e.target.value, bankSearch);
+                  }}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400 cursor-pointer"
+                >
+                  <option value="">All SQL Topics</option>
+                  {bankTopicsList.map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Search Button */}
+              <div className="md:col-span-1">
+                <button
+                  onClick={() => fetchBankQuestions(1, bankLevel, bankTopic, bankSearch)}
+                  className="w-full h-full min-h-[34px] rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center cursor-pointer transition"
+                >
+                  <Search className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Result Stats Bar */}
+            <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
+              <span>
+                Found <strong className="text-amber-400">{bankTotal}</strong> stored questions in bank
+                {bankLevel && <span> for <strong>Level {bankLevel}</strong></span>}
+                {bankTopic && <span> in topic <strong>"{bankTopic}"</strong></span>}
+                {bankSearch && <span> matching <strong>"{bankSearch}"</strong></span>}
+              </span>
+              <span>
+                Page <strong className="text-white">{bankPage}</strong> of <strong className="text-white">{bankTotalPages}</strong>
+              </span>
+            </div>
+          </div>
+
+          {/* Questions Grid */}
+          {bankLoading ? (
+            <div className="p-12 text-center text-slate-400 flex flex-col items-center justify-center gap-2">
+              <RotateCcw className="w-6 h-6 animate-spin text-amber-400" />
+              <span className="text-sm font-semibold">Loading SQL Question Bank...</span>
+            </div>
+          ) : bankQuestions.length === 0 ? (
+            <div className="p-12 text-center bg-slate-900/50 border border-slate-800 rounded-2xl text-slate-400">
+              <p className="text-base font-bold text-slate-300">No questions match your filter.</p>
+              <p className="text-xs text-slate-500 mt-1">Try clearing your search term or selecting another level.</p>
+              <button
+                onClick={() => { setBankSearch(''); setBankLevel(''); setBankTopic(''); fetchBankQuestions(1, '', '', ''); }}
+                className="mt-3 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold"
+              >
+                Clear All Filters
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {bankQuestions.map((q) => {
+                const stepInfo = KBC_PRIZE_LADDER[q.level - 1] || {};
+                return (
+                  <div
+                    key={q.id}
+                    className={`p-4 rounded-2xl border transition ${
+                      q.isActive
+                        ? 'bg-amber-950/20 border-amber-500/50 shadow-md'
+                        : 'bg-slate-900 border-slate-800 hover:border-slate-700'
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                      
+                      {/* Left: Info & Question */}
+                      <div className="space-y-2 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="px-2 py-0.5 rounded bg-amber-500/20 border border-amber-400/40 text-amber-300 font-bold text-xs">
+                            Level {q.level} • {stepInfo.prize || '₹?'}
+                          </span>
+                          <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono text-xs">
+                            {q.topic}
+                          </span>
+                          <span className="text-[10px] text-slate-500 font-mono">
+                            ID: {q.id}
+                          </span>
+                          {q.isActive && (
+                            <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-bold inline-flex items-center gap-1">
+                              <Check className="w-3 h-3" /> ACTIVE ON HOTSEAT
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-sm text-slate-100 font-bold leading-relaxed">
+                          {q.question}
+                        </p>
+
+                        {/* 4 Options Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
+                          {q.options.map((opt, oi) => {
+                            const isCorrect = oi === q.correct;
+                            return (
+                              <div
+                                key={oi}
+                                className={`px-3 py-2 rounded-xl border flex items-center gap-2 ${
+                                  isCorrect
+                                    ? 'bg-emerald-950/40 border-emerald-500/60 text-emerald-200 font-bold shadow-sm'
+                                    : 'bg-slate-950/60 border-slate-800 text-slate-300'
+                                }`}
+                              >
+                                <span className={`w-5 h-5 rounded-md flex items-center justify-center font-mono font-bold text-[11px] ${
+                                  isCorrect ? 'bg-emerald-500 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'
+                                }`}>
+                                  {String.fromCharCode(65 + oi)}
+                                </span>
+                                <span className="flex-1 truncate">{opt}</span>
+                                {isCorrect && (
+                                  <span className="text-[10px] text-emerald-400 font-black shrink-0">✓ Correct</span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Explanation */}
+                        {q.explanation && (
+                          <div className="mt-2 text-[11px] text-slate-400 bg-slate-950/40 rounded-xl p-2.5 border border-slate-800/80">
+                            <span className="font-bold text-amber-300/90 mr-1.5">💡 Concept:</span>
+                            {q.explanation}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right: Actions */}
+                      <div className="flex sm:flex-col items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+                        {q.isActive ? (
+                          <span className="w-full text-center px-3 py-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-bold inline-flex items-center justify-center gap-1.5">
+                            <Check className="w-3.5 h-3.5" /> Active in Game
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleSelectQuestion(q.id, q.level)}
+                            className="w-full px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-yellow-500/20 hover:from-amber-500/30 hover:to-yellow-500/30 border border-amber-400/50 text-amber-300 text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5"
+                          >
+                            <Flame className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Set Active (L{q.level})</span>
+                          </button>
+                        )}
+
+                        <button
+                          onClick={() => handleDeleteQuestion(q.id, q.level)}
+                          className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 hover:text-red-300 transition cursor-pointer flex items-center justify-center gap-1 text-xs"
+                          title="Delete this question from Hostinger MySQL"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span className="sm:hidden">Delete</span>
+                        </button>
+                      </div>
+
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {bankTotalPages > 1 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900/80 border border-slate-800 rounded-2xl p-4">
+              <button
+                disabled={bankPage <= 1 || bankLoading}
+                onClick={() => fetchBankQuestions(bankPage - 1, bankLevel, bankTopic, bankSearch)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-xs font-bold text-white cursor-pointer transition flex items-center gap-1.5"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" /> Previous
+              </button>
+
+              <div className="flex items-center gap-1 text-xs text-slate-300 font-mono">
+                <span>Page</span>
+                <span className="px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-400/40 text-amber-300 font-bold">
+                  {bankPage}
+                </span>
+                <span>of {bankTotalPages}</span>
+              </div>
+
+              <button
+                disabled={bankPage >= bankTotalPages || bankLoading}
+                onClick={() => fetchBankQuestions(bankPage + 1, bankLevel, bankTopic, bankSearch)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-xs font-bold text-white cursor-pointer transition flex items-center gap-1.5"
+              >
+                Next <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
 
         </div>
       )}
