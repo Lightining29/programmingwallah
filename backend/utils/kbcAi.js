@@ -39,7 +39,7 @@ Strict Rules:
 1. Every question MUST have EXACTLY 4 distinct options (Option A, B, C, D).
 2. CRITICAL SINGLE-ANSWER RULE: EXACTLY ONE (1) OPTION MUST BE CORRECT. The other THREE (3) options MUST be completely incorrect, plausible technical distractors. There must NEVER be multiple correct answers, partial truths, or ambiguous options.
 3. FORBIDDEN META-OPTIONS: Do NOT use "All of the above", "None of the above", "Both A and B", or "Both A and C". Every single option must be a concrete, independent statement/value.
-4. "correct" MUST be the exact 0-based integer index of the single correct option (0 for Option A, 1 for Option B, 2 for Option C, or 3 for Option D).
+4. "correct" MUST be the exact 0-based integer index of the single correct option (0 for Option A, 1 for Option B, 2 for Option C, or 3 for Option D). Ensure the correct answer is randomly distributed across 0, 1, 2, or 3 (never biased to B).
 5. "explanation" must clearly explain why that one specific option is correct and why the other options are wrong.
 6. "topic" must be a concise topic label (e.g. "SQL", "React", "Node.js", "Express", "MongoDB", "JavaScript").
 7. The question and options must be technically accurate, realistic, and unambiguous.
@@ -51,7 +51,7 @@ ${isMulti
     "topic": "SQL",
     "question": "What is ...?",
     "options": ["Option A", "Option B", "Option C", "Option D"],
-    "correct": 1,
+    "correct": 0,
     "explanation": "..."
   }
 ]`
@@ -60,7 +60,7 @@ ${isMulti
   "topic": "SQL",
   "question": "What is ...?",
   "options": ["Option A", "Option B", "Option C", "Option D"],
-  "correct": 1,
+  "correct": 2,
   "explanation": "..."
 }`
 }`;
@@ -161,12 +161,23 @@ function sanitizeQuestion(raw, lvl, defaultTopic) {
     return val || `Option ${String.fromCharCode(65 + idx)}`;
   });
 
+  // ── SHUFFLE OPTIONS WHILE GUARANTEEING 100% CORRECT ANSWER ACCURACY ──
+  // The correct answer is tracked and placed randomly across A, B, C, or D (not clustered on B)
+  const origCorrect = correct;
+  const indexed = cleanedOptions.map((text, idx) => ({ text, isCorrect: idx === origCorrect }));
+  for (let i = indexed.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indexed[i], indexed[j]] = [indexed[j], indexed[i]];
+  }
+  const shuffledOptions = indexed.map(o => o.text);
+  const shuffledCorrect = indexed.findIndex(o => o.isCorrect);
+
   return {
     level: lvl,
     topic: (raw.topic || defaultTopic || 'MERN & SQL').trim(),
     question: raw.question.trim(),
-    options: cleanedOptions,
-    correct, // Strictly one correct option index (0, 1, 2, or 3)
+    options: shuffledOptions,
+    correct: shuffledCorrect >= 0 ? shuffledCorrect : 0, // Strictly one correct option index (0, 1, 2, or 3)
     explanation: (raw.explanation || '').trim()
   };
 }

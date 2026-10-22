@@ -3,7 +3,7 @@ import {
   Search, Filter, BookOpen, Trophy, CheckCircle2, PlusCircle, RotateCcw, Sparkles, ExternalLink, 
   HelpCircle, Check, Database, Code2, Server, Globe, Cpu, Layers, AlertCircle,
   Radio, Play, Square, Lock, Eye, ArrowRight, ArrowLeft, Users, Laptop, 
-  Copy, Trash2, ShieldCheck, Flame, RefreshCw
+  Copy, Trash2, ShieldCheck, Flame, RefreshCw, ClipboardList, Edit, FileText, Key, CheckCheck, Box
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { KBC_PRIZE_LADDER, DEFAULT_MERN_SQL_QUESTIONS } from '../../data/kbcQuestions.js';
@@ -11,8 +11,19 @@ import { kbcAudio } from '../../utils/kbcAudio.js';
 import SaatCroreWinnerModal from '../../components/kbc/SaatCroreWinnerModal.jsx';
 
 export default function AdminKbcManager() {
-  const [activeSubTab, setActiveSubTab] = useState('live'); // 'live' | 'questions' | 'teams' | 'bank'
+  const [activeSubTab, setActiveSubTab] = useState('test_sets'); // 'test_sets' | 'live' | 'questions' | 'teams' | 'bank'
   const [levelSearch, setLevelSearch] = useState('');
+
+  // KBC Test Sets & Stored Quizzes State
+  const [testSets, setTestSets] = useState([]);
+  const [testSetsLoading, setTestSetsLoading] = useState(false);
+  const [showCreateSetModal, setShowCreateSetModal] = useState(false);
+  const [newSetTitle, setNewSetTitle] = useState('');
+  const [newSetTopic, setNewSetTopic] = useState('SQL');
+  const [newSetCode, setNewSetCode] = useState('');
+  const [selectedSetForQuestions, setSelectedSetForQuestions] = useState(null);
+  const [setQuestionsList, setSetQuestionsList] = useState([]);
+  const [setQuestionsLoading, setSetQuestionsLoading] = useState(false);
 
   // 1,000 SQL Question Bank State
   const [bankQuestions, setBankQuestions] = useState([]);
@@ -65,6 +76,7 @@ export default function AdminKbcManager() {
 
   // Load KBC Admin Data & Poll Live Session
   useEffect(() => {
+    fetchTestSets();
     fetchAdminKbcData();
     fetchSessionStatus();
     fetchTeams();
@@ -76,6 +88,165 @@ export default function AdminKbcManager() {
     }, 3000);
     return () => clearInterval(interval);
   }, []);
+
+  const fetchTestSets = async () => {
+    setTestSetsLoading(true);
+    try {
+      const res = await fetch('/api/kbc/test-sets');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.testSets)) {
+        setTestSets(data.testSets);
+      }
+    } catch (e) {
+      console.warn('Failed to fetch test sets:', e);
+    } finally {
+      setTestSetsLoading(false);
+    }
+  };
+
+  const handleActivateTestSet = async (setId, title) => {
+    try {
+      const res = await fetch('/api/kbc/admin/test-sets/activate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ setId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchTestSets();
+        await fetchAdminKbcData();
+        await fetchSessionStatus();
+        await fetchTeams();
+        kbcAudio.playQuestionArrival();
+        setActiveSubTab('live');
+        Swal.fire({
+          icon: 'success',
+          title: 'KBC Started with Test Set!',
+          html: `Now active: <strong class="text-amber-400 font-bold">${title || setId}</strong>.<br/>Live game has been initialized to Level 1 (₹1,000) for all laptop contestants!`,
+          confirmButtonColor: '#059669'
+        });
+      }
+    } catch (err) {
+      Swal.fire('Error', 'Failed to start KBC with this test set.', 'error');
+    }
+  };
+
+  const handleCreateTestSet = async (e) => {
+    e.preventDefault();
+    if (!newSetTitle.trim()) {
+      Swal.fire('Required', 'Please enter a title for the KBC test set.', 'warning');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/kbc/admin/test-sets/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newSetTitle.trim(),
+          topic: newSetTopic.trim(),
+          access_code: newSetCode.trim()
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setShowCreateSetModal(false);
+        setNewSetTitle('');
+        setNewSetTopic('SQL');
+        setNewSetCode('');
+        await fetchTestSets();
+        Swal.fire({
+          icon: 'success',
+          title: 'Quiz Box Created!',
+          text: `"${newSetTitle}" has been saved. You can now select it to start KBC anytime!`,
+          timer: 1800,
+          showConfirmButton: false,
+          toast: true,
+          position: 'top-end'
+        });
+      }
+    } catch (err) {
+      Swal.fire('Error', 'Failed to create quiz set.', 'error');
+    }
+  };
+
+  const handleDeleteTestSet = async (setId, title) => {
+    const confirm = await Swal.fire({
+      title: 'Delete Quiz Set?',
+      text: `Are you sure you want to delete "${title}"?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Delete',
+      confirmButtonColor: '#ef4444'
+    });
+
+    if (confirm.isConfirmed) {
+      try {
+        const res = await fetch('/api/kbc/admin/test-sets/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ setId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          fetchTestSets();
+          Swal.fire({
+            icon: 'success',
+            title: 'Quiz Set Deleted',
+            timer: 1500,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end'
+          });
+        }
+      } catch (err) {}
+    }
+  };
+
+  const handleOpenSetQuestions = async (setObj) => {
+    setSelectedSetForQuestions(setObj);
+    setSetQuestionsLoading(true);
+    try {
+      const res = await fetch(`/api/kbc/test-sets/${setObj.id}/questions`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.questions)) {
+        setSetQuestionsList(data.questions);
+      } else {
+        setSetQuestionsList([]);
+      }
+    } catch (e) {
+      setSetQuestionsList([]);
+    } finally {
+      setSetQuestionsLoading(false);
+    }
+  };
+
+  const handleCopyExamLink = (code) => {
+    const url = `${window.location.origin}/kbc`;
+    navigator.clipboard.writeText(url);
+    Swal.fire({
+      icon: 'success',
+      title: 'Exam Link Copied!',
+      html: `Exam Link: <strong class="text-blue-500 font-mono">${url}</strong><br/>Password / Access Code: <strong class="text-amber-500 font-mono">${code || 'KBC-901'}</strong>`,
+      timer: 2000,
+      showConfirmButton: false,
+      toast: true,
+      position: 'top-end'
+    });
+  };
+
+  const handleCopyPassword = (code) => {
+    navigator.clipboard.writeText(code);
+    Swal.fire({
+      icon: 'success',
+      title: 'Access Code Copied!',
+      text: `Code: ${code}`,
+      timer: 1500,
+      showConfirmButton: false,
+      toast: true,
+      position: 'top-end'
+    });
+  };
 
   const fetchSessionStatus = async () => {
     try {
@@ -730,9 +901,10 @@ export default function AdminKbcManager() {
         </div>
       </div>
 
-      {/* ── SUB-TABS: Live Host Screen, Question Bank Curator, Participating Teams ── */}
-      <div className="flex space-x-2 border-b border-slate-800 pb-2">
+      {/* ── SUB-TABS: Stored Test Boxes, Live Host Screen, Question Bank Curator, Participating Teams ── */}
+      <div className="flex space-x-2 border-b border-slate-800 pb-2 overflow-x-auto">
         {[
+          { id: 'test_sets', label: '📦 KBC Quiz Sets & Test Boxes', count: testSets.length },
           { id: 'live', label: '🖥️ Admin Live Screen (Host Monitor)', count: null },
           { id: 'teams', label: '💻 Participating Laptop Teams', count: teams.length },
           { id: 'questions', label: '📚 16-Level Question Curators', count: 16 },
@@ -741,7 +913,7 @@ export default function AdminKbcManager() {
           <button
             key={tab.id}
             onClick={() => setActiveSubTab(tab.id)}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
               activeSubTab === tab.id
                 ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black shadow-md'
                 : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800'
@@ -756,6 +928,151 @@ export default function AdminKbcManager() {
           </button>
         ))}
       </div>
+
+      {/* ════════════ SUB-TAB 0: KBC QUIZ SETS & STORED TEST BOXES (Exact match to portal cards!) ════════════ */}
+      {activeSubTab === 'test_sets' && (
+        <div className="space-y-4">
+          
+          {/* Top Bar with "+ Create New KBC Quiz Box" */}
+          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
+                <Box className="w-5 h-5 text-amber-400" />
+                KBC Quiz Sets & Stored Test Boxes ({testSets.length})
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Select any test box below to immediately launch KBC with that set. Store questions by topic or language without date limits.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setShowCreateSetModal(true)}
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-extrabold text-xs flex items-center gap-2 cursor-pointer shadow-lg shadow-emerald-500/20"
+            >
+              <PlusCircle className="w-4 h-4" /> Create New KBC Quiz Box
+            </button>
+          </div>
+
+          {/* Test Boxes List (Matches user's screenshot exactly!) */}
+          <div className="space-y-3.5">
+            {testSetsLoading ? (
+              <div className="bg-white rounded-2xl p-8 text-center text-slate-500 border border-slate-200">
+                ⏳ Loading KBC test sets...
+              </div>
+            ) : testSets.length === 0 ? (
+              <div className="bg-white rounded-2xl p-8 text-center text-slate-500 border border-slate-200">
+                No KBC quiz sets found. Click "+ Create New KBC Quiz Box" above to add your first set!
+              </div>
+            ) : (
+              testSets.map(t => {
+                const isActive = Boolean(t.is_active);
+
+                return (
+                  <div
+                    key={t.id}
+                    className={`bg-white text-slate-900 border rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition flex flex-col lg:flex-row lg:items-center justify-between gap-4 ${
+                      isActive ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-slate-200'
+                    }`}
+                  >
+                    <div className="flex-1 space-y-1.5">
+                      {/* Top Badges Row (Matches user's screenshot!) */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-extrabold text-slate-900 text-base sm:text-lg">
+                          {t.title}
+                        </span>
+                        
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
+                          isActive 
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                            : 'bg-slate-100 text-slate-600 border border-slate-200'
+                        }`}>
+                          ● {isActive ? 'Active' : 'Inactive'}
+                        </span>
+
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                          {t.question_count || 16} Questions
+                        </span>
+
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                          {teams.length} Registered
+                        </span>
+
+                        {/* Password / Access Code Badge (with Copy) */}
+                        <span
+                          onClick={() => handleCopyPassword(t.access_code || 'KBC-901')}
+                          title="Click to copy access password"
+                          className="cursor-pointer bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 px-2.5 py-0.5 rounded-md text-xs font-bold inline-flex items-center gap-1.5 transition active:scale-95"
+                        >
+                          🔑 Pwd: <strong className="tracking-wider">{t.access_code || 'KBC-901'}</strong> 📋
+                        </span>
+                      </div>
+
+                      {/* Sub-text Row (NO date select!) */}
+                      <div className="text-xs text-slate-500 flex flex-wrap items-center gap-2">
+                        <span className="font-semibold text-slate-600">{t.topic || 'General'}</span>
+                        <span>·</span>
+                        <span>⏱️ {t.duration || 30} min</span>
+                        <span>·</span>
+                        <span>🎯 Pass: {t.passing_score || 50}%</span>
+                        <span>·</span>
+                        <span>🏆 16-Level Ladder</span>
+                        <span>·</span>
+                        <span>Max attempts: 1</span>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons (Matches user's screenshot! NO share form!) */}
+                    <div className="flex items-center gap-2 flex-wrap shrink-0">
+                      {/* 1. Start KBC with this Test (Green Button) */}
+                      <button
+                        onClick={() => handleActivateTestSet(t.id, t.title)}
+                        className={`px-4 py-2 rounded-xl text-white font-extrabold text-xs inline-flex items-center gap-1.5 shadow-sm transition cursor-pointer ${
+                          isActive
+                            ? 'bg-emerald-600 hover:bg-emerald-700'
+                            : 'bg-emerald-600 hover:bg-emerald-500 hover:shadow-emerald-500/20'
+                        }`}
+                        title="Start whole KBC live game using this test set"
+                      >
+                        <Play className="w-3.5 h-3.5 fill-white" />
+                        {isActive ? 'Active in KBC (Playing)' : 'Start KBC with this Test'}
+                      </button>
+
+                      {/* 2. Exam Link (Blue Outline Button) */}
+                      <button
+                        onClick={() => handleCopyExamLink(t.access_code)}
+                        className="px-3.5 py-2 rounded-xl border border-sky-600 text-sky-700 hover:bg-sky-50 font-bold text-xs inline-flex items-center gap-1.5 transition cursor-pointer"
+                        title="Copy direct KBC Exam Link"
+                      >
+                        <Copy className="w-3.5 h-3.5" /> Exam Link
+                      </button>
+
+                      {/* 3. Questions Button */}
+                      <button
+                        onClick={() => handleOpenSetQuestions(t)}
+                        className="px-3.5 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-xs inline-flex items-center gap-1.5 transition cursor-pointer"
+                        title="View and store questions in this box"
+                      >
+                        <Edit className="w-3.5 h-3.5" /> Questions ({t.question_count || 16})
+                      </button>
+
+                      {/* 4. Delete Button */}
+                      <button
+                        onClick={() => handleDeleteTestSet(t.id, t.title)}
+                        className="p-2 rounded-xl border border-red-200 text-red-500 hover:bg-red-50 transition cursor-pointer"
+                        title="Delete test box"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+        </div>
+      )}
 
       {/* ════════════ SUB-TAB 1: ADMIN LIVE SCREEN (HOST MONITOR) ════════════ */}
       {activeSubTab === 'live' && (
@@ -2059,6 +2376,201 @@ export default function AdminKbcManager() {
           onClose={handleDismissWinner}
           isCurrentPlayer={false}
         />
+      )}
+
+      {/* ── CREATE NEW KBC QUIZ BOX MODAL (NO DATE SELECT) ── */}
+      {showCreateSetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <h3 className="text-base font-black text-white flex items-center gap-2">
+                <Box className="w-5 h-5 text-emerald-400" />
+                Create New KBC Quiz Box
+              </h3>
+              <button
+                onClick={() => setShowCreateSetModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateTestSet} className="space-y-3.5 text-left">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Test / Quiz Title *
+                </label>
+                <input
+                  type="text"
+                  value={newSetTitle}
+                  onChange={e => setNewSetTitle(e.target.value)}
+                  placeholder="e.g. Python Fundamentals KBC"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-400"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Subject / Topic
+                </label>
+                <input
+                  type="text"
+                  value={newSetTopic}
+                  onChange={e => setNewSetTopic(e.target.value)}
+                  placeholder="e.g. Python, SQL, JavaScript"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Access Password / Code (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={newSetCode}
+                  onChange={e => setNewSetCode(e.target.value)}
+                  placeholder="e.g. KBC-PY901 (Auto-generated if empty)"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono uppercase focus:outline-none focus:border-emerald-400"
+                />
+                <span className="text-[11px] text-slate-500 mt-1 block">
+                  Contestants enter this password on their laptops at /kbc to join.
+                </span>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateSetModal(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-extrabold text-xs shadow-lg cursor-pointer"
+                >
+                  Save Quiz Box
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── MANAGE STORED QUESTIONS MODAL FOR TEST BOX ── */}
+      {selectedSetForQuestions && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl space-y-4">
+            
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div>
+                <h3 className="text-lg font-black text-white flex items-center gap-2">
+                  <Edit className="w-5 h-5 text-amber-400" />
+                  Stored Questions: {selectedSetForQuestions.title}
+                </h3>
+                <span className="text-xs text-slate-400">
+                  {setQuestionsList.length} Questions across 16 Levels · Options shuffled evenly
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    handleActivateTestSet(selectedSetForQuestions.id, selectedSetForQuestions.title);
+                    setSelectedSetForQuestions(null);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs flex items-center gap-1.5 cursor-pointer shadow-md"
+                >
+                  <Play className="w-3.5 h-3.5 fill-white" /> Start KBC with this Test Now
+                </button>
+                <button
+                  onClick={() => setSelectedSetForQuestions(null)}
+                  className="text-slate-400 hover:text-white p-2 rounded-lg cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Questions List */}
+            {setQuestionsLoading ? (
+              <div className="py-12 text-center text-slate-400 text-sm">
+                ⏳ Loading questions for this quiz set...
+              </div>
+            ) : setQuestionsList.length === 0 ? (
+              <div className="py-12 text-center text-slate-500 text-sm">
+                No questions stored in this box yet. Use the question tools to add questions.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {setQuestionsList.map((q, idx) => (
+                  <div key={q.id || idx} className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono text-xs font-bold">
+                        Level {q.level} ({KBC_PRIZE_LADDER[q.level - 1]?.prize || '₹1,000'})
+                      </span>
+                      <span className="text-xs text-slate-500 font-mono">
+                        Topic: {q.topic}
+                      </span>
+                    </div>
+
+                    <h4 className="text-sm font-bold text-white leading-relaxed">
+                      {q.question}
+                    </h4>
+
+                    {/* Options grid with correct option highlighted */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                      {q.options.map((opt, oIdx) => {
+                        const isCorrect = oIdx === q.correct;
+                        return (
+                          <div
+                            key={oIdx}
+                            className={`p-2.5 rounded-xl border text-xs font-medium flex items-center justify-between ${
+                              isCorrect
+                                ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-200'
+                                : 'bg-slate-900 border-slate-800 text-slate-300'
+                            }`}
+                          >
+                            <span>
+                              <strong className={isCorrect ? 'text-emerald-400 font-mono mr-1.5' : 'text-slate-500 font-mono mr-1.5'}>
+                                {String.fromCharCode(65 + oIdx)}:
+                              </strong>
+                              {opt}
+                            </span>
+                            {isCorrect && (
+                              <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-black">
+                                ✓ Correct
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {q.explanation && (
+                      <p className="text-[11px] text-slate-400 bg-slate-900/40 p-2 rounded-lg border border-slate-800/60 mt-1">
+                        <strong className="text-amber-400/90">Explanation: </strong>
+                        {q.explanation}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex justify-end pt-3 border-t border-slate-800">
+              <button
+                onClick={() => setSelectedSetForQuestions(null)}
+                className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+
+          </div>
+        </div>
       )}
 
     </div>

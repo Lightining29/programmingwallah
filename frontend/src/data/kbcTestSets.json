@@ -1,0 +1,454 @@
+{
+  "html": [
+    {
+      "id": "kbc_html_l1_001",
+      "level": 1,
+      "topic": "HTML & Web",
+      "question": "What does HTML stand for?",
+      "options": [
+        "High Tech Modern Language",
+        "Home Tool Markup Language",
+        "Hyper Text Markup Language",
+        "Hyperlink and Text Markup Language"
+      ],
+      "correct": 2,
+      "explanation": "HTML stands for Hyper Text Markup Language."
+    },
+    {
+      "id": "kbc_html_l2_001",
+      "level": 2,
+      "topic": "HTML & Web",
+      "question": "Which HTML element is used for the largest heading?",
+      "options": [
+        "<heading>",
+        "<head>",
+        "<h1>",
+        "<h6>"
+      ],
+      "correct": 2,
+      "explanation": "<h1> defines the most important and largest heading."
+    },
+    {
+      "id": "kbc_html_l3_001",
+      "level": 3,
+      "topic": "HTML & Web",
+      "question": "Which HTML attribute specifies an alternate text for an image?",
+      "options": [
+        "src",
+        "description",
+        "alt",
+        "title"
+      ],
+      "correct": 2,
+      "explanation": "The alt attribute provides alternative information for an image if a user cannot view it."
+    },
+    {
+      "id": "kbc_html_l4_001",
+      "level": 4,
+      "topic": "HTML & Web",
+      "question": "Which HTML tag is used to define an internal stylesheet?",
+      "options": [
+        "<css>",
+        "<script>",
+        "<style>",
+        "<link>"
+      ],
+      "correct": 2,
+      "explanation": "The <style> element contains style information for a document."
+    },
+    {
+      "id": "kbc_html_l5_001",
+      "level": 5,
+      "topic": "HTML & Web",
+      "question": "Which HTML5 element is used to specify a footer for a document or section?",
+      "options": [
+        "<bottom>",
+        "<foot>",
+        "<footer>",
+        "<section-footer>"
+      ],
+      "correct": 2,
+      "explanation": "The <footer> element specifies a footer for a document or section."
+    },
+    {
+      "id": "kbc_html_l6_001",
+      "level": 6,
+      "topic": "HTML & Web",
+      "question": "In HTML, which input type defines a slider control?",
+      "options": [
+        "slider",
+        "scroll",
+        "controls",
+        "range"
+      ],
+      "correct": 3,
+      "explanation": "<input type=\"range\"> defines a range slider control."
+    },
+    {
+      "id": "kbc_html_l7_001",
+      "level": 7,
+      "topic": "HTML & Web",
+      "question": "What is the correct HTML element for playing audio files?",
+      "options": [
+        "<audio>",
+        "<mp3>",
+        "<sound>",
+        "<music>"
+      ],
+      "correct": 0,
+      "explanation": "The HTML5 <audio> element is used to play audio files on a web page."
+    },
+    {
+      "id": "kbc_html_l8_001",
+      "level": 8,
+      "topic": "HTML & Web",
+      "question": "Which attribute is used to open a hyperlink in a new browser tab?",
+      "options": [
+        "newtab=\"true\"",
+        "target=\"_new\"",
+        "window=\"open\"",
+        "target=\"_blank\""
+      ],
+      "correct": 3,
+      "explanation": "target=\"_blank\" opens the linked document in a new window or tab."
+    },
+    {
+      "id": "kbc_html_l9_001",
+      "level": 9,
+      "topic": "HTML & Web",
+      "question": "Which HTML5 semantic tag represents self-contained, independently distributable content?",
+      "options": [
+        "<main>",
+        "<aside>",
+        "<section>",
+        "<article>"
+      ],
+      "correct": 3,
+      "explanation": "The <article> tag specifies independent, self-contained content."
+    },
+    {
+      "id": "kbc_html_l10_001",
+      "level": 10,
+      "topic": "HTML & Web",
+      "question": "What is the purpose of the HTML5 <canvas> element?",
+      "options": [
+        "To store tabular database records",
+        "To create native container layouts",
+        "To draw graphics on the fly via scripting (usually JavaScript)",
+        "To render 3D plugins directly"
+      ],
+      "correct": 2,
+      "explanation": "<canvas> is used to draw graphics dynamically using JavaScript."
+    },
+    {
+      "id": "kbc_html_l11_001",
+      "level": 11,
+      "topic": "HTML & Web",
+      "question": "In HTML forms, what does the \"novalidate\" attribute do on a <form>?",
+      "options": [
+        "Prevents CSRF attacks",
+        "Disables all form inputs",
+        "Submits the form asynchronously via AJAX",
+        "Bypasses browser native HTML5 form constraint validation"
+      ],
+      "correct": 3,
+      "explanation": "The novalidate attribute tells the browser not to validate form inputs upon submission."
+    },
+    {
+      "id": "kbc_html_l12_001",
+      "level": 12,
+      "topic": "HTML & Web",
+      "question": "Which HTML attribute controls browser autofill behavior according to WCAG 2.1 accessibility?",
+      "options": [
+        "autocomplete",
+        "suggest",
+        "autofill",
+        "type"
+      ],
+      "correct": 0,
+      "explanation": "The autocomplete attribute specifies whether a form or an input field should have autocomplete on or off, aiding a11y."
+    },
+    {
+      "id": "kbc_html_l13_001",
+      "level": 13,
+      "topic": "HTML & Web",
+      "question": "What does the \"rel='noopener noreferrer'\" attribute combination protect against?",
+      "options": [
+        "Tabnabbing / reverse tabnabbing security vulnerability",
+        "SQL injection in forms",
+        "CORS preflight errors",
+        "XSS script execution"
+      ],
+      "correct": 0,
+      "explanation": "noopener prevents the new page from accessing window.opener, preventing malicious tabnabbing."
+    },
+    {
+      "id": "kbc_html_l14_001",
+      "level": 14,
+      "topic": "HTML & Web",
+      "question": "What does the \"loading='lazy'\" attribute on <img> and <iframe> tags achieve?",
+      "options": [
+        "Defers loading offscreen assets until near viewport to improve LCP/performance",
+        "Loads low-res blurhash placeholders",
+        "Caches images in ServiceWorker storage",
+        "Compresses images to WebP format"
+      ],
+      "correct": 0,
+      "explanation": "loading=\"lazy\" instructs the browser to defer loading the asset until it reaches near the viewport."
+    },
+    {
+      "id": "kbc_html_l15_001",
+      "level": 15,
+      "topic": "HTML & Web",
+      "question": "In the HTML Living Standard, what is the exact function of the <template> element?",
+      "options": [
+        "Compiles web assembly modules",
+        "Renders template strings on server",
+        "Injects JSX fragments into DOM",
+        "Holds client-side content that is not rendered immediately, but instantiated at runtime via JavaScript"
+      ],
+      "correct": 3,
+      "explanation": "<template> contains client-side template markup that remains inert until cloned via JS."
+    },
+    {
+      "id": "kbc_html_l16_001",
+      "level": 16,
+      "topic": "HTML & Web",
+      "question": "Which HTML5 API allows web applications to register themselves as handlers for custom URL schemes?",
+      "options": [
+        "navigator.registerProtocolHandler()",
+        "<link rel=\"protocol\">",
+        "window.bindScheme()",
+        "manifest.json protocols"
+      ],
+      "correct": 0,
+      "explanation": "navigator.registerProtocolHandler() allows web apps to register as protocol handlers for custom schemes."
+    }
+  ],
+  "excel": [
+    {
+      "id": "kbc_excel_l1_001",
+      "level": 1,
+      "topic": "Excel & Analytics",
+      "question": "Which symbol MUST all Excel formulas begin with?",
+      "options": [
+        "=",
+        "#",
+        "@",
+        "+"
+      ],
+      "correct": 0,
+      "explanation": "All Excel formulas must begin with an equal sign (=)."
+    },
+    {
+      "id": "kbc_excel_l2_001",
+      "level": 2,
+      "topic": "Excel & Analytics",
+      "question": "Which function adds all the numbers in a range of cells?",
+      "options": [
+        "SUM()",
+        "ADD()",
+        "PLUS()",
+        "TOTAL()"
+      ],
+      "correct": 0,
+      "explanation": "SUM() calculates the total of a selected range of numbers."
+    },
+    {
+      "id": "kbc_excel_l3_001",
+      "level": 3,
+      "topic": "Excel & Analytics",
+      "question": "Which keyboard shortcut selects an entire worksheet in Excel?",
+      "options": [
+        "Ctrl + W",
+        "Ctrl + A",
+        "Ctrl + S",
+        "Ctrl + E"
+      ],
+      "correct": 1,
+      "explanation": "Ctrl + A selects the entire worksheet."
+    },
+    {
+      "id": "kbc_excel_l4_001",
+      "level": 4,
+      "topic": "Excel & Analytics",
+      "question": "Which function returns the number of cells that contain numbers in a range?",
+      "options": [
+        "COUNTBLANK()",
+        "COUNTA()",
+        "COUNTIF()",
+        "COUNT()"
+      ],
+      "correct": 3,
+      "explanation": "COUNT() counts the number of cells that contain numbers."
+    },
+    {
+      "id": "kbc_excel_l5_001",
+      "level": 5,
+      "topic": "Excel & Analytics",
+      "question": "What does the \"$\" sign represent in a cell reference like $A$1?",
+      "options": [
+        "Absolute (locked) cell reference",
+        "Currency formatting",
+        "Division operator",
+        "String text format"
+      ],
+      "correct": 0,
+      "explanation": "$ locks the row and column reference so it does not change when copied."
+    },
+    {
+      "id": "kbc_excel_l6_001",
+      "level": 6,
+      "topic": "Excel & Analytics",
+      "question": "Which Excel feature summarizes and rearranges large datasets dynamically without writing formulas?",
+      "options": [
+        "Conditional Formatting",
+        "Pivot Table",
+        "Data Validation",
+        "Goal Seek"
+      ],
+      "correct": 1,
+      "explanation": "Pivot Tables allow dynamic interactive summarization and aggregation of datasets."
+    },
+    {
+      "id": "kbc_excel_l7_001",
+      "level": 7,
+      "topic": "Excel & Analytics",
+      "question": "Which function searches for a value in the leftmost column of a table and returns a value in the same row from a specified column?",
+      "options": [
+        "MATCH()",
+        "VLOOKUP()",
+        "INDEX()",
+        "HLOOKUP()"
+      ],
+      "correct": 1,
+      "explanation": "VLOOKUP searches vertically in the first column and returns values from specified column indices."
+    },
+    {
+      "id": "kbc_excel_l8_001",
+      "level": 8,
+      "topic": "Excel & Analytics",
+      "question": "Which modern Excel function replaces both VLOOKUP and HLOOKUP with two-way lookups and exact match default?",
+      "options": [
+        "LOOKUP()",
+        "SEARCHX()",
+        "SUPERLOOKUP()",
+        "XLOOKUP()"
+      ],
+      "correct": 3,
+      "explanation": "XLOOKUP is the modern, robust replacement for VLOOKUP and HLOOKUP."
+    },
+    {
+      "id": "kbc_excel_l9_001",
+      "level": 9,
+      "topic": "Excel & Analytics",
+      "question": "What will the formula =IF(A1>50, \"Pass\", \"Fail\") return if A1 is 50?",
+      "options": [
+        "Pass",
+        "#VALUE!",
+        "Fail",
+        "TRUE"
+      ],
+      "correct": 2,
+      "explanation": "Since 50 is not strictly greater than 50 (50 > 50 is false), it returns \"Fail\"."
+    },
+    {
+      "id": "kbc_excel_l10_001",
+      "level": 10,
+      "topic": "Excel & Analytics",
+      "question": "In Excel formulas, which combination provides dynamic, non-volatile left-side lookups superior to classic VLOOKUP?",
+      "options": [
+        "INDEX + MATCH",
+        "CHOOSE + SUM",
+        "OFFSET + MATCH",
+        "INDIRECT + VLOOKUP"
+      ],
+      "correct": 0,
+      "explanation": "INDEX + MATCH allows lookups in any direction and does not break when columns are inserted."
+    },
+    {
+      "id": "kbc_excel_l11_001",
+      "level": 11,
+      "topic": "Excel & Analytics",
+      "question": "Which Excel error occurs when a formula attempts to divide a number by zero or an empty cell?",
+      "options": [
+        "#N/A",
+        "#REF!",
+        "#DIV/0!",
+        "#NULL!"
+      ],
+      "correct": 2,
+      "explanation": "#DIV/0! occurs when a division by zero or empty cell is attempted."
+    },
+    {
+      "id": "kbc_excel_l12_001",
+      "level": 12,
+      "topic": "Excel & Analytics",
+      "question": "What does the dynamic array function =UNIQUE(A2:A100) do in modern Excel (Office 365 / 2021)?",
+      "options": [
+        "Sorts values in descending order",
+        "Removes duplicate rows permanently from sheet",
+        "Counts unique values",
+        "Returns an array of distinct values from the range, spilling automatically"
+      ],
+      "correct": 3,
+      "explanation": "UNIQUE() extracts unique distinct items from a range and spills results automatically."
+    },
+    {
+      "id": "kbc_excel_l13_001",
+      "level": 13,
+      "topic": "Excel & Analytics",
+      "question": "What is the purpose of Power Query in Excel?",
+      "options": [
+        "Extracting, transforming, and loading (ETL) data from multiple disparate sources",
+        "Password protecting workbooks",
+        "Writing VBA macro scripts",
+        "Creating 3D chart animations"
+      ],
+      "correct": 0,
+      "explanation": "Power Query is the dedicated data connectivity and transformation engine in Excel."
+    },
+    {
+      "id": "kbc_excel_l14_001",
+      "level": 14,
+      "topic": "Excel & Analytics",
+      "question": "In DAX / Power Pivot, what is the fundamental difference between a Calculated Column and a Measure?",
+      "options": [
+        "Measures are computed row-by-row during refresh; Calculated Columns compute at query time",
+        "Measures cannot be used in Pivot Tables",
+        "Calculated columns only support text",
+        "Calculated Columns compute at row context and consume RAM; Measures compute on the fly within filter context"
+      ],
+      "correct": 3,
+      "explanation": "Calculated Columns consume storage evaluated at row context; Measures evaluate dynamically in filter context."
+    },
+    {
+      "id": "kbc_excel_l15_001",
+      "level": 15,
+      "topic": "Excel & Analytics",
+      "question": "Which dynamic array formula filters a dataset based on boolean criteria without requiring VBA or manual filtering?",
+      "options": [
+        "=QUERY(range, sql)",
+        "=SELECT(array, condition)",
+        "=FILTER(array, include, [if_empty])",
+        "=EXTRACT(array, criteria)"
+      ],
+      "correct": 2,
+      "explanation": "=FILTER() filters an array based on conditions and spills results."
+    },
+    {
+      "id": "kbc_excel_l16_001",
+      "level": 16,
+      "topic": "Excel & Analytics",
+      "question": "What is the computational complexity difference between volatile functions (like OFFSET, INDIRECT) and non-volatile functions (like INDEX)?",
+      "options": [
+        "Volatile functions recalculate on EVERY single recalculation event anywhere in the workbook, causing performance lag",
+        "There is no computational difference",
+        "Non-volatile functions do not save to disk",
+        "Volatile functions are compiled to C++"
+      ],
+      "correct": 0,
+      "explanation": "Volatile functions recalculate on every sheet change, whereas non-volatile functions only recalculate when their dependencies change."
+    }
+  ]
+}

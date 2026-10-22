@@ -23,6 +23,33 @@ try {
   console.warn('Failed to load sqlQuestionBank1000.json:', e.message);
 }
 
+// ── Curated KBC Test Sets (HTML, Excel, MERN, SQL) ──
+const testSetsPath = path.resolve(__dirname, '../data/kbcTestSets.json');
+export let CURATED_TEST_SETS = { html: [], excel: [] };
+try {
+  if (fs.existsSync(testSetsPath)) {
+    CURATED_TEST_SETS = JSON.parse(fs.readFileSync(testSetsPath, 'utf8'));
+  }
+} catch (e) {}
+
+// Accurate Option Shuffler: Randomizes A, B, C, D while guaranteeing 100% correct answer integrity
+export function shuffleOptionsAccurately(options, correct) {
+  if (!Array.isArray(options) || options.length < 2) return { options, correct: correct || 0 };
+  const origIdx = (correct >= 0 && correct < options.length) ? correct : 0;
+  const correctText = options[origIdx];
+  const items = options.map((text, idx) => ({ text, isCorrect: idx === origIdx }));
+  for (let i = items.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [items[i], items[j]] = [items[j], items[i]];
+  }
+  const newOptions = items.map(x => x.text);
+  const newCorrect = items.findIndex(x => x.isCorrect);
+  return {
+    options: newOptions,
+    correct: newCorrect >= 0 ? newCorrect : 0
+  };
+}
+
 export const DEFAULT_SQL_QUESTIONS = {};
 for (let lvl = 1; lvl <= 16; lvl++) {
   DEFAULT_SQL_QUESTIONS[lvl] = SQL_QUESTION_BANK.filter(q => q.level === lvl);
@@ -30,6 +57,54 @@ for (let lvl = 1; lvl <= 16; lvl++) {
 
 // Backward compatibility alias for any component expecting DEFAULT_MERN_SQL_QUESTIONS
 export const DEFAULT_MERN_SQL_QUESTIONS = DEFAULT_SQL_QUESTIONS;
+
+// Default KBC Test Sets / Quiz Boxes
+let memoryTestSets = [
+  {
+    id: 'kbc-sql-mastery',
+    title: 'SQL Database Mastery KBC',
+    topic: 'SQL',
+    access_code: 'KBC-SQL901',
+    is_active: 1,
+    question_count: 16,
+    passing_score: 50,
+    duration: 30,
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'kbc-html-quiz',
+    title: 'HTML & Web Fundamentals',
+    topic: 'HTML',
+    access_code: 'KBC-HTML5',
+    is_active: 0,
+    question_count: 16,
+    passing_score: 50,
+    duration: 30,
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'kbc-mern-fullstack',
+    title: 'Full-Stack MERN Challenge',
+    topic: 'MERN',
+    access_code: 'KBC-MERN10',
+    is_active: 0,
+    question_count: 16,
+    passing_score: 50,
+    duration: 45,
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'kbc-excel-analytics',
+    title: 'Excel & Data Analytics Quiz',
+    topic: 'Excel',
+    access_code: 'KBC-EXCEL',
+    is_active: 0,
+    question_count: 16,
+    passing_score: 50,
+    duration: 40,
+    created_at: new Date().toISOString()
+  }
+];
 
 // ── In-Memory Fallback State (Active only if Hostinger MySQL is momentarily unreachable) ──
 let memoryStore = {
@@ -126,6 +201,39 @@ async function ensureKbcTable() {
         }
       }
       console.log(`✔ Successfully seeded ${SQL_QUESTION_BANK.length} SQL questions into Hostinger MySQL!`);
+    }
+
+    // 4. Ensure kbc_test_sets table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS kbc_test_sets (
+        id VARCHAR(100) PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        topic VARCHAR(100) NOT NULL,
+        access_code VARCHAR(50) NOT NULL UNIQUE,
+        is_active TINYINT(1) DEFAULT 0,
+        question_count INT DEFAULT 16,
+        passing_score INT DEFAULT 50,
+        duration INT DEFAULT 30,
+        questions_json LONGTEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // Ensure test_set_id column in kbc_questions
+    try {
+      await pool.query("ALTER TABLE kbc_questions ADD COLUMN test_set_id VARCHAR(100) DEFAULT 'kbc-sql-mastery'");
+    } catch (e) {}
+
+    // Ensure default test sets in kbc_test_sets
+    const [setRows] = await pool.query('SELECT COUNT(*) as cnt FROM kbc_test_sets');
+    if ((setRows[0]?.cnt || 0) === 0) {
+      for (const s of memoryTestSets) {
+        await pool.query(`
+          INSERT INTO kbc_test_sets (id, title, topic, access_code, is_active, question_count, passing_score, duration)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `, [s.id, s.title, s.topic, s.access_code, s.is_active, s.question_count, s.passing_score, s.duration]);
+      }
     }
 
     tableEnsured = true;
@@ -230,6 +338,272 @@ router.get('/questions', async (req, res) => {
     flipPool,
     source: 'Memory Fallback'
   });
+});
+
+// ── 1B. TEST SETS / QUIZ BOXES: List All Stored KBC Test Sets ──
+router.get('/test-sets', async (req, res) => {
+  const pool = getMySQLPool();
+  try {
+    await ensureKbcTable();
+    if (pool) {
+      const [rows] = await pool.query(`
+        SELECT id, title, topic, access_code, is_active, question_count, passing_score, duration, created_at, updated_at 
+        FROM kbc_test_sets 
+        ORDER BY is_active DESC, created_at ASC
+      `);
+      if (rows && rows.length > 0) {
+        return res.json({ success: true, testSets: rows, database: 'Hostinger MySQL' });
+      }
+    }
+  } catch (err) {
+    console.warn('MySQL /test-sets error:', err.message);
+  }
+
+  return res.json({ success: true, testSets: memoryTestSets, database: 'Memory Fallback' });
+});
+
+// ── 1C. ADMIN: Create a New KBC Test Set (Stored Quiz Box) ──
+router.post('/admin/test-sets/create', async (req, res) => {
+  const { title, topic, access_code, duration = 30, passing_score = 50 } = req.body;
+  if (!title || !title.trim()) {
+    return res.status(400).json({ success: false, message: 'Test Title is required.' });
+  }
+
+  const generatedCode = (access_code && access_code.trim())
+    ? access_code.trim().toUpperCase()
+    : `KBC-${Math.floor(100 + Math.random() * 900)}`;
+
+  const setId = `set-${Date.now()}`;
+  const cleanTitle = title.trim();
+  const cleanTopic = (topic || 'General').trim();
+  const pool = getMySQLPool();
+
+  try {
+    await ensureKbcTable();
+    if (pool) {
+      await pool.query(`
+        INSERT INTO kbc_test_sets (id, title, topic, access_code, is_active, question_count, passing_score, duration)
+        VALUES (?, ?, ?, ?, 0, 16, ?, ?)
+      `, [setId, cleanTitle, cleanTopic, generatedCode, passing_score, duration]);
+
+      return res.json({
+        success: true,
+        message: `KBC Test Set "${cleanTitle}" created!`,
+        testSet: {
+          id: setId,
+          title: cleanTitle,
+          topic: cleanTopic,
+          access_code: generatedCode,
+          is_active: 0,
+          question_count: 16,
+          passing_score,
+          duration
+        },
+        database: 'Hostinger MySQL'
+      });
+    }
+  } catch (err) {
+    console.warn('MySQL /admin/test-sets/create error:', err.message);
+  }
+
+  const newSet = {
+    id: setId,
+    title: cleanTitle,
+    topic: cleanTopic,
+    access_code: generatedCode,
+    is_active: 0,
+    question_count: 16,
+    passing_score,
+    duration,
+    created_at: new Date().toISOString()
+  };
+  memoryTestSets.push(newSet);
+
+  return res.json({
+    success: true,
+    message: `KBC Test Set "${cleanTitle}" created in fallback!`,
+    testSet: newSet,
+    database: 'Memory Fallback'
+  });
+});
+
+// ── 1D. ADMIN: Select / Activate Test Set (Starts Whole KBC with This Set) ──
+router.post('/admin/test-sets/activate', async (req, res) => {
+  const { setId } = req.body;
+  if (!setId) {
+    return res.status(400).json({ success: false, message: 'setId is required.' });
+  }
+
+  const pool = getMySQLPool();
+  try {
+    await ensureKbcTable();
+    await ensureKbcSessionsAndTeams();
+
+    if (pool) {
+      // 1. Mark target test set active, others inactive
+      await pool.query('UPDATE kbc_test_sets SET is_active = (id = ?)', [setId]);
+
+      // 2. Fetch the activated test set details
+      const [setRows] = await pool.query('SELECT * FROM kbc_test_sets WHERE id = ?', [setId]);
+      const activeSet = setRows[0];
+
+      // 3. Reset live KBC session to Level 1
+      await pool.query(`
+        UPDATE kbc_sessions 
+        SET status = 'LIVE', show_in_navbar = 1, current_level = 1, current_question_id = NULL,
+            is_locked = 0, locked_option = NULL, revealed_correct = NULL, show_winner = 0
+        WHERE id = 'main_session'
+      `);
+
+      // 4. Reset teams to Level 1, 0 points
+      await pool.query(`
+        UPDATE kbc_teams 
+        SET current_level = 1, score_amount = 0, points = 0, correct_count = 0, wrong_count = 0,
+            submitted_option = NULL, status = 'CONNECTED'
+      `);
+
+      // 5. If this set is HTML or Excel or MERN, activate its curated questions into kbc_questions
+      if (setId === 'kbc-html-quiz' && CURATED_TEST_SETS.html?.length > 0) {
+        for (const q of CURATED_TEST_SETS.html) {
+          const shuffled = shuffleOptionsAccurately(q.options, q.correct);
+          await pool.query(`
+            INSERT INTO kbc_questions (id, level, topic, question, options_json, correct, explanation, is_custom, is_active, test_set_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, 'kbc-html-quiz')
+            ON DUPLICATE KEY UPDATE 
+              options_json = VALUES(options_json), correct = VALUES(correct), is_active = 1
+          `, [q.id, q.level, q.topic, q.question, JSON.stringify(shuffled.options), shuffled.correct, q.explanation]);
+        }
+      } else if (setId === 'kbc-excel-analytics' && CURATED_TEST_SETS.excel?.length > 0) {
+        for (const q of CURATED_TEST_SETS.excel) {
+          const shuffled = shuffleOptionsAccurately(q.options, q.correct);
+          await pool.query(`
+            INSERT INTO kbc_questions (id, level, topic, question, options_json, correct, explanation, is_custom, is_active, test_set_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, 'kbc-excel-analytics')
+            ON DUPLICATE KEY UPDATE 
+              options_json = VALUES(options_json), correct = VALUES(correct), is_active = 1
+          `, [q.id, q.level, q.topic, q.question, JSON.stringify(shuffled.options), shuffled.correct, q.explanation]);
+        }
+      } else if (setId === 'kbc-sql-mastery') {
+        // Activate standard SQL questions
+        for (let lvl = 1; lvl <= 16; lvl++) {
+          await pool.query(`
+            UPDATE kbc_questions SET is_active = (id LIKE 'sql_l${lvl}_001%') WHERE level = ?
+          `, [lvl]);
+        }
+      }
+
+      return res.json({
+        success: true,
+        message: `KBC started with test "${activeSet?.title || setId}"! Live session reset to Level 1.`,
+        activeSet,
+        database: 'Hostinger MySQL'
+      });
+    }
+  } catch (err) {
+    console.warn('MySQL /admin/test-sets/activate error:', err.message);
+  }
+
+  // Fallback
+  memoryTestSets.forEach(s => {
+    s.is_active = (s.id === setId ? 1 : 0);
+  });
+  memorySession.status = 'LIVE';
+  memorySession.current_level = 1;
+  memorySession.is_locked = false;
+  memorySession.locked_option = null;
+  memorySession.revealed_correct = null;
+  memorySession.show_winner = false;
+  memoryTeams.forEach(t => {
+    t.current_level = 1;
+    t.score_amount = 0;
+    t.points = 0;
+    t.submitted_option = null;
+  });
+
+  const activeSet = memoryTestSets.find(s => s.id === setId) || memoryTestSets[0];
+  return res.json({
+    success: true,
+    message: `KBC started with "${activeSet.title}" in fallback!`,
+    activeSet,
+    database: 'Memory Fallback'
+  });
+});
+
+// ── 1E. ADMIN: Delete a Test Set ──
+router.post('/admin/test-sets/delete', async (req, res) => {
+  const { setId } = req.body;
+  if (!setId) return res.status(400).json({ success: false, message: 'setId required' });
+
+  const pool = getMySQLPool();
+  try {
+    if (pool) {
+      await pool.query('DELETE FROM kbc_test_sets WHERE id = ?', [setId]);
+      return res.json({ success: true, message: 'Test set deleted.' });
+    }
+  } catch (err) {}
+
+  memoryTestSets = memoryTestSets.filter(s => s.id !== setId);
+  return res.json({ success: true, message: 'Test set deleted in fallback.' });
+});
+
+// ── 1F. PUBLIC & ADMIN: Get Stored Questions for a Specific Test Set ──
+router.get('/test-sets/:id/questions', async (req, res) => {
+  const setId = req.params.id;
+  const pool = getMySQLPool();
+
+  try {
+    await ensureKbcTable();
+    if (pool) {
+      const [rows] = await pool.query(`
+        SELECT id, level, topic, question, options_json, correct, explanation, is_active 
+        FROM kbc_questions 
+        WHERE test_set_id = ? OR ( ? = 'kbc-sql-mastery' AND id LIKE 'sql_%' AND is_active = 1 )
+        ORDER BY level ASC, is_active DESC
+      `, [setId, setId]);
+
+      if (rows.length > 0) {
+        const questions = rows.map(r => {
+          const opts = typeof r.options_json === 'string' ? JSON.parse(r.options_json) : r.options_json;
+          // Shuffle options so answer is not always B
+          const shuffled = shuffleOptionsAccurately(opts, r.correct);
+          return {
+            id: r.id,
+            level: r.level,
+            topic: r.topic,
+            question: r.question,
+            options: shuffled.options,
+            correct: shuffled.correct,
+            explanation: r.explanation,
+            isActive: Boolean(r.is_active)
+          };
+        });
+        return res.json({ success: true, questions, database: 'Hostinger MySQL' });
+      }
+    }
+  } catch (err) {
+    console.warn('/test-sets/:id/questions error:', err.message);
+  }
+
+  // Fallback
+  let fallbackQuestions = [];
+  if (setId === 'kbc-html-quiz') {
+    fallbackQuestions = CURATED_TEST_SETS.html || [];
+  } else if (setId === 'kbc-excel-analytics') {
+    fallbackQuestions = CURATED_TEST_SETS.excel || [];
+  } else {
+    for (let l = 1; l <= 16; l++) {
+      const q = (DEFAULT_SQL_QUESTIONS[l] || [])[0];
+      if (q) fallbackQuestions.push(q);
+    }
+  }
+
+  // Ensure options are shuffled
+  const clean = fallbackQuestions.map(q => {
+    const s = shuffleOptionsAccurately(q.options, q.correct);
+    return { ...q, options: s.options, correct: s.correct };
+  });
+
+  return res.json({ success: true, questions: clean, database: 'Memory Fallback' });
 });
 
 // ── 2. ADMIN: Get All Available Questions Pool & Active Selections from Hostinger MySQL ──
@@ -498,6 +872,7 @@ router.post('/admin/add-custom', async (req, res) => {
 
   const newId = `custom-${lvl}-${Date.now()}`;
   const shouldActivate = Boolean(setAsActive);
+  const shuffled = shuffleOptionsAccurately(options.map(o => o.trim()), correctIdx);
 
   const pool = getMySQLPool();
   try {
@@ -516,8 +891,8 @@ router.post('/admin/add-custom', async (req, res) => {
         lvl,
         topic || 'MERN & SQL',
         question.trim(),
-        JSON.stringify(options.map(o => o.trim())),
-        correctIdx,
+        JSON.stringify(shuffled.options),
+        shuffled.correct,
         (explanation || '').trim(),
         shouldActivate ? 1 : 0
       ]);
