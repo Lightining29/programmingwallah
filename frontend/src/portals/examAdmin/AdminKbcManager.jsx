@@ -308,7 +308,12 @@ export default function AdminKbcManager() {
   // Reveal Correct Answer on Laptop screens & play authentic victory fanfare
   const handleAdminReveal = (correctIdx) => {
     kbcAudio.stopLockSuspense();
-    kbcAudio.playCorrect();
+    const currLvl = session?.current_level || selectedLevel || 1;
+    if (currLvl >= 10) {
+      kbcAudio.playHighPoints();
+    } else {
+      kbcAudio.playCorrect();
+    }
     handleUpdateLiveRound({
       revealed_correct: correctIdx
     });

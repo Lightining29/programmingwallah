@@ -182,12 +182,22 @@ export default function KbcExam() {
                   setAnswerStatus(isCorrect ? 'correct' : 'wrong');
 
                   if (isCorrect) {
-                    kbcAudio.playCorrect();
-                    const winAmount = KBC_PRIZE_LADDER[sess.current_level - 1]?.amount || 0;
-                    const winLabel = KBC_PRIZE_LADDER[sess.current_level - 1]?.prize || '₹0';
+                    const currentLvl = sess.current_level || currentLevel;
+                    const winAmount = KBC_PRIZE_LADDER[currentLvl - 1]?.amount || 0;
+                    const winLabel = KBC_PRIZE_LADDER[currentLvl - 1]?.prize || '₹0';
                     setEarnedAmount(winAmount);
                     setEarnedPrizeLabel(winLabel);
-                    triggerConfetti(0.5);
+
+                    // High points check: Level 10+ (₹3,20,000+), Level 15 (₹1 Crore), Level 16 (₹7 Crore Jackpot)
+                    const isHighPoints = currentLvl >= 10 || winAmount >= 320000;
+                    if (isHighPoints) {
+                      // Play authentic "SAAT CRORE!!" audio clip on contestant laptop!
+                      kbcAudio.playHighPoints();
+                      triggerGrandConfetti();
+                    } else {
+                      kbcAudio.playCorrect();
+                      triggerConfetti(0.5);
+                    }
                   } else {
                     // Play uploaded wrong answer audio on contestant laptop!
                     kbcAudio.playWrong();
@@ -438,13 +448,19 @@ export default function KbcExam() {
     setRevealedCorrect(currentQ.correct);
 
     if (isCorrect) {
-      // Correct!
-      kbcAudio.playCorrect();
       setAnswerStatus('correct');
       const winAmount = currentPrize.amount;
       const winLabel = currentPrize.prize;
       setEarnedAmount(winAmount);
       setEarnedPrizeLabel(winLabel);
+
+      const isHighPoints = currentLevel >= 10 || winAmount >= 320000;
+      if (isHighPoints) {
+        kbcAudio.playHighPoints();
+        triggerGrandConfetti();
+      } else {
+        kbcAudio.playCorrect();
+      }
 
       // Check if it's a Padav (Safe Milestone)
       if (currentPrize.isSafe) {
@@ -498,7 +514,7 @@ export default function KbcExam() {
 
   // Jackpot Win (₹7 Crore!)
   const handleJackpotWin = () => {
-    kbcAudio.playFanfare();
+    kbcAudio.playHighPoints();
     setGameWon(true);
     setGameOver(true);
     setHostQuote(AMITABH_QUOTES.crorepati);
