@@ -5,7 +5,8 @@ import {
   Trophy, Volume2, VolumeX, Clock, Users, PhoneCall, HelpCircle, 
   RotateCcw, Award, LogOut, CheckCircle2, XCircle, Sparkles, 
   AlertTriangle, ArrowRight, Settings, Download, Printer, ShieldCheck,
-  Laptop, Radio, Wifi, UserCheck, Flame, Maximize, Minimize
+  Laptop, Radio, Wifi, UserCheck, Flame, Maximize, Minimize,
+  ArrowUp, TrendingUp, Medal
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { kbcAudio } from '../../utils/kbcAudio.js';
@@ -125,6 +126,109 @@ export default function KbcExam() {
     } catch (e) {}
     return 'Hotseat Contestant';
   });
+
+  // ── Live Players Leaderboard (Calculated after every question) ──
+  const [livePlayers, setLivePlayers] = useState(() => [
+    { id: 'player-rohan', name: 'Rohan Sharma', isUser: false, points: 0, currentLevel: 1, correctCount: 0, wrongCount: 0, lastPointsGained: 0, lastStatus: null, avatar: '⚡', accuracy: 0.85 },
+    { id: 'player-priya', name: 'Priya Patel', isUser: false, points: 0, currentLevel: 1, correctCount: 0, wrongCount: 0, lastPointsGained: 0, lastStatus: null, avatar: '🌟', accuracy: 0.80 },
+    { id: 'player-aman', name: 'Aman Verma', isUser: false, points: 0, currentLevel: 1, correctCount: 0, wrongCount: 0, lastPointsGained: 0, lastStatus: null, avatar: '🔥', accuracy: 0.75 },
+    { id: 'player-user', name: 'Hotseat Contestant', isUser: true, points: 0, currentLevel: 1, correctCount: 0, wrongCount: 0, lastPointsGained: 0, lastStatus: null, avatar: '👤', accuracy: 1.0 },
+    { id: 'player-neha', name: 'Neha Gupta', isUser: false, points: 0, currentLevel: 1, correctCount: 0, wrongCount: 0, lastPointsGained: 0, lastStatus: null, avatar: '🎯', accuracy: 0.70 },
+    { id: 'player-vikram', name: 'Vikram Singh', isUser: false, points: 0, currentLevel: 1, correctCount: 0, wrongCount: 0, lastPointsGained: 0, lastStatus: null, avatar: '🚀', accuracy: 0.65 },
+    { id: 'player-ananya', name: 'Ananya Roy', isUser: false, points: 0, currentLevel: 1, correctCount: 0, wrongCount: 0, lastPointsGained: 0, lastStatus: null, avatar: '💎', accuracy: 0.60 }
+  ]);
+
+  // Synchronize contestant's actual profile name into user player card
+  useEffect(() => {
+    if (playerName) {
+      setLivePlayers(prev => prev.map(p => p.isUser ? { ...p, name: playerName } : p));
+    }
+  }, [playerName]);
+
+  // Calculate live points after every question and smoothly re-rank
+  const calculateRoundPoints = (userCorrect, speedBonus = 0) => {
+    const basePoints = currentLevel * 100;
+    const userEarned = userCorrect ? (basePoints + speedBonus) : 0;
+
+    setLivePlayers(prevPlayers => {
+      const updated = prevPlayers.map(p => {
+        if (p.isUser) {
+          return {
+            ...p,
+            points: p.points + userEarned,
+            currentLevel: Math.min(currentLevel + 1, 16),
+            correctCount: p.correctCount + (userCorrect ? 1 : 0),
+            wrongCount: p.wrongCount + (userCorrect ? 0 : 1),
+            lastPointsGained: userEarned,
+            lastStatus: userCorrect ? 'correct' : 'wrong'
+          };
+        } else {
+          // Competitive classmates simulation:
+          // Slightly decreasing accuracy on higher levels
+          const levelDifficulty = Math.max(0.35, p.accuracy - (currentLevel * 0.02));
+          const compCorrect = Math.random() < levelDifficulty;
+          const compSpeed = compCorrect ? Math.floor(Math.random() * 20) * 2 : 0;
+          const compEarned = compCorrect ? (basePoints + compSpeed) : 0;
+          return {
+            ...p,
+            points: p.points + compEarned,
+            currentLevel: Math.min(currentLevel + 1, 16),
+            correctCount: p.correctCount + (compCorrect ? 1 : 0),
+            wrongCount: p.wrongCount + (compCorrect ? 0 : 1),
+            lastPointsGained: compEarned,
+            lastStatus: compCorrect ? 'correct' : 'wrong'
+          };
+        }
+      });
+
+      // Sort by points descending, then correct count
+      return [...updated].sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        return b.correctCount - a.correctCount;
+      });
+    });
+  };
+
+  const resetLivePlayers = () => {
+    setLivePlayers([
+      { id: 'player-rohan', name: 'Rohan Sharma', isUser: false, points: 0, currentLevel: 1, correctCount: 0, wrongCount: 0, lastPointsGained: 0, lastStatus: null, avatar: '⚡', accuracy: 0.85 },
+      { id: 'player-priya', name: 'Priya Patel', isUser: false, points: 0, currentLevel: 1, correctCount: 0, wrongCount: 0, lastPointsGained: 0, lastStatus: null, avatar: '🌟', accuracy: 0.80 },
+      { id: 'player-aman', name: 'Aman Verma', isUser: false, points: 0, currentLevel: 1, correctCount: 0, wrongCount: 0, lastPointsGained: 0, lastStatus: null, avatar: '🔥', accuracy: 0.75 },
+      { id: 'player-user', name: playerName || 'Hotseat Contestant', isUser: true, points: 0, currentLevel: 1, correctCount: 0, wrongCount: 0, lastPointsGained: 0, lastStatus: null, avatar: '👤', accuracy: 1.0 },
+      { id: 'player-neha', name: 'Neha Gupta', isUser: false, points: 0, currentLevel: 1, correctCount: 0, wrongCount: 0, lastPointsGained: 0, lastStatus: null, avatar: '🎯', accuracy: 0.70 },
+      { id: 'player-vikram', name: 'Vikram Singh', isUser: false, points: 0, currentLevel: 1, correctCount: 0, wrongCount: 0, lastPointsGained: 0, lastStatus: null, avatar: '🚀', accuracy: 0.65 },
+      { id: 'player-ananya', name: 'Ananya Roy', isUser: false, points: 0, currentLevel: 1, correctCount: 0, wrongCount: 0, lastPointsGained: 0, lastStatus: null, avatar: '💎', accuracy: 0.60 }
+    ]);
+  };
+
+  // Synchronize team mode top_teams if available from Hostinger MySQL
+  const displayPlayers = useMemo(() => {
+    if (team && Array.isArray(adminSession?.top_teams) && adminSession.top_teams.length > 0) {
+      return adminSession.top_teams.map((t) => {
+        const isUser = Boolean(team && (t.id === team.id || t.access_code === team.access_code));
+        return {
+          id: `team-${t.id || t.access_code}`,
+          name: t.team_name || t.leader_name || `Team ${t.access_code}`,
+          isUser,
+          points: Number(t.points) || 0,
+          currentLevel: t.current_level || 1,
+          correctCount: t.correct_count || 0,
+          wrongCount: t.wrong_count || 0,
+          lastPointsGained: isUser && answerStatus === 'correct' ? currentLevel * 100 : 0,
+          lastStatus: isUser ? answerStatus : (t.status === 'HOTSEAT' ? 'correct' : null),
+          avatar: '🏆'
+        };
+      }).sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        return b.correctCount - a.correctCount;
+      });
+    }
+    return livePlayers;
+  }, [team, adminSession?.top_teams, livePlayers, answerStatus, currentLevel]);
+
+  const currentUserIndex = displayPlayers.findIndex(p => p.isUser);
+  const currentUserRank = currentUserIndex >= 0 ? currentUserIndex + 1 : 1;
+  const currentUserPlayer = currentUserIndex >= 0 ? displayPlayers[currentUserIndex] : null;
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
@@ -275,6 +379,7 @@ export default function KbcExam() {
                       : true
                   );
                   setAnswerStatus(isCorrect ? 'correct' : 'wrong');
+                  calculateRoundPoints(isCorrect, 0);
 
                   if (isCorrect) {
                     setIsWrongAnswer(false);
@@ -469,6 +574,7 @@ export default function KbcExam() {
     setIsWrongAnswer(true);
     setIsCelebratingCorrect(false);
     setHostQuote(AMITABH_QUOTES.timeOut);
+    calculateRoundPoints(false, 0);
   };
 
   // Real KBC Countdown Timer Effect (Active on Contestant Laptop when Round is LIVE)
@@ -563,6 +669,9 @@ export default function KbcExam() {
   const evaluateAnswer = () => {
     const isCorrect = selectedOption === currentQ.correct;
     setRevealedCorrect(currentQ.correct);
+
+    const speedBonus = Math.max(0, timeLeft * 2);
+    calculateRoundPoints(isCorrect, speedBonus);
 
     if (isCorrect) {
       setIsWrongAnswer(false);
@@ -824,6 +933,7 @@ export default function KbcExam() {
     setEliminatedOptions([]);
     setActiveModal(null);
     setLifelines({ fifty: true, poll: true, friend: true, flip: true });
+    resetLivePlayers();
     fetchQuestions();
   };
 
@@ -1375,9 +1485,9 @@ export default function KbcExam() {
 
             </div>
 
-            {/* Right 3 Columns: 16-Step Money Ladder (Dhanrashi Tree) */}
+            {/* Right 3 Columns: Live Players Points Leaderboard (Replaced Prize Ladder) */}
             <div 
-              className="lg:col-span-3 rounded-2xl p-4 shadow-2xl h-fit border relative z-20 transition-all duration-700"
+              className="lg:col-span-3 rounded-2xl p-3.5 sm:p-4 shadow-2xl h-fit border relative z-20 transition-all duration-700"
               style={{
                 background: isWrongAnswer
                   ? 'linear-gradient(180deg, rgba(69, 10, 10, 0.95) 0%, rgba(26, 4, 4, 0.95) 100%)'
@@ -1389,55 +1499,141 @@ export default function KbcExam() {
                 backdropFilter: 'blur(12px)'
               }}
             >
-              <div className="text-center pb-2.5 border-b border-indigo-900/50 mb-2.5">
-                <span className="text-xs font-black uppercase text-amber-400 tracking-widest flex items-center justify-center gap-1.5">
-                  <Trophy className="w-4 h-4 text-amber-400" /> PRIZE LADDER
+              {/* Header */}
+              <div className="pb-3 border-b border-indigo-900/50 mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 font-black shadow-md shadow-amber-500/20">
+                    <Trophy className="w-4 h-4 text-slate-950" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-black uppercase text-amber-400 tracking-wider flex items-center gap-1.5">
+                      Live Leaderboard
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping inline-block" />
+                    </h3>
+                    <p className="text-[10px] text-slate-400 font-medium">
+                      Points update after each Q
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-950/80 border border-indigo-800/60 text-indigo-300 font-bold">
+                  Q{currentLevel}/16
                 </span>
               </div>
 
-              <div className="space-y-1">
-                {KBC_PRIZE_LADDER.slice().reverse().map(step => {
-                  const isCurrent = currentLevel === step.level;
-                  const isPassed = currentLevel > step.level;
+              {/* Player Cards with Smooth Framer Motion Spring Layout Reordering */}
+              <div className="space-y-2">
+                {displayPlayers.map((player, index) => {
+                  const rank = index + 1;
+                  const isUser = player.isUser;
+                  const gainedPoints = player.lastPointsGained > 0;
+
+                  // Rank styling badges
+                  let rankBadge = (
+                    <span className="w-6 h-6 rounded-lg bg-slate-800 text-slate-300 border border-slate-700/60 font-mono text-[11px] font-black flex items-center justify-center">
+                      {rank}
+                    </span>
+                  );
+                  if (rank === 1) {
+                    rankBadge = (
+                      <span className="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-400 via-yellow-400 to-amber-600 text-slate-950 font-mono text-[11px] font-black flex items-center justify-center shadow-md shadow-amber-500/40">
+                        🥇
+                      </span>
+                    );
+                  } else if (rank === 2) {
+                    rankBadge = (
+                      <span className="w-6 h-6 rounded-lg bg-gradient-to-br from-slate-200 to-slate-400 text-slate-950 font-mono text-[11px] font-black flex items-center justify-center shadow-sm">
+                        🥈
+                      </span>
+                    );
+                  } else if (rank === 3) {
+                    rankBadge = (
+                      <span className="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-700 to-amber-900 text-amber-200 font-mono text-[11px] font-black flex items-center justify-center shadow-sm">
+                        🥉
+                      </span>
+                    );
+                  }
 
                   return (
-                    <div
-                      key={step.level}
-                      style={{
-                        color: isCurrent ? '#020617' : '#ffffff'
+                    <motion.div
+                      key={player.id}
+                      layout
+                      transition={{
+                        type: "spring",
+                        stiffness: 280,
+                        damping: 24,
+                        mass: 0.75
                       }}
-                      className={`flex items-center justify-between px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                        isCurrent
-                          ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 font-black shadow-lg shadow-amber-500/30 scale-[1.03]'
-                          : isPassed
-                          ? 'bg-emerald-950/50 border border-emerald-500/30 text-white'
-                          : step.isSafe
-                          ? 'bg-amber-500/20 border border-amber-400/40 text-white'
-                          : 'bg-slate-900/60 border border-indigo-950/50 text-white'
+                      className={`relative rounded-xl p-2.5 transition-all border ${
+                        isUser
+                          ? 'bg-gradient-to-r from-cyan-950/85 via-blue-950/85 to-indigo-950/85 border-cyan-400 shadow-[0_0_18px_rgba(6,182,212,0.3)] ring-1 ring-cyan-400/50'
+                          : rank === 1
+                          ? 'bg-gradient-to-r from-amber-950/40 via-slate-900/80 to-slate-900/80 border-amber-400/40'
+                          : gainedPoints
+                          ? 'bg-emerald-950/30 border-emerald-500/40'
+                          : 'bg-slate-900/60 border-indigo-950/60 hover:border-indigo-800/40'
                       }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <span className={`w-5 text-right font-mono text-[11px] font-black ${
-                          isCurrent ? 'text-slate-950' : 'text-amber-400'
-                        }`}>
-                          {step.level}
-                        </span>
-                        <span className={`font-bold ${isCurrent ? 'text-slate-950' : 'text-white'}`}>
-                          {step.prize}
-                        </span>
+                      <div className="flex items-center justify-between gap-2">
+                        {/* Left: Rank, Avatar & Name */}
+                        <div className="flex items-center gap-2 min-w-0">
+                          {rankBadge}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`text-xs font-bold truncate max-w-[100px] sm:max-w-[125px] ${
+                                isUser ? 'text-cyan-200 font-black' : 'text-white'
+                              }`}>
+                                {player.name}
+                              </span>
+                              {isUser && (
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider bg-cyan-400 text-slate-950 shadow-sm shadow-cyan-400/40">
+                                  YOU
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                              <span>{player.correctCount} Correct</span>
+                              <span className="w-1 h-1 rounded-full bg-slate-600" />
+                              <span>Q{player.currentLevel}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right: Points & Dynamic Upward Gain */}
+                        <div className="text-right shrink-0">
+                          <div className="text-xs font-black text-amber-300 font-mono tracking-tight">
+                            {player.points.toLocaleString()} <span className="text-[10px] text-amber-400/80 font-sans">pts</span>
+                          </div>
+                          <div className="h-4 flex items-center justify-end mt-0.5">
+                            {gainedPoints ? (
+                              <motion.span
+                                initial={{ scale: 0.5, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-black font-mono shadow-[0_0_8px_rgba(16,185,129,0.3)]"
+                              >
+                                <ArrowUp className="w-2.5 h-2.5 text-emerald-400 stroke-[3]" />
+                                +{player.lastPointsGained}
+                              </motion.span>
+                            ) : player.lastStatus === 'wrong' ? (
+                              <span className="text-[9px] text-rose-400/70 font-mono">
+                                +0 pts
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        {step.isSafe && (
-                          <span className={`text-[9px] px-1.5 py-0.5 rounded font-black ${
-                            isCurrent ? 'bg-slate-950 text-amber-400' : 'bg-amber-400/30 text-amber-300 border border-amber-400/40'
-                          }`}>
-                            PADAV
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                    </motion.div>
                   );
                 })}
+              </div>
+
+              {/* User Standing Bar at bottom of leaderboard */}
+              <div className="mt-3 pt-2.5 border-t border-indigo-900/50 flex items-center justify-between text-[11px]">
+                <span className="text-slate-400 font-medium">Your Standing:</span>
+                <span className="text-cyan-300 font-black flex items-center gap-1.5">
+                  <TrendingUp className="w-3.5 h-3.5 text-cyan-400" />
+                  Rank #{currentUserRank} of {displayPlayers.length}
+                  <span className="text-amber-300 font-mono">({currentUserPlayer?.points || 0} pts)</span>
+                </span>
               </div>
             </div>
 
