@@ -960,7 +960,7 @@ export default function KbcExam() {
       </header>
 
       {/* ── Main Arena: Host, Question, Options, and Money Ladder ── */}
-      <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto p-4 flex flex-col justify-between">
+      <main className="relative z-20 flex-1 max-w-7xl w-full mx-auto p-4 flex flex-col justify-between">
         
         {/* CASE 1: Connected Team Waiting for Admin to start Live Broadcast */}
         {team && adminSession.status !== 'LIVE' ? (
