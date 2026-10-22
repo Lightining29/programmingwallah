@@ -856,11 +856,6 @@ export default function KbcExam() {
         isWrongAnswer ? 'bg-red-600/40 shadow-[0_0_100px_#ef4444]' : 'bg-blue-600/10'
       }`} />
 
-      {/* Whole-Stage Red Environment Floodwash Layer */}
-      {isWrongAnswer && (
-        <div className="absolute inset-0 bg-gradient-to-b from-red-950/60 via-red-900/30 to-red-950/70 mix-blend-color-dodge pointer-events-none z-10 animate-pulse" />
-      )}
-
       {/* ── Atmospheric Stage Lasers & Correct Answer Celebration Lights ── */}
       <KbcStageLasers
         triggerUpwardSweep={laserUpwardTrigger}

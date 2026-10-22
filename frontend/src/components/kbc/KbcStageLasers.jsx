@@ -5,20 +5,12 @@ import { motion } from 'framer-motion';
  * Professional Stage Laser Lighting (Aurora Cobalt & Aurora Crimson Edition)
  * Inspired by high-end concert laser rigs (X-Laser Aurora Cobalt / Aurora Crimson).
  * 
- * Behaviors:
- * 1. Ambient: Thick, vibrant cobalt blue beams continuously swaying (never disappears).
- * 2. New Question (triggerUpwardSweep): Lasers sweep up and stop/hold there.
- * 3. Correct Answer (isCelebratingCorrect):
- *    - Move faster up to middle
- *    - Flicker bright strobe
- *    - Move down
- *    - Flicker bright strobe
- *    - Move back up!
- * 4. Wrong Answer (isWrongAnswer):
- *    - Changes laser colors to high-power bright red!
- *    - Fires high-power downward red laser beams from overhead rigs toward the stage floor.
- *    - Moves downward with high power and STOPS and LOCKS there.
- *    - Never disappears until the next question arrives!
+ * Features:
+ * - Crisp, bright, razor-sharp beam shafts (NO blurry fog).
+ * - Solid white-hot luminous core with electric neon coronas.
+ * - Piercing overhead downward red lasers on wrong answer.
+ * - Dynamic celebration dance & strobe flicker on correct answer.
+ * - Never disappears!
  */
 export default function KbcStageLasers({ 
   triggerUpwardSweep = false, 
@@ -81,22 +73,22 @@ export default function KbcStageLasers({
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden z-10 select-none">
 
-      {/* ── STAGE FLOOR HAZE & AMBIENCE (Switches Blue <-> Red on wrong answer) ── */}
+      {/* ── STAGE FLOOR AMBIENCE (Clean subtle gradient, non-muddy) ── */}
       <div 
-        className={`absolute -bottom-10 left-0 right-0 h-48 blur-2xl pointer-events-none transition-colors duration-700 ${
+        className={`absolute -bottom-10 left-0 right-0 h-32 blur-xl pointer-events-none transition-colors duration-700 ${
           isWrongAnswer
-            ? 'bg-gradient-to-t from-red-950 via-red-900/60 to-transparent'
-            : 'bg-gradient-to-t from-blue-950/80 via-blue-900/30 to-transparent'
+            ? 'bg-gradient-to-t from-red-950/80 via-red-900/40 to-transparent'
+            : 'bg-gradient-to-t from-blue-950/60 via-blue-900/20 to-transparent'
         }`}
       />
 
-      {/* Backstage fiery glow on wrong answer (Matches concert photo) */}
+      {/* Backstage floor flare on wrong answer */}
       {isWrongAnswer && (
         <motion.div
           initial={{ opacity: 0 }}
-          animate={{ opacity: [0.75, 1, 0.85] }}
-          transition={{ duration: 0.8, repeat: Infinity, repeatType: 'reverse' }}
-          className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-[800px] h-[340px] rounded-[100%] bg-red-600/40 blur-3xl pointer-events-none"
+          animate={{ opacity: [0.7, 0.9, 0.75] }}
+          transition={{ duration: 1.0, repeat: Infinity, repeatType: 'reverse' }}
+          className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-[700px] h-[250px] rounded-[100%] bg-red-600/30 blur-2xl pointer-events-none"
         />
       )}
 
@@ -111,19 +103,19 @@ export default function KbcStageLasers({
           <div 
             className={`w-5 h-2.5 rounded-full transition-all duration-500 ${
               isWrongAnswer
-                ? 'bg-rose-200 shadow-[0_0_25px_#ef4444,0_0_40px_#dc2626,0_0_55px_#ffffff]'
-                : 'bg-cyan-200 shadow-[0_0_20px_#38bdf8,0_0_35px_#0284c7,0_0_50px_#ffffff]'
+                ? 'bg-white shadow-[0_0_20px_#ffffff,0_0_35px_#ef4444,0_0_50px_#dc2626]'
+                : 'bg-white shadow-[0_0_20px_#ffffff,0_0_35px_#38bdf8,0_0_50px_#0284c7]'
             }`}
           />
           <div 
-            className={`w-12 h-6 -mt-1 rounded-full blur-md transition-colors duration-500 ${
-              isWrongAnswer ? 'bg-red-600/50' : 'bg-blue-600/40'
+            className={`w-10 h-4 -mt-1 rounded-full blur-sm transition-colors duration-500 ${
+              isWrongAnswer ? 'bg-red-500/60' : 'bg-cyan-500/50'
             }`}
           />
         </div>
       ))}
 
-      {/* ── 10 HIGH-POWER FLOOR BEAMS ── */}
+      {/* ── 10 HIGH-POWER, CRISP FLOOR BEAMS (Never Blurry, Solid Bright) ── */}
       {floorBeams.map((beam) => {
         let targetAngle;
         let targetOpacity;
@@ -133,7 +125,7 @@ export default function KbcStageLasers({
         if (isWrongAnswer) {
           // ── WRONG ANSWER: Move down with high power bright red beam towards down and STOP ──
           targetAngle = beam.downAngle;
-          targetOpacity = 1.0; // High power maximum brightness
+          targetOpacity = 1.0;
           targetScaleY = 1.1;
           transitionConfig = {
             duration: 0.75,
@@ -154,7 +146,7 @@ export default function KbcStageLasers({
             finalUpAngle
           ];
           targetScaleY = [1, 1.15, 1.25, 0.85, 0.8, 1.2];
-          targetOpacity = [0.85, 1, 0.2, 1, 0.2, 1]; // Exact 6 values matching times array!
+          targetOpacity = [0.9, 1, 0.25, 1, 0.25, 1];
           transitionConfig = {
             duration: 4.2,
             times: [0, 0.2, 0.35, 0.65, 0.8, 1],
@@ -163,7 +155,7 @@ export default function KbcStageLasers({
         } else if (isQuestionHeldUp) {
           // ── NEW QUESTION: Sweeps up and stops/holds right there ──
           targetAngle = beam.sweepUpAngle;
-          targetOpacity = 0.95;
+          targetOpacity = 1.0;
           targetScaleY = 1.15;
           transitionConfig = {
             duration: 1.0,
@@ -172,7 +164,7 @@ export default function KbcStageLasers({
         } else {
           // ── NORMAL AMBIENT: Continuous swaying (NEVER disappears) ──
           targetAngle = [beam.ambientRange[0], beam.ambientRange[1], beam.ambientRange[0]];
-          targetOpacity = [0.85, 0.95, 0.85];
+          targetOpacity = [0.95, 1.0, 0.95];
           targetScaleY = 1;
           transitionConfig = {
             duration: 4.8 + beam.delay * 2,
@@ -188,7 +180,10 @@ export default function KbcStageLasers({
             style={{
               left: beam.baseLeft,
               bottom: 0,
-              transformOrigin: 'bottom center'
+              transformOrigin: 'bottom center',
+              filter: isWrongAnswer
+                ? 'drop-shadow(0 0 6px #ff0033) drop-shadow(0 0 16px #dc2626)'
+                : 'drop-shadow(0 0 6px #00e5ff) drop-shadow(0 0 16px #0066ff)'
             }}
             animate={{
               rotate: targetAngle,
@@ -198,44 +193,41 @@ export default function KbcStageLasers({
             transition={transitionConfig}
             className="absolute h-[145vh] pointer-events-none flex items-center justify-center -translate-x-1/2"
           >
-            {/* 1. Volumetric Beam Aura (Red if wrong, Cobalt Blue if normal) */}
+            {/* 1. Tight, high-contrast glow corona (No wide blur - only blur-[3px]) */}
             <div 
-              className={`absolute w-12 sm:w-16 h-full blur-xl pointer-events-none transition-all duration-500 ${
+              className={`absolute w-6 sm:w-7 h-full blur-[3px] pointer-events-none transition-all duration-500 ${
                 isWrongAnswer
-                  ? 'bg-gradient-to-t from-red-700 via-rose-600/40 to-red-500/10'
-                  : 'bg-gradient-to-t from-blue-700/80 via-blue-600/35 to-cyan-400/10'
+                  ? 'bg-gradient-to-t from-rose-600 via-red-500 to-red-600/60'
+                  : 'bg-gradient-to-t from-cyan-400 via-sky-400 to-blue-500/80'
               }`}
             />
 
-            {/* 2. Intense Glow Mantle Layer */}
+            {/* 2. Solid, Sharp Piercing White-Hot Core (Clean 3px - 4px core with intense neon borders) */}
             <div 
-              className={`absolute w-4 sm:w-5 h-full blur-[4px] pointer-events-none transition-all duration-500 ${
-                isWrongAnswer
-                  ? 'bg-gradient-to-t from-rose-500 via-red-500/70 to-red-600/30 shadow-[0_0_25px_#ff0033,0_0_50px_#cc0000,0_0_80px_#990000]'
-                  : 'bg-gradient-to-t from-cyan-400/90 via-sky-400/60 to-blue-500/20 shadow-[0_0_25px_#00e5ff,0_0_50px_#0055ff]'
-              }`}
+              className="relative w-2.5 sm:w-3 h-full pointer-events-none"
+              style={{
+                background: isWrongAnswer
+                  ? 'linear-gradient(90deg, #ff0033 0%, #ffffff 38%, #ffffff 62%, #ff0033 100%)'
+                  : 'linear-gradient(90deg, #00d9ff 0%, #ffffff 38%, #ffffff 62%, #00d9ff 100%)',
+                boxShadow: isWrongAnswer
+                  ? '0 0 10px #ffffff, 0 0 22px #ef4444'
+                  : '0 0 10px #ffffff, 0 0 22px #38bdf8'
+              }}
             />
 
-            {/* 3. Razor-Sharp Solid White Core with colored corona */}
+            {/* 3. Floor Projector Emitter Base Spark */}
             <div 
-              className={`relative w-[3px] sm:w-[4px] h-full bg-white pointer-events-none transition-all duration-500 ${
-                isWrongAnswer
-                  ? 'shadow-[0_0_12px_#ffffff,0_0_25px_#ef4444,0_0_40px_#b91c1c]'
-                  : 'shadow-[0_0_10px_#ffffff,0_0_20px_#38bdf8,0_0_35px_#0284c7]'
-              }`}
-            />
-
-            {/* 4. Floor Emitter Spark */}
-            <div 
-              className={`absolute bottom-0 w-3 h-3 rounded-full bg-white -translate-y-1 transition-all duration-500 ${
-                isWrongAnswer ? 'shadow-[0_0_20px_#ef4444]' : 'shadow-[0_0_15px_#38bdf8]'
+              className={`absolute bottom-0 w-3.5 h-3.5 rounded-full bg-white -translate-y-1 transition-all duration-500 ${
+                isWrongAnswer 
+                  ? 'shadow-[0_0_20px_#ffffff,0_0_35px_#ef4444]' 
+                  : 'shadow-[0_0_20px_#ffffff,0_0_35px_#38bdf8]'
               }`}
             />
           </motion.div>
         );
       })}
 
-      {/* ── 3. OVERHEAD HIGH-POWER DOWNWARD RED LASER RIG (Active on Wrong Answer) ── */}
+      {/* ── 3. OVERHEAD HIGH-POWER DOWNWARD RED LASER RIG (Active on Wrong Answer, Crisp & Sharp) ── */}
       {isWrongAnswer && overheadDownwardBeams.map((beam) => (
         <motion.div
           key={beam.id}
@@ -245,24 +237,28 @@ export default function KbcStageLasers({
           style={{
             left: beam.left,
             top: 0,
-            transformOrigin: 'top center'
+            transformOrigin: 'top center',
+            filter: 'drop-shadow(0 0 8px #ff0033) drop-shadow(0 0 18px #cc0000)'
           }}
           className="absolute h-[155vh] pointer-events-none flex items-center justify-center -translate-x-1/2 z-20"
         >
           {/* Overhead Projector Lens Spark at Top */}
-          <div className="absolute top-0 w-5 h-5 rounded-full bg-white shadow-[0_0_30px_#ef4444,0_0_55px_#dc2626,0_0_80px_#ff0033] -translate-y-1" />
+          <div className="absolute top-0 w-5 h-5 rounded-full bg-white shadow-[0_0_25px_#ffffff,0_0_45px_#ef4444] -translate-y-1" />
 
-          {/* Volumetric Red Beam Aura (Extra wide concert spread) */}
-          <div className="absolute w-16 sm:w-24 h-full bg-gradient-to-b from-red-600 via-rose-600/50 to-red-500/15 blur-2xl pointer-events-none" />
+          {/* Tight Red Glow Corona (No wide blur!) */}
+          <div className="absolute w-7 sm:w-9 h-full bg-gradient-to-b from-red-500 via-rose-500 to-red-600/70 blur-[3px] pointer-events-none" />
 
-          {/* Electric Neon Red Glow */}
-          <div className="absolute w-6 sm:w-8 h-full bg-gradient-to-b from-rose-500 via-red-500/80 to-red-600/40 blur-[5px] shadow-[0_0_30px_#ff0033,0_0_60px_#cc0000,0_0_100px_#990000] pointer-events-none" />
+          {/* Solid White-Hot Piercing Beam Core (Sharp column) */}
+          <div 
+            className="relative w-2.5 sm:w-3.5 h-full pointer-events-none"
+            style={{
+              background: 'linear-gradient(90deg, #ff0033 0%, #ffffff 38%, #ffffff 62%, #ff0033 100%)',
+              boxShadow: '0 0 12px #ffffff, 0 0 25px #ef4444'
+            }}
+          />
 
-          {/* Razor-Sharp White-Hot Core Shooting Downward */}
-          <div className="relative w-[4px] sm:w-[5px] h-full bg-white shadow-[0_0_15px_#ffffff,0_0_30px_#ef4444,0_0_55px_#b91c1c] pointer-events-none" />
-
-          {/* Floor Contact Ground Reflection Flare */}
-          <div className="absolute bottom-10 w-12 h-6 rounded-full bg-red-500/40 blur-md pointer-events-none" />
+          {/* Floor Impact Spot */}
+          <div className="absolute bottom-12 w-10 h-4 rounded-full bg-red-400/60 blur-[3px] pointer-events-none shadow-[0_0_20px_#ef4444]" />
         </motion.div>
       ))}
 
@@ -272,29 +268,13 @@ export default function KbcStageLasers({
           animate={{
             opacity: [
               0,
-              0.6, 0.05, 0.85, 0.1, 0.7, 0.05, 0.2,
-              0.8, 0.05, 0.9, 0.1, 0.75, 0.05, 0.4, 0
+              0.5, 0.05, 0.75, 0.1, 0.6, 0.05, 0.2,
+              0.7, 0.05, 0.8, 0.1, 0.65, 0.05, 0.35, 0
             ]
           }}
           transition={{ duration: 4.2, ease: 'linear' }}
-          className="absolute inset-0 bg-gradient-to-b from-cyan-300/35 via-blue-500/20 to-transparent mix-blend-screen pointer-events-none z-30"
+          className="absolute inset-0 bg-gradient-to-b from-cyan-300/30 via-blue-500/15 to-transparent mix-blend-screen pointer-events-none z-30"
         />
-      )}
-
-      {/* ── WRONG ANSWER WHOLE-ENVIRONMENT RED AMBIENCE & CRIMSON WASH (Holds until next question) ── */}
-      {isWrongAnswer && (
-        <>
-          {/* Dense Crimson Atmospheric Fog */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0.55, 0.75, 0.6] }}
-            transition={{ duration: 1.8, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
-            className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(220,38,38,0.55)_0%,rgba(153,27,27,0.4)_50%,rgba(69,10,10,0.65)_100%)] mix-blend-screen pointer-events-none z-10"
-          />
-
-          {/* Stage Floor Crimson Reflection Wash */}
-          <div className="absolute bottom-0 left-0 right-0 h-56 bg-gradient-to-t from-red-600/40 via-red-900/30 to-transparent blur-2xl pointer-events-none z-10" />
-        </>
       )}
 
     </div>
