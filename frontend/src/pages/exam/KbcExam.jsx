@@ -1373,14 +1373,6 @@ export default function KbcExam() {
                 </div>
               )}
 
-              {/* Correct answer explanation box after evaluation */}
-              {revealedCorrect !== null && currentQ?.explanation && (
-                <div className="max-w-4xl mx-auto bg-slate-900/80 border border-indigo-500/30 rounded-2xl p-4 text-xs text-slate-300">
-                  <strong className="text-amber-300">💡 Technical Explanation: </strong>
-                  {currentQ.explanation}
-                </div>
-              )}
-
             </div>
 
             {/* Right 3 Columns: 16-Step Money Ladder (Dhanrashi Tree) */}
