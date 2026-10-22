@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Search, Filter, BookOpen, Trophy, CheckCircle2, PlusCircle, RotateCcw, Sparkles, ExternalLink, 
   HelpCircle, Check, Database, Code2, Server, Globe, Cpu, Layers, AlertCircle,
-  Radio, Play, Square, Lock, Eye, ArrowRight, ArrowLeft, Users, Laptop, 
+  Radio, Play, Square, CheckSquare, Lock, Eye, ArrowRight, ArrowLeft, Users, Laptop, 
   Copy, Trash2, ShieldCheck, Flame, RefreshCw, ClipboardList, Edit, FileText, Key, CheckCheck, Box
 } from 'lucide-react';
 import Swal from 'sweetalert2';
@@ -24,6 +24,13 @@ export default function AdminKbcManager() {
   const [selectedSetForQuestions, setSelectedSetForQuestions] = useState(null);
   const [setQuestionsList, setSetQuestionsList] = useState([]);
   const [setQuestionsLoading, setSetQuestionsLoading] = useState(false);
+  const [setModalSearch, setSetModalSearch] = useState('');
+  const [setModalLevelFilter, setSetModalLevelFilter] = useState('');
+  const [showAddFromBankModal, setShowAddFromBankModal] = useState(false);
+  const [addBankSearch, setAddBankSearch] = useState('');
+  const [addBankLevel, setAddBankLevel] = useState('');
+  const [addBankQuestionsList, setAddBankQuestionsList] = useState([]);
+  const [addBankLoading, setAddBankLoading] = useState(false);
 
   // 1,000 SQL Question Bank State
   const [bankQuestions, setBankQuestions] = useState([]);
@@ -218,6 +225,160 @@ export default function AdminKbcManager() {
       setSetQuestionsList([]);
     } finally {
       setSetQuestionsLoading(false);
+    }
+  };
+
+  // Toggle (select / deselect) question inside test set
+  const handleToggleSetQuestion = async (qId, currentStatus) => {
+    if (!selectedSetForQuestions) return;
+    const nextStatus = !currentStatus;
+
+    // Optimistic UI update
+    setSetQuestionsList(prev => prev.map(q => q.id === qId ? { ...q, isActive: nextStatus } : q));
+
+    try {
+      const res = await fetch(`/api/kbc/admin/test-sets/${selectedSetForQuestions.id}/questions/toggle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questionId: qId, isActive: nextStatus })
+      });
+      const data = await res.json();
+      if (data.success && typeof data.activeCount === 'number') {
+        setTestSets(prev => prev.map(t => t.id === selectedSetForQuestions.id ? { ...t, question_count: data.activeCount } : t));
+      }
+    } catch (e) {
+      console.warn('Failed to toggle question status:', e);
+    }
+  };
+
+  // Bulk Select All / Deselect All questions in test set
+  const handleToggleAllSetQuestions = async (shouldSelectAll) => {
+    if (!selectedSetForQuestions) return;
+
+    // Optimistic UI update
+    setSetQuestionsList(prev => prev.map(q => ({ ...q, isActive: shouldSelectAll })));
+
+    try {
+      const res = await fetch(`/api/kbc/admin/test-sets/${selectedSetForQuestions.id}/questions/toggle-all`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: shouldSelectAll })
+      });
+      const data = await res.json();
+      if (data.success && typeof data.activeCount === 'number') {
+        setTestSets(prev => prev.map(t => t.id === selectedSetForQuestions.id ? { ...t, question_count: data.activeCount } : t));
+      }
+      Swal.fire({
+        icon: 'success',
+        title: shouldSelectAll ? 'All Questions Selected!' : 'All Questions Deselected!',
+        text: shouldSelectAll ? 'All questions are now selected for this test.' : 'All questions have been deselected for this test.',
+        timer: 1500,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
+      });
+    } catch (e) {
+      console.warn('Failed to bulk toggle questions:', e);
+    }
+  };
+
+  // Delete question from test set
+  const handleDeleteSetQuestion = async (qId, qQuestion) => {
+    if (!selectedSetForQuestions) return;
+    const confirm = await Swal.fire({
+      title: 'Remove from Test?',
+      text: `Remove this question from "${selectedSetForQuestions.title}"?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Remove',
+      confirmButtonColor: '#ef4444'
+    });
+    if (!confirm.isConfirmed) return;
+
+    try {
+      const res = await fetch(`/api/kbc/admin/test-sets/${selectedSetForQuestions.id}/questions/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questionId: qId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSetQuestionsList(prev => prev.filter(q => q.id !== qId));
+        if (typeof data.activeCount === 'number') {
+          setTestSets(prev => prev.map(t => t.id === selectedSetForQuestions.id ? { ...t, question_count: data.activeCount } : t));
+        }
+        Swal.fire({
+          icon: 'success',
+          title: 'Removed!',
+          timer: 1200,
+          showConfirmButton: false,
+          toast: true,
+          position: 'top-end'
+        });
+      }
+    } catch (e) {
+      Swal.fire('Error', 'Failed to remove question.', 'error');
+    }
+  };
+
+  // Search questions in bank to add into test set
+  const fetchAddBankQuestions = async (lvl = addBankLevel, search = addBankSearch) => {
+    setAddBankLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set('page', 1);
+      params.set('limit', 15);
+      if (lvl) params.set('level', lvl);
+      if (search) params.set('search', search);
+
+      const res = await fetch(`/api/kbc/admin/bank?${params.toString()}`);
+      const data = await res.json();
+      if (data.success) {
+        setAddBankQuestionsList(data.questions || []);
+      }
+    } catch (e) {
+      setAddBankQuestionsList([]);
+    } finally {
+      setAddBankLoading(false);
+    }
+  };
+
+  // Add a specific bank question into this test set
+  const handleAddQuestionFromBankToSet = async (q) => {
+    if (!selectedSetForQuestions) return;
+    try {
+      const res = await fetch(`/api/kbc/admin/test-sets/${selectedSetForQuestions.id}/questions/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: q.question,
+          level: q.level,
+          topic: q.topic,
+          options: q.options,
+          correct: q.correct,
+          explanation: q.explanation
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (data.question) {
+          setSetQuestionsList(prev => [...prev, data.question]);
+        }
+        if (typeof data.activeCount === 'number') {
+          setTestSets(prev => prev.map(t => t.id === selectedSetForQuestions.id ? { ...t, question_count: data.activeCount } : t));
+        }
+        Swal.fire({
+          icon: 'success',
+          title: 'Question Added!',
+          text: `Added to ${selectedSetForQuestions.title}`,
+          timer: 1400,
+          showConfirmButton: false,
+          toast: true,
+          position: 'top-end'
+        });
+      }
+    } catch (e) {
+      Swal.fire('Error', 'Failed to add question to test set.', 'error');
     }
   };
 
@@ -2462,20 +2623,26 @@ export default function AdminKbcManager() {
       {/* ── MANAGE STORED QUESTIONS MODAL FOR TEST BOX ── */}
       {selectedSetForQuestions && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl space-y-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-5xl w-full max-h-[92vh] overflow-y-auto shadow-2xl space-y-4">
             
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            {/* Modal Header */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
               <div>
-                <h3 className="text-lg font-black text-white flex items-center gap-2">
+                <h3 className="text-xl font-black text-white flex items-center gap-2">
                   <Edit className="w-5 h-5 text-amber-400" />
-                  Stored Questions: {selectedSetForQuestions.title}
+                  Stored Questions: <span className="text-amber-300">{selectedSetForQuestions.title}</span>
                 </h3>
-                <span className="text-xs text-slate-400">
-                  {setQuestionsList.length} Questions across 16 Levels · Options shuffled evenly
-                </span>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono text-xs font-bold">
+                    ⭐ {setQuestionsList.filter(q => q.isActive).length} / {setQuestionsList.length} Selected (Active in Game)
+                  </span>
+                  <span className="text-xs text-slate-400">
+                    Click any checkbox to Select or Deselect questions
+                  </span>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={() => {
                     handleActivateTestSet(selectedSetForQuestions.id, selectedSetForQuestions.title);
@@ -2486,7 +2653,11 @@ export default function AdminKbcManager() {
                   <Play className="w-3.5 h-3.5 fill-white" /> Start KBC with this Test Now
                 </button>
                 <button
-                  onClick={() => setSelectedSetForQuestions(null)}
+                  onClick={() => {
+                    setSelectedSetForQuestions(null);
+                    setSetModalSearch('');
+                    setSetModalLevelFilter('');
+                  }}
                   className="text-slate-400 hover:text-white p-2 rounded-lg cursor-pointer"
                 >
                   ✕
@@ -2494,78 +2665,352 @@ export default function AdminKbcManager() {
               </div>
             </div>
 
+            {/* Quick Actions & Filters Bar */}
+            <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-3">
+              {/* Left: Bulk Select/Deselect Buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleToggleAllSetQuestions(true)}
+                  className="px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition"
+                  title="Select all questions to be active in this test"
+                >
+                  <CheckSquare className="w-4 h-4 text-emerald-400" />
+                  <span>Select All ({setQuestionsList.length})</span>
+                </button>
+
+                <button
+                  onClick={() => handleToggleAllSetQuestions(false)}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition"
+                  title="Deselect all questions"
+                >
+                  <Square className="w-4 h-4 text-slate-400" />
+                  <span>Deselect All</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowAddFromBankModal(true);
+                    fetchAddBankQuestions('', '');
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-yellow-500/20 hover:from-amber-500/30 hover:to-yellow-500/30 border border-amber-400/50 text-amber-300 text-xs font-black flex items-center gap-1.5 cursor-pointer transition"
+                >
+                  <PlusCircle className="w-4 h-4 text-amber-400" />
+                  <span>+ Add Question from 1,000 Bank</span>
+                </button>
+              </div>
+
+              {/* Right: Search & Level Filter */}
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={setModalSearch}
+                    onChange={(e) => setSetModalSearch(e.target.value)}
+                    placeholder="Search in this test..."
+                    className="bg-black/60 border border-slate-700 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-amber-400 w-44"
+                  />
+                  {setModalSearch && (
+                    <button onClick={() => setSetModalSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs">✕</button>
+                  )}
+                </div>
+
+                <select
+                  value={setModalLevelFilter}
+                  onChange={(e) => setSetModalLevelFilter(e.target.value)}
+                  className="bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400 cursor-pointer"
+                >
+                  <option value="">All Levels</option>
+                  {KBC_PRIZE_LADDER.map(s => (
+                    <option key={s.level} value={s.level}>L{s.level} ({s.prize})</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
             {/* Questions List */}
             {setQuestionsLoading ? (
-              <div className="py-12 text-center text-slate-400 text-sm">
-                ⏳ Loading questions for this quiz set...
+              <div className="py-16 text-center text-slate-400 text-sm flex flex-col items-center justify-center gap-2">
+                <RotateCcw className="w-6 h-6 animate-spin text-amber-400" />
+                <span>Loading questions for this test set...</span>
               </div>
             ) : setQuestionsList.length === 0 ? (
-              <div className="py-12 text-center text-slate-500 text-sm">
-                No questions stored in this box yet. Use the question tools to add questions.
+              <div className="py-16 text-center text-slate-500 text-sm bg-slate-950/50 border border-slate-800 rounded-2xl p-6">
+                <p className="text-base font-bold text-slate-300">No questions stored in this box yet.</p>
+                <p className="text-xs text-slate-500 mt-1">Click the button below to add questions from the 1,000 SQL master bank.</p>
+                <button
+                  onClick={() => {
+                    setShowAddFromBankModal(true);
+                    fetchAddBankQuestions('', '');
+                  }}
+                  className="mt-4 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-md"
+                >
+                  <PlusCircle className="w-4 h-4" /> Add Questions from Bank
+                </button>
               </div>
             ) : (
               <div className="space-y-3">
-                {setQuestionsList.map((q, idx) => (
-                  <div key={q.id || idx} className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono text-xs font-bold">
-                        Level {q.level} ({KBC_PRIZE_LADDER[q.level - 1]?.prize || '₹1,000'})
-                      </span>
-                      <span className="text-xs text-slate-500 font-mono">
-                        Topic: {q.topic}
-                      </span>
-                    </div>
+                {setQuestionsList
+                  .filter(q => {
+                    if (setModalLevelFilter && String(q.level) !== String(setModalLevelFilter)) return false;
+                    if (setModalSearch) {
+                      const s = setModalSearch.toLowerCase();
+                      const matchQ = q.question?.toLowerCase().includes(s);
+                      const matchTopic = q.topic?.toLowerCase().includes(s);
+                      const matchOpts = q.options?.some(opt => opt?.toLowerCase().includes(s));
+                      return matchQ || matchTopic || matchOpts;
+                    }
+                    return true;
+                  })
+                  .map((q, idx) => {
+                    const isSelected = q.isActive;
+                    return (
+                      <div
+                        key={q.id || idx}
+                        className={`rounded-2xl p-4 transition-all border ${
+                          isSelected
+                            ? 'bg-slate-950/90 border-emerald-500/40 shadow-sm'
+                            : 'bg-slate-950/40 border-slate-800/80 opacity-60 hover:opacity-100'
+                        }`}
+                      >
+                        {/* Top Row: Select/Deselect Button, Level Badge, and Remove Button */}
+                        <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-slate-800/60">
+                          
+                          {/* Prominent Checkbox Toggle Button */}
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleToggleSetQuestion(q.id, isSelected)}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-2 cursor-pointer transition shadow-sm ${
+                                isSelected
+                                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400/80 shadow-emerald-500/20'
+                                  : 'bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-700'
+                              }`}
+                              title={isSelected ? "Click to Deselect this question from this test" : "Click to Select this question for this test"}
+                            >
+                              {isSelected ? (
+                                <CheckSquare className="w-4 h-4 text-white" />
+                              ) : (
+                                <Square className="w-4 h-4 text-slate-400" />
+                              )}
+                              <span>{isSelected ? '✓ Selected in Test' : '✕ Deselected (Skipped)'}</span>
+                            </button>
 
-                    <h4 className="text-sm font-bold text-white leading-relaxed">
-                      {q.question}
-                    </h4>
-
-                    {/* Options grid with correct option highlighted */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                      {q.options.map((opt, oIdx) => {
-                        const isCorrect = oIdx === q.correct;
-                        return (
-                          <div
-                            key={oIdx}
-                            className={`p-2.5 rounded-xl border text-xs font-medium flex items-center justify-between ${
-                              isCorrect
-                                ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-200'
-                                : 'bg-slate-900 border-slate-800 text-slate-300'
-                            }`}
-                          >
-                            <span>
-                              <strong className={isCorrect ? 'text-emerald-400 font-mono mr-1.5' : 'text-slate-500 font-mono mr-1.5'}>
-                                {String.fromCharCode(65 + oIdx)}:
-                              </strong>
-                              {opt}
+                            <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono text-xs font-bold">
+                              Level {q.level} ({KBC_PRIZE_LADDER[q.level - 1]?.prize || '₹1,000'})
                             </span>
-                            {isCorrect && (
-                              <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-black">
-                                ✓ Correct
+
+                            <span className="text-xs text-slate-400 font-mono">
+                              Topic: <strong className="text-slate-300">{q.topic}</strong>
+                            </span>
+
+                            {!isSelected && (
+                              <span className="px-2 py-0.5 rounded bg-red-950/60 text-red-300 border border-red-500/30 text-[10px] font-bold">
+                                Skipped in KBC
                               </span>
                             )}
                           </div>
-                        );
-                      })}
-                    </div>
 
-                    {q.explanation && (
-                      <p className="text-[11px] text-slate-400 bg-slate-900/40 p-2 rounded-lg border border-slate-800/60 mt-1">
-                        <strong className="text-amber-400/90">Explanation: </strong>
-                        {q.explanation}
-                      </p>
-                    )}
-                  </div>
-                ))}
+                          {/* Right: Remove from Test Button */}
+                          <button
+                            onClick={() => handleDeleteSetQuestion(q.id, q.question)}
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-950/40 transition cursor-pointer"
+                            title="Remove this question from test set"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        {/* Question Text */}
+                        <h4 className={`text-sm font-bold leading-relaxed pt-2 ${isSelected ? 'text-white' : 'text-slate-400 line-through'}`}>
+                          {q.question}
+                        </h4>
+
+                        {/* Options grid with correct option highlighted */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                          {q.options.map((opt, oIdx) => {
+                            const isCorrect = oIdx === q.correct;
+                            return (
+                              <div
+                                key={oIdx}
+                                className={`p-2.5 rounded-xl border text-xs font-medium flex items-center justify-between ${
+                                  isCorrect
+                                    ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-200'
+                                    : 'bg-slate-900/80 border-slate-800 text-slate-300'
+                                }`}
+                              >
+                                <span>
+                                  <strong className={isCorrect ? 'text-emerald-400 font-mono mr-1.5' : 'text-slate-500 font-mono mr-1.5'}>
+                                    {String.fromCharCode(65 + oIdx)}:
+                                  </strong>
+                                  {opt}
+                                </span>
+                                {isCorrect && (
+                                  <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-black">
+                                    ✓ Correct
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {q.explanation && (
+                          <p className="text-[11px] text-slate-400 bg-slate-900/50 p-2 rounded-lg border border-slate-800/60 mt-2">
+                            <strong className="text-amber-400/90">Explanation: </strong>
+                            {q.explanation}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+              <span className="text-xs text-slate-400">
+                Total <strong className="text-emerald-400">{setQuestionsList.filter(q => q.isActive).length}</strong> questions will be asked when starting KBC with this test.
+              </span>
+              <button
+                onClick={() => {
+                  setSelectedSetForQuestions(null);
+                  setSetModalSearch('');
+                  setSetModalLevelFilter('');
+                }}
+                className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs cursor-pointer"
+              >
+                Done / Close
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ── ADD QUESTION FROM 1,000 SQL BANK MODAL ── */}
+      {showAddFromBankModal && selectedSetForQuestions && (
+        <div className="fixed inset-0 z-55 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-4xl w-full max-h-[88vh] overflow-y-auto shadow-2xl space-y-4">
+            
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div>
+                <h3 className="text-lg font-black text-white flex items-center gap-2">
+                  <PlusCircle className="w-5 h-5 text-amber-400" />
+                  Add Questions to <span className="text-amber-300">{selectedSetForQuestions.title}</span>
+                </h3>
+                <span className="text-xs text-slate-400">
+                  Select and add any question from the 1,000 SQL master bank
+                </span>
+              </div>
+              <button
+                onClick={() => setShowAddFromBankModal(false)}
+                className="text-slate-400 hover:text-white p-2 rounded-lg cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Filters Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+              <div className="sm:col-span-8 relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={addBankSearch}
+                  onChange={(e) => setAddBankSearch(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && fetchAddBankQuestions(addBankLevel, addBankSearch)}
+                  placeholder="Search 1,000 questions (e.g. JOIN, HAVING, ACID, INDEX)..."
+                  className="w-full bg-black/60 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <div className="sm:col-span-3">
+                <select
+                  value={addBankLevel}
+                  onChange={(e) => {
+                    setAddBankLevel(e.target.value);
+                    fetchAddBankQuestions(e.target.value, addBankSearch);
+                  }}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400 cursor-pointer"
+                >
+                  <option value="">All 16 Levels</option>
+                  {KBC_PRIZE_LADDER.map(s => (
+                    <option key={s.level} value={s.level}>Level {s.level} ({s.prize})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="sm:col-span-1">
+                <button
+                  onClick={() => fetchAddBankQuestions(addBankLevel, addBankSearch)}
+                  className="w-full h-full min-h-[34px] rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center cursor-pointer"
+                >
+                  <Search className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Results list */}
+            {addBankLoading ? (
+              <div className="py-12 text-center text-slate-400 text-sm">
+                <RotateCcw className="w-6 h-6 animate-spin text-amber-400 mx-auto mb-2" />
+                Searching question bank...
+              </div>
+            ) : addBankQuestionsList.length === 0 ? (
+              <div className="py-12 text-center text-slate-500 text-sm">
+                No questions found. Try searching for "SELECT", "JOIN", or "INDEX".
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {addBankQuestionsList.map((q) => {
+                  const alreadyInSet = setQuestionsList.some(item => item.question === q.question);
+                  return (
+                    <div key={q.id} className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-start justify-between gap-4">
+                      <div className="space-y-1.5 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold text-xs">
+                            Level {q.level} • {KBC_PRIZE_LADDER[q.level - 1]?.prize || '₹?'}
+                          </span>
+                          <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono text-xs">
+                            {q.topic}
+                          </span>
+                        </div>
+                        <p className="text-xs font-bold text-white">{q.question}</p>
+                        <div className="grid grid-cols-2 gap-1.5 text-[11px] pt-1">
+                          {q.options.map((opt, i) => (
+                            <span key={i} className={`truncate ${i === q.correct ? 'text-emerald-400 font-bold' : 'text-slate-400'}`}>
+                              {String.fromCharCode(65 + i)}: {opt}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="shrink-0">
+                        {alreadyInSet ? (
+                          <span className="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 text-xs font-bold inline-flex items-center gap-1">
+                            ✓ Already in Test
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleAddQuestionFromBankToSet(q)}
+                            className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-md transition"
+                          >
+                            <PlusCircle className="w-3.5 h-3.5" /> + Add to Test
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
             <div className="flex justify-end pt-3 border-t border-slate-800">
               <button
-                onClick={() => setSelectedSetForQuestions(null)}
-                className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs cursor-pointer"
+                onClick={() => setShowAddFromBankModal(false)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold cursor-pointer"
               >
-                Close
+                Close Picker
               </button>
             </div>
 

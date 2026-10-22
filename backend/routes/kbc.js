@@ -386,6 +386,20 @@ router.post('/admin/test-sets/create', async (req, res) => {
         VALUES (?, ?, ?, ?, 0, 16, ?, ?)
       `, [setId, cleanTitle, cleanTopic, generatedCode, passing_score, duration]);
 
+      // Populate 16 initial questions for this test set so they can be selected, deselected, and customized!
+      for (let l = 1; l <= 16; l++) {
+        const q = (DEFAULT_SQL_QUESTIONS[l] || [])[0];
+        if (q) {
+          const shuffled = shuffleOptionsAccurately(q.options, q.correct);
+          const qId = `${setId}_q_l${l}`;
+          await pool.query(`
+            INSERT INTO kbc_questions (id, level, topic, question, options_json, correct, explanation, is_custom, is_active, test_set_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, ?)
+            ON DUPLICATE KEY UPDATE is_active = 1
+          `, [qId, l, q.topic || cleanTopic, q.question, JSON.stringify(shuffled.options), shuffled.correct, q.explanation, setId]);
+        }
+      }
+
       return res.json({
         success: true,
         message: `KBC Test Set "${cleanTitle}" created!`,
@@ -490,6 +504,13 @@ router.post('/admin/test-sets/activate', async (req, res) => {
             UPDATE kbc_questions SET is_active = (id LIKE 'sql_l${lvl}_001%') WHERE level = ?
           `, [lvl]);
         }
+      } else {
+        // Custom test set (e.g. 'kal ka test'): activate its selected questions
+        const [customQRows] = await pool.query('SELECT id FROM kbc_questions WHERE test_set_id = ? AND is_active = 1', [setId]);
+        if (customQRows.length > 0) {
+          await pool.query('UPDATE kbc_questions SET is_active = 0 WHERE test_set_id != ?', [setId]);
+          await pool.query('UPDATE kbc_questions SET is_active = 1 WHERE test_set_id = ?', [setId]);
+        }
       }
 
       return res.json({
@@ -554,12 +575,44 @@ router.get('/test-sets/:id/questions', async (req, res) => {
   try {
     await ensureKbcTable();
     if (pool) {
-      const [rows] = await pool.query(`
+      let [rows] = await pool.query(`
         SELECT id, level, topic, question, options_json, correct, explanation, is_active 
         FROM kbc_questions 
-        WHERE test_set_id = ? OR ( ? = 'kbc-sql-mastery' AND id LIKE 'sql_%' AND is_active = 1 )
-        ORDER BY level ASC, is_active DESC
+        WHERE test_set_id = ? OR ( ? = 'kbc-sql-mastery' AND id LIKE 'sql_%' )
+        ORDER BY level ASC, is_active DESC, created_at ASC
       `, [setId, setId]);
+
+      // If custom test set has no questions yet in MySQL (e.g. created earlier), auto-populate 16 questions for it!
+      if (rows.length === 0 && setId !== 'kbc-sql-mastery') {
+        for (let l = 1; l <= 16; l++) {
+          let sourceQ = null;
+          if (setId === 'kbc-html-quiz') {
+            sourceQ = CURATED_TEST_SETS.html?.find(x => x.level === l);
+          } else if (setId === 'kbc-excel-analytics') {
+            sourceQ = CURATED_TEST_SETS.excel?.find(x => x.level === l);
+          }
+          if (!sourceQ) {
+            sourceQ = (DEFAULT_SQL_QUESTIONS[l] || [])[0];
+          }
+          if (sourceQ) {
+            const shuffled = shuffleOptionsAccurately(sourceQ.options, sourceQ.correct);
+            const qId = `${setId}_q_l${l}`;
+            await pool.query(`
+              INSERT INTO kbc_questions (id, level, topic, question, options_json, correct, explanation, is_custom, is_active, test_set_id)
+              VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, ?)
+              ON DUPLICATE KEY UPDATE is_active = VALUES(is_active)
+            `, [qId, l, sourceQ.topic || 'SQL', sourceQ.question, JSON.stringify(shuffled.options), shuffled.correct, sourceQ.explanation, setId]);
+          }
+        }
+
+        const [reRows] = await pool.query(`
+          SELECT id, level, topic, question, options_json, correct, explanation, is_active 
+          FROM kbc_questions 
+          WHERE test_set_id = ?
+          ORDER BY level ASC, is_active DESC, created_at ASC
+        `, [setId]);
+        rows = reRows;
+      }
 
       if (rows.length > 0) {
         const questions = rows.map(r => {
@@ -600,10 +653,141 @@ router.get('/test-sets/:id/questions', async (req, res) => {
   // Ensure options are shuffled
   const clean = fallbackQuestions.map(q => {
     const s = shuffleOptionsAccurately(q.options, q.correct);
-    return { ...q, options: s.options, correct: s.correct };
+    return { ...q, options: s.options, correct: s.correct, isActive: true };
   });
 
   return res.json({ success: true, questions: clean, database: 'Memory Fallback' });
+});
+
+// ── 1G. ADMIN: Toggle (Select / Deselect) Single Question in Test Set ──
+router.post('/admin/test-sets/:id/questions/toggle', async (req, res) => {
+  const setId = req.params.id;
+  const { questionId, isActive } = req.body;
+  const pool = getMySQLPool();
+
+  try {
+    if (pool) {
+      await pool.query(
+        'UPDATE kbc_questions SET is_active = ? WHERE id = ?',
+        [isActive ? 1 : 0, questionId]
+      );
+
+      // Update question_count in kbc_test_sets
+      const [countRows] = await pool.query(
+        'SELECT COUNT(*) as cnt FROM kbc_questions WHERE test_set_id = ? AND is_active = 1',
+        [setId]
+      );
+      const activeCount = countRows[0]?.cnt || 0;
+      await pool.query('UPDATE kbc_test_sets SET question_count = ? WHERE id = ?', [activeCount, setId]);
+
+      return res.json({ success: true, isActive: Boolean(isActive), activeCount });
+    }
+  } catch (err) {
+    console.warn('test-set toggle question error:', err.message);
+  }
+  return res.json({ success: true, isActive: Boolean(isActive) });
+});
+
+// ── 1H. ADMIN: Bulk Toggle (Select All / Deselect All) Questions in Test Set ──
+router.post('/admin/test-sets/:id/questions/toggle-all', async (req, res) => {
+  const setId = req.params.id;
+  const { isActive } = req.body;
+  const pool = getMySQLPool();
+
+  try {
+    if (pool) {
+      await pool.query(
+        'UPDATE kbc_questions SET is_active = ? WHERE test_set_id = ?',
+        [isActive ? 1 : 0, setId]
+      );
+
+      const [countRows] = await pool.query(
+        'SELECT COUNT(*) as cnt FROM kbc_questions WHERE test_set_id = ? AND is_active = 1',
+        [setId]
+      );
+      const activeCount = countRows[0]?.cnt || 0;
+      await pool.query('UPDATE kbc_test_sets SET question_count = ? WHERE id = ?', [activeCount, setId]);
+
+      return res.json({ success: true, isActive: Boolean(isActive), activeCount });
+    }
+  } catch (err) {
+    console.warn('test-set toggle-all error:', err.message);
+  }
+  return res.json({ success: true, isActive: Boolean(isActive) });
+});
+
+// ── 1I. ADMIN: Delete / Remove a Question from Test Set ──
+router.post('/admin/test-sets/:id/questions/delete', async (req, res) => {
+  const setId = req.params.id;
+  const { questionId } = req.body;
+  const pool = getMySQLPool();
+
+  try {
+    if (pool) {
+      await pool.query('DELETE FROM kbc_questions WHERE id = ? AND test_set_id = ?', [questionId, setId]);
+
+      const [countRows] = await pool.query(
+        'SELECT COUNT(*) as cnt FROM kbc_questions WHERE test_set_id = ? AND is_active = 1',
+        [setId]
+      );
+      const activeCount = countRows[0]?.cnt || 0;
+      await pool.query('UPDATE kbc_test_sets SET question_count = ? WHERE id = ?', [activeCount, setId]);
+
+      return res.json({ success: true, message: 'Question removed from test set.', activeCount });
+    }
+  } catch (err) {
+    console.warn('test-set delete question error:', err.message);
+  }
+  return res.json({ success: true, message: 'Question removed.' });
+});
+
+// ── 1J. ADMIN: Add a Question into Test Set ──
+router.post('/admin/test-sets/:id/questions/add', async (req, res) => {
+  const setId = req.params.id;
+  const { question, level = 1, topic = 'SQL', options, correct = 0, explanation = '' } = req.body;
+  const pool = getMySQLPool();
+
+  if (!question || !options || options.length !== 4) {
+    return res.status(400).json({ success: false, message: 'Question and 4 options are required.' });
+  }
+
+  try {
+    if (pool) {
+      const qId = `${setId}_q_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+      const shuffled = shuffleOptionsAccurately(options, correct);
+
+      await pool.query(`
+        INSERT INTO kbc_questions (id, level, topic, question, options_json, correct, explanation, is_custom, is_active, test_set_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, ?)
+      `, [qId, level, topic, question, JSON.stringify(shuffled.options), shuffled.correct, explanation, setId]);
+
+      const [countRows] = await pool.query(
+        'SELECT COUNT(*) as cnt FROM kbc_questions WHERE test_set_id = ? AND is_active = 1',
+        [setId]
+      );
+      const activeCount = countRows[0]?.cnt || 0;
+      await pool.query('UPDATE kbc_test_sets SET question_count = ? WHERE id = ?', [activeCount, setId]);
+
+      return res.json({
+        success: true,
+        message: 'Question added to test set!',
+        question: {
+          id: qId,
+          level,
+          topic,
+          question,
+          options: shuffled.options,
+          correct: shuffled.correct,
+          explanation,
+          isActive: true
+        },
+        activeCount
+      });
+    }
+  } catch (err) {
+    console.warn('test-set add question error:', err.message);
+  }
+  return res.json({ success: true, message: 'Question added.' });
 });
 
 // ── 2. ADMIN: Get All Available Questions Pool & Active Selections from Hostinger MySQL ──
