@@ -122,7 +122,7 @@ let memoryStore = {
 
 // ── Ensure Hostinger MySQL Table & Seed 1,000+ SQL Questions ──
 let tableEnsured = false;
-async function ensureKbcTable() {
+export async function ensureKbcTable() {
   if (tableEnsured) return true;
   const pool = getMySQLPool();
   if (!pool) return false;
@@ -152,12 +152,9 @@ async function ensureKbcTable() {
       await pool.query("DELETE FROM kbc_questions WHERE id LIKE 'q-%'");
     } catch (e) {}
 
-    // 3. Check total question count in database
-    const [rows] = await pool.query('SELECT COUNT(*) AS total FROM kbc_questions');
-    const total = rows[0]?.total || 0;
-
-    if (total < 500 && SQL_QUESTION_BANK.length > 0) {
-      console.log(`Seeding ${SQL_QUESTION_BANK.length} pure SQL questions into Hostinger MySQL kbc_questions table...`);
+    // 3. Ensure all 1,008 verified pure SQL questions are seeded and updated in Hostinger MySQL kbc_questions table
+    if (SQL_QUESTION_BANK.length > 0) {
+      console.log(`Syncing ${SQL_QUESTION_BANK.length} verified pure SQL questions into Hostinger MySQL kbc_questions table...`);
       const batchSize = 50;
       for (let i = 0; i < SQL_QUESTION_BANK.length; i += batchSize) {
         const batch = SQL_QUESTION_BANK.slice(i, i + batchSize);
@@ -200,7 +197,7 @@ async function ensureKbcTable() {
           await pool.query('UPDATE kbc_questions SET is_active = 0 WHERE level = ? AND id != ?', [lvl, keepId]);
         }
       }
-      console.log(`✔ Successfully seeded ${SQL_QUESTION_BANK.length} SQL questions into Hostinger MySQL!`);
+      console.log(`✔ Successfully verified & synced ${SQL_QUESTION_BANK.length} SQL questions in Hostinger MySQL!`);
     }
 
     // 4. Ensure kbc_test_sets table
@@ -390,13 +387,17 @@ router.post('/admin/test-sets/create', async (req, res) => {
       for (let l = 1; l <= 16; l++) {
         const q = (DEFAULT_SQL_QUESTIONS[l] || [])[0];
         if (q) {
-          const shuffled = shuffleOptionsAccurately(q.options, q.correct);
           const qId = `${setId}_q_l${l}`;
           await pool.query(`
             INSERT INTO kbc_questions (id, level, topic, question, options_json, correct, explanation, is_custom, is_active, test_set_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, ?)
-            ON DUPLICATE KEY UPDATE is_active = 1
-          `, [qId, l, q.topic || cleanTopic, q.question, JSON.stringify(shuffled.options), shuffled.correct, q.explanation, setId]);
+            ON DUPLICATE KEY UPDATE 
+              question = VALUES(question),
+              options_json = VALUES(options_json),
+              correct = VALUES(correct),
+              explanation = VALUES(explanation),
+              is_active = 1
+          `, [qId, l, q.topic || cleanTopic, q.question, JSON.stringify(q.options), q.correct, q.explanation, setId]);
         }
       }
 
@@ -595,13 +596,17 @@ router.get('/test-sets/:id/questions', async (req, res) => {
             sourceQ = (DEFAULT_SQL_QUESTIONS[l] || [])[0];
           }
           if (sourceQ) {
-            const shuffled = shuffleOptionsAccurately(sourceQ.options, sourceQ.correct);
             const qId = `${setId}_q_l${l}`;
             await pool.query(`
               INSERT INTO kbc_questions (id, level, topic, question, options_json, correct, explanation, is_custom, is_active, test_set_id)
               VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, ?)
-              ON DUPLICATE KEY UPDATE is_active = VALUES(is_active)
-            `, [qId, l, sourceQ.topic || 'SQL', sourceQ.question, JSON.stringify(shuffled.options), shuffled.correct, sourceQ.explanation, setId]);
+              ON DUPLICATE KEY UPDATE 
+                question = VALUES(question),
+                options_json = VALUES(options_json),
+                correct = VALUES(correct),
+                explanation = VALUES(explanation),
+                is_active = VALUES(is_active)
+            `, [qId, l, sourceQ.topic || 'SQL', sourceQ.question, JSON.stringify(sourceQ.options), sourceQ.correct, sourceQ.explanation, setId]);
           }
         }
 
@@ -617,15 +622,13 @@ router.get('/test-sets/:id/questions', async (req, res) => {
       if (rows.length > 0) {
         const questions = rows.map(r => {
           const opts = typeof r.options_json === 'string' ? JSON.parse(r.options_json) : r.options_json;
-          // Shuffle options so answer is not always B
-          const shuffled = shuffleOptionsAccurately(opts, r.correct);
           return {
             id: r.id,
             level: r.level,
             topic: r.topic,
             question: r.question,
-            options: shuffled.options,
-            correct: shuffled.correct,
+            options: opts,
+            correct: r.correct,
             explanation: r.explanation,
             isActive: Boolean(r.is_active)
           };
@@ -650,10 +653,8 @@ router.get('/test-sets/:id/questions', async (req, res) => {
     }
   }
 
-  // Ensure options are shuffled
   const clean = fallbackQuestions.map(q => {
-    const s = shuffleOptionsAccurately(q.options, q.correct);
-    return { ...q, options: s.options, correct: s.correct, isActive: true };
+    return { ...q, isActive: true };
   });
 
   return res.json({ success: true, questions: clean, database: 'Memory Fallback' });
@@ -1344,6 +1345,41 @@ router.post('/admin/reset', async (req, res) => {
       await pool.query('DELETE FROM kbc_questions WHERE is_custom = 1');
       // Set all to inactive
       await pool.query('UPDATE kbc_questions SET is_active = 0');
+
+      // Re-sync all 1,008 questions from verified SQL_QUESTION_BANK
+      if (SQL_QUESTION_BANK.length > 0) {
+        const batchSize = 50;
+        for (let i = 0; i < SQL_QUESTION_BANK.length; i += batchSize) {
+          const batch = SQL_QUESTION_BANK.slice(i, i + batchSize);
+          const values = [];
+          const placeholders = batch.map(q => {
+            const isActive = q.id.endsWith('_001') ? 1 : 0;
+            values.push(
+              q.id,
+              q.level,
+              q.topic,
+              q.question,
+              JSON.stringify(q.options),
+              q.correct,
+              q.explanation || '',
+              0,
+              isActive
+            );
+            return '(?, ?, ?, ?, ?, ?, ?, ?, ?)';
+          }).join(', ');
+
+          await pool.query(`
+            INSERT INTO kbc_questions (id, level, topic, question, options_json, correct, explanation, is_custom, is_active)
+            VALUES ${placeholders}
+            ON DUPLICATE KEY UPDATE 
+              question = VALUES(question),
+              options_json = VALUES(options_json),
+              correct = VALUES(correct),
+              explanation = VALUES(explanation),
+              topic = VALUES(topic);
+          `, values);
+        }
+      }
 
       // Set the first question of each level to active
       for (let lvl = 1; lvl <= 16; lvl++) {
