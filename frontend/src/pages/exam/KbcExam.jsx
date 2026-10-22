@@ -168,7 +168,7 @@ export default function KbcExam() {
                   setSelectedOption(sess.locked_option);
                 }
                 setAnswerStatus('evaluating');
-                kbcAudio.playLock();
+                kbcAudio.startLockSuspense();
               }
 
               // Admin reveals the correct answer
@@ -176,6 +176,7 @@ export default function KbcExam() {
                 if (lastQuestionTrackRef.current.lastRevealed !== sess.revealed_correct) {
                   lastQuestionTrackRef.current.lastRevealed = sess.revealed_correct;
                   setRevealedCorrect(sess.revealed_correct);
+                  kbcAudio.stopLockSuspense();
 
                   const isCorrect = selectedOption === sess.revealed_correct;
                   setAnswerStatus(isCorrect ? 'correct' : 'wrong');
@@ -416,7 +417,7 @@ export default function KbcExam() {
     if (selectedOption === null || isLocked) return;
     setIsLocked(true);
     setAnswerStatus('evaluating');
-    kbcAudio.playLock();
+    kbcAudio.startLockSuspense();
     const letter = String.fromCharCode(65 + selectedOption);
     setHostQuote(AMITABH_QUOTES.lockConfirmed(letter));
 

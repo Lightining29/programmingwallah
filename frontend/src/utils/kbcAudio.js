@@ -9,6 +9,7 @@ class KbcSoundManager {
     this.isMuted = false;
     this.currentAudio = null;
     this.clockAudio = null;
+    this.lockAudio = null;
   }
 
   init() {
@@ -28,6 +29,7 @@ class KbcSoundManager {
     if (muted) {
       this.stopDrone();
       this.stopClock();
+      this.stopLockSuspense();
     }
   }
 
@@ -38,6 +40,7 @@ class KbcSoundManager {
 
   // 1. Clock Ticking Countdown Audio (Tik-Tiki Ji) using uploaded authentic KBC clock
   startClock() {
+    this.stopLockSuspense();
     if (this.isMuted) return;
     this.stopClock();
     try {
@@ -175,38 +178,47 @@ class KbcSoundManager {
     } catch (e) {}
   }
 
-  // 4. "Lock Kiya Jaaye" - Dramatic Suspense Lock Sting
-  playLock() {
+  // 4. "Lock Kiya Jaaye" - Dramatic Suspense Lock Music (Loops until admin reveals answer)
+  startLockSuspense() {
     if (this.isMuted) return;
-    this.init();
-    if (!this.ctx) return;
-
+    this.stopClock();
+    this.stopDrone();
+    this.stopLockSuspense();
     try {
-      const now = this.ctx.currentTime;
-      const freqs = [220, 329.63, 440];
+      if (this.currentAudio) {
+        try { this.currentAudio.pause(); } catch (e) {}
+        this.currentAudio = null;
+      }
+      const audio = new Audio('/kbc-lock.mp3');
+      audio.volume = 0.95;
+      audio.loop = true;
+      this.lockAudio = audio;
+      const p = audio.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch(() => {});
+      }
+    } catch (e) {
+      console.warn('Suspense lock audio error:', e);
+    }
+  }
 
-      freqs.forEach((freq, idx) => {
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
+  stopLockSuspense() {
+    if (this.lockAudio) {
+      try {
+        this.lockAudio.pause();
+        this.lockAudio.currentTime = 0;
+      } catch (e) {}
+      this.lockAudio = null;
+    }
+  }
 
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(freq, now + idx * 0.05);
-        osc.frequency.linearRampToValueAtTime(freq * 1.25, now + 0.45);
-
-        gain.gain.setValueAtTime(0.2, now + idx * 0.05);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-
-        osc.start(now + idx * 0.05);
-        osc.stop(now + 0.52);
-      });
-    } catch (e) {}
+  playLock() {
+    this.startLockSuspense();
   }
 
   // 5. Correct Answer Victory Chime (Plays authentic KBC Correct Answer MP3)
   playCorrect() {
+    this.stopLockSuspense();
     if (this.isMuted) return;
     this.stopClock();
     this.init();
@@ -260,6 +272,7 @@ class KbcSoundManager {
 
   // 6. Question Arrival Theme / Screen Entrance Music
   playQuestionArrival() {
+    this.stopLockSuspense();
     if (this.isMuted) return;
     this.stopClock();
     this.init();
@@ -287,6 +300,7 @@ class KbcSoundManager {
 
   // 7. Wrong Answer Sound Effect (Contestant Laptop & Hotseat)
   playWrong() {
+    this.stopLockSuspense();
     if (this.isMuted) return;
     this.stopClock();
     this.init();

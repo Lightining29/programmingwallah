@@ -274,6 +274,7 @@ export default function AdminKbcManager() {
 
   // Advance to Next Level on Admin Monitor
   const handleNextLevel = () => {
+    kbcAudio.stopLockSuspense();
     if (selectedLevel >= 16) return;
     const nextLvl = selectedLevel + 1;
     setSelectedLevel(nextLvl);
@@ -285,6 +286,7 @@ export default function AdminKbcManager() {
 
   // Previous Level
   const handlePrevLevel = () => {
+    kbcAudio.stopLockSuspense();
     if (selectedLevel <= 1) return;
     const prevLvl = selectedLevel - 1;
     setSelectedLevel(prevLvl);
@@ -296,6 +298,7 @@ export default function AdminKbcManager() {
 
   // Lock Question on Laptop screens
   const handleAdminLock = (optIdx) => {
+    kbcAudio.startLockSuspense();
     handleUpdateLiveRound({
       is_locked: 1,
       locked_option: optIdx
@@ -304,6 +307,7 @@ export default function AdminKbcManager() {
 
   // Reveal Correct Answer on Laptop screens & play authentic victory fanfare
   const handleAdminReveal = (correctIdx) => {
+    kbcAudio.stopLockSuspense();
     kbcAudio.playCorrect();
     handleUpdateLiveRound({
       revealed_correct: correctIdx
