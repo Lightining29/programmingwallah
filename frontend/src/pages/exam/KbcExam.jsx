@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { kbcAudio } from '../../utils/kbcAudio.js';
+import SaatCroreWinnerModal from '../../components/kbc/SaatCroreWinnerModal.jsx';
 import { 
   KBC_PRIZE_LADDER, 
   DEFAULT_MERN_SQL_QUESTIONS, 
@@ -37,6 +38,8 @@ export default function KbcExam() {
   const [teamJoinLoading, setTeamJoinLoading] = useState(false);
   const [teamJoinError, setTeamJoinError] = useState('');
   const [teamAnswerSubmitted, setTeamAnswerSubmitted] = useState(false);
+  const [winnerData, setWinnerData] = useState(null);
+  const lastWinnerShownRef = useRef(false);
 
   // Admin Live Session Polled State
   const [adminSession, setAdminSession] = useState({
@@ -121,8 +124,34 @@ export default function KbcExam() {
           const sess = data.session;
           setAdminSession(sess);
 
+          // ── CHECK IF ADMIN HAS ANNOUNCED TOP SCORER (SAAT CRORE MEME) ──
+          if (sess.show_winner && sess.winner) {
+            if (!lastWinnerShownRef.current) {
+              lastWinnerShownRef.current = true;
+              setWinnerData(sess.winner);
+              setActiveModal('saat_crore_winner');
+              kbcAudio.playHighPoints();
+            }
+          } else if (!sess.show_winner) {
+            lastWinnerShownRef.current = false;
+          }
+
           // If playing in team mode, synchronize level, new question arrival, and host states
           if (team) {
+            // Synchronize live points and stats from top_teams
+            if (Array.isArray(sess.top_teams)) {
+              const found = sess.top_teams.find(t => t.id === team.id || t.access_code === team.access_code);
+              if (found && (team.points !== found.points || team.current_level !== found.current_level)) {
+                setTeam(prev => ({
+                  ...prev,
+                  points: found.points || 0,
+                  correct_count: found.correct_count || 0,
+                  score_amount: found.score_amount || 0,
+                  current_level: found.current_level || prev.current_level
+                }));
+              }
+            }
+
             const isNowLive = sess.status === 'LIVE';
             const levelChanged = sess.current_level && sess.current_level !== lastQuestionTrackRef.current.level;
             const qChanged = sess.current_question?.id && sess.current_question.id !== lastQuestionTrackRef.current.qId;
@@ -740,6 +769,9 @@ export default function KbcExam() {
                 <Laptop className="w-3.5 h-3.5 text-amber-400" />
                 <span className="text-slate-300">Team: <strong className="text-amber-300">{team.team_name}</strong></span>
                 <span className="text-[10px] bg-slate-900 px-2 py-0.5 rounded text-slate-400 font-mono font-bold">{team.access_code}</span>
+                <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-black border border-amber-400/40 font-mono text-[11px] flex items-center gap-1">
+                  ⭐ {team.points || 0} pts
+                </span>
                 <button
                   onClick={handleDisconnectTeam}
                   className="text-red-400 hover:text-red-300 text-[10px] font-bold ml-1 hover:underline cursor-pointer"
@@ -866,8 +898,12 @@ export default function KbcExam() {
               <h2 className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-100">
                 Swagat Hai, {team.team_name}!
               </h2>
-              <p className="text-amber-400/90 font-bold text-xs uppercase tracking-widest">
-                Team Leader: {team.leader_name} • Access Code: <span className="font-mono text-white bg-slate-900 px-2 py-0.5 rounded">{team.access_code}</span>
+              <p className="text-amber-400/90 font-bold text-xs uppercase tracking-widest flex flex-wrap items-center justify-center gap-2">
+                <span>Team Leader: <strong className="text-white">{team.leader_name}</strong></span>
+                <span>•</span>
+                <span className="font-mono text-yellow-300 font-bold bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30">⭐ {team.points || 0} pts</span>
+                <span>•</span>
+                <span>Code: <span className="font-mono text-white bg-slate-900 px-2 py-0.5 rounded">{team.access_code}</span></span>
               </p>
             </div>
 
@@ -1436,6 +1472,15 @@ export default function KbcExam() {
 
           </div>
         </div>
+      )}
+
+      {/* ── SAAT CRORE TOP SCORER MEME MODAL ── */}
+      {activeModal === 'saat_crore_winner' && winnerData && (
+        <SaatCroreWinnerModal
+          winner={winnerData}
+          onClose={() => setActiveModal(null)}
+          isCurrentPlayer={Boolean(team && (team.id === winnerData.id || team.access_code === winnerData.access_code))}
+        />
       )}
 
       {/* ── Footer ── */}

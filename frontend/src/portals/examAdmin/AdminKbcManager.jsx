@@ -8,6 +8,7 @@ import {
 import Swal from 'sweetalert2';
 import { KBC_PRIZE_LADDER, DEFAULT_MERN_SQL_QUESTIONS } from '../../data/kbcQuestions.js';
 import { kbcAudio } from '../../utils/kbcAudio.js';
+import SaatCroreWinnerModal from '../../components/kbc/SaatCroreWinnerModal.jsx';
 
 export default function AdminKbcManager() {
   const [activeSubTab, setActiveSubTab] = useState('live'); // 'live' | 'questions' | 'teams' | 'bank'
@@ -44,6 +45,8 @@ export default function AdminKbcManager() {
   const [newTeamName, setNewTeamName] = useState('');
   const [newLeaderName, setNewLeaderName] = useState('');
   const [newAccessCode, setNewAccessCode] = useState('');
+  const [winnerData, setWinnerData] = useState(null);
+  const [showWinnerModal, setShowWinnerModal] = useState(false);
 
   // Question Management Form State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -317,6 +320,40 @@ export default function AdminKbcManager() {
     handleUpdateLiveRound({
       revealed_correct: correctIdx
     });
+  };
+
+  // Announce Top Scorer & Broadcast "SAAT CRORE!!" Meme across all contestant laptops
+  const handleAnnounceWinner = async () => {
+    try {
+      const res = await fetch('/api/kbc/admin/session/announce-winner', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (data.success && data.winner) {
+        setWinnerData(data.winner);
+        setShowWinnerModal(true);
+        kbcAudio.playHighPoints();
+        fetchTeams();
+        fetchSessionStatus();
+      } else {
+        Swal.fire({
+          icon: 'info',
+          title: 'No Teams Found',
+          text: data.message || 'No registered contestant teams available to announce.'
+        });
+      }
+    } catch (err) {
+      Swal.fire('Error', 'Failed to announce top scorer.', 'error');
+    }
+  };
+
+  const handleDismissWinner = async () => {
+    setShowWinnerModal(false);
+    try {
+      await fetch('/api/kbc/admin/session/dismiss-winner', { method: 'POST' });
+      fetchSessionStatus();
+    } catch (e) {}
   };
 
   // ── TEAM MANAGEMENT ──
@@ -964,6 +1001,13 @@ export default function AdminKbcManager() {
                       >
                         <Eye className="w-3.5 h-3.5" /> Reveal Correct Answer
                       </button>
+                      <button
+                        onClick={handleAnnounceWinner}
+                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-yellow-500 via-amber-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-lg shadow-amber-500/30 border border-yellow-300 animate-pulse"
+                        title="Announce player with max points and play Saat Crore meme"
+                      >
+                        <Trophy className="w-4 h-4 text-slate-950" /> Announce Winner (Saat Crore Meme)
+                      </button>
                     </div>
 
                     <button
@@ -1095,38 +1139,46 @@ export default function AdminKbcManager() {
                 {teams.length === 0 ? (
                   <p className="text-xs text-slate-500 text-center py-3">No teams added yet. Go to "Participating Laptop Teams" tab to add.</p>
                 ) : (
-                  teams.map(t => {
-                    const hasSubmitted = t.submitted_option !== null;
-                    const letter = hasSubmitted ? String.fromCharCode(65 + t.submitted_option) : '—';
-                    return (
-                      <div
-                        key={t.id}
-                        className={`p-2.5 rounded-xl border flex items-center justify-between text-xs ${
-                          hasSubmitted
-                            ? 'bg-cyan-950/30 border-cyan-500/40 text-cyan-200'
-                            : 'bg-slate-950 border-slate-800 text-slate-400'
-                        }`}
-                      >
-                        <div>
-                          <div className="font-bold text-white flex items-center gap-1.5">
-                            <span>{t.team_name}</span>
-                            <span className="text-[10px] text-slate-500 font-mono font-normal">({t.access_code})</span>
+                  (() => {
+                    const maxPts = Math.max(...teams.map(x => x.points || 0), 0);
+                    return teams.map(t => {
+                      const hasSubmitted = t.submitted_option !== null;
+                      const letter = hasSubmitted ? String.fromCharCode(65 + t.submitted_option) : '—';
+                      const isTop = (t.points || 0) > 0 && (t.points || 0) === maxPts;
+                      return (
+                        <div
+                          key={t.id}
+                          className={`p-2.5 rounded-xl border flex items-center justify-between text-xs transition ${
+                            isTop
+                              ? 'bg-amber-950/40 border-amber-500/60 text-amber-200'
+                              : hasSubmitted
+                              ? 'bg-cyan-950/30 border-cyan-500/40 text-cyan-200'
+                              : 'bg-slate-950 border-slate-800 text-slate-400'
+                          }`}
+                        >
+                          <div>
+                            <div className="font-bold text-white flex items-center gap-1.5">
+                              {isTop && <span title="Top Scorer">👑</span>}
+                              <span>{t.team_name}</span>
+                              <span className="text-[10px] text-slate-500 font-mono font-normal">({t.access_code})</span>
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-mono flex items-center gap-2">
+                              <span>{t.leader_name}</span>
+                              <span className="text-amber-400 font-bold font-sans">⭐ {t.points || 0} pts</span>
+                            </div>
                           </div>
-                          <span className="text-[10px] text-slate-400 font-mono">
-                            {t.leader_name}
-                          </span>
-                        </div>
 
-                        <div className="text-right">
-                          <span className={`px-2 py-0.5 rounded text-xs font-black ${
-                            hasSubmitted ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-500'
-                          }`}>
-                            Ans: {letter}
-                          </span>
+                          <div className="text-right">
+                            <span className={`px-2 py-0.5 rounded text-xs font-black ${
+                              hasSubmitted ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-500'
+                            }`}>
+                              Ans: {letter}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })
+                      );
+                    });
+                  })()
                 )}
               </div>
             </div>
@@ -1189,12 +1241,20 @@ export default function AdminKbcManager() {
               </p>
             </div>
 
-            <button
-              onClick={() => setShowAddTeamModal(true)}
-              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-lg shadow-cyan-500/20"
-            >
-              <PlusCircle className="w-4 h-4" /> Add New Team
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={handleAnnounceWinner}
+                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-yellow-500 via-amber-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-slate-950 font-black text-xs flex items-center gap-2 cursor-pointer shadow-lg shadow-amber-500/20 border border-yellow-300 animate-pulse"
+              >
+                <Trophy className="w-4 h-4 text-slate-950" /> Announce Top Scorer (Saat Crore Meme)
+              </button>
+              <button
+                onClick={() => setShowAddTeamModal(true)}
+                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-lg shadow-cyan-500/20"
+              >
+                <PlusCircle className="w-4 h-4" /> Add New Team
+              </button>
+            </div>
           </div>
 
           {/* Teams Table */}
@@ -1204,6 +1264,7 @@ export default function AdminKbcManager() {
                 <tr>
                   <th className="px-4 py-3">Team Name</th>
                   <th className="px-4 py-3">Leader</th>
+                  <th className="px-4 py-3">Points / Score</th>
                   <th className="px-4 py-3">Laptop Access Code</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Current Answer</th>
@@ -1213,68 +1274,83 @@ export default function AdminKbcManager() {
               <tbody className="divide-y divide-slate-800 text-slate-300">
                 {teams.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-500">
+                    <td colSpan={7} className="py-8 text-center text-slate-500">
                       No teams added yet. Click "+ Add New Team" to create teams.
                     </td>
                   </tr>
                 ) : (
-                  teams.map(t => {
-                    const isHotseat = session.active_team_id === t.id;
-                    const ansLetter = t.submitted_option !== null ? String.fromCharCode(65 + t.submitted_option) : null;
+                  (() => {
+                    const maxPts = Math.max(...teams.map(x => x.points || 0), 0);
+                    return teams.map(t => {
+                      const isHotseat = session.active_team_id === t.id;
+                      const isTop = (t.points || 0) > 0 && (t.points || 0) === maxPts;
+                      const ansLetter = t.submitted_option !== null ? String.fromCharCode(65 + t.submitted_option) : null;
 
-                    return (
-                      <tr key={t.id} className="hover:bg-slate-800/40 transition">
-                        <td className="px-4 py-3.5 font-bold text-white flex items-center gap-2">
-                          <Users className="w-4 h-4 text-amber-400" />
-                          <span>{t.team_name}</span>
-                          {isHotseat && (
-                            <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-black border border-amber-500/40">
-                              HOTSEAT
+                      return (
+                        <tr key={t.id} className={`hover:bg-slate-800/40 transition ${isTop ? 'bg-amber-950/20' : ''}`}>
+                          <td className="px-4 py-3.5 font-bold text-white flex items-center gap-2">
+                            <Users className="w-4 h-4 text-amber-400" />
+                            <span>{t.team_name}</span>
+                            {isTop && (
+                              <span className="px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300 text-[10px] font-black border border-yellow-400/40">
+                                👑 TOP SCORER
+                              </span>
+                            )}
+                            {isHotseat && (
+                              <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-black border border-amber-500/40">
+                                HOTSEAT
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3.5 font-medium">{t.leader_name}</td>
+                          <td className="px-4 py-3.5">
+                            <div className="flex items-center gap-1.5 font-bold text-amber-300 font-mono">
+                              <span>⭐ {t.points || 0} pts</span>
+                              <span className="text-[10px] text-slate-500 font-normal">({t.correct_count || 0} correct)</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <span className="px-2.5 py-1 rounded-lg bg-indigo-950 border border-indigo-500/30 font-mono text-indigo-300 font-bold inline-flex items-center gap-1.5">
+                              {t.access_code}
                             </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3.5 font-medium">{t.leader_name}</td>
-                        <td className="px-4 py-3.5">
-                          <span className="px-2.5 py-1 rounded-lg bg-indigo-950 border border-indigo-500/30 font-mono text-indigo-300 font-bold inline-flex items-center gap-1.5">
-                            {t.access_code}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3.5">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            t.status === 'CONNECTED' 
-                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
-                              : 'bg-slate-800 text-slate-400'
-                          }`}>
-                            {t.status === 'CONNECTED' ? 'ONLINE 💻' : 'REGISTERED'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3.5">
-                          {ansLetter ? (
-                            <span className="px-2.5 py-1 rounded bg-amber-500 text-slate-950 font-black text-xs">
-                              Option {ansLetter}
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              t.status === 'CONNECTED' 
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
+                                : 'bg-slate-800 text-slate-400'
+                            }`}>
+                              {t.status === 'CONNECTED' ? 'ONLINE 💻' : 'REGISTERED'}
                             </span>
-                          ) : (
-                            <span className="text-slate-600">Waiting...</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3.5 text-right space-x-2">
-                          <button
-                            onClick={() => handleSetHotseatTeam(t.id)}
-                            className="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-400/30 text-amber-300 text-[11px] font-bold transition cursor-pointer"
-                          >
-                            Hotseat
-                          </button>
-                          <button
-                            onClick={() => handleDeleteTeam(t.id)}
-                            className="p-1 rounded-lg hover:bg-red-500/20 text-red-400 transition cursor-pointer"
-                            title="Remove team"
-                          >
-                            <Trash2 className="w-4 h-4 inline" />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
+                          </td>
+                          <td className="px-4 py-3.5">
+                            {ansLetter ? (
+                              <span className="px-2.5 py-1 rounded bg-amber-500 text-slate-950 font-black text-xs">
+                                Option {ansLetter}
+                              </span>
+                            ) : (
+                              <span className="text-slate-600">Waiting...</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3.5 text-right space-x-2">
+                            <button
+                              onClick={() => handleSetHotseatTeam(t.id)}
+                              className="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-400/30 text-amber-300 text-[11px] font-bold transition cursor-pointer"
+                            >
+                              Hotseat
+                            </button>
+                            <button
+                              onClick={() => handleDeleteTeam(t.id)}
+                              className="p-1 rounded-lg hover:bg-red-500/20 text-red-400 transition cursor-pointer"
+                              title="Remove team"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    });
+                  })()
                 )}
               </tbody>
             </table>
@@ -1974,6 +2050,15 @@ export default function AdminKbcManager() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* ── SAAT CRORE TOP SCORER MEME MODAL (ADMIN VIEW) ── */}
+      {showWinnerModal && winnerData && (
+        <SaatCroreWinnerModal
+          winner={winnerData}
+          onClose={handleDismissWinner}
+          isCurrentPlayer={false}
+        />
       )}
 
     </div>

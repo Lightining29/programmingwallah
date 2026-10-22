@@ -818,6 +818,25 @@ router.post('/admin/reset', async (req, res) => {
 // ── LIVE SESSION CONTROLLER & MULTI-TEAM MANAGEMENT (Hostinger MySQL) ──
 // ════════════════════════════════════════════════════════════════════════════════
 
+export const KBC_PRIZE_LADDER_BACKEND = [
+  { level: 1,  prize: '₹1,000',       amount: 1000 },
+  { level: 2,  prize: '₹2,000',       amount: 2000 },
+  { level: 3,  prize: '₹3,000',       amount: 3000 },
+  { level: 4,  prize: '₹5,000',       amount: 5000 },
+  { level: 5,  prize: '₹10,000',      amount: 10000 },
+  { level: 6,  prize: '₹20,000',      amount: 20000 },
+  { level: 7,  prize: '₹40,000',      amount: 40000 },
+  { level: 8,  prize: '₹80,000',      amount: 80000 },
+  { level: 9,  prize: '₹1,60,000',    amount: 160000 },
+  { level: 10, prize: '₹3,20,000',    amount: 320000 },
+  { level: 11, prize: '₹6,40,000',    amount: 640000 },
+  { level: 12, prize: '₹12,50,000',   amount: 1250000 },
+  { level: 13, prize: '₹25,00,000',   amount: 2500000 },
+  { level: 14, prize: '₹50,00,000',   amount: 5000000 },
+  { level: 15, prize: '₹1 Crore',     amount: 10000000 },
+  { level: 16, prize: '₹7 Crore',     amount: 70000000 },
+];
+
 // In-Memory fallback for session & teams when MySQL is unavailable
 let memorySession = {
   id: 'main_session',
@@ -829,6 +848,11 @@ let memorySession = {
   locked_option: null,
   revealed_correct: null,
   active_team_id: null,
+  winner_team_id: null,
+  winner_name: null,
+  winner_points: 0,
+  winner_prize: null,
+  show_winner: false,
   updated_at: new Date().toISOString()
 };
 
@@ -840,6 +864,9 @@ let memoryTeams = [
     access_code: 'KBC-101',
     current_level: 1,
     score_amount: 0,
+    points: 0,
+    correct_count: 0,
+    wrong_count: 0,
     status: 'REGISTERED',
     submitted_option: null,
     laptop_info: 'Chrome on Windows'
@@ -851,6 +878,9 @@ let memoryTeams = [
     access_code: 'KBC-102',
     current_level: 1,
     score_amount: 0,
+    points: 0,
+    correct_count: 0,
+    wrong_count: 0,
     status: 'REGISTERED',
     submitted_option: null,
     laptop_info: 'Safari on macOS'
@@ -875,6 +905,11 @@ async function ensureKbcSessionsAndTeams() {
         locked_option INT DEFAULT NULL,
         revealed_correct INT DEFAULT NULL,
         active_team_id VARCHAR(100) DEFAULT NULL,
+        winner_team_id VARCHAR(100) DEFAULT NULL,
+        winner_name VARCHAR(255) DEFAULT NULL,
+        winner_points INT DEFAULT 0,
+        winner_prize VARCHAR(100) DEFAULT NULL,
+        show_winner TINYINT(1) DEFAULT 0,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
@@ -888,6 +923,13 @@ async function ensureKbcSessionsAndTeams() {
       `);
     }
 
+    // Dynamic schema migrations for kbc_sessions
+    try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN winner_team_id VARCHAR(100) DEFAULT NULL'); } catch(e) {}
+    try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN winner_name VARCHAR(255) DEFAULT NULL'); } catch(e) {}
+    try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN winner_points INT DEFAULT 0'); } catch(e) {}
+    try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN winner_prize VARCHAR(100) DEFAULT NULL'); } catch(e) {}
+    try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN show_winner TINYINT(1) DEFAULT 0'); } catch(e) {}
+
     // 2. Ensure kbc_teams table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS kbc_teams (
@@ -897,6 +939,9 @@ async function ensureKbcSessionsAndTeams() {
         access_code VARCHAR(50) NOT NULL UNIQUE,
         current_level INT DEFAULT 1,
         score_amount INT DEFAULT 0,
+        points INT DEFAULT 0,
+        correct_count INT DEFAULT 0,
+        wrong_count INT DEFAULT 0,
         safe_amount INT DEFAULT 0,
         status ENUM('REGISTERED', 'CONNECTED', 'HOTSEAT', 'ELIMINATED', 'WON') DEFAULT 'REGISTERED',
         submitted_option INT DEFAULT NULL,
@@ -908,14 +953,19 @@ async function ensureKbcSessionsAndTeams() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
+    // Dynamic schema migrations for kbc_teams
+    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN points INT DEFAULT 0'); } catch(e) {}
+    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN correct_count INT DEFAULT 0'); } catch(e) {}
+    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN wrong_count INT DEFAULT 0'); } catch(e) {}
+
     // Ensure starter teams if none exist
     const [teamRows] = await pool.query('SELECT COUNT(*) as cnt FROM kbc_teams');
     if ((teamRows[0]?.cnt || 0) === 0) {
       for (const t of memoryTeams) {
         await pool.query(`
-          INSERT INTO kbc_teams (id, team_name, leader_name, access_code, current_level, score_amount, status, laptop_info)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `, [t.id, t.team_name, t.leader_name, t.access_code, t.current_level, t.score_amount, t.status, t.laptop_info]);
+          INSERT INTO kbc_teams (id, team_name, leader_name, access_code, current_level, score_amount, points, status, laptop_info)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [t.id, t.team_name, t.leader_name, t.access_code, t.current_level, t.score_amount, t.points || 0, t.status, t.laptop_info]);
       }
     }
 
@@ -966,6 +1016,25 @@ router.get('/session/status', async (req, res) => {
           };
         }
 
+        // Fetch top scorer / winner if show_winner is true
+        let winner = null;
+        if (s.show_winner && s.winner_team_id) {
+          const [wRows] = await pool.query('SELECT * FROM kbc_teams WHERE id = ?', [s.winner_team_id]);
+          if (wRows.length > 0) winner = wRows[0];
+        }
+        if (!winner && s.show_winner) {
+          const [topRows] = await pool.query('SELECT * FROM kbc_teams ORDER BY points DESC, score_amount DESC, correct_count DESC LIMIT 1');
+          if (topRows.length > 0) winner = topRows[0];
+        }
+
+        // Leaderboard top teams
+        const [topTeams] = await pool.query(`
+          SELECT id, team_name, leader_name, access_code, current_level, points, score_amount, correct_count, wrong_count, submitted_option, status
+          FROM kbc_teams 
+          ORDER BY points DESC, score_amount DESC, correct_count DESC, created_at ASC 
+          LIMIT 10
+        `);
+
         return res.json({
           success: true,
           session: {
@@ -978,6 +1047,13 @@ router.get('/session/status', async (req, res) => {
             locked_option: s.locked_option,
             revealed_correct: s.revealed_correct,
             active_team_id: s.active_team_id,
+            winner_team_id: s.winner_team_id,
+            winner_name: s.winner_name,
+            winner_points: s.winner_points || 0,
+            winner_prize: s.winner_prize,
+            show_winner: Boolean(s.show_winner),
+            winner: winner,
+            top_teams: topTeams,
             current_question: currentQuestion
           },
           database: 'Hostinger MySQL'
@@ -989,11 +1065,17 @@ router.get('/session/status', async (req, res) => {
   }
 
   // Fallback in-memory
+  const sortedMemory = [...memoryTeams].sort((a, b) => (b.points || 0) - (a.points || 0));
+  const fallbackWinner = memorySession.show_winner 
+    ? (sortedMemory.find(t => t.id === memorySession.winner_team_id) || sortedMemory[0]) 
+    : null;
   const qList = DEFAULT_MERN_SQL_QUESTIONS[memorySession.current_level] || DEFAULT_MERN_SQL_QUESTIONS[1];
   return res.json({
     success: true,
     session: {
       ...memorySession,
+      winner: fallbackWinner,
+      top_teams: sortedMemory.slice(0, 10),
       current_question: qList[0]
     },
     database: 'Memory Fallback'
@@ -1019,14 +1101,15 @@ router.post('/admin/session/toggle', async (req, res) => {
         await pool.query(`
           UPDATE kbc_sessions 
           SET status = ?, show_in_navbar = ?, current_level = 1, current_question_id = NULL,
-              is_locked = 0, locked_option = NULL, revealed_correct = NULL
+              is_locked = 0, locked_option = NULL, revealed_correct = NULL,
+              winner_team_id = NULL, winner_name = NULL, winner_points = 0, winner_prize = NULL, show_winner = 0
           WHERE id = 'main_session'
         `, [newStatus, showNav]);
 
-        // Reset all teams back to Level 1, 0 prize won, ready for round 1
+        // Reset all teams back to Level 1, 0 prize won, 0 points, ready for round 1
         await pool.query(`
           UPDATE kbc_teams 
-          SET current_level = 1, score_amount = 0, safe_amount = 0, submitted_option = NULL,
+          SET current_level = 1, score_amount = 0, points = 0, correct_count = 0, wrong_count = 0, safe_amount = 0, submitted_option = NULL,
               status = 'CONNECTED', lifelines_used_json = NULL
         `);
       } else {
@@ -1066,9 +1149,17 @@ router.post('/admin/session/toggle', async (req, res) => {
     memorySession.is_locked = false;
     memorySession.locked_option = null;
     memorySession.revealed_correct = null;
+    memorySession.winner_team_id = null;
+    memorySession.winner_name = null;
+    memorySession.winner_points = 0;
+    memorySession.winner_prize = null;
+    memorySession.show_winner = false;
     memoryTeams.forEach(t => {
       t.current_level = 1;
       t.score_amount = 0;
+      t.points = 0;
+      t.correct_count = 0;
+      t.wrong_count = 0;
       t.submitted_option = null;
     });
   } else if (level) {
@@ -1143,6 +1234,33 @@ router.post('/admin/session/update', async (req, res) => {
           params.push('main_session');
           await pool.query(`UPDATE kbc_sessions SET ${updates.join(', ')} WHERE id = ?`, params);
         }
+
+        // ── REAL-TIME POINTS CALCULATION ON REVEAL ──
+        if (revealed_correct !== undefined && revealed_correct !== null) {
+          const correctOpt = parseInt(revealed_correct, 10);
+          const [curSess] = await pool.query('SELECT current_level FROM kbc_sessions WHERE id = "main_session"');
+          const lvl = curSess[0]?.current_level || current_level || 1;
+          const prizeInfo = KBC_PRIZE_LADDER_BACKEND[lvl - 1] || { amount: lvl * 1000, prize: `₹${lvl * 1000}` };
+          const pointsEarned = lvl * 100; // Escalating points: L1=100, L2=200, ..., L10=1000, L16=1600 pts
+
+          // 1. Award points, prize score amount, and correct count to all teams with correct answer
+          await pool.query(`
+            UPDATE kbc_teams 
+            SET points = COALESCE(points, 0) + ?,
+                score_amount = ?,
+                current_level = ?,
+                correct_count = COALESCE(correct_count, 0) + 1,
+                status = 'HOTSEAT'
+            WHERE submitted_option = ?
+          `, [pointsEarned, prizeInfo.amount, Math.min(lvl + 1, 16), correctOpt]);
+
+          // 2. Track wrong count for teams that submitted an incorrect answer
+          await pool.query(`
+            UPDATE kbc_teams 
+            SET wrong_count = COALESCE(wrong_count, 0) + 1
+            WHERE submitted_option IS NOT NULL AND submitted_option != ?
+          `, [correctOpt]);
+        }
       }
 
       return res.json({ success: true, message: 'Live game session updated.', database: 'Hostinger MySQL' });
@@ -1162,14 +1280,107 @@ router.post('/admin/session/update', async (req, res) => {
     if (current_level !== undefined) memorySession.current_level = current_level;
     if (is_locked !== undefined) memorySession.is_locked = is_locked;
     if (locked_option !== undefined) memorySession.locked_option = locked_option;
-    if (revealed_correct !== undefined) memorySession.revealed_correct = revealed_correct;
+    if (revealed_correct !== undefined) {
+      memorySession.revealed_correct = revealed_correct;
+      if (revealed_correct !== null) {
+        const correctOpt = parseInt(revealed_correct, 10);
+        const lvl = memorySession.current_level || 1;
+        const prizeInfo = KBC_PRIZE_LADDER_BACKEND[lvl - 1] || { amount: lvl * 1000 };
+        const pointsEarned = lvl * 100;
+        memoryTeams.forEach(t => {
+          if (t.submitted_option === correctOpt) {
+            t.points = (t.points || 0) + pointsEarned;
+            t.score_amount = prizeInfo.amount;
+            t.current_level = Math.min(lvl + 1, 16);
+            t.correct_count = (t.correct_count || 0) + 1;
+            t.status = 'HOTSEAT';
+          } else if (t.submitted_option !== null && t.submitted_option !== undefined) {
+            t.wrong_count = (t.wrong_count || 0) + 1;
+          }
+        });
+      }
+    }
     if (active_team_id !== undefined) memorySession.active_team_id = active_team_id;
   }
 
   return res.json({ success: true, message: 'Session updated in fallback.', database: 'Memory Fallback' });
 });
 
-// ── 9. ADMIN & TEAMS: Get All Registered Teams & Live Laptop Status ──
+// ── 8B. ADMIN: Announce / Broadcast Top Scorer with "Saat Crore" Celebration ──
+router.post('/admin/session/announce-winner', async (req, res) => {
+  const pool = getMySQLPool();
+  try {
+    await ensureKbcSessionsAndTeams();
+    if (pool) {
+      const [rows] = await pool.query(`
+        SELECT * FROM kbc_teams 
+        ORDER BY points DESC, score_amount DESC, correct_count DESC, created_at ASC 
+        LIMIT 1
+      `);
+
+      if (rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'No registered teams found to announce winner.' });
+      }
+
+      const winner = rows[0];
+      const winLvl = winner.current_level || 1;
+      const prizeInfo = KBC_PRIZE_LADDER_BACKEND[winLvl - 1] || { prize: `₹${winner.score_amount || 0}` };
+
+      await pool.query(`
+        UPDATE kbc_sessions 
+        SET winner_team_id = ?, winner_name = ?, winner_points = ?, winner_prize = ?, show_winner = 1 
+        WHERE id = 'main_session'
+      `, [winner.id, winner.leader_name || winner.team_name, winner.points || 0, prizeInfo.prize]);
+
+      return res.json({
+        success: true,
+        message: `Winner announced! Top Scorer: ${winner.leader_name} (${winner.points || 0} pts)`,
+        winner: {
+          ...winner,
+          prizeLabel: prizeInfo.prize
+        },
+        database: 'Hostinger MySQL'
+      });
+    }
+  } catch (err) {
+    console.warn('/admin/session/announce-winner error:', err.message);
+  }
+
+  // Fallback
+  const sorted = [...memoryTeams].sort((a, b) => (b.points || 0) - (a.points || 0));
+  const winner = sorted[0];
+  if (winner) {
+    memorySession.winner_team_id = winner.id;
+    memorySession.winner_name = winner.leader_name || winner.team_name;
+    memorySession.winner_points = winner.points || 0;
+    memorySession.winner_prize = '₹7 Crore';
+    memorySession.show_winner = true;
+    return res.json({
+      success: true,
+      message: `Winner announced in fallback!`,
+      winner,
+      database: 'Memory Fallback'
+    });
+  }
+
+  return res.status(404).json({ success: false, message: 'No teams available.' });
+});
+
+// ── 8C. ADMIN: Dismiss Winner Modal across screens ──
+router.post('/admin/session/dismiss-winner', async (req, res) => {
+  const pool = getMySQLPool();
+  try {
+    if (pool) {
+      await pool.query(`UPDATE kbc_sessions SET show_winner = 0 WHERE id = 'main_session'`);
+      return res.json({ success: true, message: 'Winner announcement dismissed.' });
+    }
+  } catch (err) {}
+
+  memorySession.show_winner = false;
+  return res.json({ success: true, message: 'Winner announcement dismissed in fallback.' });
+});
+
+// ── 9. ADMIN & TEAMS: Get All Registered Teams & Live Laptop Status (Ranked by Points) ──
 router.get('/teams', async (req, res) => {
   const pool = getMySQLPool();
   try {
@@ -1177,9 +1388,9 @@ router.get('/teams', async (req, res) => {
 
     if (pool) {
       const [rows] = await pool.query(`
-        SELECT id, team_name, leader_name, access_code, current_level, score_amount, safe_amount, status, submitted_option, laptop_info, last_active_at, created_at 
+        SELECT id, team_name, leader_name, access_code, current_level, score_amount, points, correct_count, wrong_count, safe_amount, status, submitted_option, laptop_info, last_active_at, created_at 
         FROM kbc_teams 
-        ORDER BY score_amount DESC, created_at ASC
+        ORDER BY points DESC, score_amount DESC, correct_count DESC, created_at ASC
       `);
 
       return res.json({
@@ -1192,9 +1403,10 @@ router.get('/teams', async (req, res) => {
     console.warn('MySQL /teams query error:', err.message);
   }
 
+  const sortedMemory = [...memoryTeams].sort((a, b) => (b.points || 0) - (a.points || 0));
   return res.json({
     success: true,
-    teams: memoryTeams,
+    teams: sortedMemory,
     database: 'Memory Fallback'
   });
 });
@@ -1315,7 +1527,10 @@ router.post('/team/join', async (req, res) => {
           team_name: team.team_name,
           leader_name: team.leader_name,
           access_code: team.access_code,
-          score_amount: team.score_amount,
+          score_amount: team.score_amount || 0,
+          points: team.points || 0,
+          correct_count: team.correct_count || 0,
+          wrong_count: team.wrong_count || 0,
           current_level: team.current_level
         },
         session: sessRows[0] || memorySession
