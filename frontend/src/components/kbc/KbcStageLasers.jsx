@@ -3,10 +3,10 @@ import { motion } from 'framer-motion';
 
 /**
  * Professional Stage Laser Lighting (Aurora Cobalt & Aurora Crimson Edition)
- * Inspired by high-end concert laser rigs (X-Laser Aurora Cobalt / Crimson).
+ * Inspired by high-end concert laser rigs (X-Laser Aurora Cobalt / Aurora Crimson).
  * 
  * Behaviors:
- * 1. Ambient: Thick, vibrant cobalt blue beams swaying continuously (never disappears).
+ * 1. Ambient: Thick, vibrant cobalt blue beams continuously swaying (never disappears).
  * 2. New Question (triggerUpwardSweep): Lasers sweep up and stop/hold there.
  * 3. Correct Answer (isCelebratingCorrect):
  *    - Move faster up to middle
@@ -16,8 +16,9 @@ import { motion } from 'framer-motion';
  *    - Move back up!
  * 4. Wrong Answer (isWrongAnswer):
  *    - Changes laser colors to high-power bright red!
- *    - Moves downward with high power and STOPS there.
- *    - Stays locked in red downward position without disappearing until next question arrives.
+ *    - Fires high-power downward red laser beams from overhead rigs toward the stage floor.
+ *    - Moves downward with high power and STOPS and LOCKS there.
+ *    - Never disappears until the next question arrives!
  */
 export default function KbcStageLasers({ 
   triggerUpwardSweep = false, 
@@ -37,27 +38,44 @@ export default function KbcStageLasers({
     }
   }, [triggerUpwardSweep]);
 
-  // Define 10 high-intensity beams from 4 floor projector stations
-  const laserBeams = useMemo(() => [
+  // ── 1. Floor Projector Beams (Emanating from bottom stage floor) ──
+  const floorBeams = useMemo(() => [
     // Station 1: Left (~18%)
-    { id: 1, baseLeft: '18%', baseAngle: -42, sweepUpAngle: -18, downAngle: -62, ambientRange: [-48, -34], delay: 0 },
-    { id: 2, baseLeft: '18%', baseAngle: 24,  sweepUpAngle: 12,  downAngle: 42,  ambientRange: [18, 30],   delay: 0.2 },
+    { id: 1, baseLeft: '18%', baseAngle: -42, sweepUpAngle: -18, downAngle: -60, ambientRange: [-48, -34], delay: 0 },
+    { id: 2, baseLeft: '18%', baseAngle: 24,  sweepUpAngle: 12,  downAngle: 38,  ambientRange: [18, 30],   delay: 0.2 },
 
     // Station 2: Mid-Left (~38%)
-    { id: 3, baseLeft: '38%', baseAngle: -30, sweepUpAngle: -10, downAngle: -48, ambientRange: [-36, -22], delay: 0.4 },
-    { id: 4, baseLeft: '38%', baseAngle: 28,  sweepUpAngle: 14,  downAngle: 46,  ambientRange: [20, 34],   delay: 0.1 },
+    { id: 3, baseLeft: '38%', baseAngle: -30, sweepUpAngle: -10, downAngle: -45, ambientRange: [-36, -22], delay: 0.4 },
+    { id: 4, baseLeft: '38%', baseAngle: 28,  sweepUpAngle: 14,  downAngle: 42,  ambientRange: [20, 34],   delay: 0.1 },
 
     // Station 3: Mid-Right (~62%)
-    { id: 5, baseLeft: '62%', baseAngle: -28, sweepUpAngle: -14, downAngle: -46, ambientRange: [-34, -20], delay: 0.3 },
-    { id: 6, baseLeft: '62%', baseAngle: 30,  sweepUpAngle: 10,  downAngle: 48,  ambientRange: [22, 36],   delay: 0.5 },
+    { id: 5, baseLeft: '62%', baseAngle: -28, sweepUpAngle: -14, downAngle: -42, ambientRange: [-34, -20], delay: 0.3 },
+    { id: 6, baseLeft: '62%', baseAngle: 30,  sweepUpAngle: 10,  downAngle: 45,  ambientRange: [22, 36],   delay: 0.5 },
 
     // Station 4: Right (~82%)
-    { id: 7, baseLeft: '82%', baseAngle: -24, sweepUpAngle: -12, downAngle: -42, ambientRange: [-30, -18], delay: 0.2 },
-    { id: 8, baseLeft: '82%', baseAngle: 42,  sweepUpAngle: 18,  downAngle: 62,  ambientRange: [34, 48],   delay: 0.4 },
+    { id: 7, baseLeft: '82%', baseAngle: -24, sweepUpAngle: -12, downAngle: -38, ambientRange: [-30, -18], delay: 0.2 },
+    { id: 8, baseLeft: '82%', baseAngle: 42,  sweepUpAngle: 18,  downAngle: 60,  ambientRange: [34, 48],   delay: 0.4 },
 
     // Station Center Highlights (~50%)
-    { id: 9, baseLeft: '50%', baseAngle: -12, sweepUpAngle: -4,  downAngle: -26, ambientRange: [-18, -6],  delay: 0.1 },
-    { id: 10, baseLeft: '50%', baseAngle: 12, sweepUpAngle: 4,   downAngle: 26,  ambientRange: [6, 18],    delay: 0.3 }
+    { id: 9, baseLeft: '50%', baseAngle: -12, sweepUpAngle: -4,  downAngle: -24, ambientRange: [-18, -6],  delay: 0.1 },
+    { id: 10, baseLeft: '50%', baseAngle: 12, sweepUpAngle: 4,   downAngle: 24,  ambientRange: [6, 18],    delay: 0.3 }
+  ], []);
+
+  // ── 2. Overhead Downward Projector Beams (Shooting down on Wrong Answer, matching photo) ──
+  const overheadDownwardBeams = useMemo(() => [
+    // Station Left Ceiling Rig (~16%)
+    { id: 'top-1', left: '16%', angle: 34, delay: 0 },
+    { id: 'top-2', left: '16%', angle: 52, delay: 0.05 },
+    { id: 'top-3', left: '24%', angle: 22, delay: 0.08 },
+    
+    // Station Right Ceiling Rig (~84%)
+    { id: 'top-4', left: '84%', angle: -34, delay: 0 },
+    { id: 'top-5', left: '84%', angle: -52, delay: 0.05 },
+    { id: 'top-6', left: '76%', angle: -22, delay: 0.08 },
+
+    // Station Center Ceiling Rig (~50%)
+    { id: 'top-7', left: '46%', angle: -10, delay: 0.02 },
+    { id: 'top-8', left: '54%', angle: 10, delay: 0.02 }
   ], []);
 
   return (
@@ -65,20 +83,20 @@ export default function KbcStageLasers({
 
       {/* ── STAGE FLOOR HAZE & AMBIENCE (Switches Blue <-> Red on wrong answer) ── */}
       <div 
-        className={`absolute -bottom-10 left-0 right-0 h-44 blur-2xl pointer-events-none transition-colors duration-700 ${
+        className={`absolute -bottom-10 left-0 right-0 h-48 blur-2xl pointer-events-none transition-colors duration-700 ${
           isWrongAnswer
             ? 'bg-gradient-to-t from-red-950 via-red-900/60 to-transparent'
             : 'bg-gradient-to-t from-blue-950/80 via-blue-900/30 to-transparent'
         }`}
       />
 
-      {/* Backstage fiery glow on wrong answer (Matches photo) */}
+      {/* Backstage fiery glow on wrong answer (Matches concert photo) */}
       {isWrongAnswer && (
         <motion.div
           initial={{ opacity: 0 }}
-          animate={{ opacity: [0.7, 1, 0.85] }}
+          animate={{ opacity: [0.75, 1, 0.85] }}
           transition={{ duration: 0.8, repeat: Infinity, repeatType: 'reverse' }}
-          className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-[700px] h-[300px] rounded-[100%] bg-red-600/35 blur-3xl pointer-events-none"
+          className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-[800px] h-[340px] rounded-[100%] bg-red-600/40 blur-3xl pointer-events-none"
         />
       )}
 
@@ -105,8 +123,8 @@ export default function KbcStageLasers({
         </div>
       ))}
 
-      {/* ── 10 HIGH-POWER LASER BEAMS ── */}
-      {laserBeams.map((beam) => {
+      {/* ── 10 HIGH-POWER FLOOR BEAMS ── */}
+      {floorBeams.map((beam) => {
         let targetAngle;
         let targetOpacity;
         let targetScaleY;
@@ -135,21 +153,11 @@ export default function KbcStageLasers({
             downAngle,
             finalUpAngle
           ];
-
-          targetOpacity = [
-            0.9,
-            1,
-            0.15, 1, 0.2, 1, 0.3, 1, // Rapid flicker at middle
-            0.9,
-            0.1, 1, 0.2, 1, 0.15, 1, // Rapid flicker at bottom
-            1
-          ];
-
           targetScaleY = [1, 1.15, 1.25, 0.85, 0.8, 1.2];
-
+          targetOpacity = [0.85, 1, 0.2, 1, 0.2, 1]; // Exact 6 values matching times array!
           transitionConfig = {
-            duration: 4.0,
-            times: [0, 0.18, 0.32, 0.58, 0.72, 1],
+            duration: 4.2,
+            times: [0, 0.2, 0.35, 0.65, 0.8, 1],
             ease: 'easeInOut'
           };
         } else if (isQuestionHeldUp) {
@@ -227,30 +235,56 @@ export default function KbcStageLasers({
         );
       })}
 
+      {/* ── 3. OVERHEAD HIGH-POWER DOWNWARD RED LASER RIG (Active on Wrong Answer) ── */}
+      {isWrongAnswer && overheadDownwardBeams.map((beam) => (
+        <motion.div
+          key={beam.id}
+          initial={{ scaleY: 0, opacity: 0, rotate: beam.angle }}
+          animate={{ scaleY: 1.15, opacity: 1, rotate: beam.angle }}
+          transition={{ duration: 0.65, delay: beam.delay, ease: [0.16, 1, 0.3, 1] }}
+          style={{
+            left: beam.left,
+            top: 0,
+            transformOrigin: 'top center'
+          }}
+          className="absolute h-[150vh] pointer-events-none flex items-center justify-center -translate-x-1/2 z-20"
+        >
+          {/* Overhead Projector Lens Spark at Top */}
+          <div className="absolute top-0 w-4 h-4 rounded-full bg-white shadow-[0_0_25px_#ef4444,0_0_45px_#dc2626] -translate-y-1" />
+
+          {/* Volumetric Red Beam Aura */}
+          <div className="absolute w-12 sm:w-16 h-full bg-gradient-to-b from-red-600/90 via-rose-600/40 to-red-500/10 blur-xl pointer-events-none" />
+
+          {/* Electric Neon Red Glow */}
+          <div className="absolute w-4 sm:w-5 h-full bg-gradient-to-b from-rose-500 via-red-500/70 to-red-600/30 blur-[4px] shadow-[0_0_25px_#ff0033,0_0_50px_#cc0000,0_0_80px_#990000] pointer-events-none" />
+
+          {/* Razor-Sharp White-Hot Core Shooting Downward */}
+          <div className="relative w-[3.5px] sm:w-[4.5px] h-full bg-white shadow-[0_0_12px_#ffffff,0_0_25px_#ef4444,0_0_45px_#b91c1c] pointer-events-none" />
+        </motion.div>
+      ))}
+
       {/* ── CELEBRATION WHOLE-STAGE STROBE FLASH EFFECT ── */}
       {isCelebratingCorrect && (
         <motion.div
           animate={{
             opacity: [
               0,
-              0.4, 0.05, 0.5, 0.1, 0.45, 0.05,
-              0.1,
-              0.5, 0.08, 0.55, 0.1, 0.4, 0.05,
-              0.3, 0
+              0.6, 0.05, 0.85, 0.1, 0.7, 0.05, 0.2,
+              0.8, 0.05, 0.9, 0.1, 0.75, 0.05, 0.4, 0
             ]
           }}
-          transition={{ duration: 4.0, ease: 'linear' }}
-          className="absolute inset-0 bg-gradient-to-b from-cyan-300/25 via-blue-500/15 to-transparent mix-blend-screen pointer-events-none"
+          transition={{ duration: 4.2, ease: 'linear' }}
+          className="absolute inset-0 bg-gradient-to-b from-cyan-300/35 via-blue-500/20 to-transparent mix-blend-screen pointer-events-none z-30"
         />
       )}
 
-      {/* ── WRONG ANSWER WHOLE-STAGE CRIMSON PULSE ── */}
+      {/* ── WRONG ANSWER WHOLE-STAGE CRIMSON PULSE (Holds until next question) ── */}
       {isWrongAnswer && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: [0.35, 0.15, 0.35] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute inset-0 bg-gradient-to-b from-red-600/20 via-red-950/20 to-transparent mix-blend-screen pointer-events-none"
+          className="absolute inset-0 bg-gradient-to-b from-red-600/20 via-red-950/20 to-transparent mix-blend-screen pointer-events-none z-10"
         />
       )}
 

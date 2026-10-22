@@ -9,10 +9,16 @@ import Swal from 'sweetalert2';
 import { KBC_PRIZE_LADDER, DEFAULT_MERN_SQL_QUESTIONS } from '../../data/kbcQuestions.js';
 import { kbcAudio } from '../../utils/kbcAudio.js';
 import SaatCroreWinnerModal from '../../components/kbc/SaatCroreWinnerModal.jsx';
+import KbcStageLasers from '../../components/kbc/KbcStageLasers.jsx';
 
 export default function AdminKbcManager() {
   const [activeSubTab, setActiveSubTab] = useState('test_sets'); // 'test_sets' | 'live' | 'questions' | 'teams' | 'bank'
   const [levelSearch, setLevelSearch] = useState('');
+
+  // Host Screen Stage Lasers State
+  const [adminLaserSweep, setAdminLaserSweep] = useState(false);
+  const [adminLaserCelebrating, setAdminLaserCelebrating] = useState(false);
+  const [adminLaserWrong, setAdminLaserWrong] = useState(false);
 
   // KBC Test Sets & Stored Quizzes State
   const [testSets, setTestSets] = useState([]);
@@ -613,6 +619,9 @@ export default function AdminKbcManager() {
     if (selectedLevel >= 16) return;
     const nextLvl = selectedLevel + 1;
     setSelectedLevel(nextLvl);
+    setAdminLaserWrong(false);
+    setAdminLaserCelebrating(false);
+    setAdminLaserSweep(prev => !prev);
     handleUpdateLiveRound({
       current_level: nextLvl,
       reset_round: true
@@ -625,6 +634,9 @@ export default function AdminKbcManager() {
     if (selectedLevel <= 1) return;
     const prevLvl = selectedLevel - 1;
     setSelectedLevel(prevLvl);
+    setAdminLaserWrong(false);
+    setAdminLaserCelebrating(false);
+    setAdminLaserSweep(prev => !prev);
     handleUpdateLiveRound({
       current_level: prevLvl,
       reset_round: true
@@ -640,7 +652,7 @@ export default function AdminKbcManager() {
     });
   };
 
-  // Reveal Correct Answer on Laptop screens & play authentic victory fanfare
+  // Reveal Correct Answer on Laptop screens & play authentic victory fanfare & lights
   const handleAdminReveal = (correctIdx) => {
     kbcAudio.stopLockSuspense();
     const currLvl = session?.current_level || selectedLevel || 1;
@@ -649,8 +661,26 @@ export default function AdminKbcManager() {
     } else {
       kbcAudio.playCorrect();
     }
+    // Trigger celebration dance lights on host screen
+    setAdminLaserWrong(false);
+    setAdminLaserCelebrating(true);
+    setTimeout(() => setAdminLaserCelebrating(false), 4200);
+
     handleUpdateLiveRound({
       revealed_correct: correctIdx
+    });
+  };
+
+  // Trigger Wrong Answer (Downward High-Power Red Lasers) on Host & Laptop screens
+  const handleAdminTriggerWrong = () => {
+    kbcAudio.stopLockSuspense();
+    kbcAudio.playWrong();
+    // Trigger downward red lasers on host screen
+    setAdminLaserCelebrating(false);
+    setAdminLaserWrong(true);
+
+    handleUpdateLiveRound({
+      revealed_correct: 99 // 99 broadcasts wrong answer reveal
     });
   };
 
@@ -1399,9 +1429,16 @@ export default function AdminKbcManager() {
               </div>
             </div>
 
-            {/* ── QUESTION DISPLAYED TO CONTESTANTS (Visible on Admin Screen) ── */}
-            <div className="bg-gradient-to-b from-[#141d40] to-[#0a1027] border-2 border-amber-400/80 rounded-3xl p-6 shadow-2xl relative">
-              <div className="flex items-center justify-between pb-3 border-b border-indigo-900/50 mb-4">
+            {/* ── QUESTION DISPLAYED TO CONTESTANTS (Visible on Admin Screen with Stage Lasers) ── */}
+            <div className="bg-gradient-to-b from-[#141d40] to-[#0a1027] border-2 border-amber-400/80 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+              {/* Atmospheric Stage Lasers in Admin Host Monitor */}
+              <KbcStageLasers
+                triggerUpwardSweep={adminLaserSweep}
+                isCelebratingCorrect={adminLaserCelebrating}
+                isWrongAnswer={adminLaserWrong}
+              />
+
+              <div className="flex items-center justify-between pb-3 border-b border-indigo-900/50 mb-4 relative z-20">
                 <span className="text-xs font-black uppercase text-amber-400 tracking-wider flex items-center gap-2">
                   <Eye className="w-4 h-4 text-amber-400" />
                   Live Question on Contestants' Screens
@@ -1412,9 +1449,9 @@ export default function AdminKbcManager() {
               </div>
 
               {activeQ ? (
-                <div className="space-y-4">
+                <div className="space-y-4 relative z-20">
                   {/* Large Question Text */}
-                  <h3 className="text-lg sm:text-xl font-bold text-white leading-relaxed bg-black/40 border border-indigo-500/30 rounded-2xl p-5">
+                  <h3 className="text-lg sm:text-xl font-bold text-white leading-relaxed bg-black/60 border border-indigo-500/30 rounded-2xl p-5 backdrop-blur-md">
                     {activeQ.question}
                   </h3>
 
@@ -1430,10 +1467,10 @@ export default function AdminKbcManager() {
                           key={idx}
                           className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
                             isCorrect
-                              ? 'bg-emerald-950/60 border-emerald-400 text-emerald-100 font-bold shadow-lg shadow-emerald-500/10'
+                              ? 'bg-emerald-950/70 border-emerald-400 text-emerald-100 font-bold shadow-lg shadow-emerald-500/20 backdrop-blur-sm'
                               : isLocked
-                              ? 'bg-amber-950/50 border-amber-400 text-amber-200 font-bold'
-                              : 'bg-slate-900/80 border-slate-800 text-slate-200'
+                              ? 'bg-amber-950/60 border-amber-400 text-amber-200 font-bold backdrop-blur-sm'
+                              : 'bg-slate-900/90 border-slate-800 text-slate-200 backdrop-blur-sm'
                           }`}
                         >
                           <div className="flex items-center gap-3">
@@ -1475,9 +1512,17 @@ export default function AdminKbcManager() {
                       </button>
                       <button
                         onClick={() => handleAdminReveal(activeQ.correct)}
-                        className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-md"
+                        className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-md shadow-emerald-500/20"
+                        title="Reveal correct answer & trigger stage laser celebration dance"
                       >
                         <Eye className="w-3.5 h-3.5" /> Reveal Correct Answer
+                      </button>
+                      <button
+                        onClick={handleAdminTriggerWrong}
+                        className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-md shadow-rose-600/30"
+                        title="Mark wrong answer & trigger high-power downward red lasers"
+                      >
+                        <Flame className="w-3.5 h-3.5" /> Mark Wrong (Red Lasers)
                       </button>
                       <button
                         onClick={handleAnnounceWinner}
@@ -1486,6 +1531,46 @@ export default function AdminKbcManager() {
                       >
                         <Trophy className="w-4 h-4 text-slate-950" /> Announce Winner (Saat Crore Meme)
                       </button>
+
+                      {/* Live Laser Quick Test Buttons for Host */}
+                      <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-950/90 border border-slate-700 text-[11px]">
+                        <span className="text-slate-400 font-bold px-1">Lasers:</span>
+                        <button
+                          onClick={() => {
+                            setAdminLaserWrong(false);
+                            setAdminLaserCelebrating(false);
+                            setAdminLaserSweep(prev => !prev);
+                            kbcAudio.playLaserSweep();
+                          }}
+                          className="px-2 py-0.5 rounded bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 font-bold cursor-pointer"
+                          title="Test upward blue laser sweep"
+                        >
+                          ⬆️ Up
+                        </button>
+                        <button
+                          onClick={() => {
+                            setAdminLaserWrong(false);
+                            setAdminLaserCelebrating(true);
+                            kbcAudio.playCorrect();
+                            setTimeout(() => setAdminLaserCelebrating(false), 4200);
+                          }}
+                          className="px-2 py-0.5 rounded bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 font-bold cursor-pointer"
+                          title="Test correct answer celebration lights"
+                        >
+                          🎆 Correct
+                        </button>
+                        <button
+                          onClick={() => {
+                            setAdminLaserCelebrating(false);
+                            setAdminLaserWrong(true);
+                            kbcAudio.playWrong();
+                          }}
+                          className="px-2 py-0.5 rounded bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 font-bold cursor-pointer"
+                          title="Test downward red lasers lock"
+                        >
+                          🔴 Wrong
+                        </button>
+                      </div>
                     </div>
 
                     <button

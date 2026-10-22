@@ -267,7 +267,13 @@ export default function KbcExam() {
                   setRevealedCorrect(sess.revealed_correct);
                   kbcAudio.stopLockSuspense();
 
-                  const isCorrect = selectedOption === sess.revealed_correct;
+                  // Explicit wrong answer from Admin or mismatch with contestant option
+                  const isWrongExplicit = sess.revealed_correct === 99;
+                  const isCorrect = !isWrongExplicit && (
+                    selectedOption !== null 
+                      ? Number(selectedOption) === Number(sess.revealed_correct)
+                      : true
+                  );
                   setAnswerStatus(isCorrect ? 'correct' : 'wrong');
 
                   if (isCorrect) {
@@ -298,10 +304,15 @@ export default function KbcExam() {
                     setIsCelebratingCorrect(false);
                     // Play uploaded wrong answer audio on contestant laptop!
                     kbcAudio.playWrong();
-                    const correctLetter = String.fromCharCode(65 + sess.revealed_correct);
-                    setHostQuote(AMITABH_QUOTES.wrongAnswer(correctLetter));
+                    const correctLetter = sess.revealed_correct >= 0 && sess.revealed_correct <= 3 
+                      ? String.fromCharCode(65 + sess.revealed_correct) 
+                      : '';
+                    setHostQuote(correctLetter ? AMITABH_QUOTES.wrongAnswer(correctLetter) : 'Galat uttar! Khel samapt.');
                   }
                 }
+              } else if (sess.revealed_correct === null) {
+                // Clear tracking when round is reset so reveals trigger reliably every time
+                lastQuestionTrackRef.current.lastRevealed = null;
               }
             }
           }
@@ -1124,6 +1135,20 @@ export default function KbcExam() {
                     className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-sm uppercase tracking-wider shadow-lg shadow-amber-500/30 transition transform hover:scale-[1.02] cursor-pointer"
                   >
                     {teamJoinLoading ? 'Connecting Laptop...' : 'Connect to Live Hotseat →'}
+                  </button>
+
+                  <div className="relative flex py-1 items-center">
+                    <div className="flex-grow border-t border-indigo-900/40"></div>
+                    <span className="flex-shrink mx-3 text-[11px] text-slate-500 font-bold uppercase tracking-wider">OR</span>
+                    <div className="flex-grow border-t border-indigo-900/40"></div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleStartGame}
+                    className="w-full py-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-amber-400/40 text-amber-300 hover:text-white font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                  >
+                    <span>⚡ Solo Hotseat Mode (Direct Practice & Laser Lights)</span>
                   </button>
                 </div>
               </form>
