@@ -417,6 +417,38 @@ class KbcSoundManager {
     this.playHighPoints();
   }
 
+  // 8B. Laser Upward Sweep & Studio Lights FX
+  playLaserSweep() {
+    if (this.isMuted) return;
+    this.init();
+    if (!this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(140, now);
+      osc.frequency.exponentialRampToValueAtTime(1400, now + 0.85);
+
+      gain.gain.setValueAtTime(0.01, now);
+      gain.gain.linearRampToValueAtTime(0.22, now + 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(400, now);
+      filter.frequency.exponentialRampToValueAtTime(2200, now + 0.85);
+      filter.Q.setValueAtTime(6, now);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.95);
+    } catch (e) {}
+  }
+
   // 9. 7 Crore / Milestone Grand Fanfare
   playFanfare() {
     if (this.isMuted) return;

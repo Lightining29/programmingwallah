@@ -5,11 +5,13 @@ import {
   Trophy, Volume2, VolumeX, Clock, Users, PhoneCall, HelpCircle, 
   RotateCcw, Award, LogOut, CheckCircle2, XCircle, Sparkles, 
   AlertTriangle, ArrowRight, Settings, Download, Printer, ShieldCheck,
-  Laptop, Radio, Wifi, UserCheck, Flame
+  Laptop, Radio, Wifi, UserCheck, Flame, Maximize, Minimize
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { kbcAudio } from '../../utils/kbcAudio.js';
 import SaatCroreWinnerModal from '../../components/kbc/SaatCroreWinnerModal.jsx';
+import KbcLaserLogoReveal from '../../components/kbc/KbcLaserLogoReveal.jsx';
+import KbcStageLasers from '../../components/kbc/KbcStageLasers.jsx';
 import { 
   KBC_PRIZE_LADDER, 
   DEFAULT_MERN_SQL_QUESTIONS, 
@@ -40,6 +42,58 @@ export default function KbcExam() {
   const [teamAnswerSubmitted, setTeamAnswerSubmitted] = useState(false);
   const [winnerData, setWinnerData] = useState(null);
   const lastWinnerShownRef = useRef(false);
+
+  // Laser Effects & Fullscreen State
+  const [showLaserIntro, setShowLaserIntro] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [laserUpwardTrigger, setLaserUpwardTrigger] = useState(false);
+  const [isCelebratingCorrect, setIsCelebratingCorrect] = useState(false);
+
+  // Sync fullscreen state
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullScreen(Boolean(document.fullscreenElement || document.webkitFullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    document.addEventListener('webkitfullscreenchange', handleFsChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFsChange);
+      document.removeEventListener('webkitfullscreenchange', handleFsChange);
+    };
+  }, []);
+
+  const enterFullScreen = () => {
+    try {
+      const docEl = document.documentElement;
+      if (docEl.requestFullscreen) {
+        docEl.requestFullscreen().catch(() => {});
+      } else if (docEl.webkitRequestFullscreen) {
+        docEl.webkitRequestFullscreen();
+      } else if (docEl.msRequestFullscreen) {
+        docEl.msRequestFullscreen();
+      }
+    } catch (err) {}
+  };
+
+  const exitFullScreen = () => {
+    try {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+    } catch (err) {}
+  };
+
+  const toggleFullScreen = () => {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      enterFullScreen();
+    } else {
+      exitFullScreen();
+    }
+  };
 
   // Admin Live Session Polled State
   const [adminSession, setAdminSession] = useState({
@@ -168,6 +222,10 @@ export default function KbcExam() {
               setTeamAnswerSubmitted(false);
               setEliminatedOptions([]);
 
+              // Trigger upward laser sweep animation & sound
+              setLaserUpwardTrigger(prev => !prev);
+              kbcAudio.playLaserSweep();
+
               // If restarting whole KBC from beginning (Level 1), reset earned prize
               if (newLvl === 1) {
                 setEarnedAmount(0);
@@ -211,6 +269,10 @@ export default function KbcExam() {
                   setAnswerStatus(isCorrect ? 'correct' : 'wrong');
 
                   if (isCorrect) {
+                    // Trigger stage light flicker, zig-zag and bouncing animation
+                    setIsCelebratingCorrect(true);
+                    setTimeout(() => setIsCelebratingCorrect(false), 4200);
+
                     const currentLvl = sess.current_level || currentLevel;
                     const winAmount = KBC_PRIZE_LADDER[currentLvl - 1]?.amount || 0;
                     const winLabel = KBC_PRIZE_LADDER[currentLvl - 1]?.prize || '₹0';
@@ -324,6 +386,9 @@ export default function KbcExam() {
         setPlayMode('TEAM');
         kbcAudio.init();
         kbcAudio.playLifeline();
+        // Enter Fullscreen mode and launch Laser Logo Reveal Intro
+        enterFullScreen();
+        setShowLaserIntro(true);
       } else {
         setTeamJoinError(data.message || 'Invalid Team Access Code.');
       }
@@ -433,6 +498,8 @@ export default function KbcExam() {
   // Start the Game
   const handleStartGame = () => {
     kbcAudio.init();
+    setLaserUpwardTrigger(prev => !prev);
+    kbcAudio.playLaserSweep();
     kbcAudio.playQuestionArrival();
     setGameStarted(true);
     setHostQuote(AMITABH_QUOTES.questionIntro(currentLevel, currentPrize.prize));
@@ -478,6 +545,10 @@ export default function KbcExam() {
 
     if (isCorrect) {
       setAnswerStatus('correct');
+      // Trigger stage light flicker, zig-zag and bouncing animation
+      setIsCelebratingCorrect(true);
+      setTimeout(() => setIsCelebratingCorrect(false), 4200);
+
       const winAmount = currentPrize.amount;
       const winLabel = currentPrize.prize;
       setEarnedAmount(winAmount);
@@ -538,6 +609,8 @@ export default function KbcExam() {
     setEliminatedOptions([]);
     const nextPrize = KBC_PRIZE_LADDER[nextLvl - 1];
     setHostQuote(AMITABH_QUOTES.questionIntro(nextLvl, nextPrize.prize));
+    setLaserUpwardTrigger(prev => !prev);
+    kbcAudio.playLaserSweep();
     kbcAudio.playQuestionArrival();
   };
 
@@ -743,6 +816,17 @@ export default function KbcExam() {
       {/* Circular studio stage floor effect */}
       <div className="absolute -bottom-40 left-1/2 -translate-x-1/2 w-[850px] h-[360px] rounded-[100%] bg-blue-600/10 blur-3xl pointer-events-none" />
 
+      {/* ── Atmospheric Stage Lasers & Correct Answer Celebration Lights ── */}
+      <KbcStageLasers
+        triggerUpwardSweep={laserUpwardTrigger}
+        isCelebratingCorrect={isCelebratingCorrect}
+      />
+
+      {/* ── Fullscreen Cinematic Laser Logo Reveal Intro ── */}
+      {showLaserIntro && (
+        <KbcLaserLogoReveal onComplete={() => setShowLaserIntro(false)} />
+      )}
+
       {/* ── Top Header Bar: Logo, Lifelines, Timer, Controls ── */}
       <header className="relative z-20 border-b border-indigo-900/50 bg-black/40 backdrop-blur-md px-4 py-2.5">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
@@ -855,8 +939,15 @@ export default function KbcExam() {
             </div>
           )}
 
-          {/* Right Controls: Audio Mute */}
+          {/* Right Controls: Fullscreen & Audio Mute */}
           <div className="flex items-center gap-2">
+            <button
+              onClick={toggleFullScreen}
+              className="p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition cursor-pointer"
+              title={isFullScreen ? "Exit Fullscreen (Esc)" : "Enter Fullscreen"}
+            >
+              {isFullScreen ? <Minimize className="w-4 h-4 text-amber-400" /> : <Maximize className="w-4 h-4 text-amber-400" />}
+            </button>
             <button
               onClick={toggleSound}
               className="p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition cursor-pointer"
