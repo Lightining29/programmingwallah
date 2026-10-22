@@ -48,6 +48,7 @@ export default function KbcExam() {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [laserUpwardTrigger, setLaserUpwardTrigger] = useState(false);
   const [isCelebratingCorrect, setIsCelebratingCorrect] = useState(false);
+  const [isWrongAnswer, setIsWrongAnswer] = useState(false);
 
   // Sync fullscreen state
   useEffect(() => {
@@ -221,6 +222,7 @@ export default function KbcExam() {
               setRevealedCorrect(null);
               setTeamAnswerSubmitted(false);
               setEliminatedOptions([]);
+              setIsWrongAnswer(false); // Reset wrong answer red beams back to normal blue
 
               // Trigger upward laser sweep animation & sound
               setLaserUpwardTrigger(prev => !prev);
@@ -269,6 +271,7 @@ export default function KbcExam() {
                   setAnswerStatus(isCorrect ? 'correct' : 'wrong');
 
                   if (isCorrect) {
+                    setIsWrongAnswer(false);
                     // Trigger stage light flicker, zig-zag and bouncing animation
                     setIsCelebratingCorrect(true);
                     setTimeout(() => setIsCelebratingCorrect(false), 4200);
@@ -290,6 +293,9 @@ export default function KbcExam() {
                       triggerConfetti(0.5);
                     }
                   } else {
+                    // Turn lasers high-power bright red and point downward, holding until next question arrives
+                    setIsWrongAnswer(true);
+                    setIsCelebratingCorrect(false);
                     // Play uploaded wrong answer audio on contestant laptop!
                     kbcAudio.playWrong();
                     const correctLetter = String.fromCharCode(65 + sess.revealed_correct);
@@ -449,6 +455,8 @@ export default function KbcExam() {
     kbcAudio.playWrong();
     setIsLocked(true);
     setAnswerStatus('wrong');
+    setIsWrongAnswer(true);
+    setIsCelebratingCorrect(false);
     setHostQuote(AMITABH_QUOTES.timeOut);
   };
 
@@ -498,6 +506,8 @@ export default function KbcExam() {
   // Start the Game
   const handleStartGame = () => {
     kbcAudio.init();
+    setIsWrongAnswer(false);
+    setIsCelebratingCorrect(false);
     setLaserUpwardTrigger(prev => !prev);
     kbcAudio.playLaserSweep();
     kbcAudio.playQuestionArrival();
@@ -544,6 +554,7 @@ export default function KbcExam() {
     setRevealedCorrect(currentQ.correct);
 
     if (isCorrect) {
+      setIsWrongAnswer(false);
       setAnswerStatus('correct');
       // Trigger stage light flicker, zig-zag and bouncing animation
       setIsCelebratingCorrect(true);
@@ -589,7 +600,9 @@ export default function KbcExam() {
       }, 3200);
 
     } else {
-      // Wrong Answer!
+      // Wrong Answer! Turn lasers high-power bright red and point downward, holding until next question arrives
+      setIsWrongAnswer(true);
+      setIsCelebratingCorrect(false);
       kbcAudio.playWrong();
       setAnswerStatus('wrong');
       const correctLetter = String.fromCharCode(65 + currentQ.correct);
@@ -607,6 +620,7 @@ export default function KbcExam() {
     setAnswerStatus(null);
     setRevealedCorrect(null);
     setEliminatedOptions([]);
+    setIsWrongAnswer(false);
     const nextPrize = KBC_PRIZE_LADDER[nextLvl - 1];
     setHostQuote(AMITABH_QUOTES.questionIntro(nextLvl, nextPrize.prize));
     setLaserUpwardTrigger(prev => !prev);
@@ -781,6 +795,8 @@ export default function KbcExam() {
   // Reset / Play Again
   const handlePlayAgain = () => {
     kbcAudio.stopDrone();
+    setIsWrongAnswer(false);
+    setIsCelebratingCorrect(false);
     setCurrentLevel(1);
     setGameStarted(false);
     setGameOver(false);
@@ -820,6 +836,7 @@ export default function KbcExam() {
       <KbcStageLasers
         triggerUpwardSweep={laserUpwardTrigger}
         isCelebratingCorrect={isCelebratingCorrect}
+        isWrongAnswer={isWrongAnswer}
       />
 
       {/* ── Fullscreen Cinematic Laser Logo Reveal Intro ── */}
