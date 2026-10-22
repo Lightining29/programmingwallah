@@ -240,26 +240,29 @@ export default function KbcStageLasers({
         <motion.div
           key={beam.id}
           initial={{ scaleY: 0, opacity: 0, rotate: beam.angle }}
-          animate={{ scaleY: 1.15, opacity: 1, rotate: beam.angle }}
+          animate={{ scaleY: 1.25, opacity: 1, rotate: beam.angle }}
           transition={{ duration: 0.65, delay: beam.delay, ease: [0.16, 1, 0.3, 1] }}
           style={{
             left: beam.left,
             top: 0,
             transformOrigin: 'top center'
           }}
-          className="absolute h-[150vh] pointer-events-none flex items-center justify-center -translate-x-1/2 z-20"
+          className="absolute h-[155vh] pointer-events-none flex items-center justify-center -translate-x-1/2 z-20"
         >
           {/* Overhead Projector Lens Spark at Top */}
-          <div className="absolute top-0 w-4 h-4 rounded-full bg-white shadow-[0_0_25px_#ef4444,0_0_45px_#dc2626] -translate-y-1" />
+          <div className="absolute top-0 w-5 h-5 rounded-full bg-white shadow-[0_0_30px_#ef4444,0_0_55px_#dc2626,0_0_80px_#ff0033] -translate-y-1" />
 
-          {/* Volumetric Red Beam Aura */}
-          <div className="absolute w-12 sm:w-16 h-full bg-gradient-to-b from-red-600/90 via-rose-600/40 to-red-500/10 blur-xl pointer-events-none" />
+          {/* Volumetric Red Beam Aura (Extra wide concert spread) */}
+          <div className="absolute w-16 sm:w-24 h-full bg-gradient-to-b from-red-600 via-rose-600/50 to-red-500/15 blur-2xl pointer-events-none" />
 
           {/* Electric Neon Red Glow */}
-          <div className="absolute w-4 sm:w-5 h-full bg-gradient-to-b from-rose-500 via-red-500/70 to-red-600/30 blur-[4px] shadow-[0_0_25px_#ff0033,0_0_50px_#cc0000,0_0_80px_#990000] pointer-events-none" />
+          <div className="absolute w-6 sm:w-8 h-full bg-gradient-to-b from-rose-500 via-red-500/80 to-red-600/40 blur-[5px] shadow-[0_0_30px_#ff0033,0_0_60px_#cc0000,0_0_100px_#990000] pointer-events-none" />
 
           {/* Razor-Sharp White-Hot Core Shooting Downward */}
-          <div className="relative w-[3.5px] sm:w-[4.5px] h-full bg-white shadow-[0_0_12px_#ffffff,0_0_25px_#ef4444,0_0_45px_#b91c1c] pointer-events-none" />
+          <div className="relative w-[4px] sm:w-[5px] h-full bg-white shadow-[0_0_15px_#ffffff,0_0_30px_#ef4444,0_0_55px_#b91c1c] pointer-events-none" />
+
+          {/* Floor Contact Ground Reflection Flare */}
+          <div className="absolute bottom-10 w-12 h-6 rounded-full bg-red-500/40 blur-md pointer-events-none" />
         </motion.div>
       ))}
 
@@ -278,14 +281,20 @@ export default function KbcStageLasers({
         />
       )}
 
-      {/* ── WRONG ANSWER WHOLE-STAGE CRIMSON PULSE (Holds until next question) ── */}
+      {/* ── WRONG ANSWER WHOLE-ENVIRONMENT RED AMBIENCE & CRIMSON WASH (Holds until next question) ── */}
       {isWrongAnswer && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: [0.35, 0.15, 0.35] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute inset-0 bg-gradient-to-b from-red-600/20 via-red-950/20 to-transparent mix-blend-screen pointer-events-none z-10"
-        />
+        <>
+          {/* Dense Crimson Atmospheric Fog */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0.55, 0.75, 0.6] }}
+            transition={{ duration: 1.8, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
+            className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(220,38,38,0.55)_0%,rgba(153,27,27,0.4)_50%,rgba(69,10,10,0.65)_100%)] mix-blend-screen pointer-events-none z-10"
+          />
+
+          {/* Stage Floor Crimson Reflection Wash */}
+          <div className="absolute bottom-0 left-0 right-0 h-56 bg-gradient-to-t from-red-600/40 via-red-900/30 to-transparent blur-2xl pointer-events-none z-10" />
+        </>
       )}
 
     </div>

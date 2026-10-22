@@ -1430,7 +1430,11 @@ export default function AdminKbcManager() {
             </div>
 
             {/* ── QUESTION DISPLAYED TO CONTESTANTS (Visible on Admin Screen with Stage Lasers) ── */}
-            <div className="bg-gradient-to-b from-[#141d40] to-[#0a1027] border-2 border-amber-400/80 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+            <div className={`border-2 rounded-3xl p-6 shadow-2xl relative overflow-hidden transition-all duration-700 ${
+              adminLaserWrong 
+                ? 'bg-gradient-to-b from-[#380808] to-[#150202] border-red-500/80 shadow-[0_0_50px_rgba(239,68,68,0.35)]'
+                : 'bg-gradient-to-b from-[#141d40] to-[#0a1027] border-amber-400/80'
+            }`}>
               {/* Atmospheric Stage Lasers in Admin Host Monitor */}
               <KbcStageLasers
                 triggerUpwardSweep={adminLaserSweep}

@@ -835,13 +835,31 @@ export default function KbcExam() {
     : (safeWonPrizeLabel !== '₹0' ? safeWonPrizeLabel : '₹0');
 
   return (
-    <div className="kbc-dark-root arena-dark-root min-h-screen bg-[#020617] text-white flex flex-col justify-between relative overflow-hidden select-none font-sans">
+    <div className={`kbc-dark-root arena-dark-root min-h-screen text-white flex flex-col justify-between relative overflow-hidden select-none font-sans transition-colors duration-700 ${
+      isWrongAnswer ? 'bg-[#0f0202]' : 'bg-[#020617]'
+    }`}>
       
-      {/* ── Background Deep Studio Ambience ── */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(26,38,100,0.45)_0%,rgba(2,6,23,0.95)_70%)] pointer-events-none" />
-      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(15,23,42,0.3)_0%,rgba(2,6,23,0.9)_100%)] pointer-events-none" />
+      {/* ── Background Deep Studio Ambience (Shifts Whole Environment to Red on Wrong Answer) ── */}
+      <div className={`absolute inset-0 transition-all duration-700 pointer-events-none ${
+        isWrongAnswer
+          ? 'bg-[radial-gradient(ellipse_at_center,rgba(185,28,28,0.55)_0%,rgba(35,6,6,0.98)_70%)]'
+          : 'bg-[radial-gradient(ellipse_at_center,rgba(26,38,100,0.45)_0%,rgba(2,6,23,0.95)_70%)]'
+      }`} />
+      <div className={`absolute inset-0 transition-all duration-700 pointer-events-none ${
+        isWrongAnswer
+          ? 'bg-[linear-gradient(to_bottom,rgba(69,10,10,0.5)_0%,rgba(15,2,2,0.98)_100%)]'
+          : 'bg-[linear-gradient(to_bottom,rgba(15,23,42,0.3)_0%,rgba(2,6,23,0.9)_100%)]'
+      }`} />
+      
       {/* Circular studio stage floor effect */}
-      <div className="absolute -bottom-40 left-1/2 -translate-x-1/2 w-[850px] h-[360px] rounded-[100%] bg-blue-600/10 blur-3xl pointer-events-none" />
+      <div className={`absolute -bottom-40 left-1/2 -translate-x-1/2 w-[1000px] h-[450px] rounded-[100%] blur-3xl pointer-events-none transition-all duration-700 ${
+        isWrongAnswer ? 'bg-red-600/40 shadow-[0_0_100px_#ef4444]' : 'bg-blue-600/10'
+      }`} />
+
+      {/* Whole-Stage Red Environment Floodwash Layer */}
+      {isWrongAnswer && (
+        <div className="absolute inset-0 bg-gradient-to-b from-red-950/60 via-red-900/30 to-red-950/70 mix-blend-color-dodge pointer-events-none z-10 animate-pulse" />
+      )}
 
       {/* ── Atmospheric Stage Lasers & Correct Answer Celebration Lights ── */}
       <KbcStageLasers
@@ -856,7 +874,9 @@ export default function KbcExam() {
       )}
 
       {/* ── Top Header Bar: Logo, Lifelines, Timer, Controls ── */}
-      <header className="relative z-20 border-b border-indigo-900/50 bg-black/40 backdrop-blur-md px-4 py-2.5">
+      <header className={`relative z-20 border-b transition-colors duration-700 bg-black/50 backdrop-blur-md px-4 py-2.5 ${
+        isWrongAnswer ? 'border-red-600/70 shadow-[0_4px_30px_rgba(239,68,68,0.25)]' : 'border-indigo-900/50'
+      }`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           
           {/* Logo & Hotseat Title */}
@@ -1220,15 +1240,23 @@ export default function KbcExam() {
 
               {/* ── THE ICONIC HEXAGONAL QUESTION BAR (Matching reference image) ── */}
               <div className="relative w-full py-2">
-                {/* Horizontal golden connector lines */}
-                <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/80 to-transparent -translate-y-1/2 pointer-events-none" />
+                {/* Horizontal golden/red connector lines */}
+                <div className={`absolute top-1/2 left-0 right-0 h-[2px] -translate-y-1/2 pointer-events-none transition-all duration-700 ${
+                  isWrongAnswer
+                    ? 'bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_20px_#ef4444]'
+                    : 'bg-gradient-to-r from-transparent via-amber-400/80 to-transparent'
+                }`} />
 
                 <div 
-                  className="relative mx-auto w-full max-w-4xl px-8 py-5 text-center transition-all"
+                  className="relative mx-auto w-full max-w-4xl px-8 py-5 text-center transition-all duration-700"
                   style={{
-                    background: 'linear-gradient(180deg, #1d1847 0%, #0d0b27 100%)',
-                    border: '2px solid #d4af37',
-                    boxShadow: '0 0 25px rgba(212, 175, 55, 0.25), inset 0 0 15px rgba(100, 60, 200, 0.3)',
+                    background: isWrongAnswer
+                      ? 'linear-gradient(180deg, #450a0a 0%, #1a0404 100%)'
+                      : 'linear-gradient(180deg, #1d1847 0%, #0d0b27 100%)',
+                    border: isWrongAnswer ? '2px solid #ef4444' : '2px solid #d4af37',
+                    boxShadow: isWrongAnswer
+                      ? '0 0 35px rgba(239, 68, 68, 0.5), inset 0 0 20px rgba(185, 28, 28, 0.6)'
+                      : '0 0 25px rgba(212, 175, 55, 0.25), inset 0 0 15px rgba(100, 60, 200, 0.3)',
                     clipPath: 'polygon(3% 0%, 97% 0%, 100% 50%, 97% 100%, 3% 100%, 0% 50%)'
                   }}
                 >
@@ -1362,11 +1390,15 @@ export default function KbcExam() {
 
             {/* Right 3 Columns: 16-Step Money Ladder (Dhanrashi Tree) */}
             <div 
-              className="lg:col-span-3 rounded-2xl p-4 shadow-2xl h-fit border border-indigo-900/60 relative z-20"
+              className="lg:col-span-3 rounded-2xl p-4 shadow-2xl h-fit border relative z-20 transition-all duration-700"
               style={{
-                background: 'linear-gradient(180deg, rgba(11, 19, 46, 0.95) 0%, rgba(6, 10, 29, 0.95) 100%)',
-                boxShadow: '0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(30, 58, 138, 0.25)',
-                border: '1px solid rgba(212, 175, 55, 0.35)',
+                background: isWrongAnswer
+                  ? 'linear-gradient(180deg, rgba(69, 10, 10, 0.95) 0%, rgba(26, 4, 4, 0.95) 100%)'
+                  : 'linear-gradient(180deg, rgba(11, 19, 46, 0.95) 0%, rgba(6, 10, 29, 0.95) 100%)',
+                boxShadow: isWrongAnswer
+                  ? '0 0 35px rgba(239, 68, 68, 0.35), inset 0 0 20px rgba(153, 27, 27, 0.35)'
+                  : '0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(30, 58, 138, 0.25)',
+                border: isWrongAnswer ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid rgba(212, 175, 55, 0.35)',
                 backdropFilter: 'blur(12px)'
               }}
             >
