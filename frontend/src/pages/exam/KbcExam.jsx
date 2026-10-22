@@ -835,7 +835,7 @@ export default function KbcExam() {
     : (safeWonPrizeLabel !== '₹0' ? safeWonPrizeLabel : '₹0');
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white flex flex-col justify-between relative overflow-hidden select-none font-sans">
+    <div className="kbc-dark-root arena-dark-root min-h-screen bg-[#020617] text-white flex flex-col justify-between relative overflow-hidden select-none font-sans">
       
       {/* ── Background Deep Studio Ambience ── */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(26,38,100,0.45)_0%,rgba(2,6,23,0.95)_70%)] pointer-events-none" />
@@ -1159,44 +1159,61 @@ export default function KbcExam() {
           /* CASE 3: Live KBC Arena (Active in Solo OR when Team is LIVE) */
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 my-auto items-center">
             
-            {/* Left 9 Columns: Host speech, Timer, Hexagonal Question, and Hexagonal 4 Options */}
-            <div className="lg:col-span-9 space-y-6">
+            {/* Left 9 Columns: Circular Timer, Hexagonal Question, and Hexagonal 4 Options */}
+            <div className="lg:col-span-9 space-y-4">
               
-              {/* Host Quote Bubble & Timer Row */}
-              <div className="flex flex-col md:flex-row items-center gap-4 justify-between bg-slate-950/50 border border-indigo-900/40 rounded-2xl p-4 backdrop-blur-sm">
-                
-                {/* Host Avatar & Speech Bubble */}
-                <div className="flex items-center gap-3.5 flex-1">
-                  <div className="w-12 h-12 rounded-full p-0.5 bg-gradient-to-tr from-amber-500 to-yellow-300 shrink-0 shadow-md">
-                    <img
-                      src="/kbc-host.jpg"
-                      alt="Host"
-                      className="w-full h-full object-cover rounded-full"
-                    />
-                  </div>
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] font-black uppercase text-amber-400 tracking-wider">
-                      Amitabh Bachchan (Host)
-                    </span>
-                    <p className="text-xs md:text-sm text-slate-200 font-medium italic">
-                      "{hostQuote}"
-                    </p>
-                  </div>
-                </div>
-
-                {/* Tik-Tiki Ji (Timer) */}
+              {/* ── Circular Timer (Tik-Tiki Ji) at Top Center (Circle Shape) ── */}
+              <div className="flex items-center justify-center pt-1 pb-1 relative z-20">
                 {currentLevel <= 10 ? (
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 border border-amber-400/30 shrink-0">
-                    <Clock className={`w-4 h-4 ${timeLeft <= 10 ? 'text-red-400 animate-spin' : 'text-amber-400'}`} />
-                    <span className="text-xs text-slate-400 font-bold uppercase">Tik-Tiki Ji:</span>
-                    <span className={`text-xl font-black font-mono ${timeLeft <= 10 ? 'text-red-400 animate-pulse' : 'text-amber-300'}`}>
-                      {timeLeft}s
-                    </span>
+                  <div className="relative flex items-center justify-center">
+                    {/* Glowing halo behind circle timer */}
+                    <div className={`absolute w-24 h-24 rounded-full blur-xl pointer-events-none transition-all ${
+                      timeLeft <= 10 ? 'bg-red-500/60 animate-pulse' : 'bg-amber-400/30'
+                    }`} />
+
+                    {/* Circular Timer Body */}
+                    <div 
+                      className={`relative w-20 h-20 sm:w-22 sm:h-22 rounded-full border-[3.5px] flex flex-col items-center justify-center shadow-2xl transition-all ${
+                        timeLeft <= 10 
+                          ? 'border-red-500 bg-gradient-to-b from-red-950/95 via-red-900/90 to-black/95 text-white shadow-[0_0_35px_#ef4444] animate-pulse scale-105' 
+                          : 'border-amber-400 bg-gradient-to-b from-[#141d48]/95 via-[#0c1230]/95 to-[#060a1d]/95 text-amber-300 shadow-[0_0_25px_rgba(251,191,36,0.45)]'
+                      }`}
+                    >
+                      {/* SVG circular radar tick marks */}
+                      <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none p-1">
+                        <circle
+                          cx="50%"
+                          cy="50%"
+                          r="38%"
+                          stroke={timeLeft <= 10 ? 'rgba(239, 68, 68, 0.45)' : 'rgba(245, 158, 11, 0.35)'}
+                          strokeWidth="2.5"
+                          fill="none"
+                          strokeDasharray="4 4"
+                        />
+                      </svg>
+
+                      <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-amber-400 font-sans -mb-0.5 z-10">
+                        TIK-TIKI
+                      </span>
+                      <span className={`text-2xl sm:text-3xl font-black font-mono leading-none tracking-tight z-10 ${
+                        timeLeft <= 10 ? 'text-white' : 'text-amber-300'
+                      }`}>
+                        {timeLeft}
+                      </span>
+                      <span className="text-[7px] sm:text-[8px] font-bold text-slate-400 tracking-wider uppercase z-10">
+                        SEC
+                      </span>
+                    </div>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-950/50 border border-emerald-500/30 text-emerald-300 text-xs font-bold shrink-0">
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>No Time Limit (Shanti se sochiye)</span>
+                  /* Level 11 to 16: No Timer Circular Badge */
+                  <div className="relative flex items-center justify-center">
+                    <div className="w-18 h-18 rounded-full border-2 border-emerald-400/60 bg-gradient-to-b from-emerald-950/90 to-[#060a1d]/95 flex flex-col items-center justify-center shadow-lg shadow-emerald-500/20 text-emerald-300">
+                      <span className="text-xl font-black">∞</span>
+                      <span className="text-[8px] font-black uppercase tracking-wider text-emerald-400 -mt-0.5">
+                        NO LIMIT
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1344,10 +1361,18 @@ export default function KbcExam() {
             </div>
 
             {/* Right 3 Columns: 16-Step Money Ladder (Dhanrashi Tree) */}
-            <div className="lg:col-span-3 bg-slate-950/80 border border-indigo-900/40 rounded-2xl p-3.5 backdrop-blur-md shadow-xl h-fit">
-              <div className="text-center pb-2 border-b border-indigo-900/40 mb-2">
-                <span className="text-[11px] font-black uppercase text-amber-400 tracking-wider flex items-center justify-center gap-1.5">
-                  <Trophy className="w-3.5 h-3.5" /> Prize Ladder
+            <div 
+              className="lg:col-span-3 rounded-2xl p-4 shadow-2xl h-fit border border-indigo-900/60 relative z-20"
+              style={{
+                background: 'linear-gradient(180deg, rgba(11, 19, 46, 0.95) 0%, rgba(6, 10, 29, 0.95) 100%)',
+                boxShadow: '0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(30, 58, 138, 0.25)',
+                border: '1px solid rgba(212, 175, 55, 0.35)',
+                backdropFilter: 'blur(12px)'
+              }}
+            >
+              <div className="text-center pb-2.5 border-b border-indigo-900/50 mb-2.5">
+                <span className="text-xs font-black uppercase text-amber-400 tracking-widest flex items-center justify-center gap-1.5">
+                  <Trophy className="w-4 h-4 text-amber-400" /> PRIZE LADDER
                 </span>
               </div>
 
@@ -1359,26 +1384,33 @@ export default function KbcExam() {
                   return (
                     <div
                       key={step.level}
+                      style={{
+                        color: isCurrent ? '#020617' : '#ffffff'
+                      }}
                       className={`flex items-center justify-between px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                         isCurrent
-                          ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black shadow-lg shadow-amber-500/20 scale-[1.02]'
+                          ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 font-black shadow-lg shadow-amber-500/30 scale-[1.03]'
                           : isPassed
-                          ? 'text-emerald-400 bg-emerald-950/20'
+                          ? 'bg-emerald-950/50 border border-emerald-500/30 text-white'
                           : step.isSafe
-                          ? 'text-amber-300 bg-amber-500/10'
-                          : 'text-slate-400'
+                          ? 'bg-amber-500/20 border border-amber-400/40 text-white'
+                          : 'bg-slate-900/60 border border-indigo-950/50 text-white'
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <span className="w-5 text-right font-mono text-[11px] opacity-75">
+                        <span className={`w-5 text-right font-mono text-[11px] font-black ${
+                          isCurrent ? 'text-slate-950' : 'text-amber-400'
+                        }`}>
                           {step.level}
                         </span>
-                        <span>{step.prize}</span>
+                        <span className={`font-bold ${isCurrent ? 'text-slate-950' : 'text-white'}`}>
+                          {step.prize}
+                        </span>
                       </div>
                       <div>
                         {step.isSafe && (
-                          <span className={`text-[9px] px-1.5 py-0.2 rounded font-black ${
-                            isCurrent ? 'bg-slate-950 text-amber-400' : 'bg-amber-400/20 text-amber-300'
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded font-black ${
+                            isCurrent ? 'bg-slate-950 text-amber-400' : 'bg-amber-400/30 text-amber-300 border border-amber-400/40'
                           }`}>
                             PADAV
                           </span>

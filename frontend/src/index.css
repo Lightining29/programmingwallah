@@ -97,52 +97,52 @@ html.dark [class*='border-slate-200'] {
    buttons/badges, which must stay white in both themes).
    ─────────────────────────────────────────────────────────── */
 
-/* Dark-first backgrounds → light surfaces (only when NOT in dark mode and NOT in coding arena) */
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='bg-slate-950'],
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='bg-slate-900'],
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='bg-slate-800'],
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='bg-[#020617]'],
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='bg-[#0f172a]'],
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='bg-[#111827]'] {
+/* Dark-first backgrounds → light surfaces (only when NOT in dark mode, NOT in coding arena, and NOT in KBC) */
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='bg-slate-950'],
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='bg-slate-900'],
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='bg-slate-800'],
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='bg-[#020617]'],
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='bg-[#0f172a]'],
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='bg-[#111827]'] {
   background-color: #ffffff !important;
 }
 
 /* Dark glassmorphism / slate gradients → soft cream gradient in light mode.
    Targets the rgba(15,23,42) / rgba(2,6,23) slate gradients. */
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='bg-[linear-gradient(135deg,rgba(15,23,42'],
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='bg-[linear-gradient(145deg,rgba(15,23,42'],
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='bg-[linear-gradient(180deg,rgba(2,6,23'] {
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='bg-[linear-gradient(135deg,rgba(15,23,42'],
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='bg-[linear-gradient(145deg,rgba(15,23,42'],
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='bg-[linear-gradient(180deg,rgba(2,6,23'] {
   background-image: linear-gradient(135deg, #ffffff, #FAF8F5) !important;
   background-color: #ffffff !important;
 }
 
 /* Dark borders (white/10, white/20, slate-800) → soft warm border in light mode */
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='border-white/10'],
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='border-white/20'],
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='border-slate-800'] {
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='border-white/10'],
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='border-white/20'],
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='border-slate-800'] {
   border-color: rgba(255, 112, 67, 0.16) !important;
 }
 
 /* Semi-transparent white surfaces (bg-white/6 etc.) → solid white in light mode */
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='bg-white/6'],
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='bg-white/5'],
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='bg-white/10'],
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='bg-white/20'],
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='bg-white\/5'],
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='bg-white\/10'],
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='bg-white\/20'] {
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='bg-white/6'],
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='bg-white/5'],
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='bg-white/10'],
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='bg-white/20'],
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='bg-white\/5'],
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='bg-white\/10'],
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='bg-white\/20'] {
   background-color: #ffffff !important;
 }
 
 /* Light-on-dark text that only ever appears on dark surfaces → dark slate
    in light mode. (text-white is intentionally NOT included — it stays white
    on colored buttons/badges.) */
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='text-slate-100'],
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='text-slate-200'],
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='text-cyan-100'],
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='text-cyan-200'],
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='text-indigo-100'],
-html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='text-rose-100'],
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='text-slate-100'],
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='text-slate-200'],
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='text-cyan-100'],
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='text-cyan-200'],
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='text-indigo-100'],
+html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *):not(.kbc-dark-root):not(.kbc-dark-root *) [class*='text-rose-100'],
 html:not(.dark) :not(.arena-dark-root):not(.arena-dark-root *) [class*='text-amber-100'] {
   color: #334155 !important;
 }
