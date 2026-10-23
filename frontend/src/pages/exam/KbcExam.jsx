@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -201,34 +201,6 @@ export default function KbcExam() {
     ]);
   };
 
-  // Synchronize team mode top_teams if available from Hostinger MySQL
-  const displayPlayers = useMemo(() => {
-    if (team && Array.isArray(adminSession?.top_teams) && adminSession.top_teams.length > 0) {
-      return adminSession.top_teams.map((t) => {
-        const isUser = Boolean(team && (t.id === team.id || t.access_code === team.access_code));
-        return {
-          id: `team-${t.id || t.access_code}`,
-          name: t.team_name || t.leader_name || `Team ${t.access_code}`,
-          isUser,
-          points: Number(t.points) || 0,
-          currentLevel: t.current_level || 1,
-          correctCount: t.correct_count || 0,
-          wrongCount: t.wrong_count || 0,
-          lastPointsGained: isUser && answerStatus === 'correct' ? currentLevel * 100 : 0,
-          lastStatus: isUser ? answerStatus : (t.status === 'HOTSEAT' ? 'correct' : null),
-          avatar: '🏆'
-        };
-      }).sort((a, b) => {
-        if (b.points !== a.points) return b.points - a.points;
-        return b.correctCount - a.correctCount;
-      });
-    }
-    return livePlayers;
-  }, [team, adminSession?.top_teams, livePlayers, answerStatus, currentLevel]);
-
-  const currentUserIndex = displayPlayers.findIndex(p => p.isUser);
-  const currentUserRank = currentUserIndex >= 0 ? currentUserIndex + 1 : 1;
-  const currentUserPlayer = currentUserIndex >= 0 ? displayPlayers[currentUserIndex] : null;
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
@@ -263,6 +235,35 @@ export default function KbcExam() {
   // Host Dialogue
   const [hostQuote, setHostQuote] = useState(AMITABH_QUOTES.welcome[0]);
   const [isMuted, setIsMuted] = useState(false);
+
+  // Synchronize team mode top_teams if available from Hostinger MySQL
+  const displayPlayers = useMemo(() => {
+    if (team && Array.isArray(adminSession?.top_teams) && adminSession.top_teams.length > 0) {
+      return adminSession.top_teams.map((t) => {
+        const isUser = Boolean(team && (t.id === team.id || t.access_code === team.access_code));
+        return {
+          id: `team-${t.id || t.access_code}`,
+          name: t.team_name || t.leader_name || `Team ${t.access_code}`,
+          isUser,
+          points: Number(t.points) || 0,
+          currentLevel: t.current_level || 1,
+          correctCount: t.correct_count || 0,
+          wrongCount: t.wrong_count || 0,
+          lastPointsGained: isUser && answerStatus === 'correct' ? currentLevel * 100 : 0,
+          lastStatus: isUser ? answerStatus : (t.status === 'HOTSEAT' ? 'correct' : null),
+          avatar: '🏆'
+        };
+      }).sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        return b.correctCount - a.correctCount;
+      });
+    }
+    return livePlayers;
+  }, [team, adminSession?.top_teams, livePlayers, answerStatus, currentLevel]);
+
+  const currentUserIndex = displayPlayers.findIndex(p => p.isUser);
+  const currentUserRank = currentUserIndex >= 0 ? currentUserIndex + 1 : 1;
+  const currentUserPlayer = currentUserIndex >= 0 ? displayPlayers[currentUserIndex] : null;
 
   // Track previous question and session state to detect arrival & answer reveal
   const lastQuestionTrackRef = useRef({
