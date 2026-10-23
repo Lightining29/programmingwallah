@@ -1794,7 +1794,7 @@ router.post('/admin/session/update', async (req, res) => {
         // Reset locked and revealed state for new question
         await pool.query(`
           UPDATE kbc_sessions 
-          SET is_locked = 0, locked_option = NULL, revealed_correct = NULL, current_level = ?, current_question_id = ?
+          SET is_locked = 0, locked_option = NULL, revealed_correct = NULL, current_level = ?, current_question_id = ?, show_leaderboard = 0
           WHERE id = 'main_session'
         `, [current_level || 1, current_question_id || null]);
 
@@ -1901,6 +1901,7 @@ router.post('/admin/session/update', async (req, res) => {
     memorySession.is_locked = false;
     memorySession.locked_option = null;
     memorySession.revealed_correct = null;
+    memorySession.show_leaderboard = false;
     memorySession.current_level = current_level || 1;
     memoryTeams.forEach(t => { t.submitted_option = null; });
   } else {

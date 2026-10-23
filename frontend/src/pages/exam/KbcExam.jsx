@@ -421,6 +421,10 @@ export default function KbcExam() {
               setEliminatedOptions([]);
               setIsWrongAnswer(false); // Reset wrong answer red beams back to normal blue
 
+              // Automatically dismiss the middle-screen leaderboard when next question comes
+              setShowBroadcastLeaderboard(false);
+              userDismissedLeaderboardRef.current = false;
+
               // Trigger upward laser sweep animation & sound
               setLaserUpwardTrigger(prev => !prev);
               kbcAudio.playLaserSweep();
@@ -834,6 +838,8 @@ export default function KbcExam() {
     setRevealedCorrect(null);
     setEliminatedOptions([]);
     setIsWrongAnswer(false);
+    setShowBroadcastLeaderboard(false);
+    userDismissedLeaderboardRef.current = false;
     const nextPrize = KBC_PRIZE_LADDER[nextLvl - 1];
     setHostQuote(AMITABH_QUOTES.questionIntro(nextLvl, nextPrize.prize));
     setLaserUpwardTrigger(prev => !prev);
@@ -1375,10 +1381,10 @@ export default function KbcExam() {
           </div>
         ) : (
           /* CASE 3: Live KBC Arena (Active in Solo OR when Team is LIVE) */
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 my-auto items-center">
+          <div className="w-full max-w-4xl mx-auto my-auto space-y-4">
             
-            {/* Left 9 Columns: Circular Timer, Hexagonal Question, and Hexagonal 4 Options */}
-            <div className="lg:col-span-9 space-y-4">
+            {/* Circular Timer, Hexagonal Question, and Hexagonal 4 Options */}
+            <div className="space-y-4">
               
               {/* ── Circular Timer (Tik-Tiki Ji) at Top Center (Circle Shape) ── */}
               <div className="flex items-center justify-center pt-1 pb-1 relative z-20">
@@ -1577,273 +1583,6 @@ export default function KbcExam() {
               )}
 
             </div>
-
-            {/* Right 3 Columns: Live Players Points Leaderboard (Replaced Prize Ladder) */}
-            <div 
-              className="lg:col-span-3 rounded-2xl p-3.5 sm:p-4 shadow-2xl h-fit border relative z-20 transition-all duration-700"
-              style={{
-                background: isWrongAnswer
-                  ? 'linear-gradient(180deg, rgba(69, 10, 10, 0.95) 0%, rgba(26, 4, 4, 0.95) 100%)'
-                  : 'linear-gradient(180deg, rgba(11, 19, 46, 0.95) 0%, rgba(6, 10, 29, 0.95) 100%)',
-                boxShadow: isWrongAnswer
-                  ? '0 0 35px rgba(239, 68, 68, 0.35), inset 0 0 20px rgba(153, 27, 27, 0.35)'
-                  : '0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(30, 58, 138, 0.25)',
-                border: isWrongAnswer ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid rgba(212, 175, 55, 0.35)',
-                backdropFilter: 'blur(12px)'
-              }}
-            >
-              {/* Header */}
-              <div className="pb-3 border-b border-indigo-900/50 mb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 font-black shadow-md shadow-amber-500/20">
-                    <Trophy className="w-4 h-4 text-slate-950" />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5" style={{ color: '#fbbf24' }}>
-                      Live Contestants ({displayPlayers.length})
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
-                    </h3>
-                    <p className="text-[10px] font-medium" style={{ color: '#94a3b8' }}>
-                      Real-time participating players
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setShowBroadcastLeaderboard(true)}
-                    className="px-2 py-0.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-400/40 text-[10px] font-bold text-indigo-200 flex items-center gap-1 cursor-pointer transition shadow-sm"
-                    title="Expand Full Screen Moving Leaderboard"
-                  >
-                    <BarChart3 className="w-3 h-3 text-amber-400" />
-                    Expand
-                  </button>
-                  <span 
-                    style={{
-                      background: 'rgba(30, 27, 75, 0.85)',
-                      border: '1px solid rgba(99, 102, 241, 0.5)',
-                      color: '#c7d2fe'
-                    }}
-                    className="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold"
-                  >
-                    Q{currentLevel}/16
-                  </span>
-                </div>
-              </div>
-
-              {/* Player Cards with Smooth Framer Motion Spring Layout Reordering */}
-              <div className="space-y-2 max-h-[580px] overflow-y-auto pr-1">
-                {displayPlayers.map((player, index) => {
-                  const rank = index + 1;
-                  const isUser = player.isUser;
-                  const gainedPoints = player.lastPointsGained > 0;
-
-                  // Rank styling badges
-                  let rankBadge = (
-                    <span 
-                      style={{
-                        background: 'rgba(30, 41, 59, 0.8)',
-                        borderColor: 'rgba(71, 85, 105, 0.6)',
-                        color: '#cbd5e1'
-                      }}
-                      className="w-6 h-6 rounded-lg border font-mono text-[11px] font-black flex items-center justify-center"
-                    >
-                      {rank}
-                    </span>
-                  );
-                  if (rank === 1) {
-                    rankBadge = (
-                      <span 
-                        style={{
-                          background: 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)',
-                          color: '#020617'
-                        }}
-                        className="w-6 h-6 rounded-lg font-mono text-[11px] font-black flex items-center justify-center shadow-md shadow-amber-500/40"
-                      >
-                        🥇
-                      </span>
-                    );
-                  } else if (rank === 2) {
-                    rankBadge = (
-                      <span 
-                        style={{
-                          background: 'linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%)',
-                          color: '#020617'
-                        }}
-                        className="w-6 h-6 rounded-lg font-mono text-[11px] font-black flex items-center justify-center shadow-sm"
-                      >
-                        🥈
-                      </span>
-                    );
-                  } else if (rank === 3) {
-                    rankBadge = (
-                      <span 
-                        style={{
-                          background: 'linear-gradient(135deg, #b45309 0%, #78350f 100%)',
-                          color: '#fef3c7'
-                        }}
-                        className="w-6 h-6 rounded-lg font-mono text-[11px] font-black flex items-center justify-center shadow-sm"
-                      >
-                        🥉
-                      </span>
-                    );
-                  }
-
-                  return (
-                    <motion.div
-                      key={player.id}
-                      layout
-                      transition={{
-                        type: "spring",
-                        stiffness: 280,
-                        damping: 24,
-                        mass: 0.75
-                      }}
-                      style={{
-                        background: isUser
-                          ? 'linear-gradient(135deg, rgba(8, 47, 73, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)'
-                          : rank === 1
-                          ? 'linear-gradient(135deg, rgba(69, 26, 3, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%)'
-                          : gainedPoints
-                          ? 'linear-gradient(135deg, rgba(6, 78, 59, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%)'
-                          : 'linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(10, 15, 30, 0.95) 100%)',
-                        border: isUser
-                          ? '1.5px solid #22d3ee'
-                          : rank === 1
-                          ? '1px solid rgba(251, 191, 36, 0.5)'
-                          : gainedPoints
-                          ? '1px solid rgba(16, 185, 129, 0.5)'
-                          : '1px solid rgba(99, 102, 241, 0.35)',
-                        boxShadow: isUser
-                          ? '0 0 18px rgba(6, 182, 212, 0.35), inset 0 0 10px rgba(6, 182, 212, 0.15)'
-                          : '0 4px 12px rgba(0, 0, 0, 0.45)',
-                        color: '#ffffff'
-                      }}
-                      className="relative rounded-xl p-2.5 transition-all"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        {/* Left: Rank, Avatar & Name */}
-                        <div className="flex items-center gap-2 min-w-0">
-                          {rankBadge}
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span 
-                                style={{ 
-                                  color: isUser ? '#38bdf8' : '#ffffff',
-                                  textShadow: isUser ? '0 0 12px rgba(56, 189, 248, 0.6)' : 'none'
-                                }} 
-                                className="text-xs font-black truncate max-w-[110px] sm:max-w-[140px]"
-                              >
-                                {player.name}
-                              </span>
-                              {isUser && (
-                                <span 
-                                  style={{
-                                    background: '#06b6d4',
-                                    color: '#020617',
-                                    boxShadow: '0 0 8px rgba(6, 182, 212, 0.5)'
-                                  }}
-                                  className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider"
-                                >
-                                  YOU
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-[10px] flex items-center gap-1.5 mt-0.5 flex-wrap" style={{ color: '#94a3b8' }}>
-                              <span style={{ color: '#cbd5e1' }}>{player.correctCount} Correct</span>
-                              <span className="w-1 h-1 rounded-full bg-slate-600" />
-                              <span style={{ color: '#94a3b8' }}>Q{player.currentLevel}</span>
-                              <span className="w-1 h-1 rounded-full bg-slate-600" />
-                              <span 
-                                style={{ 
-                                  color: '#34d399',
-                                  background: 'rgba(16, 185, 129, 0.15)',
-                                  border: '1px solid rgba(16, 185, 129, 0.35)'
-                                }}
-                                className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded font-bold text-[9px]"
-                              >
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                Live
-                              </span>
-                              {player.submittedOption !== null && player.submittedOption !== undefined && (
-                                <span 
-                                  style={{ 
-                                    color: '#38bdf8',
-                                    background: 'rgba(56, 189, 248, 0.15)',
-                                    border: '1px solid rgba(56, 189, 248, 0.35)'
-                                  }}
-                                  className="px-1 py-0.2 rounded font-mono text-[9px] font-bold"
-                                >
-                                  Opt {String.fromCharCode(65 + Number(player.submittedOption))}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Right: Points & Dynamic Upward/Downward Gain */}
-                        <div className="text-right shrink-0">
-                          <div className="flex items-center justify-end gap-1.5">
-                            {player.rankDelta > 0 ? (
-                              <span className="text-[9px] font-black font-mono text-emerald-400 bg-emerald-500/20 border border-emerald-500/40 px-1 py-0.2 rounded inline-flex items-center gap-0.5">
-                                <ArrowUp className="w-2.5 h-2.5 stroke-[3]" /> +{player.rankDelta}
-                              </span>
-                            ) : player.rankDelta < 0 ? (
-                              <span className="text-[9px] font-black font-mono text-rose-400 bg-rose-500/20 border border-rose-500/40 px-1 py-0.2 rounded inline-flex items-center gap-0.5">
-                                <ArrowDown className="w-2.5 h-2.5 stroke-[3]" /> {player.rankDelta}
-                              </span>
-                            ) : null}
-                            <div className="text-xs font-black font-mono tracking-tight" style={{ color: '#fbbf24' }}>
-                              {player.points.toLocaleString()} <span className="text-[10px] font-sans" style={{ color: 'rgba(251, 191, 36, 0.8)' }}>pts</span>
-                            </div>
-                          </div>
-                          <div className="h-4 flex items-center justify-end mt-0.5">
-                            {gainedPoints ? (
-                              <motion.span
-                                initial={{ scale: 0.5, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                style={{
-                                  background: 'rgba(16, 185, 129, 0.25)',
-                                  border: '1px solid rgba(16, 185, 129, 0.5)',
-                                  color: '#34d399'
-                                }}
-                                className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-black font-mono shadow-[0_0_8px_rgba(16,185,129,0.35)]"
-                              >
-                                <ArrowUp className="w-2.5 h-2.5 text-emerald-400 stroke-[3]" />
-                                +{player.lastPointsGained}
-                              </motion.span>
-                            ) : player.lastStatus === 'wrong' ? (
-                              <span className="text-[9px] font-mono" style={{ color: '#f87171' }}>
-                                +0 pts
-                              </span>
-                            ) : (
-                              <span className="text-[9px] font-mono" style={{ color: '#64748b' }}>
-                                Participating
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-
-              {/* User Standing Bar at bottom of leaderboard */}
-              <div 
-                style={{
-                  borderTop: '1px solid rgba(99, 102, 241, 0.3)'
-                }}
-                className="mt-3 pt-2.5 flex items-center justify-between text-[11px]"
-              >
-                <span style={{ color: '#94a3b8' }} className="font-medium">Your Standing:</span>
-                <span style={{ color: '#38bdf8' }} className="font-black flex items-center gap-1.5">
-                  <TrendingUp className="w-3.5 h-3.5 text-cyan-400" />
-                  Rank #{currentUserRank} of {displayPlayers.length}
-                  <span style={{ color: '#fbbf24' }} className="font-mono">({currentUserPlayer?.points || 0} pts)</span>
-                </span>
-              </div>
-            </div>
-
           </div>
         )}
 

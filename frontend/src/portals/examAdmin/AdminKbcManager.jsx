@@ -605,6 +605,9 @@ export default function AdminKbcManager() {
   // Admin Live Screen Controls: Lock, Reveal, Next Level
   const handleUpdateLiveRound = async (payload) => {
     try {
+      if (payload.reset_round) {
+        setSession(prev => ({ ...prev, show_leaderboard: false }));
+      }
       await fetch('/api/kbc/admin/session/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
