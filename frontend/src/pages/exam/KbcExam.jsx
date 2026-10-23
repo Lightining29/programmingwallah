@@ -255,7 +255,14 @@ export default function KbcExam() {
   // Synchronize team mode top_teams if available from Hostinger MySQL
   const displayPlayers = useMemo(() => {
     if (Array.isArray(adminSession?.top_teams) && adminSession.top_teams.length > 0) {
-      const teams = adminSession.top_teams.map((t) => {
+      // Only keep teams actively playing in this session
+      const activeTeamsInSession = adminSession.top_teams.filter(t => 
+        t.status === 'CONNECTED' || t.status === 'HOTSEAT' || (team && (t.id === team.id || t.access_code === team.access_code))
+      );
+
+      const sourceList = activeTeamsInSession.length > 0 ? activeTeamsInSession : adminSession.top_teams;
+
+      const teams = sourceList.map((t) => {
         const isUser = Boolean(
           (team && (t.id === team.id || t.access_code === team.access_code)) ||
           (playerName && (
@@ -283,24 +290,19 @@ export default function KbcExam() {
       // If current user is not in top_teams, include user card
       const userExists = teams.some(t => t.isUser);
       if (!userExists) {
-        const userContestant = livePlayers.find(p => p.isUser) || {
-          id: 'player-user',
-          name: playerName || 'Hotseat Contestant',
-          isUser: true,
-          points: 0,
-          currentLevel: currentLevel,
-          correctCount: 0,
-          wrongCount: 0,
-          lastPointsGained: 0,
-          lastStatus: null,
-          avatar: '👤',
-          status: 'HOTSEAT',
-          submittedOption: null
-        };
         teams.push({
-          ...userContestant,
-          name: playerName || 'Hotseat Contestant',
-          isUser: true
+          id: `team-user-${team?.id || 'current'}`,
+          name: team ? (team.leader_name || team.team_name) : (playerName || 'Hotseat Contestant'),
+          isUser: true,
+          points: team ? Number(team.points) || 0 : 0,
+          currentLevel: currentLevel,
+          correctCount: team ? Number(team.correct_count) || 0 : 0,
+          wrongCount: 0,
+          lastPointsGained: answerStatus === 'correct' ? currentLevel * 100 : 0,
+          lastStatus: answerStatus,
+          avatar: '👤',
+          status: 'CONNECTED',
+          submittedOption: selectedOption
         });
       }
 
@@ -329,6 +331,25 @@ export default function KbcExam() {
       });
     }
 
+    // In Team mode or live session with no other teams, only show the connected user!
+    if (team) {
+      return [{
+        id: `team-user-${team.id}`,
+        name: team.leader_name || team.team_name,
+        isUser: true,
+        points: Number(team.points) || 0,
+        currentLevel: currentLevel,
+        correctCount: Number(team.correct_count) || 0,
+        wrongCount: 0,
+        lastPointsGained: answerStatus === 'correct' ? currentLevel * 100 : 0,
+        lastStatus: answerStatus,
+        avatar: '👤',
+        status: 'CONNECTED',
+        rank: 1,
+        rankDelta: 0
+      }];
+    }
+
     return livePlayers.map((p, idx) => {
       const rank = idx + 1;
       const prev = previousTeamsRef.current[p.id];
@@ -341,7 +362,7 @@ export default function KbcExam() {
         rankDelta
       };
     });
-  }, [team, adminSession?.top_teams, livePlayers, answerStatus, currentLevel, playerName]);
+  }, [team, adminSession?.top_teams, livePlayers, answerStatus, currentLevel, playerName, selectedOption]);
 
   const currentUserIndex = displayPlayers.findIndex(p => p.isUser);
   const currentUserRank = currentUserIndex >= 0 ? currentUserIndex + 1 : 1;

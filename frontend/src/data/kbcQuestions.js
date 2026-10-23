@@ -19,11 +19,31 @@ export const KBC_PRIZE_LADDER = [
   { level: 14, prize: '₹50,00,000',   amount: 5000000,  isSafe: false, label: '50,00,000' },
   { level: 15, prize: '₹1 Crore',     amount: 10000000, isSafe: true,  label: '1,00,00,000 (1 Crore)' },
   { level: 16, prize: '₹7 Crore',     amount: 70000000, isSafe: true,  label: '7,00,00,000 (7 Crore Jackpot)' },
+  { level: 17, prize: '₹7.5 Crore',   amount: 75000000, isSafe: false, label: '7,50,00,000' },
+  { level: 18, prize: '₹8 Crore',     amount: 80000000, isSafe: false, label: '8,00,00,000' },
+  { level: 19, prize: '₹8.5 Crore',   amount: 85000000, isSafe: false, label: '8,50,00,000' },
+  { level: 20, prize: '₹10 Crore',    amount: 100000000, isSafe: true, label: '10,00,00,000 (Padav 3)' },
+  { level: 21, prize: '₹11 Crore',    amount: 110000000, isSafe: false, label: '11,00,00,000' },
+  { level: 22, prize: '₹12 Crore',    amount: 120000000, isSafe: false, label: '12,00,00,000' },
+  { level: 23, prize: '₹13 Crore',    amount: 130000000, isSafe: false, label: '13,00,00,000' },
+  { level: 24, prize: '₹14 Crore',    amount: 140000000, isSafe: false, label: '14,00,00,000' },
+  { level: 25, prize: '₹15 Crore',    amount: 150000000, isSafe: true, label: '15,00,00,000 (Padav 4)' },
+  { level: 26, prize: '₹16 Crore',    amount: 160000000, isSafe: false, label: '16,00,00,000' },
+  { level: 27, prize: '₹17 Crore',    amount: 170000000, isSafe: false, label: '17,00,00,000' },
+  { level: 28, prize: '₹18 Crore',    amount: 180000000, isSafe: false, label: '18,00,00,000' },
+  { level: 29, prize: '₹20 Crore',    amount: 200000000, isSafe: false, label: '20,00,00,000' },
+  { level: 30, prize: '₹25 Crore',    amount: 250000000, isSafe: true,  label: '25,00,00,000 (Grand Jackpot)' },
 ];
 
 export const DEFAULT_SQL_QUESTIONS = {};
-for (let lvl = 1; lvl <= 16; lvl++) {
-  DEFAULT_SQL_QUESTIONS[lvl] = sqlQuestionBank.filter(q => q.level === lvl);
+for (let lvl = 1; lvl <= 30; lvl++) {
+  const matching = sqlQuestionBank.filter(q => q.level === lvl);
+  if (matching.length > 0) {
+    DEFAULT_SQL_QUESTIONS[lvl] = matching;
+  } else {
+    const wrapLvl = ((lvl - 1) % 16) + 1;
+    DEFAULT_SQL_QUESTIONS[lvl] = sqlQuestionBank.filter(q => q.level === wrapLvl);
+  }
 }
 
 // Backward compatibility alias for any component expecting DEFAULT_MERN_SQL_QUESTIONS

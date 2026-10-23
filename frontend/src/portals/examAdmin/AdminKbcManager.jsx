@@ -735,7 +735,6 @@ export default function AdminKbcManager() {
       if (data.success) {
         setSession(prev => ({ ...prev, show_leaderboard: data.show_leaderboard }));
         if (data.show_leaderboard) {
-          kbcAudio.playHighPoints();
           Swal.fire({
             icon: 'success',
             title: '📊 Leaderboard Broadcasted!',
@@ -757,6 +756,44 @@ export default function AdminKbcManager() {
       }
     } catch (err) {
       Swal.fire('Error', 'Failed to toggle moving leaderboard broadcast.', 'error');
+    }
+  };
+
+  // ── CHOOSE 30 QUESTIONS AT A TIME FOR KBC ──
+  const handleChoose30Questions = async () => {
+    const result = await Swal.fire({
+      title: '⚡ Choose 30 Questions for KBC?',
+      text: 'This will configure and activate 30 master questions across levels 1 to 30 for the live tournament session.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Activate 30 Questions!',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#7c3aed'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const res = await fetch('/api/kbc/admin/session/choose-30-questions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (data.success) {
+          Swal.fire({
+            icon: 'success',
+            title: '🎉 30 Questions Activated for KBC!',
+            text: 'All 30 levels are now loaded and ready for the grand tournament!',
+            timer: 2500,
+            showConfirmButton: false
+          });
+          fetchSessionStatus();
+          fetchAdminKbcData();
+        } else {
+          Swal.fire('Notice', data.message || 'Could not activate 30 questions.', 'info');
+        }
+      } catch (err) {
+        Swal.fire('Error', 'Failed to activate 30 questions.', 'error');
+      }
     }
   };
 
@@ -1110,6 +1147,14 @@ export default function AdminKbcManager() {
             >
               <ExternalLink className="w-4 h-4" /> Open Laptop View
             </button>
+
+            <button
+              onClick={handleChoose30Questions}
+              className="px-4 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-purple-600/30 transition transform hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer border border-purple-400/40"
+              title="Quickly configure and activate 30 master questions for KBC"
+            >
+              <Sparkles className="w-4 h-4 text-amber-300" /> Choose 30 Questions (KBC)
+            </button>
           </div>
 
         </div>
@@ -1382,13 +1427,13 @@ export default function AdminKbcManager() {
                     <input
                       type="number"
                       min="1"
-                      max="15"
+                      max="30"
                       value={aiCount}
-                      onChange={(e) => setAiCount(Math.max(1, Math.min(15, parseInt(e.target.value, 10) || 1)))}
+                      onChange={(e) => setAiCount(Math.max(1, Math.min(30, parseInt(e.target.value, 10) || 1)))}
                       className="w-10 bg-purple-950/80 border border-purple-500/50 rounded-lg py-0.5 text-center text-xs font-black text-amber-300 focus:outline-none"
                     />
                     <div className="flex items-center gap-1">
-                      {[1, 3, 5, 10].map(n => (
+                      {[1, 5, 10, 15, 20, 30].map(n => (
                         <button
                           key={n}
                           type="button"
@@ -2073,13 +2118,13 @@ export default function AdminKbcManager() {
                 <input
                   type="number"
                   min="1"
-                  max="15"
+                  max="30"
                   value={aiCount}
-                  onChange={(e) => setAiCount(Math.max(1, Math.min(15, parseInt(e.target.value, 10) || 1)))}
+                  onChange={(e) => setAiCount(Math.max(1, Math.min(30, parseInt(e.target.value, 10) || 1)))}
                   className="w-10 bg-purple-950/80 border border-purple-500/40 rounded-lg py-0.5 text-center text-xs font-black text-amber-300 focus:outline-none"
                 />
                 <div className="flex items-center gap-1">
-                  {[1, 3, 5, 10].map(n => (
+                  {[1, 5, 10, 15, 20, 30].map(n => (
                     <button
                       key={n}
                       type="button"
