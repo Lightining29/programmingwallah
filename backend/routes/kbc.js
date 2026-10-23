@@ -23,6 +23,17 @@ try {
   console.warn('Failed to load sqlQuestionBank1000.json:', e.message);
 }
 
+// ── 1,000+ Pure HTML, CSS & JavaScript Question Bank ──
+const webBankPath = path.resolve(__dirname, '../data/webQuestionBank1000.json');
+export let WEB_QUESTION_BANK = [];
+try {
+  if (fs.existsSync(webBankPath)) {
+    WEB_QUESTION_BANK = JSON.parse(fs.readFileSync(webBankPath, 'utf8'));
+  }
+} catch (e) {
+  console.warn('Failed to load webQuestionBank1000.json:', e.message);
+}
+
 // ── Curated KBC Test Sets (HTML, Excel, MERN, SQL) ──
 const testSetsPath = path.resolve(__dirname, '../data/kbcTestSets.json');
 export let CURATED_TEST_SETS = { html: [], excel: [] };
@@ -55,6 +66,11 @@ for (let lvl = 1; lvl <= 16; lvl++) {
   DEFAULT_SQL_QUESTIONS[lvl] = SQL_QUESTION_BANK.filter(q => q.level === lvl);
 }
 
+export const DEFAULT_WEB_QUESTIONS = {};
+for (let lvl = 1; lvl <= 16; lvl++) {
+  DEFAULT_WEB_QUESTIONS[lvl] = WEB_QUESTION_BANK.filter(q => q.level === lvl);
+}
+
 // Backward compatibility alias for any component expecting DEFAULT_MERN_SQL_QUESTIONS
 export const DEFAULT_MERN_SQL_QUESTIONS = DEFAULT_SQL_QUESTIONS;
 
@@ -73,11 +89,11 @@ let memoryTestSets = [
   },
   {
     id: 'kbc-html-quiz',
-    title: 'HTML & Web Fundamentals',
-    topic: 'HTML',
+    title: 'HTML, CSS & JavaScript Master Challenge',
+    topic: 'HTML / CSS / JS',
     access_code: 'KBC-HTML5',
     is_active: 0,
-    question_count: 16,
+    question_count: 1008,
     passing_score: 50,
     duration: 30,
     created_at: new Date().toISOString()
@@ -198,6 +214,52 @@ export async function ensureKbcTable() {
         }
       }
       console.log(`✔ Successfully verified & synced ${SQL_QUESTION_BANK.length} SQL questions in Hostinger MySQL!`);
+    }
+
+    // 3b. Ensure all 1,008 verified pure HTML, CSS & JavaScript questions are seeded and updated in Hostinger MySQL kbc_questions table
+    if (WEB_QUESTION_BANK.length > 0) {
+      console.log(`Syncing ${WEB_QUESTION_BANK.length} verified pure HTML, CSS & JavaScript questions into Hostinger MySQL kbc_questions table...`);
+      const batchSize = 50;
+      for (let i = 0; i < WEB_QUESTION_BANK.length; i += batchSize) {
+        const batch = WEB_QUESTION_BANK.slice(i, i + batchSize);
+        const values = [];
+        const placeholders = batch.map(q => {
+          values.push(
+            q.id,
+            q.level,
+            q.topic,
+            q.question,
+            JSON.stringify(q.options),
+            q.correct,
+            q.explanation || '',
+            0,
+            0,
+            'kbc-html-quiz'
+          );
+          return '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        }).join(', ');
+
+        await pool.query(`
+          INSERT INTO kbc_questions (id, level, topic, question, options_json, correct, explanation, is_custom, is_active, test_set_id)
+          VALUES ${placeholders}
+          ON DUPLICATE KEY UPDATE 
+            question = VALUES(question),
+            options_json = VALUES(options_json),
+            correct = VALUES(correct),
+            explanation = VALUES(explanation),
+            topic = VALUES(topic),
+            test_set_id = VALUES(test_set_id);
+        `, values);
+      }
+      console.log(`✔ Successfully verified & synced ${WEB_QUESTION_BANK.length} HTML, CSS & JavaScript questions in Hostinger MySQL!`);
+
+      try {
+        await pool.query(`
+          UPDATE kbc_test_sets 
+          SET title = 'HTML, CSS & JavaScript Master Challenge', topic = 'HTML / CSS / JS', question_count = 1008
+          WHERE id = 'kbc-html-quiz'
+        `);
+      } catch (e) {}
     }
 
     // 4. Ensure kbc_test_sets table
@@ -478,15 +540,14 @@ router.post('/admin/test-sets/activate', async (req, res) => {
       `);
 
       // 5. If this set is HTML or Excel or MERN, activate its curated questions into kbc_questions
-      if (setId === 'kbc-html-quiz' && CURATED_TEST_SETS.html?.length > 0) {
-        for (const q of CURATED_TEST_SETS.html) {
-          const shuffled = shuffleOptionsAccurately(q.options, q.correct);
+      if (setId === 'kbc-html-quiz') {
+        await pool.query("UPDATE kbc_questions SET is_active = 0");
+        for (let lvl = 1; lvl <= 16; lvl++) {
           await pool.query(`
-            INSERT INTO kbc_questions (id, level, topic, question, options_json, correct, explanation, is_custom, is_active, test_set_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, 'kbc-html-quiz')
-            ON DUPLICATE KEY UPDATE 
-              options_json = VALUES(options_json), correct = VALUES(correct), is_active = 1
-          `, [q.id, q.level, q.topic, q.question, JSON.stringify(shuffled.options), shuffled.correct, q.explanation]);
+            UPDATE kbc_questions 
+            SET is_active = 1 
+            WHERE level = ? AND test_set_id = 'kbc-html-quiz' AND id = CONCAT('web_l', ?, '_001')
+          `, [lvl, lvl]);
         }
       } else if (setId === 'kbc-excel-analytics' && CURATED_TEST_SETS.excel?.length > 0) {
         for (const q of CURATED_TEST_SETS.excel) {
@@ -950,7 +1011,7 @@ router.get('/admin/bank', async (req, res) => {
   }
 
   // In-Memory Fallback
-  let filtered = [...SQL_QUESTION_BANK];
+  let filtered = [...SQL_QUESTION_BANK, ...WEB_QUESTION_BANK];
   if (lvl && lvl >= 1 && lvl <= 16) {
     filtered = filtered.filter(q => q.level === lvl);
   }
@@ -1381,6 +1442,42 @@ router.post('/admin/reset', async (req, res) => {
         }
       }
 
+      // Re-sync all 1,008 questions from verified WEB_QUESTION_BANK
+      if (WEB_QUESTION_BANK.length > 0) {
+        const batchSize = 50;
+        for (let i = 0; i < WEB_QUESTION_BANK.length; i += batchSize) {
+          const batch = WEB_QUESTION_BANK.slice(i, i + batchSize);
+          const values = [];
+          const placeholders = batch.map(q => {
+            values.push(
+              q.id,
+              q.level,
+              q.topic,
+              q.question,
+              JSON.stringify(q.options),
+              q.correct,
+              q.explanation || '',
+              0,
+              0,
+              'kbc-html-quiz'
+            );
+            return '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+          }).join(', ');
+
+          await pool.query(`
+            INSERT INTO kbc_questions (id, level, topic, question, options_json, correct, explanation, is_custom, is_active, test_set_id)
+            VALUES ${placeholders}
+            ON DUPLICATE KEY UPDATE 
+              question = VALUES(question),
+              options_json = VALUES(options_json),
+              correct = VALUES(correct),
+              explanation = VALUES(explanation),
+              topic = VALUES(topic),
+              test_set_id = VALUES(test_set_id);
+          `, values);
+        }
+      }
+
       // Set the first question of each level to active
       for (let lvl = 1; lvl <= 16; lvl++) {
         const firstDef = DEFAULT_SQL_QUESTIONS[lvl]?.[0] || { id: `sql_l${lvl}_001` };
@@ -1389,7 +1486,7 @@ router.post('/admin/reset', async (req, res) => {
 
       return res.json({
         success: true,
-        message: 'KBC questions reset to 1,000 pure SQL master bank in Hostinger MySQL!',
+        message: 'KBC questions reset to 1,000 SQL + 1,000 HTML/CSS/JS master banks in Hostinger MySQL!',
         database: 'Hostinger MySQL'
       });
     }
@@ -1407,6 +1504,77 @@ router.post('/admin/reset', async (req, res) => {
     message: 'KBC questions reset to default 1,000 pure SQL master bank.',
     database: 'Memory Fallback'
   });
+});
+
+// Explicit Sync Endpoint for 1,008 HTML, CSS & JavaScript Questions
+router.post('/admin/sync-web-bank', async (req, res) => {
+  const pool = getMySQLPool();
+  if (!pool) {
+    return res.status(500).json({ success: false, error: 'Database unavailable' });
+  }
+
+  try {
+    await ensureKbcTable();
+
+    if (WEB_QUESTION_BANK.length > 0) {
+      console.log(`Explicitly syncing ${WEB_QUESTION_BANK.length} HTML, CSS & JavaScript questions into Hostinger MySQL...`);
+      const batchSize = 50;
+      for (let i = 0; i < WEB_QUESTION_BANK.length; i += batchSize) {
+        const batch = WEB_QUESTION_BANK.slice(i, i + batchSize);
+        const values = [];
+        const placeholders = batch.map(q => {
+          values.push(
+            q.id,
+            q.level,
+            q.topic,
+            q.question,
+            JSON.stringify(q.options),
+            q.correct,
+            q.explanation || '',
+            0,
+            0,
+            'kbc-html-quiz'
+          );
+          return '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        }).join(', ');
+
+        await pool.query(`
+          INSERT INTO kbc_questions (id, level, topic, question, options_json, correct, explanation, is_custom, is_active, test_set_id)
+          VALUES ${placeholders}
+          ON DUPLICATE KEY UPDATE 
+            question = VALUES(question),
+            options_json = VALUES(options_json),
+            correct = VALUES(correct),
+            explanation = VALUES(explanation),
+            topic = VALUES(topic),
+            test_set_id = VALUES(test_set_id);
+        `, values);
+      }
+
+      await pool.query(`
+        UPDATE kbc_test_sets 
+        SET title = 'HTML, CSS & JavaScript Master Challenge', topic = 'HTML / CSS / JS', question_count = 1008
+        WHERE id = 'kbc-html-quiz'
+      `);
+
+      const [countRows] = await pool.query('SELECT COUNT(*) AS total FROM kbc_questions');
+      const [webRows] = await pool.query('SELECT COUNT(*) AS webTotal FROM kbc_questions WHERE id LIKE "web_%"');
+
+      return res.json({
+        success: true,
+        message: `Successfully synced ${WEB_QUESTION_BANK.length} HTML, CSS & JavaScript questions into Hostinger MySQL!`,
+        synced: WEB_QUESTION_BANK.length,
+        webTotalInDb: webRows[0]?.webTotal || 0,
+        totalQuestionsInDb: countRows[0]?.total || 0,
+        database: 'Hostinger MySQL'
+      });
+    }
+
+    return res.json({ success: false, message: 'No web questions found in memory bank to sync.' });
+  } catch (err) {
+    console.error('MySQL sync-web-bank error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // ════════════════════════════════════════════════════════════════════════════════

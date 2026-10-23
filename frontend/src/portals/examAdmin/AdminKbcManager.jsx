@@ -480,6 +480,32 @@ export default function AdminKbcManager() {
     }
   };
 
+  const handleSyncWebBank = async () => {
+    try {
+      Swal.fire({
+        title: 'Syncing Web Bank...',
+        text: 'Syncing 1,008 HTML, CSS & JavaScript questions into KBC database...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+      const res = await fetch('/api/kbc/admin/sync-web-bank', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        await fetchAdminKbcData();
+        await fetchSessionStatus();
+        await fetchBankQuestions(1);
+        await fetchTestSets();
+        Swal.fire('Synced!', data.message || '1,008 HTML, CSS & JavaScript questions synced into KBC!', 'success');
+      } else {
+        Swal.fire('Notice', data.message || 'Sync failed', 'warning');
+      }
+    } catch (e) {
+      Swal.fire('Error', 'Sync failed: ' + e.message, 'error');
+    }
+  };
+
   const fetchTeams = async () => {
     try {
       const res = await fetch('/api/kbc/teams');
@@ -1186,7 +1212,7 @@ export default function AdminKbcManager() {
           { id: 'live', label: '🖥️ Admin Live Screen (Host Monitor)', count: null },
           { id: 'teams', label: '💻 Participating Laptop Teams', count: teams.length },
           { id: 'questions', label: '📚 16-Level Question Curators', count: 16 },
-          { id: 'bank', label: '🏛️ 1,000 SQL Question Bank', count: bankTotal || 1008 }
+          { id: 'bank', label: '🏛️ Question Bank (SQL, HTML, CSS, JS)', count: bankTotal || 2016 }
         ].map(tab => (
           <button
             key={tab.id}
@@ -2274,14 +2300,21 @@ export default function AdminKbcManager() {
                   </span>
                 </div>
                 <h3 className="text-xl font-black text-white mt-1">
-                  1,000 SQL Question Bank & Stored Questions
+                  Question Bank & Stored Questions (SQL, HTML, CSS & JavaScript)
                 </h3>
                 <p className="text-xs text-slate-400">
-                  Browse, search, and activate any stored question for any level of KBC. Admin can also generate new questions via Gemini AI.
+                  Browse, search, and activate any stored question for any level of KBC (over 2,000+ verified questions). Admin can also generate new questions via Gemini AI.
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={handleSyncWebBank}
+                  className="px-3.5 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 font-bold text-xs flex items-center gap-1.5 border border-emerald-500/30 transition cursor-pointer"
+                  title="Sync 1,008 verified HTML, CSS & JavaScript questions into KBC database"
+                >
+                  <Database className="w-3.5 h-3.5" /> ⚡ Sync 1,000 Web (HTML/CSS/JS)
+                </button>
                 <button
                   onClick={handleResetToSqlBank}
                   className="px-3.5 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 font-bold text-xs flex items-center gap-1.5 border border-blue-500/30 transition cursor-pointer"
@@ -2936,7 +2969,7 @@ export default function AdminKbcManager() {
             ) : setQuestionsList.length === 0 ? (
               <div className="py-16 text-center text-slate-500 text-sm bg-slate-950/50 border border-slate-800 rounded-2xl p-6">
                 <p className="text-base font-bold text-slate-300">No questions stored in this box yet.</p>
-                <p className="text-xs text-slate-500 mt-1">Click the button below to add questions from the 1,000 SQL master bank.</p>
+                <p className="text-xs text-slate-500 mt-1">Click the button below to add questions from the master question bank (SQL, HTML, CSS & JS).</p>
                 <button
                   onClick={() => {
                     setShowAddFromBankModal(true);
@@ -3098,7 +3131,7 @@ export default function AdminKbcManager() {
                   Add Questions to <span className="text-amber-300">{selectedSetForQuestions.title}</span>
                 </h3>
                 <span className="text-xs text-slate-400">
-                  Select and add any question from the 1,000 SQL master bank
+                  Select and add any question from the master question bank (SQL, HTML, CSS & JS)
                 </span>
               </div>
               <button

@@ -1,6 +1,10 @@
 // Kaun Banega Crorepati (KBC) Authentic 16-Level Question Bank - Pure SQL Master Edition (1,000+ Questions)
 // Level 1 (₹1,000) to Level 16 (₹7 Crore Jackpot)
 import sqlQuestionBank from './sqlQuestionBank1000.json';
+import webQuestionBank from './webQuestionBank1000.json';
+
+export const SQL_QUESTION_BANK = sqlQuestionBank;
+export const WEB_QUESTION_BANK = webQuestionBank;
 
 export const KBC_PRIZE_LADDER = [
   { level: 1,  prize: '₹1,000',       amount: 1000,     isSafe: false, label: '1,000' },
@@ -43,6 +47,17 @@ for (let lvl = 1; lvl <= 30; lvl++) {
   } else {
     const wrapLvl = ((lvl - 1) % 16) + 1;
     DEFAULT_SQL_QUESTIONS[lvl] = sqlQuestionBank.filter(q => q.level === wrapLvl);
+  }
+}
+
+export const DEFAULT_WEB_QUESTIONS = {};
+for (let lvl = 1; lvl <= 30; lvl++) {
+  const matching = webQuestionBank.filter(q => q.level === lvl);
+  if (matching.length > 0) {
+    DEFAULT_WEB_QUESTIONS[lvl] = matching;
+  } else {
+    const wrapLvl = ((lvl - 1) % 16) + 1;
+    DEFAULT_WEB_QUESTIONS[lvl] = webQuestionBank.filter(q => q.level === wrapLvl);
   }
 }
 
