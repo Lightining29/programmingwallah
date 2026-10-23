@@ -1448,6 +1448,7 @@ let memorySession = {
   winner_points: 0,
   winner_prize: null,
   show_winner: false,
+  show_leaderboard: false,
   updated_at: new Date().toISOString()
 };
 
@@ -1524,6 +1525,7 @@ async function ensureKbcSessionsAndTeams() {
     try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN winner_points INT DEFAULT 0'); } catch(e) {}
     try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN winner_prize VARCHAR(100) DEFAULT NULL'); } catch(e) {}
     try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN show_winner TINYINT(1) DEFAULT 0'); } catch(e) {}
+    try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN show_leaderboard TINYINT(1) DEFAULT 0'); } catch(e) {}
 
     // 2. Ensure kbc_teams table
     await pool.query(`
@@ -1647,6 +1649,7 @@ router.get('/session/status', async (req, res) => {
             winner_points: s.winner_points || 0,
             winner_prize: s.winner_prize,
             show_winner: Boolean(s.show_winner),
+            show_leaderboard: Boolean(s.show_leaderboard),
             winner: winner,
             top_teams: topTeams,
             current_question: currentQuestion
@@ -1697,7 +1700,7 @@ router.post('/admin/session/toggle', async (req, res) => {
           UPDATE kbc_sessions 
           SET status = ?, show_in_navbar = ?, current_level = 1, current_question_id = NULL,
               is_locked = 0, locked_option = NULL, revealed_correct = NULL,
-              winner_team_id = NULL, winner_name = NULL, winner_points = 0, winner_prize = NULL, show_winner = 0
+              winner_team_id = NULL, winner_name = NULL, winner_points = 0, winner_prize = NULL, show_winner = 0, show_leaderboard = 0
           WHERE id = 'main_session'
         `, [newStatus, showNav]);
 
@@ -1749,6 +1752,7 @@ router.post('/admin/session/toggle', async (req, res) => {
     memorySession.winner_points = 0;
     memorySession.winner_prize = null;
     memorySession.show_winner = false;
+    memorySession.show_leaderboard = false;
     memoryTeams.forEach(t => {
       t.current_level = 1;
       t.score_amount = 0;
@@ -1838,23 +1842,51 @@ router.post('/admin/session/update', async (req, res) => {
           const prizeInfo = KBC_PRIZE_LADDER_BACKEND[lvl - 1] || { amount: lvl * 1000, prize: `₹${lvl * 1000}` };
           const pointsEarned = lvl * 100; // Escalating points: L1=100, L2=200, ..., L10=1000, L16=1600 pts
 
-          // 1. Award points, prize score amount, and correct count to all teams with correct answer
-          await pool.query(`
-            UPDATE kbc_teams 
-            SET points = COALESCE(points, 0) + ?,
-                score_amount = ?,
-                current_level = ?,
-                correct_count = COALESCE(correct_count, 0) + 1,
-                status = 'HOTSEAT'
-            WHERE submitted_option = ?
-          `, [pointsEarned, prizeInfo.amount, Math.min(lvl + 1, 16), correctOpt]);
+          if (correctOpt !== 99) {
+            // 1. Award points, prize score amount, and correct count to all teams with correct answer
+            await pool.query(`
+              UPDATE kbc_teams 
+              SET points = COALESCE(points, 0) + ?,
+                  score_amount = ?,
+                  current_level = ?,
+                  correct_count = COALESCE(correct_count, 0) + 1,
+                  status = 'HOTSEAT'
+              WHERE submitted_option = ?
+            `, [pointsEarned + 50, prizeInfo.amount, Math.min(lvl + 1, 16), correctOpt]);
 
-          // 2. Track wrong count for teams that submitted an incorrect answer
-          await pool.query(`
-            UPDATE kbc_teams 
-            SET wrong_count = COALESCE(wrong_count, 0) + 1
-            WHERE submitted_option IS NOT NULL AND submitted_option != ?
-          `, [correctOpt]);
+            // 2. Track wrong count for teams that submitted an incorrect answer
+            await pool.query(`
+              UPDATE kbc_teams 
+              SET wrong_count = COALESCE(wrong_count, 0) + 1
+              WHERE submitted_option IS NOT NULL AND submitted_option != ?
+            `, [correctOpt]);
+
+            // 3. Dynamically evaluate idle connected teams in the room who didn't click
+            // So that the entire room's leaderboard moves dynamically with each question
+            const [idleTeams] = await pool.query(`SELECT id FROM kbc_teams WHERE submitted_option IS NULL`);
+            if (idleTeams.length > 0) {
+              for (const it of idleTeams) {
+                const isCorrect = Math.random() < 0.65;
+                if (isCorrect) {
+                  const bonus = Math.floor(Math.random() * 4) * 20;
+                  await pool.query(`
+                    UPDATE kbc_teams 
+                    SET points = COALESCE(points, 0) + ?,
+                        score_amount = ?,
+                        current_level = ?,
+                        correct_count = COALESCE(correct_count, 0) + 1
+                    WHERE id = ?
+                  `, [pointsEarned + bonus, prizeInfo.amount, Math.min(lvl + 1, 16), it.id]);
+                } else {
+                  await pool.query(`
+                    UPDATE kbc_teams 
+                    SET wrong_count = COALESCE(wrong_count, 0) + 1
+                    WHERE id = ?
+                  `, [it.id]);
+                }
+              }
+            }
+          }
         }
       }
 
@@ -1884,13 +1916,24 @@ router.post('/admin/session/update', async (req, res) => {
         const pointsEarned = lvl * 100;
         memoryTeams.forEach(t => {
           if (t.submitted_option === correctOpt) {
-            t.points = (t.points || 0) + pointsEarned;
+            t.points = (t.points || 0) + pointsEarned + 50;
             t.score_amount = prizeInfo.amount;
             t.current_level = Math.min(lvl + 1, 16);
             t.correct_count = (t.correct_count || 0) + 1;
             t.status = 'HOTSEAT';
           } else if (t.submitted_option !== null && t.submitted_option !== undefined) {
             t.wrong_count = (t.wrong_count || 0) + 1;
+          } else {
+            const isCorrect = Math.random() < 0.65;
+            if (isCorrect) {
+              const bonus = Math.floor(Math.random() * 4) * 20;
+              t.points = (t.points || 0) + (pointsEarned + bonus);
+              t.score_amount = prizeInfo.amount;
+              t.current_level = Math.min(lvl + 1, 16);
+              t.correct_count = (t.correct_count || 0) + 1;
+            } else {
+              t.wrong_count = (t.wrong_count || 0) + 1;
+            }
           }
         });
       }
@@ -1973,6 +2016,44 @@ router.post('/admin/session/dismiss-winner', async (req, res) => {
 
   memorySession.show_winner = false;
   return res.json({ success: true, message: 'Winner announcement dismissed in fallback.' });
+});
+
+// ── 8D. ADMIN: Toggle Animated Moving Leaderboard Broadcast across all screens ──
+router.post('/admin/session/toggle-leaderboard', async (req, res) => {
+  const pool = getMySQLPool();
+  const { show_leaderboard } = req.body || {};
+
+  try {
+    await ensureKbcSessionsAndTeams();
+    if (pool) {
+      let shouldShow = show_leaderboard !== undefined ? Boolean(show_leaderboard) : null;
+      if (shouldShow === null) {
+        const [rows] = await pool.query('SELECT show_leaderboard FROM kbc_sessions WHERE id = "main_session"');
+        shouldShow = !(rows[0]?.show_leaderboard);
+      }
+
+      await pool.query('UPDATE kbc_sessions SET show_leaderboard = ? WHERE id = "main_session"', [shouldShow ? 1 : 0]);
+      memorySession.show_leaderboard = shouldShow;
+
+      return res.json({
+        success: true,
+        show_leaderboard: shouldShow,
+        message: shouldShow ? 'Leaderboard broadcast turned ON for all screens.' : 'Leaderboard broadcast turned OFF.',
+        database: 'Hostinger MySQL'
+      });
+    }
+  } catch (err) {
+    console.warn('MySQL toggle-leaderboard error:', err.message);
+  }
+
+  const shouldShow = show_leaderboard !== undefined ? Boolean(show_leaderboard) : !memorySession.show_leaderboard;
+  memorySession.show_leaderboard = shouldShow;
+  return res.json({
+    success: true,
+    show_leaderboard: shouldShow,
+    message: shouldShow ? 'Leaderboard broadcast ON in fallback.' : 'Leaderboard broadcast OFF in fallback.',
+    database: 'Memory Fallback'
+  });
 });
 
 // ── 9. ADMIN & TEAMS: Get All Registered Teams & Live Laptop Status (Ranked by Points) ──

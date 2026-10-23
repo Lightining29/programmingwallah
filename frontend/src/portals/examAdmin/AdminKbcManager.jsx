@@ -3,7 +3,8 @@ import {
   Search, Filter, BookOpen, Trophy, CheckCircle2, PlusCircle, RotateCcw, Sparkles, ExternalLink, 
   HelpCircle, Check, Database, Code2, Server, Globe, Cpu, Layers, AlertCircle,
   Radio, Play, Square, CheckSquare, Lock, Eye, ArrowRight, ArrowLeft, Users, Laptop, 
-  Copy, Trash2, ShieldCheck, Flame, RefreshCw, ClipboardList, Edit, FileText, Key, CheckCheck, Box
+  Copy, Trash2, ShieldCheck, Flame, RefreshCw, ClipboardList, Edit, FileText, Key, CheckCheck, Box,
+  BarChart3
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { KBC_PRIZE_LADDER, DEFAULT_MERN_SQL_QUESTIONS } from '../../data/kbcQuestions.js';
@@ -716,6 +717,44 @@ export default function AdminKbcManager() {
       await fetch('/api/kbc/admin/session/dismiss-winner', { method: 'POST' });
       fetchSessionStatus();
     } catch (e) {}
+  };
+
+  // Toggle Moving Leaderboard Broadcast across all screens
+  const handleToggleBroadcastLeaderboard = async () => {
+    try {
+      const nextState = !session?.show_leaderboard;
+      const res = await fetch('/api/kbc/admin/session/toggle-leaderboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ show_leaderboard: nextState })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSession(prev => ({ ...prev, show_leaderboard: data.show_leaderboard }));
+        if (data.show_leaderboard) {
+          kbcAudio.playHighPoints();
+          Swal.fire({
+            icon: 'success',
+            title: '📊 Leaderboard Broadcasted!',
+            text: 'Live animated moving leaderboard is now displaying on all screens!',
+            timer: 2000,
+            showConfirmButton: false
+          });
+        } else {
+          Swal.fire({
+            icon: 'info',
+            title: 'Leaderboard Hidden',
+            text: 'Moving leaderboard broadcast closed from screens.',
+            timer: 1500,
+            showConfirmButton: false
+          });
+        }
+        fetchSessionStatus();
+        fetchTeams();
+      }
+    } catch (err) {
+      Swal.fire('Error', 'Failed to toggle moving leaderboard broadcast.', 'error');
+    }
   };
 
   // ── TEAM MANAGEMENT ──
@@ -1535,6 +1574,18 @@ export default function AdminKbcManager() {
                       >
                         <Trophy className="w-4 h-4 text-slate-950" /> Announce Winner (Saat Crore Meme)
                       </button>
+                      <button
+                        onClick={handleToggleBroadcastLeaderboard}
+                        className={`px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-lg transition-all ${
+                          session?.show_leaderboard
+                            ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/40 border border-rose-400 animate-pulse'
+                            : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-indigo-600/30 border border-indigo-400'
+                        }`}
+                        title="Show or hide live animated moving leaderboard on all player screens and projector"
+                      >
+                        <BarChart3 className="w-4 h-4" />
+                        {session?.show_leaderboard ? '🛑 Stop Leaderboard Broadcast' : '📊 Show Moving Leaderboard on Everyone\'s Screen'}
+                      </button>
 
                       {/* Live Laser Quick Test Buttons for Host */}
                       <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-950/90 border border-slate-700 text-[11px]">
@@ -1814,6 +1865,17 @@ export default function AdminKbcManager() {
                 className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-yellow-500 via-amber-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-slate-950 font-black text-xs flex items-center gap-2 cursor-pointer shadow-lg shadow-amber-500/20 border border-yellow-300 animate-pulse"
               >
                 <Trophy className="w-4 h-4 text-slate-950" /> Announce Top Scorer (Saat Crore Meme)
+              </button>
+              <button
+                onClick={handleToggleBroadcastLeaderboard}
+                className={`px-4 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 cursor-pointer shadow-lg transition-all ${
+                  session?.show_leaderboard
+                    ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/40 border border-rose-400 animate-pulse'
+                    : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-indigo-600/30 border border-indigo-400'
+                }`}
+              >
+                <BarChart3 className="w-4 h-4" />
+                {session?.show_leaderboard ? '🛑 Stop Leaderboard Broadcast' : '📊 Broadcast Leaderboard to Screens'}
               </button>
               <button
                 onClick={() => setShowAddTeamModal(true)}

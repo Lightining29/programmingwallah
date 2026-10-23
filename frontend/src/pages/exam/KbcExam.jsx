@@ -6,11 +6,12 @@ import {
   RotateCcw, Award, LogOut, CheckCircle2, XCircle, Sparkles, 
   AlertTriangle, ArrowRight, Settings, Download, Printer, ShieldCheck,
   Laptop, Radio, Wifi, UserCheck, Flame, Maximize, Minimize,
-  ArrowUp, TrendingUp, Medal
+  ArrowUp, ArrowDown, TrendingUp, Medal, BarChart3
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { kbcAudio } from '../../utils/kbcAudio.js';
 import SaatCroreWinnerModal from '../../components/kbc/SaatCroreWinnerModal.jsx';
+import MovingLeaderboardModal from '../../components/kbc/MovingLeaderboardModal.jsx';
 import KbcLaserLogoReveal from '../../components/kbc/KbcLaserLogoReveal.jsx';
 import KbcStageLasers from '../../components/kbc/KbcStageLasers.jsx';
 import { 
@@ -43,6 +44,9 @@ export default function KbcExam() {
   const [teamAnswerSubmitted, setTeamAnswerSubmitted] = useState(false);
   const [winnerData, setWinnerData] = useState(null);
   const lastWinnerShownRef = useRef(false);
+  const [showBroadcastLeaderboard, setShowBroadcastLeaderboard] = useState(false);
+  const userDismissedLeaderboardRef = useRef(false);
+  const previousTeamsRef = useRef({});
 
   // Laser Effects & Fullscreen State
   const [showLaserIntro, setShowLaserIntro] = useState(false);
@@ -300,12 +304,43 @@ export default function KbcExam() {
         });
       }
 
-      return teams.sort((a, b) => {
+      const sorted = teams.sort((a, b) => {
         if (b.points !== a.points) return b.points - a.points;
         return b.correctCount - a.correctCount;
       });
+
+      return sorted.map((p, idx) => {
+        const rank = idx + 1;
+        const prev = previousTeamsRef.current[p.id];
+        const prevRank = prev?.rank;
+        const prevPoints = prev?.points;
+        const rankDelta = (prevRank !== undefined) ? (prevRank - rank) : 0;
+        const gainedFromDiff = (prevPoints !== undefined && p.points > prevPoints) ? (p.points - prevPoints) : 0;
+        const finalPointsGained = gainedFromDiff > 0 ? gainedFromDiff : p.lastPointsGained;
+
+        previousTeamsRef.current[p.id] = { rank, points: p.points };
+
+        return {
+          ...p,
+          rank,
+          rankDelta,
+          lastPointsGained: finalPointsGained
+        };
+      });
     }
-    return livePlayers;
+
+    return livePlayers.map((p, idx) => {
+      const rank = idx + 1;
+      const prev = previousTeamsRef.current[p.id];
+      const prevRank = prev?.rank;
+      const rankDelta = (prevRank !== undefined) ? (prevRank - rank) : 0;
+      previousTeamsRef.current[p.id] = { rank, points: p.points };
+      return {
+        ...p,
+        rank,
+        rankDelta
+      };
+    });
   }, [team, adminSession?.top_teams, livePlayers, answerStatus, currentLevel, playerName]);
 
   const currentUserIndex = displayPlayers.findIndex(p => p.isUser);
@@ -341,6 +376,16 @@ export default function KbcExam() {
             }
           } else if (!sess.show_winner) {
             lastWinnerShownRef.current = false;
+          }
+
+          // ── CHECK IF ADMIN HAS BROADCASTED MOVING LEADERBOARD ON EVERYONE'S SCREEN ──
+          if (sess.show_leaderboard) {
+            if (!userDismissedLeaderboardRef.current) {
+              setShowBroadcastLeaderboard(true);
+            }
+          } else {
+            userDismissedLeaderboardRef.current = false;
+            setShowBroadcastLeaderboard(false);
           }
 
           // If playing in team mode, synchronize level, new question arrival, and host states
@@ -1563,16 +1608,26 @@ export default function KbcExam() {
                     </p>
                   </div>
                 </div>
-                <span 
-                  style={{
-                    background: 'rgba(30, 27, 75, 0.85)',
-                    border: '1px solid rgba(99, 102, 241, 0.5)',
-                    color: '#c7d2fe'
-                  }}
-                  className="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold"
-                >
-                  Q{currentLevel}/16
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowBroadcastLeaderboard(true)}
+                    className="px-2 py-0.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-400/40 text-[10px] font-bold text-indigo-200 flex items-center gap-1 cursor-pointer transition shadow-sm"
+                    title="Expand Full Screen Moving Leaderboard"
+                  >
+                    <BarChart3 className="w-3 h-3 text-amber-400" />
+                    Expand
+                  </button>
+                  <span 
+                    style={{
+                      background: 'rgba(30, 27, 75, 0.85)',
+                      border: '1px solid rgba(99, 102, 241, 0.5)',
+                      color: '#c7d2fe'
+                    }}
+                    className="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold"
+                  >
+                    Q{currentLevel}/16
+                  </span>
+                </div>
               </div>
 
               {/* Player Cards with Smooth Framer Motion Spring Layout Reordering */}
@@ -1725,10 +1780,21 @@ export default function KbcExam() {
                           </div>
                         </div>
 
-                        {/* Right: Points & Dynamic Upward Gain */}
+                        {/* Right: Points & Dynamic Upward/Downward Gain */}
                         <div className="text-right shrink-0">
-                          <div className="text-xs font-black font-mono tracking-tight" style={{ color: '#fbbf24' }}>
-                            {player.points.toLocaleString()} <span className="text-[10px] font-sans" style={{ color: 'rgba(251, 191, 36, 0.8)' }}>pts</span>
+                          <div className="flex items-center justify-end gap-1.5">
+                            {player.rankDelta > 0 ? (
+                              <span className="text-[9px] font-black font-mono text-emerald-400 bg-emerald-500/20 border border-emerald-500/40 px-1 py-0.2 rounded inline-flex items-center gap-0.5">
+                                <ArrowUp className="w-2.5 h-2.5 stroke-[3]" /> +{player.rankDelta}
+                              </span>
+                            ) : player.rankDelta < 0 ? (
+                              <span className="text-[9px] font-black font-mono text-rose-400 bg-rose-500/20 border border-rose-500/40 px-1 py-0.2 rounded inline-flex items-center gap-0.5">
+                                <ArrowDown className="w-2.5 h-2.5 stroke-[3]" /> {player.rankDelta}
+                              </span>
+                            ) : null}
+                            <div className="text-xs font-black font-mono tracking-tight" style={{ color: '#fbbf24' }}>
+                              {player.points.toLocaleString()} <span className="text-[10px] font-sans" style={{ color: 'rgba(251, 191, 36, 0.8)' }}>pts</span>
+                            </div>
                           </div>
                           <div className="h-4 flex items-center justify-end mt-0.5">
                             {gainedPoints ? (
@@ -2001,6 +2067,19 @@ export default function KbcExam() {
           winner={winnerData}
           onClose={() => setActiveModal(null)}
           isCurrentPlayer={Boolean(team && (team.id === winnerData.id || team.access_code === winnerData.access_code))}
+        />
+      )}
+
+      {/* ── BROADCAST MOVING LEADERBOARD MODAL (Triggered by Admin across all screens) ── */}
+      {showBroadcastLeaderboard && (
+        <MovingLeaderboardModal
+          players={displayPlayers}
+          onClose={() => {
+            userDismissedLeaderboardRef.current = true;
+            setShowBroadcastLeaderboard(false);
+          }}
+          currentUserTeam={team}
+          currentLevel={currentLevel}
         />
       )}
 
