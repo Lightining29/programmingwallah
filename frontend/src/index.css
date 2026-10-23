@@ -764,3 +764,32 @@ html.dark .admin-dashboard-shell .border-slate-200\/50 {
   background: #484f58;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   KBC ARENA & LEADERBOARD BULLETPROOF DARK THEME
+   Guarantees all KBC cards, text, and participants stay strictly in
+   dark stage mode and cannot be overridden by light-theme rules.
+   ═══════════════════════════════════════════════════════════════════════ */
+.kbc-dark-root,
+.kbc-dark-root * {
+  color-scheme: dark !important;
+}
+
+.kbc-dark-root [class*='bg-slate-900'],
+.kbc-dark-root [class*='bg-slate-950'],
+.kbc-dark-root [class*='bg-slate-800'] {
+  background-color: rgba(15, 23, 42, 0.85) !important;
+}
+
+.kbc-dark-root [class*='text-white'],
+.kbc-dark-root .text-white {
+  color: #ffffff !important;
+}
+
+.kbc-dark-root [class*='text-slate-100'],
+.kbc-dark-root [class*='text-slate-200'],
+.kbc-dark-root [class*='text-slate-300'],
+.kbc-dark-root [class*='text-slate-400'] {
+  color: #cbd5e1 !important;
+}
+
+

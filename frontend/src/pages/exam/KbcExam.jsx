@@ -236,14 +236,33 @@ export default function KbcExam() {
   const [hostQuote, setHostQuote] = useState(AMITABH_QUOTES.welcome[0]);
   const [isMuted, setIsMuted] = useState(false);
 
+  // Helper to format live participant names with proper capitalization
+  const formatDisplayName = (teamName, leaderName, code) => {
+    const tName = (teamName || '').trim();
+    const lName = (leaderName || '').trim();
+    if (tName && lName && tName.toLowerCase() !== lName.toLowerCase()) {
+      const leaderCap = lName.charAt(0).toUpperCase() + lName.slice(1);
+      return `${leaderCap} (${tName})`;
+    }
+    const raw = tName || lName || `Contestant ${code || ''}`;
+    return raw.charAt(0).toUpperCase() + raw.slice(1);
+  };
+
   // Synchronize team mode top_teams if available from Hostinger MySQL
   const displayPlayers = useMemo(() => {
-    if (team && Array.isArray(adminSession?.top_teams) && adminSession.top_teams.length > 0) {
-      return adminSession.top_teams.map((t) => {
-        const isUser = Boolean(team && (t.id === team.id || t.access_code === team.access_code));
+    if (Array.isArray(adminSession?.top_teams) && adminSession.top_teams.length > 0) {
+      const teams = adminSession.top_teams.map((t) => {
+        const isUser = Boolean(
+          (team && (t.id === team.id || t.access_code === team.access_code)) ||
+          (playerName && (
+            (t.team_name && t.team_name.toLowerCase() === playerName.toLowerCase()) ||
+            (t.leader_name && t.leader_name.toLowerCase() === playerName.toLowerCase())
+          ))
+        );
+        const displayName = formatDisplayName(t.team_name, t.leader_name, t.access_code);
         return {
           id: `team-${t.id || t.access_code}`,
-          name: t.team_name || t.leader_name || `Team ${t.access_code}`,
+          name: displayName,
           isUser,
           points: Number(t.points) || 0,
           currentLevel: t.current_level || 1,
@@ -251,15 +270,43 @@ export default function KbcExam() {
           wrongCount: t.wrong_count || 0,
           lastPointsGained: isUser && answerStatus === 'correct' ? currentLevel * 100 : 0,
           lastStatus: isUser ? answerStatus : (t.status === 'HOTSEAT' ? 'correct' : null),
-          avatar: '🏆'
+          avatar: '🏆',
+          status: t.status || 'CONNECTED',
+          submittedOption: t.submitted_option
         };
-      }).sort((a, b) => {
+      });
+
+      // If current user is not in top_teams, include user card
+      const userExists = teams.some(t => t.isUser);
+      if (!userExists) {
+        const userContestant = livePlayers.find(p => p.isUser) || {
+          id: 'player-user',
+          name: playerName || 'Hotseat Contestant',
+          isUser: true,
+          points: 0,
+          currentLevel: currentLevel,
+          correctCount: 0,
+          wrongCount: 0,
+          lastPointsGained: 0,
+          lastStatus: null,
+          avatar: '👤',
+          status: 'HOTSEAT',
+          submittedOption: null
+        };
+        teams.push({
+          ...userContestant,
+          name: playerName || 'Hotseat Contestant',
+          isUser: true
+        });
+      }
+
+      return teams.sort((a, b) => {
         if (b.points !== a.points) return b.points - a.points;
         return b.correctCount - a.correctCount;
       });
     }
     return livePlayers;
-  }, [team, adminSession?.top_teams, livePlayers, answerStatus, currentLevel]);
+  }, [team, adminSession?.top_teams, livePlayers, answerStatus, currentLevel, playerName]);
 
   const currentUserIndex = displayPlayers.findIndex(p => p.isUser);
   const currentUserRank = currentUserIndex >= 0 ? currentUserIndex + 1 : 1;
@@ -1507,22 +1554,29 @@ export default function KbcExam() {
                     <Trophy className="w-4 h-4 text-slate-950" />
                   </div>
                   <div>
-                    <h3 className="text-xs font-black uppercase text-amber-400 tracking-wider flex items-center gap-1.5">
-                      Live Leaderboard
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping inline-block" />
+                    <h3 className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5" style={{ color: '#fbbf24' }}>
+                      Live Contestants ({displayPlayers.length})
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
                     </h3>
-                    <p className="text-[10px] text-slate-400 font-medium">
-                      Points update after each Q
+                    <p className="text-[10px] font-medium" style={{ color: '#94a3b8' }}>
+                      Real-time participating players
                     </p>
                   </div>
                 </div>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-950/80 border border-indigo-800/60 text-indigo-300 font-bold">
+                <span 
+                  style={{
+                    background: 'rgba(30, 27, 75, 0.85)',
+                    border: '1px solid rgba(99, 102, 241, 0.5)',
+                    color: '#c7d2fe'
+                  }}
+                  className="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold"
+                >
                   Q{currentLevel}/16
                 </span>
               </div>
 
               {/* Player Cards with Smooth Framer Motion Spring Layout Reordering */}
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-[580px] overflow-y-auto pr-1">
                 {displayPlayers.map((player, index) => {
                   const rank = index + 1;
                   const isUser = player.isUser;
@@ -1530,25 +1584,50 @@ export default function KbcExam() {
 
                   // Rank styling badges
                   let rankBadge = (
-                    <span className="w-6 h-6 rounded-lg bg-slate-800 text-slate-300 border border-slate-700/60 font-mono text-[11px] font-black flex items-center justify-center">
+                    <span 
+                      style={{
+                        background: 'rgba(30, 41, 59, 0.8)',
+                        borderColor: 'rgba(71, 85, 105, 0.6)',
+                        color: '#cbd5e1'
+                      }}
+                      className="w-6 h-6 rounded-lg border font-mono text-[11px] font-black flex items-center justify-center"
+                    >
                       {rank}
                     </span>
                   );
                   if (rank === 1) {
                     rankBadge = (
-                      <span className="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-400 via-yellow-400 to-amber-600 text-slate-950 font-mono text-[11px] font-black flex items-center justify-center shadow-md shadow-amber-500/40">
+                      <span 
+                        style={{
+                          background: 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)',
+                          color: '#020617'
+                        }}
+                        className="w-6 h-6 rounded-lg font-mono text-[11px] font-black flex items-center justify-center shadow-md shadow-amber-500/40"
+                      >
                         🥇
                       </span>
                     );
                   } else if (rank === 2) {
                     rankBadge = (
-                      <span className="w-6 h-6 rounded-lg bg-gradient-to-br from-slate-200 to-slate-400 text-slate-950 font-mono text-[11px] font-black flex items-center justify-center shadow-sm">
+                      <span 
+                        style={{
+                          background: 'linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%)',
+                          color: '#020617'
+                        }}
+                        className="w-6 h-6 rounded-lg font-mono text-[11px] font-black flex items-center justify-center shadow-sm"
+                      >
                         🥈
                       </span>
                     );
                   } else if (rank === 3) {
                     rankBadge = (
-                      <span className="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-700 to-amber-900 text-amber-200 font-mono text-[11px] font-black flex items-center justify-center shadow-sm">
+                      <span 
+                        style={{
+                          background: 'linear-gradient(135deg, #b45309 0%, #78350f 100%)',
+                          color: '#fef3c7'
+                        }}
+                        className="w-6 h-6 rounded-lg font-mono text-[11px] font-black flex items-center justify-center shadow-sm"
+                      >
                         🥉
                       </span>
                     );
@@ -1564,15 +1643,27 @@ export default function KbcExam() {
                         damping: 24,
                         mass: 0.75
                       }}
-                      className={`relative rounded-xl p-2.5 transition-all border ${
-                        isUser
-                          ? 'bg-gradient-to-r from-cyan-950/85 via-blue-950/85 to-indigo-950/85 border-cyan-400 shadow-[0_0_18px_rgba(6,182,212,0.3)] ring-1 ring-cyan-400/50'
+                      style={{
+                        background: isUser
+                          ? 'linear-gradient(135deg, rgba(8, 47, 73, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)'
                           : rank === 1
-                          ? 'bg-gradient-to-r from-amber-950/40 via-slate-900/80 to-slate-900/80 border-amber-400/40'
+                          ? 'linear-gradient(135deg, rgba(69, 26, 3, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%)'
                           : gainedPoints
-                          ? 'bg-emerald-950/30 border-emerald-500/40'
-                          : 'bg-slate-900/60 border-indigo-950/60 hover:border-indigo-800/40'
-                      }`}
+                          ? 'linear-gradient(135deg, rgba(6, 78, 59, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%)'
+                          : 'linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(10, 15, 30, 0.95) 100%)',
+                        border: isUser
+                          ? '1.5px solid #22d3ee'
+                          : rank === 1
+                          ? '1px solid rgba(251, 191, 36, 0.5)'
+                          : gainedPoints
+                          ? '1px solid rgba(16, 185, 129, 0.5)'
+                          : '1px solid rgba(99, 102, 241, 0.35)',
+                        boxShadow: isUser
+                          ? '0 0 18px rgba(6, 182, 212, 0.35), inset 0 0 10px rgba(6, 182, 212, 0.15)'
+                          : '0 4px 12px rgba(0, 0, 0, 0.45)',
+                        color: '#ffffff'
+                      }}
+                      className="relative rounded-xl p-2.5 transition-all"
                     >
                       <div className="flex items-center justify-between gap-2">
                         {/* Left: Rank, Avatar & Name */}
@@ -1580,45 +1671,89 @@ export default function KbcExam() {
                           {rankBadge}
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <span className={`text-xs font-bold truncate max-w-[100px] sm:max-w-[125px] ${
-                                isUser ? 'text-cyan-200 font-black' : 'text-white'
-                              }`}>
+                              <span 
+                                style={{ 
+                                  color: isUser ? '#38bdf8' : '#ffffff',
+                                  textShadow: isUser ? '0 0 12px rgba(56, 189, 248, 0.6)' : 'none'
+                                }} 
+                                className="text-xs font-black truncate max-w-[110px] sm:max-w-[140px]"
+                              >
                                 {player.name}
                               </span>
                               {isUser && (
-                                <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider bg-cyan-400 text-slate-950 shadow-sm shadow-cyan-400/40">
+                                <span 
+                                  style={{
+                                    background: '#06b6d4',
+                                    color: '#020617',
+                                    boxShadow: '0 0 8px rgba(6, 182, 212, 0.5)'
+                                  }}
+                                  className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider"
+                                >
                                   YOU
                                 </span>
                               )}
                             </div>
-                            <div className="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
-                              <span>{player.correctCount} Correct</span>
+                            <div className="text-[10px] flex items-center gap-1.5 mt-0.5 flex-wrap" style={{ color: '#94a3b8' }}>
+                              <span style={{ color: '#cbd5e1' }}>{player.correctCount} Correct</span>
                               <span className="w-1 h-1 rounded-full bg-slate-600" />
-                              <span>Q{player.currentLevel}</span>
+                              <span style={{ color: '#94a3b8' }}>Q{player.currentLevel}</span>
+                              <span className="w-1 h-1 rounded-full bg-slate-600" />
+                              <span 
+                                style={{ 
+                                  color: '#34d399',
+                                  background: 'rgba(16, 185, 129, 0.15)',
+                                  border: '1px solid rgba(16, 185, 129, 0.35)'
+                                }}
+                                className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded font-bold text-[9px]"
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                Live
+                              </span>
+                              {player.submittedOption !== null && player.submittedOption !== undefined && (
+                                <span 
+                                  style={{ 
+                                    color: '#38bdf8',
+                                    background: 'rgba(56, 189, 248, 0.15)',
+                                    border: '1px solid rgba(56, 189, 248, 0.35)'
+                                  }}
+                                  className="px-1 py-0.2 rounded font-mono text-[9px] font-bold"
+                                >
+                                  Opt {String.fromCharCode(65 + Number(player.submittedOption))}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
 
                         {/* Right: Points & Dynamic Upward Gain */}
                         <div className="text-right shrink-0">
-                          <div className="text-xs font-black text-amber-300 font-mono tracking-tight">
-                            {player.points.toLocaleString()} <span className="text-[10px] text-amber-400/80 font-sans">pts</span>
+                          <div className="text-xs font-black font-mono tracking-tight" style={{ color: '#fbbf24' }}>
+                            {player.points.toLocaleString()} <span className="text-[10px] font-sans" style={{ color: 'rgba(251, 191, 36, 0.8)' }}>pts</span>
                           </div>
                           <div className="h-4 flex items-center justify-end mt-0.5">
                             {gainedPoints ? (
                               <motion.span
                                 initial={{ scale: 0.5, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
-                                className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-black font-mono shadow-[0_0_8px_rgba(16,185,129,0.3)]"
+                                style={{
+                                  background: 'rgba(16, 185, 129, 0.25)',
+                                  border: '1px solid rgba(16, 185, 129, 0.5)',
+                                  color: '#34d399'
+                                }}
+                                className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-black font-mono shadow-[0_0_8px_rgba(16,185,129,0.35)]"
                               >
                                 <ArrowUp className="w-2.5 h-2.5 text-emerald-400 stroke-[3]" />
                                 +{player.lastPointsGained}
                               </motion.span>
                             ) : player.lastStatus === 'wrong' ? (
-                              <span className="text-[9px] text-rose-400/70 font-mono">
+                              <span className="text-[9px] font-mono" style={{ color: '#f87171' }}>
                                 +0 pts
                               </span>
-                            ) : null}
+                            ) : (
+                              <span className="text-[9px] font-mono" style={{ color: '#64748b' }}>
+                                Participating
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1628,12 +1763,17 @@ export default function KbcExam() {
               </div>
 
               {/* User Standing Bar at bottom of leaderboard */}
-              <div className="mt-3 pt-2.5 border-t border-indigo-900/50 flex items-center justify-between text-[11px]">
-                <span className="text-slate-400 font-medium">Your Standing:</span>
-                <span className="text-cyan-300 font-black flex items-center gap-1.5">
+              <div 
+                style={{
+                  borderTop: '1px solid rgba(99, 102, 241, 0.3)'
+                }}
+                className="mt-3 pt-2.5 flex items-center justify-between text-[11px]"
+              >
+                <span style={{ color: '#94a3b8' }} className="font-medium">Your Standing:</span>
+                <span style={{ color: '#38bdf8' }} className="font-black flex items-center gap-1.5">
                   <TrendingUp className="w-3.5 h-3.5 text-cyan-400" />
                   Rank #{currentUserRank} of {displayPlayers.length}
-                  <span className="text-amber-300 font-mono">({currentUserPlayer?.points || 0} pts)</span>
+                  <span style={{ color: '#fbbf24' }} className="font-mono">({currentUserPlayer?.points || 0} pts)</span>
                 </span>
               </div>
             </div>
