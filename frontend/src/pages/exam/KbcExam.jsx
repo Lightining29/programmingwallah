@@ -12,6 +12,7 @@ import confetti from 'canvas-confetti';
 import { kbcAudio } from '../../utils/kbcAudio.js';
 import SaatCroreWinnerModal from '../../components/kbc/SaatCroreWinnerModal.jsx';
 import MovingLeaderboardModal from '../../components/kbc/MovingLeaderboardModal.jsx';
+import ContestantPointsLeaderboard from '../../components/kbc/ContestantPointsLeaderboard.jsx';
 import KbcLaserLogoReveal from '../../components/kbc/KbcLaserLogoReveal.jsx';
 import KbcStageLasers from '../../components/kbc/KbcStageLasers.jsx';
 import { 
@@ -149,44 +150,89 @@ export default function KbcExam() {
     }
   }, [playerName]);
 
+  // Helper for safe points cutoff
+  const getSafePoints = (lvl, totalQ) => {
+    let safeLvl = 0;
+    if (totalQ > 16) {
+      safeLvl = Math.floor((lvl - 1) / 5) * 5;
+    } else {
+      if (lvl > 15) safeLvl = 15;
+      else if (lvl > 10) safeLvl = 10;
+      else if (lvl > 5) safeLvl = 5;
+      else safeLvl = 0;
+    }
+    return safeLvl * 100;
+  };
+
   // Calculate live points after every question and smoothly re-rank
   const calculateRoundPoints = (userCorrect, speedBonus = 0) => {
+    const totalQ = adminSession?.total_questions || (questions?.length >= 30 ? 30 : 16);
     const basePoints = currentLevel * 100;
     const userEarned = userCorrect ? (basePoints + speedBonus) : 0;
+    const cutoffPoints = getSafePoints(currentLevel, totalQ);
 
     setLivePlayers(prevPlayers => {
       const updated = prevPlayers.map(p => {
         if (p.isUser) {
-          return {
-            ...p,
-            points: p.points + userEarned,
-            currentLevel: Math.min(currentLevel + 1, 16),
-            correctCount: p.correctCount + (userCorrect ? 1 : 0),
-            wrongCount: p.wrongCount + (userCorrect ? 0 : 1),
-            lastPointsGained: userEarned,
-            lastStatus: userCorrect ? 'correct' : 'wrong'
-          };
+          if (userCorrect) {
+            return {
+              ...p,
+              points: p.points + userEarned,
+              currentLevel: Math.min(currentLevel + 1, totalQ),
+              correctCount: p.correctCount + 1,
+              lastPointsGained: userEarned,
+              lastStatus: 'correct',
+              status: 'HOTSEAT'
+            };
+          } else {
+            // User OUT -> Points CUTOFF applied!
+            return {
+              ...p,
+              points: cutoffPoints,
+              wrongCount: p.wrongCount + 1,
+              lastPointsGained: 0,
+              lastStatus: 'wrong',
+              status: 'OUT'
+            };
+          }
         } else {
           // Competitive classmates simulation:
-          // Slightly decreasing accuracy on higher levels
+          if (p.status === 'OUT' || p.status === 'ELIMINATED') {
+            return p;
+          }
           const levelDifficulty = Math.max(0.35, p.accuracy - (currentLevel * 0.02));
           const compCorrect = Math.random() < levelDifficulty;
-          const compSpeed = compCorrect ? Math.floor(Math.random() * 20) * 2 : 0;
-          const compEarned = compCorrect ? (basePoints + compSpeed) : 0;
-          return {
-            ...p,
-            points: p.points + compEarned,
-            currentLevel: Math.min(currentLevel + 1, 16),
-            correctCount: p.correctCount + (compCorrect ? 1 : 0),
-            wrongCount: p.wrongCount + (compCorrect ? 0 : 1),
-            lastPointsGained: compEarned,
-            lastStatus: compCorrect ? 'correct' : 'wrong'
-          };
+          if (compCorrect) {
+            const compSpeed = Math.floor(Math.random() * 20) * 2;
+            const compEarned = basePoints + compSpeed;
+            return {
+              ...p,
+              points: p.points + compEarned,
+              currentLevel: Math.min(currentLevel + 1, totalQ),
+              correctCount: p.correctCount + 1,
+              lastPointsGained: compEarned,
+              lastStatus: 'correct',
+              status: 'HOTSEAT'
+            };
+          } else {
+            // Classmate OUT -> Points CUTOFF applied!
+            return {
+              ...p,
+              points: cutoffPoints,
+              wrongCount: p.wrongCount + 1,
+              lastPointsGained: 0,
+              lastStatus: 'wrong',
+              status: 'OUT'
+            };
+          }
         }
       });
 
-      // Sort by points descending, then correct count
+      // Sort: active players above OUT players, then by points descending, then correct count
       return [...updated].sort((a, b) => {
+        const aActive = a.status !== 'OUT' && a.status !== 'ELIMINATED' ? 1 : 0;
+        const bActive = b.status !== 'OUT' && b.status !== 'ELIMINATED' ? 1 : 0;
+        if (bActive !== aActive) return bActive - aActive;
         if (b.points !== a.points) return b.points - a.points;
         return b.correctCount - a.correctCount;
       });
@@ -239,6 +285,7 @@ export default function KbcExam() {
   // Host Dialogue
   const [hostQuote, setHostQuote] = useState(AMITABH_QUOTES.welcome[0]);
   const [isMuted, setIsMuted] = useState(false);
+  const [showMobileLeaderboard, setShowMobileLeaderboard] = useState(false);
 
   // Helper to format live participant names with proper capitalization
   const formatDisplayName = (teamName, leaderName, code) => {
@@ -255,9 +302,9 @@ export default function KbcExam() {
   // Synchronize team mode top_teams if available from Hostinger MySQL
   const displayPlayers = useMemo(() => {
     if (Array.isArray(adminSession?.top_teams) && adminSession.top_teams.length > 0) {
-      // Only keep teams actively playing in this session
+      // Only keep teams actively playing in this session (including OUT players)
       const activeTeamsInSession = adminSession.top_teams.filter(t => 
-        t.status === 'CONNECTED' || t.status === 'HOTSEAT' || (team && (t.id === team.id || t.access_code === team.access_code))
+        t.status === 'CONNECTED' || t.status === 'HOTSEAT' || t.status === 'OUT' || t.status === 'ELIMINATED' || (team && (t.id === team.id || t.access_code === team.access_code))
       );
 
       const sourceList = activeTeamsInSession.length > 0 ? activeTeamsInSession : adminSession.top_teams;
@@ -301,12 +348,15 @@ export default function KbcExam() {
           lastPointsGained: answerStatus === 'correct' ? currentLevel * 100 : 0,
           lastStatus: answerStatus,
           avatar: '👤',
-          status: 'CONNECTED',
+          status: team?.status || 'CONNECTED',
           submittedOption: selectedOption
         });
       }
 
       const sorted = teams.sort((a, b) => {
+        const aActive = a.status !== 'OUT' && a.status !== 'ELIMINATED' ? 1 : 0;
+        const bActive = b.status !== 'OUT' && b.status !== 'ELIMINATED' ? 1 : 0;
+        if (bActive !== aActive) return bActive - aActive;
         if (b.points !== a.points) return b.points - a.points;
         return b.correctCount - a.correctCount;
       });
@@ -367,6 +417,7 @@ export default function KbcExam() {
   const currentUserIndex = displayPlayers.findIndex(p => p.isUser);
   const currentUserRank = currentUserIndex >= 0 ? currentUserIndex + 1 : 1;
   const currentUserPlayer = currentUserIndex >= 0 ? displayPlayers[currentUserIndex] : null;
+  const totalQuestions = adminSession?.total_questions || (questions?.length >= 30 ? 30 : 16);
 
   // Track previous question and session state to detect arrival & answer reveal
   const lastQuestionTrackRef = useRef({
@@ -1402,10 +1453,42 @@ export default function KbcExam() {
           </div>
         ) : (
           /* CASE 3: Live KBC Arena (Active in Solo OR when Team is LIVE) */
-          <div className="w-full max-w-4xl mx-auto my-auto space-y-4">
+          <div className="w-full max-w-7xl mx-auto my-auto px-2 sm:px-4 space-y-4">
             
-            {/* Circular Timer, Hexagonal Question, and Hexagonal 4 Options */}
-            <div className="space-y-4">
+            {/* Mobile Header Quick Rank Pill & Leaderboard Drawer Toggle */}
+            <div className="lg:hidden flex items-center justify-between p-2.5 sm:p-3 rounded-2xl bg-[#0c102a]/90 border border-amber-400/40 backdrop-blur-md shadow-lg">
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm font-black text-amber-300">
+                  🏆 Rank #{currentUserRank}
+                </span>
+                <span className="text-xs text-slate-300">
+                  • ⭐ {(currentUserPlayer?.points || 0).toLocaleString()} pts
+                </span>
+                {currentUserPlayer?.status === 'OUT' || currentUserPlayer?.status === 'ELIMINATED' ? (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/40 font-bold">
+                    OUT (CUTOFF)
+                  </span>
+                ) : (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold">
+                    Q{currentLevel}/{totalQuestions}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowMobileLeaderboard(prev => !prev)}
+                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-amber-500/20 cursor-pointer"
+              >
+                <Trophy className="w-3.5 h-3.5" />
+                {showMobileLeaderboard ? 'Hide' : 'Leaderboard'}
+              </button>
+            </div>
+
+            {/* 2-Column Responsive Layout: Left 8 Cols (Questions & Options) + Right 4 Cols (Contestant Points Leaderboard) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+              
+              {/* Left Column: Timer, Hex Question, 4 Hex Options, Lock bar */}
+              <div className="lg:col-span-8 space-y-4">
               
               {/* ── Circular Timer (Tik-Tiki Ji) at Top Center (Circle Shape) ── */}
               <div className="flex items-center justify-center pt-1 pb-1 relative z-20">
@@ -1603,7 +1686,54 @@ export default function KbcExam() {
                 </div>
               )}
 
+              </div>
+
+              {/* Right Column: Docked Live Points Leaderboard for Desktop/Laptop */}
+              <div className="hidden lg:block lg:col-span-4 sticky top-20">
+                <ContestantPointsLeaderboard
+                  players={displayPlayers}
+                  currentLevel={currentLevel}
+                  totalQuestions={totalQuestions}
+                  currentUserIndex={currentUserIndex}
+                />
+              </div>
+
             </div>
+
+            {/* Mobile Slide-Up Modal Drawer for Leaderboard */}
+            <AnimatePresence>
+              {showMobileLeaderboard && (
+                <div className="lg:hidden fixed inset-0 z-50 flex flex-col justify-end bg-black/80 backdrop-blur-md p-3">
+                  <motion.div
+                    initial={{ opacity: 0, y: 80 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 80 }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                    className="bg-[#0a0d24] border-2 border-amber-400/60 rounded-3xl p-3 sm:p-4 max-h-[85vh] overflow-y-auto space-y-3"
+                  >
+                    <div className="flex items-center justify-between pb-2 border-b border-indigo-900/50">
+                      <span className="text-xs sm:text-sm font-black text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                        <Trophy className="w-4 h-4 text-amber-400" /> Contestant Points Leaderboard
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowMobileLeaderboard(false)}
+                        className="text-xs px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold cursor-pointer"
+                      >
+                        Close ✕
+                      </button>
+                    </div>
+                    <ContestantPointsLeaderboard
+                      players={displayPlayers}
+                      currentLevel={currentLevel}
+                      totalQuestions={totalQuestions}
+                      currentUserIndex={currentUserIndex}
+                    />
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>
+
           </div>
         )}
 
