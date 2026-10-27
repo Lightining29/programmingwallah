@@ -12,7 +12,7 @@ import confetti from 'canvas-confetti';
 import { kbcAudio } from '../../utils/kbcAudio.js';
 import SaatCroreWinnerModal from '../../components/kbc/SaatCroreWinnerModal.jsx';
 import MovingLeaderboardModal from '../../components/kbc/MovingLeaderboardModal.jsx';
-import ContestantPointsLeaderboard from '../../components/kbc/ContestantPointsLeaderboard.jsx';
+import KbcPointsLadder from '../../components/kbc/KbcPointsLadder.jsx';
 import KbcLaserLogoReveal from '../../components/kbc/KbcLaserLogoReveal.jsx';
 import KbcStageLasers from '../../components/kbc/KbcStageLasers.jsx';
 import { 
@@ -420,6 +420,11 @@ export default function KbcExam() {
   const currentUserRank = currentUserIndex >= 0 ? currentUserIndex + 1 : 1;
   const currentUserPlayer = currentUserIndex >= 0 ? displayPlayers[currentUserIndex] : null;
   const totalQuestions = adminSession?.total_questions || (questions?.length >= 30 ? 30 : 16);
+  const userPoints = currentUserPlayer ? currentUserPlayer.points : (team ? (Number(team.points) || 0) : 0);
+  const isUserOut = gameOver || (currentUserPlayer?.status === 'OUT') || (team && team.status === 'OUT');
+  const safePadavLevel = Math.max(0, Math.floor(getSafePoints(currentLevel, totalQuestions) / 100));
+  const safePadavPoints = safePadavLevel * 100;
+  const safePadavPrize = safeWonPrizeLabel !== '₹0' ? safeWonPrizeLabel : (safePadavLevel > 0 ? (KBC_PRIZE_LADDER[safePadavLevel - 1]?.prize || '₹0') : '₹0');
 
   // Track previous question and session state to detect arrival & answer reveal
   const lastQuestionTrackRef = useRef({
@@ -1456,22 +1461,22 @@ export default function KbcExam() {
           /* CASE 3: Live KBC Arena (Active in Solo OR when Team is LIVE) */
           <div className="w-full max-w-7xl mx-auto my-auto px-2 sm:px-4 space-y-4">
             
-            {/* Mobile Header Quick Rank Pill & Leaderboard Drawer Toggle */}
+            {/* Mobile Header Quick Points Pill & Point Ladder Drawer Toggle */}
             <div className="lg:hidden flex items-center justify-between p-2.5 sm:p-3 rounded-2xl bg-[#0c102a]/90 border border-amber-400/40 backdrop-blur-md shadow-lg">
               <div className="flex items-center gap-2">
                 <span className="text-xs sm:text-sm font-black text-amber-300">
-                  🏆 Rank #{currentUserRank}
+                  ⭐ {(userPoints || 0).toLocaleString()} pts
                 </span>
                 <span className="text-xs text-slate-300">
-                  • ⭐ {(currentUserPlayer?.points || 0).toLocaleString()} pts
+                  • Q{currentLevel}/{totalQuestions}
                 </span>
-                {currentUserPlayer?.status === 'OUT' || currentUserPlayer?.status === 'ELIMINATED' ? (
+                {isUserOut ? (
                   <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/40 font-bold">
                     OUT (CUTOFF)
                   </span>
                 ) : (
                   <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold">
-                    Q{currentLevel}/{totalQuestions}
+                    Safe: {safePadavPoints} pts
                   </span>
                 )}
               </div>
@@ -1481,11 +1486,11 @@ export default function KbcExam() {
                 className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-amber-500/20 cursor-pointer"
               >
                 <Trophy className="w-3.5 h-3.5" />
-                {showMobileLeaderboard ? 'Hide' : 'Leaderboard'}
+                {showMobileLeaderboard ? 'Hide' : 'Point Ladder'}
               </button>
             </div>
 
-            {/* 2-Column Responsive Layout: Left 8 Cols (Questions & Options) + Right 4 Cols (Contestant Points Leaderboard) */}
+            {/* 2-Column Responsive Layout: Left 8 Cols (Questions & Options) + Right 4 Cols (KBC Point Leaderboard / Ladder) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
               
               {/* Left Column: Timer, Hex Question, 4 Hex Options, Lock bar */}
@@ -1689,19 +1694,21 @@ export default function KbcExam() {
 
               </div>
 
-              {/* Right Column: Docked Live Points Leaderboard for Desktop/Laptop */}
+              {/* Right Column: Authentic KBC Point Leaderboard / Ladder */}
               <div className="hidden lg:block lg:col-span-4 sticky top-20">
-                <ContestantPointsLeaderboard
-                  players={displayPlayers}
+                <KbcPointsLadder
                   currentLevel={currentLevel}
                   totalQuestions={totalQuestions}
-                  currentUserIndex={currentUserIndex}
+                  userPoints={userPoints}
+                  isOut={isUserOut}
+                  safePoints={safePadavPoints}
+                  safePrize={safePadavPrize}
                 />
               </div>
 
             </div>
 
-            {/* Mobile Slide-Up Modal Drawer for Leaderboard */}
+            {/* Mobile Slide-Up Modal Drawer for KBC Point Ladder */}
             <AnimatePresence>
               {showMobileLeaderboard && (
                 <div className="lg:hidden fixed inset-0 z-50 flex flex-col justify-end bg-black/80 backdrop-blur-md p-3">
@@ -1714,7 +1721,7 @@ export default function KbcExam() {
                   >
                     <div className="flex items-center justify-between pb-2 border-b border-indigo-900/50">
                       <span className="text-xs sm:text-sm font-black text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-                        <Trophy className="w-4 h-4 text-amber-400" /> Contestant Points Leaderboard
+                        <Trophy className="w-4 h-4 text-amber-400" /> KBC Point Leaderboard
                       </span>
                       <button
                         type="button"
@@ -1724,11 +1731,13 @@ export default function KbcExam() {
                         Close ✕
                       </button>
                     </div>
-                    <ContestantPointsLeaderboard
-                      players={displayPlayers}
+                    <KbcPointsLadder
                       currentLevel={currentLevel}
                       totalQuestions={totalQuestions}
-                      currentUserIndex={currentUserIndex}
+                      userPoints={userPoints}
+                      isOut={isUserOut}
+                      safePoints={safePadavPoints}
+                      safePrize={safePadavPrize}
                     />
                   </motion.div>
                 </div>
