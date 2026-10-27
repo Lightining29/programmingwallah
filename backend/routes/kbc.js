@@ -2076,11 +2076,12 @@ router.post('/admin/session/update', async (req, res) => {
                 WHERE submitted_option = ? AND status != 'OUT'
               `, [pointsEarned, prizeInfo.amount, Math.min(lvl + 1, totalQ), correctOpt]);
 
-            // 2. Cut off points for teams that submitted an incorrect answer & mark OUT!
+            // 2. Cut off / lose points for teams that submitted an incorrect answer & drop place down!
             await pool.query(`
               UPDATE kbc_teams 
-              SET points = ?,
-                  score_amount = ?,
+              SET points = GREATEST(?, COALESCE(points, 0) - 100),
+                  current_level = GREATEST(1, current_level - 1),
+                  score_amount = GREATEST(?, COALESCE(score_amount, 0) - 1000),
                   wrong_count = COALESCE(wrong_count, 0) + 1,
                   status = 'OUT'
               WHERE submitted_option IS NOT NULL AND submitted_option != ? AND status != 'OUT'
@@ -2090,8 +2091,9 @@ router.post('/admin/session/update', async (req, res) => {
               // 99 = Explicit Wrong Answer triggered by Admin for the round
               await pool.query(`
                 UPDATE kbc_teams 
-                SET points = ?,
-                    score_amount = ?,
+                SET points = GREATEST(?, COALESCE(points, 0) - 100),
+                    current_level = GREATEST(1, current_level - 1),
+                    score_amount = GREATEST(?, COALESCE(score_amount, 0) - 1000),
                     wrong_count = COALESCE(wrong_count, 0) + 1,
                     status = 'OUT'
                 WHERE (submitted_option IS NOT NULL OR id = ?) AND status != 'OUT'
@@ -2140,14 +2142,16 @@ router.post('/admin/session/update', async (req, res) => {
             t.status = 'HOTSEAT';
           } else if (correctOpt === 99) {
             if ((t.submitted_option !== null || t.id === memorySession.active_team_id) && t.status !== 'OUT') {
-              t.points = safePoints;
-              t.score_amount = safePrize;
+              t.points = Math.max(safePoints, (t.points || 0) - 100);
+              t.current_level = Math.max(1, (t.current_level || 1) - 1);
+              t.score_amount = Math.max(safePrize, (t.score_amount || 0) - 1000);
               t.wrong_count = (t.wrong_count || 0) + 1;
               t.status = 'OUT';
             }
           } else if (t.submitted_option !== null && t.submitted_option !== undefined && t.status !== 'OUT') {
-            t.points = safePoints;
-            t.score_amount = safePrize;
+            t.points = Math.max(safePoints, (t.points || 0) - 100);
+            t.current_level = Math.max(1, (t.current_level || 1) - 1);
+            t.score_amount = Math.max(safePrize, (t.score_amount || 0) - 1000);
             t.wrong_count = (t.wrong_count || 0) + 1;
             t.status = 'OUT';
           }

@@ -8,12 +8,23 @@ export default function KbcPointsLadder({
   totalQuestions = 16,
   userPoints = 0,
   isOut = false,
+  isWrongAnswer = false,
   safePoints = 0,
   safePrize = '₹0'
 }) {
   const currentStepRef = useRef(null);
 
-  // Auto-scroll to active current level if ladder is long (e.g. 30 questions)
+  // Active highlighted level on the leaderboard:
+  // If player answered wrong, their place in the leaderboard moves down!
+  // Example: player was at 200 pts and gave wrong answer -> drops to 100 pts (Level 1)
+  const activeLevel = Math.max(
+    1,
+    isWrongAnswer 
+      ? Math.max(1, currentLevel - 1)
+      : Math.min(totalQuestions, Math.max(1, currentLevel))
+  );
+
+  // Auto-scroll to active current level
   useEffect(() => {
     if (currentStepRef.current) {
       currentStepRef.current.scrollIntoView({
@@ -21,7 +32,7 @@ export default function KbcPointsLadder({
         block: 'nearest'
       });
     }
-  }, [currentLevel]);
+  }, [activeLevel]);
 
   // Organize steps according to total questions (16 or 30)
   const ladderSteps = KBC_PRIZE_LADDER
@@ -79,17 +90,24 @@ export default function KbcPointsLadder({
         </div>
 
         {/* Contestant's Real-Time Points & Safe Padav Status */}
-        <div className={`p-2.5 rounded-2xl border transition-all ${
-          isOut 
-            ? 'bg-red-950/50 border-red-500/60 shadow-[0_0_15px_rgba(239,68,68,0.3)]'
-            : 'bg-[#12183d]/80 border-indigo-500/30'
+        <div className={`p-2.5 rounded-2xl border transition-all duration-500 ${
+          isWrongAnswer 
+            ? 'bg-red-950/70 border-red-500/80 shadow-[0_0_25px_rgba(239,68,68,0.5)]'
+            : isOut 
+              ? 'bg-red-950/50 border-red-500/60 shadow-[0_0_15px_rgba(239,68,68,0.3)]'
+              : 'bg-[#12183d]/80 border-indigo-500/30'
         }`}>
           <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-300 font-medium flex items-center gap-1">
+            <span className="text-slate-300 font-medium flex items-center gap-1.5">
               <span>Your Points:</span>
-              <strong className={`font-mono font-black ${isOut ? 'text-red-300 line-through' : 'text-amber-300 text-sm'}`}>
+              <strong className={`font-mono font-black ${isWrongAnswer ? 'text-red-300 text-sm animate-pulse' : isOut ? 'text-red-300 line-through' : 'text-amber-300 text-sm'}`}>
                 ⭐ {userPoints.toLocaleString()} pts
               </strong>
+              {isWrongAnswer && (
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-red-600/40 text-red-200 border border-red-500 font-mono font-bold animate-pulse">
+                  -100 pts
+                </span>
+              )}
             </span>
 
             <span className="text-[11px] font-mono font-bold text-emerald-400 flex items-center gap-1">
@@ -99,10 +117,14 @@ export default function KbcPointsLadder({
           </div>
 
           {/* Out / Cutoff Alert Banner */}
-          {isOut && (
+          {(isWrongAnswer || isOut) && (
             <div className="mt-1.5 pt-1.5 border-t border-red-500/30 flex items-center gap-1.5 text-[10px] text-red-300 font-bold">
               <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />
-              <span>OUT: Points cut off to safe padav ({safePoints} pts / {safePrize})</span>
+              <span>
+                {isWrongAnswer 
+                  ? `Wrong Answer: Place dropped down to Level ${activeLevel} (${activeLevel * 100} pts)` 
+                  : `OUT: Points locked to safe padav (${safePoints} pts / ${safePrize})`}
+              </span>
             </div>
           )}
         </div>
@@ -113,43 +135,59 @@ export default function KbcPointsLadder({
         totalQuestions > 16 ? 'max-h-[460px] sm:max-h-[520px]' : 'max-h-[460px]'
       }`}>
         {ladderSteps.map(step => {
-          const isCurrent = step.level === currentLevel && !isOut;
-          const isPassed = step.level < currentLevel;
+          const isCurrent = step.level === activeLevel;
+          const isPassed = step.level < activeLevel;
+          const isDroppedStep = isWrongAnswer && step.level === activeLevel;
 
           return (
             <motion.div
               key={step.level}
               ref={isCurrent ? currentStepRef : null}
               layout
-              className={`flex items-center justify-between px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                isCurrent
-                  ? 'bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-slate-950 font-black shadow-lg shadow-amber-500/40 scale-[1.02] border-2 border-white'
-                  : isPassed
-                    ? 'bg-emerald-950/60 border border-emerald-500/40 text-emerald-200'
-                    : step.isSafe
-                      ? 'bg-amber-500/15 border border-amber-400/40 text-amber-200'
-                      : 'bg-slate-950/50 border border-indigo-950/60 text-slate-300 hover:text-white'
+              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              className={`flex items-center justify-between px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-700 ${
+                isDroppedStep
+                  ? 'bg-gradient-to-r from-red-600 via-rose-500 to-amber-500 text-white font-black shadow-[0_0_25px_rgba(239,68,68,0.8)] scale-[1.02] border-2 border-red-300 animate-pulse'
+                  : isCurrent
+                    ? 'bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-slate-950 font-black shadow-lg shadow-amber-500/40 scale-[1.02] border-2 border-white'
+                    : isPassed
+                      ? 'bg-emerald-950/60 border border-emerald-500/40 text-emerald-200'
+                      : step.isSafe
+                        ? 'bg-amber-500/15 border border-amber-400/40 text-amber-200'
+                        : 'bg-slate-950/50 border border-indigo-950/60 text-slate-300 hover:text-white'
               }`}
             >
               {/* Left: Level Number & Current Marker */}
               <div className="flex items-center gap-2">
                 <span className={`w-6 text-right font-mono text-xs font-black ${
-                  isCurrent ? 'text-slate-950' : isPassed ? 'text-emerald-400' : 'text-amber-400'
+                  isDroppedStep 
+                    ? 'text-white' 
+                    : isCurrent 
+                      ? 'text-slate-950' 
+                      : isPassed 
+                        ? 'text-emerald-400' 
+                        : 'text-amber-400'
                 }`}>
-                  {isCurrent ? '◆' : isPassed ? <Check className="w-3.5 h-3.5 inline text-emerald-400 stroke-[3]" /> : step.level}
+                  {isDroppedStep ? '▼' : isCurrent ? '◆' : isPassed ? <Check className="w-3.5 h-3.5 inline text-emerald-400 stroke-[3]" /> : step.level}
                 </span>
 
                 <span className={`font-mono text-[11px] font-bold ${
-                  isCurrent ? 'text-slate-950 font-black' : isPassed ? 'text-emerald-300' : 'text-white'
+                  isDroppedStep ? 'text-white font-black' : isCurrent ? 'text-slate-950 font-black' : isPassed ? 'text-emerald-300' : 'text-white'
                 }`}>
-                  {step.points.toLocaleString()} pts
+                  {step.points.toLocaleString()} pts {isDroppedStep ? '(DROPPED)' : ''}
                 </span>
               </div>
 
               {/* Right: Prize Amount & Padav Badge */}
               <div className="flex items-center gap-2">
                 <span className={`text-xs font-black ${
-                  isCurrent ? 'text-slate-950' : step.isSafe ? 'text-amber-300' : 'text-slate-200'
+                  isDroppedStep 
+                    ? 'text-white' 
+                    : isCurrent 
+                      ? 'text-slate-950' 
+                      : step.isSafe 
+                        ? 'text-amber-300' 
+                        : 'text-slate-200'
                 }`}>
                   {step.prize}
                 </span>
@@ -176,7 +214,7 @@ export default function KbcPointsLadder({
           Safe Padavs: {totalQuestions > 16 ? 'Q5, Q10, Q15, Q20, Q25, Q30' : 'Q5, Q10, Q15, Q16'}
         </span>
         <span className="text-red-400/80 font-mono text-[9px]">
-          *Cutoff on wrong answer
+          *Wrong answer = -100 pts & place drops
         </span>
       </div>
 

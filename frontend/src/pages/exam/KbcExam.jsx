@@ -185,12 +185,14 @@ export default function KbcExam() {
               status: 'HOTSEAT'
             };
           } else {
-            // User OUT -> Points CUTOFF applied!
+            // User gives wrong answer: loses 100 points and place in leaderboard drops down!
+            const lostPoints = Math.max(cutoffPoints, (p.points || 0) - 100);
             return {
               ...p,
-              points: cutoffPoints,
+              points: lostPoints,
+              currentLevel: Math.max(1, p.currentLevel - 1),
               wrongCount: p.wrongCount + 1,
-              lastPointsGained: 0,
+              lastPointsGained: -100,
               lastStatus: 'wrong',
               status: 'OUT'
             };
@@ -215,12 +217,14 @@ export default function KbcExam() {
               status: 'HOTSEAT'
             };
           } else {
-            // Classmate OUT -> Points CUTOFF applied!
+            // Classmate gives wrong answer: loses 100 points and place drops down!
+            const lostPoints = Math.max(cutoffPoints, (p.points || 0) - 100);
             return {
               ...p,
-              points: cutoffPoints,
+              points: lostPoints,
+              currentLevel: Math.max(1, p.currentLevel - 1),
               wrongCount: p.wrongCount + 1,
-              lastPointsGained: 0,
+              lastPointsGained: -100,
               lastStatus: 'wrong',
               status: 'OUT'
             };
@@ -583,6 +587,8 @@ export default function KbcExam() {
                     setIsCelebratingCorrect(false);
                     // Play uploaded wrong answer audio on contestant laptop!
                     kbcAudio.playWrong();
+                    // Place in point leaderboard drops down!
+                    setCurrentLevel(prev => Math.max(1, prev - 1));
                     const correctLetter = sess.revealed_correct >= 0 && sess.revealed_correct <= 3 
                       ? String.fromCharCode(65 + sess.revealed_correct) 
                       : '';
@@ -901,6 +907,8 @@ export default function KbcExam() {
       setAnswerStatus('wrong');
       const correctLetter = String.fromCharCode(65 + currentQ.correct);
       setHostQuote(AMITABH_QUOTES.wrongAnswer(correctLetter));
+      // Drop current level down so place in leaderboard goes down!
+      setCurrentLevel(prev => Math.max(1, prev - 1));
       finishGame(false, false);
     }
   };
@@ -1701,6 +1709,7 @@ export default function KbcExam() {
                   totalQuestions={totalQuestions}
                   userPoints={userPoints}
                   isOut={isUserOut}
+                  isWrongAnswer={isWrongAnswer}
                   safePoints={safePadavPoints}
                   safePrize={safePadavPrize}
                 />
@@ -1736,6 +1745,7 @@ export default function KbcExam() {
                       totalQuestions={totalQuestions}
                       userPoints={userPoints}
                       isOut={isUserOut}
+                      isWrongAnswer={isWrongAnswer}
                       safePoints={safePadavPoints}
                       safePrize={safePadavPrize}
                     />
