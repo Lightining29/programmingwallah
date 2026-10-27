@@ -1843,6 +1843,8 @@ export default function AdminKbcManager() {
                           className={`p-2.5 rounded-xl border flex items-center justify-between text-xs transition ${
                             isTop
                               ? 'bg-amber-950/40 border-amber-500/60 text-amber-200'
+                              : t.status === 'OUT' || t.status === 'ELIMINATED'
+                              ? 'bg-red-950/30 border-red-900/40 text-red-300'
                               : hasSubmitted
                               ? 'bg-cyan-950/30 border-cyan-500/40 text-cyan-200'
                               : 'bg-slate-950 border-slate-800 text-slate-400'
@@ -1856,7 +1858,12 @@ export default function AdminKbcManager() {
                             </div>
                             <div className="text-[10px] text-slate-400 font-mono flex items-center gap-2">
                               <span>{t.leader_name}</span>
-                              <span className="text-amber-400 font-bold font-sans">⭐ {t.points || 0} pts</span>
+                              <span className={`font-bold font-sans ${t.status === 'OUT' || t.status === 'ELIMINATED' ? 'text-red-400 line-through' : 'text-amber-400'}`}>
+                                ⭐ {t.points || 0} pts
+                              </span>
+                              {(t.status === 'OUT' || t.status === 'ELIMINATED') && (
+                                <span className="text-[9px] px-1 rounded bg-red-500/20 text-red-400 border border-red-500/30">OUT</span>
+                              )}
                             </div>
                           </div>
 
@@ -2019,11 +2026,21 @@ export default function AdminKbcManager() {
                           </td>
                           <td className="px-4 py-3.5">
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                              t.status === 'CONNECTED' 
+                              t.status === 'HOTSEAT'
+                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                                : t.status === 'CONNECTED' 
                                 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
+                                : t.status === 'OUT' || t.status === 'ELIMINATED'
+                                ? 'bg-red-500/20 text-red-300 border border-red-500/30'
                                 : 'bg-slate-800 text-slate-400'
                             }`}>
-                              {t.status === 'CONNECTED' ? 'ONLINE 💻' : 'REGISTERED'}
+                              {t.status === 'HOTSEAT' 
+                                ? '🔥 HOTSEAT' 
+                                : t.status === 'CONNECTED' 
+                                ? 'ONLINE 💻' 
+                                : t.status === 'OUT' || t.status === 'ELIMINATED'
+                                ? '🔴 OUT (CUTOFF)'
+                                : 'REGISTERED'}
                             </span>
                           </td>
                           <td className="px-4 py-3.5">

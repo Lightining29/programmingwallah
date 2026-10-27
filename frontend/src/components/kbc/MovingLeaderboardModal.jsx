@@ -9,10 +9,8 @@ export default function MovingLeaderboardModal({
   currentLevel = 1,
   isAdmin = false
 }) {
-  // Filter to only players who are participating/connected in this session
-  const sessionPlayers = players.filter(p => 
-    p.isUser || p.status === 'CONNECTED' || p.status === 'HOTSEAT' || (p.points && p.points > 0)
-  );
+  // Use session participants provided from displayPlayers
+  const sessionPlayers = Array.isArray(players) ? players : [];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
@@ -135,9 +133,13 @@ export default function MovingLeaderboardModal({
                           )}
                         </div>
                         <div className="text-[9px] flex items-center gap-1.5 text-slate-400">
-                          <span className="text-slate-300">{player.correctCount} Correct</span>
+                          <span className="text-slate-300">{player.correctCount || 0} Correct</span>
                           <span>•</span>
-                          <span className="text-emerald-400 font-medium">🟢 Live</span>
+                          {player.status === 'OUT' || player.status === 'ELIMINATED' ? (
+                            <span className="text-red-400 font-medium">🔴 Cutoff</span>
+                          ) : (
+                            <span className="text-emerald-400 font-medium">🟢 Live</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -161,8 +163,12 @@ export default function MovingLeaderboardModal({
 
                       {/* Points */}
                       <div className="text-right min-w-[65px]">
-                        <div className="text-xs font-black font-mono text-amber-400">
-                          {player.points.toLocaleString()} <span className="text-[9px] font-sans text-amber-300/80">pts</span>
+                        <div className={`text-xs font-black font-mono ${
+                          player.status === 'OUT' || player.status === 'ELIMINATED'
+                            ? 'text-red-400 line-through'
+                            : 'text-amber-400'
+                        }`}>
+                          {(player.points || 0).toLocaleString()} <span className="text-[9px] font-sans text-amber-300/80">pts</span>
                         </div>
                         {gainedPoints && (
                           <span className="text-[10px] font-black text-emerald-400 flex items-center justify-end gap-0.5">

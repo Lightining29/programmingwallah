@@ -161,7 +161,7 @@ export default function KbcExam() {
       else if (lvl > 5) safeLvl = 5;
       else safeLvl = 0;
     }
-    return safeLvl * 100;
+    return (safeLvl * (safeLvl + 1) / 2) * 100;
   };
 
   // Calculate live points after every question and smoothly re-rank
@@ -299,120 +299,122 @@ export default function KbcExam() {
     return raw.charAt(0).toUpperCase() + raw.slice(1);
   };
 
-  // Synchronize team mode top_teams if available from Hostinger MySQL
+  // Synchronize live leaderboard based on participation mode (TEAM vs SOLO)
   const displayPlayers = useMemo(() => {
-    if (Array.isArray(adminSession?.top_teams) && adminSession.top_teams.length > 0) {
-      // Only keep teams actively playing in this session (including OUT players)
-      const activeTeamsInSession = adminSession.top_teams.filter(t => 
-        t.status === 'CONNECTED' || t.status === 'HOTSEAT' || t.status === 'OUT' || t.status === 'ELIMINATED' || (team && (t.id === team.id || t.access_code === team.access_code))
-      );
+    // ── CASE 1: TEAM MODE (Connected with Laptop Access Code to Admin Live Game) ──
+    if (team) {
+      if (Array.isArray(adminSession?.top_teams) && adminSession.top_teams.length > 0) {
+        // Keep all session teams (CONNECTED, HOTSEAT, OUT, ELIMINATED, REGISTERED)
+        const sourceList = adminSession.top_teams;
 
-      const sourceList = activeTeamsInSession.length > 0 ? activeTeamsInSession : adminSession.top_teams;
+        const teams = sourceList.map((t) => {
+          const isUser = Boolean(
+            (team && (t.id === team.id || t.access_code === team.access_code)) ||
+            (playerName && (
+              (t.team_name && t.team_name.toLowerCase() === playerName.toLowerCase()) ||
+              (t.leader_name && t.leader_name.toLowerCase() === playerName.toLowerCase())
+            ))
+          );
+          const displayName = formatDisplayName(t.team_name, t.leader_name, t.access_code);
+          const pts = isUser ? (team.points !== undefined ? Number(team.points) : Number(t.points) || 0) : Number(t.points) || 0;
+          const correctCount = isUser ? (team.correct_count !== undefined ? Number(team.correct_count) : Number(t.correct_count) || 0) : Number(t.correct_count) || 0;
+          const status = isUser ? (team.status || t.status || 'CONNECTED') : (t.status || 'CONNECTED');
 
-      const teams = sourceList.map((t) => {
-        const isUser = Boolean(
-          (team && (t.id === team.id || t.access_code === team.access_code)) ||
-          (playerName && (
-            (t.team_name && t.team_name.toLowerCase() === playerName.toLowerCase()) ||
-            (t.leader_name && t.leader_name.toLowerCase() === playerName.toLowerCase())
-          ))
-        );
-        const displayName = formatDisplayName(t.team_name, t.leader_name, t.access_code);
-        return {
-          id: `team-${t.id || t.access_code}`,
-          name: displayName,
-          isUser,
-          points: Number(t.points) || 0,
-          currentLevel: t.current_level || 1,
-          correctCount: t.correct_count || 0,
-          wrongCount: t.wrong_count || 0,
-          lastPointsGained: isUser && answerStatus === 'correct' ? currentLevel * 100 : 0,
-          lastStatus: isUser ? answerStatus : (t.status === 'HOTSEAT' ? 'correct' : null),
-          avatar: '🏆',
-          status: t.status || 'CONNECTED',
-          submittedOption: t.submitted_option
-        };
-      });
+          return {
+            id: `team-${t.id || t.access_code}`,
+            name: displayName,
+            isUser,
+            points: pts,
+            currentLevel: t.current_level || 1,
+            correctCount,
+            wrongCount: t.wrong_count || 0,
+            lastPointsGained: isUser && answerStatus === 'correct' ? currentLevel * 100 : 0,
+            lastStatus: isUser ? answerStatus : (status === 'HOTSEAT' ? 'correct' : null),
+            avatar: '🏆',
+            status,
+            submittedOption: t.submitted_option
+          };
+        });
 
-      // If current user is not in top_teams, include user card
-      const userExists = teams.some(t => t.isUser);
-      if (!userExists) {
-        teams.push({
-          id: `team-user-${team?.id || 'current'}`,
-          name: team ? (team.leader_name || team.team_name) : (playerName || 'Hotseat Contestant'),
-          isUser: true,
-          points: team ? Number(team.points) || 0 : 0,
-          currentLevel: currentLevel,
-          correctCount: team ? Number(team.correct_count) || 0 : 0,
-          wrongCount: 0,
-          lastPointsGained: answerStatus === 'correct' ? currentLevel * 100 : 0,
-          lastStatus: answerStatus,
-          avatar: '👤',
-          status: team?.status || 'CONNECTED',
-          submittedOption: selectedOption
+        // If current team is not in top_teams list, include team card
+        const userExists = teams.some(t => t.isUser);
+        if (!userExists) {
+          teams.push({
+            id: `team-user-${team.id || 'current'}`,
+            name: formatDisplayName(team.team_name, team.leader_name, team.access_code),
+            isUser: true,
+            points: Number(team.points) || 0,
+            currentLevel: currentLevel,
+            correctCount: Number(team.correct_count) || 0,
+            wrongCount: Number(team.wrong_count) || 0,
+            lastPointsGained: answerStatus === 'correct' ? currentLevel * 100 : 0,
+            lastStatus: answerStatus,
+            avatar: '👤',
+            status: team.status || 'CONNECTED',
+            submittedOption: selectedOption
+          });
+        }
+
+        const sorted = teams.sort((a, b) => {
+          const aActive = a.status !== 'OUT' && a.status !== 'ELIMINATED' ? 1 : 0;
+          const bActive = b.status !== 'OUT' && b.status !== 'ELIMINATED' ? 1 : 0;
+          if (bActive !== aActive) return bActive - aActive;
+          if (b.points !== a.points) return b.points - a.points;
+          return b.correctCount - a.correctCount;
+        });
+
+        return sorted.map((p, idx) => {
+          const rank = idx + 1;
+          const prev = previousTeamsRef.current[p.id];
+          const prevRank = prev?.rank;
+          const rankDelta = (prevRank !== undefined) ? (prevRank - rank) : 0;
+          return {
+            ...p,
+            rank,
+            rankDelta
+          };
         });
       }
 
-      const sorted = teams.sort((a, b) => {
-        const aActive = a.status !== 'OUT' && a.status !== 'ELIMINATED' ? 1 : 0;
-        const bActive = b.status !== 'OUT' && b.status !== 'ELIMINATED' ? 1 : 0;
-        if (bActive !== aActive) return bActive - aActive;
-        if (b.points !== a.points) return b.points - a.points;
-        return b.correctCount - a.correctCount;
-      });
-
-      return sorted.map((p, idx) => {
-        const rank = idx + 1;
-        const prev = previousTeamsRef.current[p.id];
-        const prevRank = prev?.rank;
-        const prevPoints = prev?.points;
-        const rankDelta = (prevRank !== undefined) ? (prevRank - rank) : 0;
-        const gainedFromDiff = (prevPoints !== undefined && p.points > prevPoints) ? (p.points - prevPoints) : 0;
-        const finalPointsGained = gainedFromDiff > 0 ? gainedFromDiff : p.lastPointsGained;
-
-        previousTeamsRef.current[p.id] = { rank, points: p.points };
-
-        return {
-          ...p,
-          rank,
-          rankDelta,
-          lastPointsGained: finalPointsGained
-        };
-      });
-    }
-
-    // In Team mode or live session with no other teams, only show the connected user!
-    if (team) {
+      // Single connected laptop team
       return [{
         id: `team-user-${team.id}`,
-        name: team.leader_name || team.team_name,
+        name: formatDisplayName(team.team_name, team.leader_name, team.access_code),
         isUser: true,
         points: Number(team.points) || 0,
         currentLevel: currentLevel,
         correctCount: Number(team.correct_count) || 0,
-        wrongCount: 0,
+        wrongCount: Number(team.wrong_count) || 0,
         lastPointsGained: answerStatus === 'correct' ? currentLevel * 100 : 0,
         lastStatus: answerStatus,
         avatar: '👤',
-        status: 'CONNECTED',
+        status: team.status || 'CONNECTED',
         rank: 1,
         rankDelta: 0
       }];
     }
 
-    return livePlayers.map((p, idx) => {
+    // ── CASE 2: SOLO MODE (Practice Hotseat against dynamic classmates simulation) ──
+    const sortedSolo = [...livePlayers].sort((a, b) => {
+      const aActive = a.status !== 'OUT' && a.status !== 'ELIMINATED' ? 1 : 0;
+      const bActive = b.status !== 'OUT' && b.status !== 'ELIMINATED' ? 1 : 0;
+      if (bActive !== aActive) return bActive - aActive;
+      if (b.points !== a.points) return b.points - a.points;
+      return (b.correctCount || 0) - (a.correctCount || 0);
+    });
+
+    return sortedSolo.map((p, idx) => {
       const rank = idx + 1;
       const prev = previousTeamsRef.current[p.id];
       const prevRank = prev?.rank;
       const rankDelta = (prevRank !== undefined) ? (prevRank - rank) : 0;
-      previousTeamsRef.current[p.id] = { rank, points: p.points };
       return {
         ...p,
         rank,
         rankDelta
       };
     });
-  }, [team, adminSession?.top_teams, livePlayers, answerStatus, currentLevel, playerName, selectedOption]);
+  }, [playMode, team, adminSession?.top_teams, livePlayers, answerStatus, currentLevel, playerName, selectedOption]);
 
   const currentUserIndex = displayPlayers.findIndex(p => p.isUser);
   const currentUserRank = currentUserIndex >= 0 ? currentUserIndex + 1 : 1;
@@ -465,13 +467,15 @@ export default function KbcExam() {
             // Synchronize live points and stats from top_teams
             if (Array.isArray(sess.top_teams)) {
               const found = sess.top_teams.find(t => t.id === team.id || t.access_code === team.access_code);
-              if (found && (team.points !== found.points || team.current_level !== found.current_level)) {
+              if (found) {
                 setTeam(prev => ({
                   ...prev,
-                  points: found.points || 0,
-                  correct_count: found.correct_count || 0,
-                  score_amount: found.score_amount || 0,
-                  current_level: found.current_level || prev.current_level
+                  points: Number(found.points) || 0,
+                  correct_count: Number(found.correct_count) || 0,
+                  wrong_count: Number(found.wrong_count) || 0,
+                  score_amount: Number(found.score_amount) || 0,
+                  current_level: found.current_level || prev.current_level,
+                  status: found.status || prev.status
                 }));
               }
             }
@@ -542,11 +546,7 @@ export default function KbcExam() {
 
                   // Explicit wrong answer from Admin or mismatch with contestant option
                   const isWrongExplicit = sess.revealed_correct === 99;
-                  const isCorrect = !isWrongExplicit && (
-                    selectedOption !== null 
-                      ? Number(selectedOption) === Number(sess.revealed_correct)
-                      : true
-                  );
+                  const isCorrect = !isWrongExplicit && selectedOption !== null && Number(selectedOption) === Number(sess.revealed_correct);
                   setAnswerStatus(isCorrect ? 'correct' : 'wrong');
                   calculateRoundPoints(isCorrect, 0);
 
@@ -912,6 +912,7 @@ export default function KbcExam() {
     setIsWrongAnswer(false);
     setShowBroadcastLeaderboard(false);
     userDismissedLeaderboardRef.current = false;
+    setLivePlayers(prev => prev.map(p => ({ ...p, lastPointsGained: 0, lastStatus: null })));
     const nextPrize = KBC_PRIZE_LADDER[nextLvl - 1];
     setHostQuote(AMITABH_QUOTES.questionIntro(nextLvl, nextPrize.prize));
     setLaserUpwardTrigger(prev => !prev);

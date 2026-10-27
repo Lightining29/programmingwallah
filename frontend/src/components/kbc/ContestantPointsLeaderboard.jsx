@@ -19,10 +19,11 @@ export default function ContestantPointsLeaderboard({
     const next = milestones.find(m => m >= lvl);
     if (!next) return null;
     const ladderItem = KBC_PRIZE_LADDER[next - 1] || { prize: `₹${next * 10000}` };
+    const safePoints = (next * (next + 1) / 2) * 100;
     return {
       level: next,
       prize: ladderItem.prize,
-      points: next * 100
+      points: safePoints
     };
   };
 
@@ -244,7 +245,9 @@ export default function ContestantPointsLeaderboard({
       <div className="pt-2 border-t border-indigo-900/40 flex items-center justify-between text-[10px] text-slate-400 font-sans">
         <span className="flex items-center gap-1">
           <ShieldCheck className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-          Safe Padavs: Q5, Q10, Q15, Q20, Q25, Q30
+          {totalQuestions > 16 
+            ? 'Safe Padavs: Q5 (1,500 pts), Q10 (5,500 pts), Q15 (12,000 pts)...'
+            : 'Safe Padavs: Q5 (1,500 pts), Q10 (5,500 pts), Q15 (12,000 pts)'}
         </span>
         <span className="text-red-400/90 font-mono text-[9px]">
           *Wrong answer = Points Cutoff
