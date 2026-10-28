@@ -654,6 +654,29 @@ router.get('/test-sets/:id/questions', async (req, res) => {
         ORDER BY level ASC, is_active DESC, created_at ASC
       `, [setId, setId]);
 
+      // Clean up legacy auto-populated SQL questions from non-SQL custom test sets
+      if (setId.startsWith('set-')) {
+        try {
+          const [targetSet] = await pool.query('SELECT topic FROM kbc_test_sets WHERE id = ?', [setId]);
+          const setTopic = targetSet[0]?.topic?.toLowerCase() || '';
+          if (setTopic && !setTopic.includes('sql')) {
+            await pool.query(`
+              DELETE FROM kbc_questions 
+              WHERE test_set_id = ? AND id LIKE CONCAT(?, '_q_l%')
+            `, [setId, setId]);
+
+            // Re-fetch clean rows
+            const [cleanRows] = await pool.query(`
+              SELECT id, level, topic, question, options_json, correct, explanation, is_active 
+              FROM kbc_questions 
+              WHERE test_set_id = ?
+              ORDER BY level ASC, is_active DESC, created_at ASC
+            `, [setId]);
+            rows = cleanRows;
+          }
+        } catch (e) {}
+      }
+
       // Only auto-populate curated questions if it's the specific pre-seeded default sets:
       if (rows.length === 0 && (setId === 'kbc-html-quiz' || setId === 'kbc-excel-analytics' || setId === 'kbc-sql-mastery')) {
         for (let l = 1; l <= 16; l++) {
