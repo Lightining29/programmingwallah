@@ -26,8 +26,10 @@ export default function AdminKbcManager() {
   const [testSetsLoading, setTestSetsLoading] = useState(false);
   const [showCreateSetModal, setShowCreateSetModal] = useState(false);
   const [newSetTitle, setNewSetTitle] = useState('');
-  const [newSetTopic, setNewSetTopic] = useState('SQL');
+  const [newSetTopic, setNewSetTopic] = useState('');
   const [newSetCode, setNewSetCode] = useState('');
+  const [manualLevel, setManualLevel] = useState(1);
+  const [editingQuestionId, setEditingQuestionId] = useState(null);
   const [selectedSetForQuestions, setSelectedSetForQuestions] = useState(null);
   const [setQuestionsList, setSetQuestionsList] = useState([]);
   const [setQuestionsLoading, setSetQuestionsLoading] = useState(false);
@@ -166,14 +168,14 @@ export default function AdminKbcManager() {
       if (data.success) {
         setShowCreateSetModal(false);
         setNewSetTitle('');
-        setNewSetTopic('SQL');
+        setNewSetTopic('');
         setNewSetCode('');
         await fetchTestSets();
         Swal.fire({
           icon: 'success',
           title: 'Quiz Box Created!',
-          text: `"${newSetTitle}" has been saved. You can now select it to start KBC anytime!`,
-          timer: 1800,
+          text: `"${newSetTitle}" created with 0 questions. You can now add your custom questions manually or pick from the bank!`,
+          timer: 2200,
           showConfirmButton: false,
           toast: true,
           position: 'top-end'
@@ -997,36 +999,165 @@ export default function AdminKbcManager() {
     }
   };
 
-  const handleAddCustomQuestion = async (e) => {
-    e.preventDefault();
+  const handleOpenManualAddForSet = (setObj) => {
+    const targetSet = setObj || selectedSetForQuestions;
+    if (!targetSet) return;
+    setEditingQuestionId(null);
+    setNewTopic(targetSet.topic || '');
+    // Determine the next empty level in this set if any
+    const existingLevels = new Set(setQuestionsList.map(q => Number(q.level)));
+    let nextLvl = 1;
+    for (let l = 1; l <= 16; l++) {
+      if (!existingLevels.has(l)) {
+        nextLvl = l;
+        break;
+      }
+    }
+    setManualLevel(nextLvl);
+    resetForm();
+    setShowAddModal(true);
+  };
+
+  const handleEditSetQuestion = (q) => {
+    setEditingQuestionId(q.id);
+    setManualLevel(q.level || 1);
+    setNewTopic(q.topic || '');
+    setNewQuestion(q.question || '');
+    setNewOptions(Array.isArray(q.options) && q.options.length === 4 ? [...q.options] : ['', '', '', '']);
+    setNewCorrect(typeof q.correct === 'number' ? q.correct : 0);
+    setNewExplanation(q.explanation || '');
+    setShowAddModal(true);
+  };
+
+  const handleAddCustomQuestion = async (e, keepOpenForNext = false) => {
+    if (e && e.preventDefault) e.preventDefault();
     if (!newQuestion.trim() || newOptions.some(o => !o.trim())) {
       Swal.fire('Required', 'Please fill in question and all 4 options.', 'warning');
       return;
     }
 
     try {
-      const res = await fetch('/api/kbc/admin/add-custom', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          level: selectedLevel,
-          topic: newTopic,
-          question: newQuestion,
-          options: newOptions,
-          correct: newCorrect,
-          explanation: newExplanation,
-          setAsActive: setImmediatelyActive
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        setShowAddModal(false);
-        resetForm();
-        fetchAdminKbcData();
-        fetchSessionStatus();
-        Swal.fire('Success', `Question saved into Hostinger MySQL!`, 'success');
+      if (selectedSetForQuestions) {
+        if (editingQuestionId) {
+          // Update existing question in test set
+          const res = await fetch(`/api/kbc/admin/test-sets/${selectedSetForQuestions.id}/questions/update`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              questionId: editingQuestionId,
+              level: manualLevel || selectedLevel,
+              topic: newTopic.trim() || selectedSetForQuestions.topic || 'General',
+              question: newQuestion.trim(),
+              options: newOptions.map(o => o.trim()),
+              correct: newCorrect,
+              explanation: newExplanation.trim()
+            })
+          });
+          const data = await res.json();
+          if (data.success) {
+            setSetQuestionsList(prev => prev.map(q => q.id === editingQuestionId ? {
+              ...q,
+              level: manualLevel || selectedLevel,
+              topic: newTopic.trim() || selectedSetForQuestions.topic || 'General',
+              question: newQuestion.trim(),
+              options: newOptions.map(o => o.trim()),
+              correct: newCorrect,
+              explanation: newExplanation.trim()
+            } : q));
+            setShowAddModal(false);
+            setEditingQuestionId(null);
+            resetForm();
+            Swal.fire({
+              icon: 'success',
+              title: 'Question Updated!',
+              text: 'Changes saved into this Quiz Box.',
+              timer: 1500,
+              showConfirmButton: false,
+              toast: true,
+              position: 'top-end'
+            });
+          } else {
+            Swal.fire('Error', data.message || 'Failed to update question', 'error');
+          }
+        } else {
+          // Add brand new question into test set
+          const res = await fetch(`/api/kbc/admin/test-sets/${selectedSetForQuestions.id}/questions/add`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              level: manualLevel || selectedLevel,
+              topic: newTopic.trim() || selectedSetForQuestions.topic || 'General',
+              question: newQuestion.trim(),
+              options: newOptions.map(o => o.trim()),
+              correct: newCorrect,
+              explanation: newExplanation.trim(),
+              shuffle: false
+            })
+          });
+          const data = await res.json();
+          if (data.success) {
+            setSetQuestionsList(prev => [...prev, data.question]);
+            setTestSets(prev => prev.map(t => t.id === selectedSetForQuestions.id ? { ...t, question_count: data.activeCount || prev.length + 1 } : t));
+
+            if (keepOpenForNext) {
+              setManualLevel(prev => Math.min(16, (Number(prev) || 1) + 1));
+              resetForm();
+              Swal.fire({
+                icon: 'success',
+                title: 'Question Added!',
+                text: `Saved to Level ${manualLevel}. Ready for next question.`,
+                timer: 1200,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
+              });
+            } else {
+              setShowAddModal(false);
+              resetForm();
+              Swal.fire({
+                icon: 'success',
+                title: 'Question Saved!',
+                text: `Question added to Level ${manualLevel || selectedLevel} in "${selectedSetForQuestions.title}".`,
+                timer: 1800,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
+              });
+            }
+          } else {
+            Swal.fire('Error', data.message || 'Failed to add question', 'error');
+          }
+        }
+      } else {
+        // Global / Level tree view add
+        const res = await fetch('/api/kbc/admin/add-custom', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            level: manualLevel || selectedLevel,
+            topic: newTopic.trim() || 'General',
+            question: newQuestion.trim(),
+            options: newOptions.map(o => o.trim()),
+            correct: newCorrect,
+            explanation: newExplanation.trim(),
+            setAsActive: setImmediatelyActive,
+            shuffle: false
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          setShowAddModal(false);
+          resetForm();
+          fetchAdminKbcData();
+          fetchSessionStatus();
+          Swal.fire('Success', `Question saved into Hostinger MySQL!`, 'success');
+        } else {
+          Swal.fire('Error', data.message || 'Failed to save question', 'error');
+        }
       }
-    } catch (err) {}
+    } catch (err) {
+      Swal.fire('Error', 'Unable to save question', 'error');
+    }
   };
 
   const handleGenerateAiQuestion = async (customTopic) => {
@@ -2652,43 +2783,88 @@ export default function AdminKbcManager() {
         </div>
       )}
 
-      {/* ── MODAL: ADD CUSTOM QUESTION ── */}
+      {/* ── MODAL: ADD / EDIT CUSTOM QUESTION ── */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-amber-400/40 rounded-3xl w-full max-w-2xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-slate-900 border border-emerald-500/40 rounded-3xl w-full max-w-2xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <PlusCircle className="w-5 h-5 text-amber-400" />
-                Add Custom MERN / SQL Question (Level {selectedLevel})
+              <h3 className="text-base font-black text-white flex items-center gap-2">
+                <PlusCircle className="w-5 h-5 text-emerald-400" />
+                {editingQuestionId
+                  ? `Edit Question (Level ${manualLevel})`
+                  : selectedSetForQuestions
+                    ? `Add Question to "${selectedSetForQuestions.title}"`
+                    : `Add Custom Question (Level ${manualLevel || selectedLevel})`
+                }
               </h3>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-white text-base">✕</button>
+              <button 
+                onClick={() => {
+                  setShowAddModal(false);
+                  setEditingQuestionId(null);
+                  resetForm();
+                }} 
+                className="text-slate-400 hover:text-white text-base p-1 rounded-lg cursor-pointer"
+              >
+                ✕
+              </button>
             </div>
 
             <form onSubmit={handleAddCustomQuestion} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">Topic / Category</label>
-                <select
-                  value={newTopic}
-                  onChange={e => setNewTopic(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                >
-                  <option value="React">React (Hooks, VDOM, Fiber, Concurrent)</option>
-                  <option value="MongoDB">MongoDB (Aggregation, BSON, Sharding, Replica)</option>
-                  <option value="Node.js">Node.js (Event Loop, V8, Streams, Worker Threads)</option>
-                  <option value="Express">Express.js (Routing, Middleware, Security)</option>
-                  <option value="SQL">SQL (PostgreSQL / MySQL, Joins, Indexes, ACID)</option>
-                  <option value="MERN & SQL Architecture">MERN & SQL Architecture</option>
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Level & Prize Amount *
+                  </label>
+                  <select
+                    value={manualLevel}
+                    onChange={e => setManualLevel(Number(e.target.value))}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-400 cursor-pointer"
+                  >
+                    {KBC_PRIZE_LADDER.map(s => (
+                      <option key={s.level} value={s.level}>
+                        Level {s.level} — {s.prize} ({s.points} pts){s.isSafe ? ' ★ SAFE' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Topic / Category *
+                  </label>
+                  <input
+                    type="text"
+                    list="kbc-topic-datalist"
+                    value={newTopic}
+                    onChange={e => setNewTopic(e.target.value)}
+                    placeholder="e.g. Python OOPs, Functions, HTML..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-400"
+                    required
+                  />
+                  <datalist id="kbc-topic-datalist">
+                    <option value="Python" />
+                    <option value="Python OOPs" />
+                    <option value="JavaScript" />
+                    <option value="HTML & CSS" />
+                    <option value="Java" />
+                    <option value="React" />
+                    <option value="Node.js" />
+                    <option value="Express" />
+                    <option value="MongoDB" />
+                    <option value="SQL" />
+                    <option value="General Knowledge" />
+                  </datalist>
+                </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">Question Text</label>
+                <label className="block text-xs font-bold text-slate-300 mb-1">Question Text *</label>
                 <textarea
                   value={newQuestion}
                   onChange={e => setNewQuestion(e.target.value)}
-                  placeholder="e.g. Which React Hook is used to memoize expensive function calculations?"
+                  placeholder="e.g. What is the difference between a class and an object in Python?"
                   rows={3}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-400"
                   required
                 />
               </div>
@@ -2749,30 +2925,47 @@ export default function AdminKbcManager() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">Explanation</label>
+                <label className="block text-xs font-bold text-slate-300 mb-1">Explanation (Optional)</label>
                 <textarea
                   value={newExplanation}
                   onChange={e => setNewExplanation(e.target.value)}
-                  placeholder="Brief reason or concept explanation..."
+                  placeholder="Brief reason or concept explanation shown after answer reveal..."
                   rows={2}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-amber-400"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-emerald-400"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-800">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold cursor-pointer"
+                  onClick={() => {
+                    setShowAddModal(false);
+                    setEditingQuestionId(null);
+                    resetForm();
+                  }}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold cursor-pointer"
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-bold text-xs shadow-lg cursor-pointer"
-                >
-                  Save Question
-                </button>
+
+                <div className="flex items-center gap-2">
+                  {selectedSetForQuestions && !editingQuestionId && (
+                    <button
+                      type="button"
+                      onClick={(e) => handleAddCustomQuestion(e, true)}
+                      className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-emerald-500/40 text-emerald-300 font-bold text-xs cursor-pointer transition flex items-center gap-1.5"
+                      title="Save this question and immediately open next level"
+                    >
+                      <span>Save & Add Next Level ➔</span>
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-extrabold text-xs shadow-lg cursor-pointer transition"
+                  >
+                    {editingQuestionId ? 'Save Changes' : 'Save Question'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
@@ -2822,15 +3015,23 @@ export default function AdminKbcManager() {
 
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1">
-                  Subject / Topic
+                  Subject / Topic *
                 </label>
                 <input
                   type="text"
                   value={newSetTopic}
                   onChange={e => setNewSetTopic(e.target.value)}
-                  placeholder="e.g. Python, SQL, JavaScript"
+                  placeholder="e.g. Python, Java, JavaScript, HTML & CSS"
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-400"
+                  required
                 />
+              </div>
+
+              <div className="p-3 bg-emerald-950/30 border border-emerald-500/20 rounded-xl text-xs text-emerald-300 flex items-start gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                <span>
+                  <strong>Clean Quiz Box:</strong> Created with 0 questions. You can add your custom questions manually or pick questions from the Question Bank.
+                </span>
               </div>
 
               <div>
@@ -2917,7 +3118,16 @@ export default function AdminKbcManager() {
             {/* Quick Actions & Filters Bar */}
             <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-3">
               {/* Left: Bulk Select/Deselect Buttons */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => handleOpenManualAddForSet(selectedSetForQuestions)}
+                  className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-xs font-black flex items-center gap-1.5 cursor-pointer shadow-md transition"
+                  title="Manually create and add a custom question to this test"
+                >
+                  <PlusCircle className="w-4 h-4 text-white" />
+                  <span>+ Add Question Manually</span>
+                </button>
+
                 <button
                   onClick={() => handleToggleAllSetQuestions(true)}
                   className="px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition"
@@ -2943,8 +3153,8 @@ export default function AdminKbcManager() {
                   }}
                   className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-yellow-500/20 hover:from-amber-500/30 hover:to-yellow-500/30 border border-amber-400/50 text-amber-300 text-xs font-black flex items-center gap-1.5 cursor-pointer transition"
                 >
-                  <PlusCircle className="w-4 h-4 text-amber-400" />
-                  <span>+ Add Question from 1,000 Bank</span>
+                  <Layers className="w-4 h-4 text-amber-400" />
+                  <span>+ Add from 1,000 Bank</span>
                 </button>
               </div>
 
@@ -2985,17 +3195,27 @@ export default function AdminKbcManager() {
               </div>
             ) : setQuestionsList.length === 0 ? (
               <div className="py-16 text-center text-slate-500 text-sm bg-slate-950/50 border border-slate-800 rounded-2xl p-6">
-                <p className="text-base font-bold text-slate-300">No questions stored in this box yet.</p>
-                <p className="text-xs text-slate-500 mt-1">Click the button below to add questions from the master question bank (SQL, HTML, CSS & JS).</p>
-                <button
-                  onClick={() => {
-                    setShowAddFromBankModal(true);
-                    fetchAddBankQuestions('', '');
-                  }}
-                  className="mt-4 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-md"
-                >
-                  <PlusCircle className="w-4 h-4" /> Add Questions from Bank
-                </button>
+                <p className="text-base font-bold text-slate-200">No questions in "{selectedSetForQuestions.title}" yet.</p>
+                <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+                  This quiz box is clean with 0 questions. Add custom questions manually or pick questions from the 1,000 Question Bank.
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-3 mt-5">
+                  <button
+                    onClick={() => handleOpenManualAddForSet(selectedSetForQuestions)}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-extrabold text-xs inline-flex items-center gap-2 cursor-pointer shadow-lg shadow-emerald-950 transition"
+                  >
+                    <PlusCircle className="w-4 h-4" /> Add Question Manually
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowAddFromBankModal(true);
+                      fetchAddBankQuestions('', '');
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 font-bold text-xs inline-flex items-center gap-2 cursor-pointer transition"
+                  >
+                    <Layers className="w-4 h-4 text-amber-400" /> Browse 1,000 Bank
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="space-y-3">
@@ -3022,7 +3242,7 @@ export default function AdminKbcManager() {
                             : 'bg-slate-950/40 border-slate-800/80 opacity-60 hover:opacity-100'
                         }`}
                       >
-                        {/* Top Row: Select/Deselect Button, Level Badge, and Remove Button */}
+                        {/* Top Row: Select/Deselect Button, Level Badge, and Action Buttons */}
                         <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-slate-800/60">
                           
                           {/* Prominent Checkbox Toggle Button */}
@@ -3059,14 +3279,23 @@ export default function AdminKbcManager() {
                             )}
                           </div>
 
-                          {/* Right: Remove from Test Button */}
-                          <button
-                            onClick={() => handleDeleteSetQuestion(q.id, q.question)}
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-950/40 transition cursor-pointer"
-                            title="Remove this question from test set"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {/* Right: Edit & Remove Buttons */}
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => handleEditSetQuestion(q)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-amber-300 hover:bg-amber-950/40 border border-transparent hover:border-amber-500/30 transition cursor-pointer"
+                              title="Edit question text, level, options or answer"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSetQuestion(q.id, q.question)}
+                              className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-950/40 border border-transparent hover:border-red-500/30 transition cursor-pointer"
+                              title="Remove this question from test set"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
 
                         {/* Question Text */}

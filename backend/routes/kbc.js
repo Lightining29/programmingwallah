@@ -295,6 +295,22 @@ export async function ensureKbcTable() {
       }
     }
 
+    // Clean up accidentally auto-populated SQL questions from custom test sets (non-SQL)
+    try {
+      await pool.query(`
+        DELETE q FROM kbc_questions q
+        JOIN kbc_test_sets s ON q.test_set_id = s.id
+        WHERE s.id NOT IN ('kbc-sql-mastery', 'kbc-html-quiz', 'kbc-excel-analytics')
+          AND LOWER(s.topic) NOT LIKE '%sql%'
+          AND q.id LIKE CONCAT(s.id, '_q_l%')
+      `);
+      await pool.query(`
+        UPDATE kbc_test_sets s
+        SET question_count = (SELECT COUNT(*) FROM kbc_questions q WHERE q.test_set_id = s.id AND q.is_active = 1)
+        WHERE s.id NOT IN ('kbc-sql-mastery', 'kbc-html-quiz', 'kbc-excel-analytics')
+      `);
+    } catch (e) {}
+
     tableEnsured = true;
     return true;
   } catch (err) {
@@ -330,7 +346,7 @@ router.get('/questions', async (req, res) => {
         ORDER BY level ASC, created_at ASC
       `);
 
-      if (activeRows.length >= 16) {
+      if (activeRows.length > 0) {
         const activeQuestions = activeRows.map(row => ({
           level: row.level,
           id: row.id,
@@ -423,7 +439,7 @@ router.get('/test-sets', async (req, res) => {
 
 // ── 1C. ADMIN: Create a New KBC Test Set (Stored Quiz Box) ──
 router.post('/admin/test-sets/create', async (req, res) => {
-  const { title, topic, access_code, duration = 30, passing_score = 50 } = req.body;
+  const { title, topic, access_code, duration = 30, passing_score = 50, initial_questions = [] } = req.body;
   if (!title || !title.trim()) {
     return res.status(400).json({ success: false, message: 'Test Title is required.' });
   }
@@ -440,26 +456,20 @@ router.post('/admin/test-sets/create', async (req, res) => {
   try {
     await ensureKbcTable();
     if (pool) {
+      const qCount = Array.isArray(initial_questions) ? initial_questions.length : 0;
       await pool.query(`
         INSERT INTO kbc_test_sets (id, title, topic, access_code, is_active, question_count, passing_score, duration)
-        VALUES (?, ?, ?, ?, 0, 16, ?, ?)
-      `, [setId, cleanTitle, cleanTopic, generatedCode, passing_score, duration]);
+        VALUES (?, ?, ?, ?, 0, ?, ?, ?)
+      `, [setId, cleanTitle, cleanTopic, generatedCode, qCount, passing_score, duration]);
 
-      // Populate 16 initial questions for this test set so they can be selected, deselected, and customized!
-      for (let l = 1; l <= 16; l++) {
-        const q = (DEFAULT_SQL_QUESTIONS[l] || [])[0];
-        if (q) {
-          const qId = `${setId}_q_l${l}`;
+      // If initial questions were explicitly provided, insert them; otherwise clean quiz box with 0 questions!
+      if (Array.isArray(initial_questions) && initial_questions.length > 0) {
+        for (const q of initial_questions) {
+          const qId = `${setId}_q_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
           await pool.query(`
             INSERT INTO kbc_questions (id, level, topic, question, options_json, correct, explanation, is_custom, is_active, test_set_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, ?)
-            ON DUPLICATE KEY UPDATE 
-              question = VALUES(question),
-              options_json = VALUES(options_json),
-              correct = VALUES(correct),
-              explanation = VALUES(explanation),
-              is_active = 1
-          `, [qId, l, q.topic || cleanTopic, q.question, JSON.stringify(q.options), q.correct, q.explanation, setId]);
+          `, [qId, q.level || 1, q.topic || cleanTopic, q.question, JSON.stringify(q.options), q.correct || 0, q.explanation || '', setId]);
         }
       }
 
@@ -472,7 +482,7 @@ router.post('/admin/test-sets/create', async (req, res) => {
           topic: cleanTopic,
           access_code: generatedCode,
           is_active: 0,
-          question_count: 16,
+          question_count: qCount,
           passing_score,
           duration
         },
@@ -489,7 +499,7 @@ router.post('/admin/test-sets/create', async (req, res) => {
     topic: cleanTopic,
     access_code: generatedCode,
     is_active: 0,
-    question_count: 16,
+    question_count: 0,
     passing_score,
     duration,
     created_at: new Date().toISOString()
@@ -644,16 +654,15 @@ router.get('/test-sets/:id/questions', async (req, res) => {
         ORDER BY level ASC, is_active DESC, created_at ASC
       `, [setId, setId]);
 
-      // If custom test set has no questions yet in MySQL (e.g. created earlier), auto-populate 16 questions for it!
-      if (rows.length === 0 && setId !== 'kbc-sql-mastery') {
+      // Only auto-populate curated questions if it's the specific pre-seeded default sets:
+      if (rows.length === 0 && (setId === 'kbc-html-quiz' || setId === 'kbc-excel-analytics' || setId === 'kbc-sql-mastery')) {
         for (let l = 1; l <= 16; l++) {
           let sourceQ = null;
           if (setId === 'kbc-html-quiz') {
             sourceQ = CURATED_TEST_SETS.html?.find(x => x.level === l);
           } else if (setId === 'kbc-excel-analytics') {
             sourceQ = CURATED_TEST_SETS.excel?.find(x => x.level === l);
-          }
-          if (!sourceQ) {
+          } else if (setId === 'kbc-sql-mastery') {
             sourceQ = (DEFAULT_SQL_QUESTIONS[l] || [])[0];
           }
           if (sourceQ) {
@@ -667,7 +676,7 @@ router.get('/test-sets/:id/questions', async (req, res) => {
                 correct = VALUES(correct),
                 explanation = VALUES(explanation),
                 is_active = VALUES(is_active)
-            `, [qId, l, sourceQ.topic || 'SQL', sourceQ.question, JSON.stringify(sourceQ.options), sourceQ.correct, sourceQ.explanation, setId]);
+            `, [qId, l, sourceQ.topic || 'General', sourceQ.question, JSON.stringify(sourceQ.options), sourceQ.correct, sourceQ.explanation, setId]);
           }
         }
 
@@ -680,22 +689,20 @@ router.get('/test-sets/:id/questions', async (req, res) => {
         rows = reRows;
       }
 
-      if (rows.length > 0) {
-        const questions = rows.map(r => {
-          const opts = typeof r.options_json === 'string' ? JSON.parse(r.options_json) : r.options_json;
-          return {
-            id: r.id,
-            level: r.level,
-            topic: r.topic,
-            question: r.question,
-            options: opts,
-            correct: r.correct,
-            explanation: r.explanation,
-            isActive: Boolean(r.is_active)
-          };
-        });
-        return res.json({ success: true, questions, database: 'Hostinger MySQL' });
-      }
+      const questions = rows.map(r => {
+        const opts = typeof r.options_json === 'string' ? JSON.parse(r.options_json) : r.options_json;
+        return {
+          id: r.id,
+          level: r.level,
+          topic: r.topic,
+          question: r.question,
+          options: opts,
+          correct: r.correct,
+          explanation: r.explanation,
+          isActive: Boolean(r.is_active)
+        };
+      });
+      return res.json({ success: true, questions, database: 'Hostinger MySQL' });
     }
   } catch (err) {
     console.warn('/test-sets/:id/questions error:', err.message);
@@ -707,7 +714,7 @@ router.get('/test-sets/:id/questions', async (req, res) => {
     fallbackQuestions = CURATED_TEST_SETS.html || [];
   } else if (setId === 'kbc-excel-analytics') {
     fallbackQuestions = CURATED_TEST_SETS.excel || [];
-  } else {
+  } else if (setId === 'kbc-sql-mastery') {
     for (let l = 1; l <= 16; l++) {
       const q = (DEFAULT_SQL_QUESTIONS[l] || [])[0];
       if (q) fallbackQuestions.push(q);
@@ -806,7 +813,7 @@ router.post('/admin/test-sets/:id/questions/delete', async (req, res) => {
 // ── 1J. ADMIN: Add a Question into Test Set ──
 router.post('/admin/test-sets/:id/questions/add', async (req, res) => {
   const setId = req.params.id;
-  const { question, level = 1, topic = 'SQL', options, correct = 0, explanation = '' } = req.body;
+  const { question, level = 1, topic = 'General', options, correct = 0, explanation = '', shuffle = false } = req.body;
   const pool = getMySQLPool();
 
   if (!question || !options || options.length !== 4) {
@@ -816,12 +823,15 @@ router.post('/admin/test-sets/:id/questions/add', async (req, res) => {
   try {
     if (pool) {
       const qId = `${setId}_q_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-      const shuffled = shuffleOptionsAccurately(options, correct);
+      const cleanOptions = options.map(o => String(o || '').trim());
+      const cleanCorrect = parseInt(correct, 10) || 0;
+      const finalOptions = shuffle ? shuffleOptionsAccurately(cleanOptions, cleanCorrect).options : cleanOptions;
+      const finalCorrect = shuffle ? shuffleOptionsAccurately(cleanOptions, cleanCorrect).correct : cleanCorrect;
 
       await pool.query(`
         INSERT INTO kbc_questions (id, level, topic, question, options_json, correct, explanation, is_custom, is_active, test_set_id)
         VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, ?)
-      `, [qId, level, topic, question, JSON.stringify(shuffled.options), shuffled.correct, explanation, setId]);
+      `, [qId, parseInt(level, 10) || 1, topic.trim(), question.trim(), JSON.stringify(finalOptions), finalCorrect, (explanation || '').trim(), setId]);
 
       const [countRows] = await pool.query(
         'SELECT COUNT(*) as cnt FROM kbc_questions WHERE test_set_id = ? AND is_active = 1',
@@ -835,12 +845,12 @@ router.post('/admin/test-sets/:id/questions/add', async (req, res) => {
         message: 'Question added to test set!',
         question: {
           id: qId,
-          level,
-          topic,
-          question,
-          options: shuffled.options,
-          correct: shuffled.correct,
-          explanation,
+          level: parseInt(level, 10) || 1,
+          topic: topic.trim(),
+          question: question.trim(),
+          options: finalOptions,
+          correct: finalCorrect,
+          explanation: (explanation || '').trim(),
           isActive: true
         },
         activeCount
@@ -849,7 +859,49 @@ router.post('/admin/test-sets/:id/questions/add', async (req, res) => {
   } catch (err) {
     console.warn('test-set add question error:', err.message);
   }
-  return res.json({ success: true, message: 'Question added.' });
+  return res.status(500).json({ success: false, message: 'Failed to add question to test set' });
+});
+
+// ── 1K. ADMIN: Update / Edit a Question in Test Set ──
+router.post('/admin/test-sets/:id/questions/update', async (req, res) => {
+  const setId = req.params.id;
+  const { questionId, question, level = 1, topic = 'General', options, correct = 0, explanation = '' } = req.body;
+  const pool = getMySQLPool();
+
+  if (!questionId || !question || !options || options.length !== 4) {
+    return res.status(400).json({ success: false, message: 'Question ID, question text, and 4 options are required.' });
+  }
+
+  try {
+    if (pool) {
+      const cleanOptions = options.map(o => String(o || '').trim());
+      const cleanCorrect = parseInt(correct, 10) || 0;
+
+      await pool.query(`
+        UPDATE kbc_questions 
+        SET level = ?, topic = ?, question = ?, options_json = ?, correct = ?, explanation = ?
+        WHERE id = ? AND test_set_id = ?
+      `, [parseInt(level, 10) || 1, topic.trim(), question.trim(), JSON.stringify(cleanOptions), cleanCorrect, (explanation || '').trim(), questionId, setId]);
+
+      return res.json({
+        success: true,
+        message: 'Question updated in test set!',
+        question: {
+          id: questionId,
+          level: parseInt(level, 10) || 1,
+          topic: topic.trim(),
+          question: question.trim(),
+          options: cleanOptions,
+          correct: cleanCorrect,
+          explanation: (explanation || '').trim(),
+          isActive: true
+        }
+      });
+    }
+  } catch (err) {
+    console.warn('test-set update question error:', err.message);
+  }
+  return res.status(500).json({ success: false, message: 'Failed to update question in test set' });
 });
 
 // ── 2. ADMIN: Get All Available Questions Pool & Active Selections from Hostinger MySQL ──
@@ -1097,9 +1149,9 @@ router.post('/admin/select', async (req, res) => {
   });
 });
 
-// ── 4. ADMIN: Add a New Custom MERN or SQL Question into Hostinger MySQL ──
+// ── 4. ADMIN: Add a New Custom Question into Hostinger MySQL ──
 router.post('/admin/add-custom', async (req, res) => {
-  const { level, topic, question, options, correct, explanation, setAsActive } = req.body;
+  const { level, topic, question, options, correct, explanation, setAsActive, test_set_id, shuffle = false } = req.body;
   const lvl = parseInt(level, 10);
 
   if (!lvl || lvl < 1 || lvl > 16) {
@@ -1118,30 +1170,43 @@ router.post('/admin/add-custom', async (req, res) => {
 
   const newId = `custom-${lvl}-${Date.now()}`;
   const shouldActivate = Boolean(setAsActive);
-  const shuffled = shuffleOptionsAccurately(options.map(o => o.trim()), correctIdx);
+  const cleanOptions = options.map(o => o.trim());
+  const finalOptions = shuffle ? shuffleOptionsAccurately(cleanOptions, correctIdx).options : cleanOptions;
+  const finalCorrect = shuffle ? shuffleOptionsAccurately(cleanOptions, correctIdx).correct : correctIdx;
+  const targetSetId = test_set_id || null;
 
   const pool = getMySQLPool();
   try {
     await ensureKbcTable();
 
     if (pool) {
-      if (shouldActivate) {
+      if (shouldActivate && !targetSetId) {
         await pool.query('UPDATE kbc_questions SET is_active = 0 WHERE level = ?', [lvl]);
       }
 
       await pool.query(`
-        INSERT INTO kbc_questions (id, level, topic, question, options_json, correct, explanation, is_custom, is_active)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
+        INSERT INTO kbc_questions (id, level, topic, question, options_json, correct, explanation, is_custom, is_active, test_set_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
       `, [
         newId,
         lvl,
-        topic || 'MERN & SQL',
+        topic || 'General',
         question.trim(),
-        JSON.stringify(shuffled.options),
-        shuffled.correct,
+        JSON.stringify(finalOptions),
+        finalCorrect,
         (explanation || '').trim(),
-        shouldActivate ? 1 : 0
+        shouldActivate ? 1 : 0,
+        targetSetId
       ]);
+
+      if (targetSetId) {
+        const [countRows] = await pool.query(
+          'SELECT COUNT(*) as cnt FROM kbc_questions WHERE test_set_id = ? AND is_active = 1',
+          [targetSetId]
+        );
+        const activeCount = countRows[0]?.cnt || 0;
+        await pool.query('UPDATE kbc_test_sets SET question_count = ? WHERE id = ?', [activeCount, targetSetId]);
+      }
 
       return res.json({
         success: true,
@@ -1149,10 +1214,10 @@ router.post('/admin/add-custom', async (req, res) => {
         question: {
           id: newId,
           level: lvl,
-          topic: topic || 'MERN & SQL',
+          topic: topic || 'General',
           question: question.trim(),
-          options,
-          correct: correctIdx,
+          options: finalOptions,
+          correct: finalCorrect,
           explanation: (explanation || '').trim(),
           isCustom: true
         },
@@ -1167,10 +1232,10 @@ router.post('/admin/add-custom', async (req, res) => {
   const fallbackQ = {
     id: newId,
     level: lvl,
-    topic: topic || 'MERN & SQL',
+    topic: topic || 'General',
     question: question.trim(),
-    options: options.map(o => o.trim()),
-    correct: correctIdx,
+    options: finalOptions,
+    correct: finalCorrect,
     explanation: (explanation || '').trim(),
     isCustom: true
   };
