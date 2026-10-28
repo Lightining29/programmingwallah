@@ -30,6 +30,7 @@ export default function AdminKbcManager() {
   const [newSetCode, setNewSetCode] = useState('');
   const [manualLevel, setManualLevel] = useState(1);
   const [editingQuestionId, setEditingQuestionId] = useState(null);
+  const [modalTargetSetId, setModalTargetSetId] = useState('');
   const [selectedSetForQuestions, setSelectedSetForQuestions] = useState(null);
   const [setQuestionsList, setSetQuestionsList] = useState([]);
   const [setQuestionsLoading, setSetQuestionsLoading] = useState(false);
@@ -1003,6 +1004,7 @@ export default function AdminKbcManager() {
     const targetSet = setObj || selectedSetForQuestions;
     if (!targetSet) return;
     setEditingQuestionId(null);
+    setModalTargetSetId(targetSet.id);
     setNewTopic(targetSet.topic || '');
     // Determine the next empty level in this set if any
     const existingLevels = new Set(setQuestionsList.map(q => Number(q.level)));
@@ -1018,9 +1020,25 @@ export default function AdminKbcManager() {
     setShowAddModal(true);
   };
 
+  const handleOpenGeneralAddModal = (lvl) => {
+    setEditingQuestionId(null);
+    setManualLevel(lvl || selectedLevel || 1);
+    const activeSet = testSets.find(t => t.is_active);
+    const targetId = activeSet ? activeSet.id : (selectedSetForQuestions ? selectedSetForQuestions.id : '');
+    setModalTargetSetId(targetId);
+    if (activeSet && activeSet.topic) {
+      setNewTopic(activeSet.topic);
+    }
+    resetForm();
+    setShowAddModal(true);
+  };
+
   const handleEditSetQuestion = (q) => {
     setEditingQuestionId(q.id);
     setManualLevel(q.level || 1);
+    if (selectedSetForQuestions) {
+      setModalTargetSetId(selectedSetForQuestions.id);
+    }
     setNewTopic(q.topic || '');
     setNewQuestion(q.question || '');
     setNewOptions(Array.isArray(q.options) && q.options.length === 4 ? [...q.options] : ['', '', '', '']);
@@ -1036,17 +1054,20 @@ export default function AdminKbcManager() {
       return;
     }
 
+    const effectiveTargetSetId = modalTargetSetId || (selectedSetForQuestions ? selectedSetForQuestions.id : (testSets.find(t => t.is_active)?.id || null));
+    const targetSetObj = testSets.find(t => t.id === effectiveTargetSetId) || selectedSetForQuestions;
+
     try {
-      if (selectedSetForQuestions) {
+      if (effectiveTargetSetId) {
         if (editingQuestionId) {
           // Update existing question in test set
-          const res = await fetch(`/api/kbc/admin/test-sets/${selectedSetForQuestions.id}/questions/update`, {
+          const res = await fetch(`/api/kbc/admin/test-sets/${effectiveTargetSetId}/questions/update`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               questionId: editingQuestionId,
               level: manualLevel || selectedLevel,
-              topic: newTopic.trim() || selectedSetForQuestions.topic || 'General',
+              topic: newTopic.trim() || targetSetObj?.topic || 'General',
               question: newQuestion.trim(),
               options: newOptions.map(o => o.trim()),
               correct: newCorrect,
@@ -1058,7 +1079,7 @@ export default function AdminKbcManager() {
             setSetQuestionsList(prev => prev.map(q => q.id === editingQuestionId ? {
               ...q,
               level: manualLevel || selectedLevel,
-              topic: newTopic.trim() || selectedSetForQuestions.topic || 'General',
+              topic: newTopic.trim() || targetSetObj?.topic || 'General',
               question: newQuestion.trim(),
               options: newOptions.map(o => o.trim()),
               correct: newCorrect,
@@ -1067,6 +1088,8 @@ export default function AdminKbcManager() {
             setShowAddModal(false);
             setEditingQuestionId(null);
             resetForm();
+            await fetchTestSets();
+            await fetchAdminKbcData();
             Swal.fire({
               icon: 'success',
               title: 'Question Updated!',
@@ -1081,12 +1104,12 @@ export default function AdminKbcManager() {
           }
         } else {
           // Add brand new question into test set
-          const res = await fetch(`/api/kbc/admin/test-sets/${selectedSetForQuestions.id}/questions/add`, {
+          const res = await fetch(`/api/kbc/admin/test-sets/${effectiveTargetSetId}/questions/add`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               level: manualLevel || selectedLevel,
-              topic: newTopic.trim() || selectedSetForQuestions.topic || 'General',
+              topic: newTopic.trim() || targetSetObj?.topic || 'General',
               question: newQuestion.trim(),
               options: newOptions.map(o => o.trim()),
               correct: newCorrect,
@@ -1097,7 +1120,9 @@ export default function AdminKbcManager() {
           const data = await res.json();
           if (data.success) {
             setSetQuestionsList(prev => [...prev, data.question]);
-            setTestSets(prev => prev.map(t => t.id === selectedSetForQuestions.id ? { ...t, question_count: data.activeCount || prev.length + 1 } : t));
+            setTestSets(prev => prev.map(t => t.id === effectiveTargetSetId ? { ...t, question_count: data.activeCount || prev.length + 1 } : t));
+            await fetchTestSets();
+            await fetchAdminKbcData();
 
             if (keepOpenForNext) {
               setManualLevel(prev => Math.min(16, (Number(prev) || 1) + 1));
@@ -1117,7 +1142,7 @@ export default function AdminKbcManager() {
               Swal.fire({
                 icon: 'success',
                 title: 'Question Saved!',
-                text: `Question added to Level ${manualLevel || selectedLevel} in "${selectedSetForQuestions.title}".`,
+                text: `Question added to Level ${manualLevel || selectedLevel} in "${targetSetObj?.title || 'Quiz Box'}".`,
                 timer: 1800,
                 showConfirmButton: false,
                 toast: true,
@@ -1148,8 +1173,9 @@ export default function AdminKbcManager() {
         if (data.success) {
           setShowAddModal(false);
           resetForm();
-          fetchAdminKbcData();
-          fetchSessionStatus();
+          await fetchAdminKbcData();
+          await fetchTestSets();
+          await fetchSessionStatus();
           Swal.fire('Success', `Question saved into Hostinger MySQL!`, 'success');
         } else {
           Swal.fire('Error', data.message || 'Failed to save question', 'error');
@@ -1535,7 +1561,7 @@ export default function AdminKbcManager() {
               {/* Host Navigation Buttons & Quick Add */}
               <div className="flex flex-wrap items-center gap-2">
                 <button
-                  onClick={() => setShowAddModal(true)}
+                  onClick={() => handleOpenGeneralAddModal(selectedLevel)}
                   className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md border border-slate-700"
                   title={`Add a manual custom question for Level ${selectedLevel}`}
                 >
@@ -2271,7 +2297,7 @@ export default function AdminKbcManager() {
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setShowAddModal(true)}
+                  onClick={() => handleOpenGeneralAddModal(selectedLevel)}
                   className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-slate-700"
                 >
                   <PlusCircle className="w-3.5 h-3.5" /> Manual Add
@@ -2471,7 +2497,7 @@ export default function AdminKbcManager() {
                   <RefreshCw className="w-3.5 h-3.5" /> Reset to 1,000 SQL Bank
                 </button>
                 <button
-                  onClick={() => setShowAddModal(true)}
+                  onClick={() => handleOpenGeneralAddModal(selectedLevel)}
                   className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 transition cursor-pointer shadow-md"
                 >
                   <PlusCircle className="w-3.5 h-3.5" /> Create Custom Question
@@ -2785,15 +2811,15 @@ export default function AdminKbcManager() {
 
       {/* ── MODAL: ADD / EDIT CUSTOM QUESTION ── */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
           <div className="bg-slate-900 border border-emerald-500/40 rounded-3xl w-full max-w-2xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <h3 className="text-base font-black text-white flex items-center gap-2">
                 <PlusCircle className="w-5 h-5 text-emerald-400" />
                 {editingQuestionId
                   ? `Edit Question (Level ${manualLevel})`
-                  : selectedSetForQuestions
-                    ? `Add Question to "${selectedSetForQuestions.title}"`
+                  : modalTargetSetId
+                    ? `Add Question to "${testSets.find(t => t.id === modalTargetSetId)?.title || selectedSetForQuestions?.title || 'Quiz Box'}"`
                     : `Add Custom Question (Level ${manualLevel || selectedLevel})`
                 }
               </h3>
@@ -2810,6 +2836,37 @@ export default function AdminKbcManager() {
             </div>
 
             <form onSubmit={handleAddCustomQuestion} className="space-y-4">
+              {/* Target Quiz Set Selector */}
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Assign to Quiz Set / Exam *
+                </label>
+                <select
+                  value={modalTargetSetId}
+                  onChange={e => {
+                    const targetId = e.target.value;
+                    setModalTargetSetId(targetId);
+                    const found = testSets.find(t => t.id === targetId);
+                    if (found && found.topic && (!newTopic || newTopic === 'General')) {
+                      setNewTopic(found.topic);
+                    }
+                  }}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-400 cursor-pointer"
+                >
+                  <option value="">-- Master Question Pool (Global / All) --</option>
+                  {testSets.map(t => (
+                    <option key={t.id} value={t.id}>
+                      {t.title} ({t.topic || 'General'}) {t.is_active ? '★ CURRENT LIVE EXAM' : ''}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-[11px] text-emerald-400/80 mt-1 block">
+                  {modalTargetSetId 
+                    ? `This question will be saved into "${testSets.find(t => t.id === modalTargetSetId)?.title}" and will appear immediately when opening it.`
+                    : 'Select your exam above so the question appears inside that exam.'
+                  }
+                </span>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 mb-1">

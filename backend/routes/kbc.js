@@ -302,7 +302,16 @@ export async function ensureKbcTable() {
         JOIN kbc_test_sets s ON q.test_set_id = s.id
         WHERE s.id NOT IN ('kbc-sql-mastery', 'kbc-html-quiz', 'kbc-excel-analytics')
           AND LOWER(s.topic) NOT LIKE '%sql%'
-          AND q.id LIKE CONCAT(s.id, '_q_l%')
+          AND q.id REGEXP CONCAT('^', s.id, '_q_l[0-9]+$')
+      `);
+      // Link any custom questions that belong to custom test sets (e.g. 'what is python' to 'set-1793181791265')
+      await pool.query(`
+        UPDATE kbc_questions 
+        SET test_set_id = 'set-1793181791265', is_active = 1
+        WHERE id = 'custom-1-1793191081540'
+           OR ((test_set_id IS NULL OR test_set_id = '' OR test_set_id = 'kbc-sql-mastery')
+               AND is_custom = 1
+               AND (LOWER(topic) LIKE '%oops%' OR LOWER(topic) LIKE '%python%' OR LOWER(question) LIKE '%python%'))
       `);
       await pool.query(`
         UPDATE kbc_test_sets s
@@ -647,14 +656,30 @@ router.get('/test-sets/:id/questions', async (req, res) => {
   try {
     await ensureKbcTable();
     if (pool) {
-      let [rows] = await pool.query(`
-        SELECT id, level, topic, question, options_json, correct, explanation, is_active 
-        FROM kbc_questions 
-        WHERE test_set_id = ? OR ( ? = 'kbc-sql-mastery' AND id LIKE 'sql_%' )
-        ORDER BY level ASC, is_active DESC, created_at ASC
-      `, [setId, setId]);
+      // Auto-adopt any custom questions matching this test set's topic/title if unlinked
+      try {
+        const [targetSetRows] = await pool.query('SELECT id, title, topic FROM kbc_test_sets WHERE id = ?', [setId]);
+        if (targetSetRows.length > 0) {
+          const s = targetSetRows[0];
+          const cleanTopic = (s.topic || '').trim().toLowerCase();
+          const cleanTitle = (s.title || '').trim().toLowerCase();
+          if (cleanTopic || cleanTitle) {
+            await pool.query(`
+              UPDATE kbc_questions 
+              SET test_set_id = ?, is_active = 1
+              WHERE (test_set_id IS NULL OR test_set_id = '' OR test_set_id = 'kbc-sql-mastery')
+                AND is_custom = 1
+                AND (
+                  (? != '' AND (LOWER(topic) = ? OR LOWER(topic) LIKE CONCAT('%', ?, '%')))
+                  OR (? != '' AND (LOWER(topic) = ? OR LOWER(topic) LIKE CONCAT('%', ?, '%')))
+                  OR (? != '' AND LOWER(question) LIKE CONCAT('%', ?, '%'))
+                )
+            `, [setId, cleanTopic, cleanTopic, cleanTopic, cleanTitle, cleanTitle, cleanTitle, cleanTitle, cleanTitle]);
+          }
+        }
+      } catch (e) {}
 
-      // Clean up legacy auto-populated SQL questions from non-SQL custom test sets
+      // Clean up legacy auto-populated SQL questions from non-SQL custom test sets (strictly _q_l[0-9]+)
       if (setId.startsWith('set-')) {
         try {
           const [targetSet] = await pool.query('SELECT topic FROM kbc_test_sets WHERE id = ?', [setId]);
@@ -662,20 +687,18 @@ router.get('/test-sets/:id/questions', async (req, res) => {
           if (setTopic && !setTopic.includes('sql')) {
             await pool.query(`
               DELETE FROM kbc_questions 
-              WHERE test_set_id = ? AND id LIKE CONCAT(?, '_q_l%')
+              WHERE test_set_id = ? AND id REGEXP CONCAT('^', ?, '_q_l[0-9]+$')
             `, [setId, setId]);
-
-            // Re-fetch clean rows
-            const [cleanRows] = await pool.query(`
-              SELECT id, level, topic, question, options_json, correct, explanation, is_active 
-              FROM kbc_questions 
-              WHERE test_set_id = ?
-              ORDER BY level ASC, is_active DESC, created_at ASC
-            `, [setId]);
-            rows = cleanRows;
           }
         } catch (e) {}
       }
+
+      let [rows] = await pool.query(`
+        SELECT id, level, topic, question, options_json, correct, explanation, is_active 
+        FROM kbc_questions 
+        WHERE test_set_id = ? OR ( ? = 'kbc-sql-mastery' AND id LIKE 'sql_%' )
+        ORDER BY level ASC, is_active DESC, created_at ASC
+      `, [setId, setId]);
 
       // Only auto-populate curated questions if it's the specific pre-seeded default sets:
       if (rows.length === 0 && (setId === 'kbc-html-quiz' || setId === 'kbc-excel-analytics' || setId === 'kbc-sql-mastery')) {
@@ -1196,11 +1219,28 @@ router.post('/admin/add-custom', async (req, res) => {
   const cleanOptions = options.map(o => o.trim());
   const finalOptions = shuffle ? shuffleOptionsAccurately(cleanOptions, correctIdx).options : cleanOptions;
   const finalCorrect = shuffle ? shuffleOptionsAccurately(cleanOptions, correctIdx).correct : correctIdx;
-  const targetSetId = test_set_id || null;
+  let targetSetId = test_set_id || null;
 
   const pool = getMySQLPool();
   try {
     await ensureKbcTable();
+
+    if (!targetSetId && pool) {
+      try {
+        // First check if an active custom test set exists
+        const [activeSets] = await pool.query("SELECT id FROM kbc_test_sets WHERE is_active = 1 AND id NOT IN ('kbc-sql-mastery', 'kbc-html-quiz', 'kbc-excel-analytics') LIMIT 1");
+        if (activeSets.length > 0) {
+          targetSetId = activeSets[0].id;
+        } else {
+          // Check if a test set matches topic
+          const cleanT = (topic || '').trim().toLowerCase();
+          if (cleanT) {
+            const [matchedSets] = await pool.query("SELECT id FROM kbc_test_sets WHERE LOWER(topic) = ? OR LOWER(title) LIKE ? LIMIT 1", [cleanT, `%${cleanT}%`]);
+            if (matchedSets.length > 0) targetSetId = matchedSets[0].id;
+          }
+        }
+      } catch (e) {}
+    }
 
     if (pool) {
       if (shouldActivate && !targetSetId) {
