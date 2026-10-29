@@ -186,7 +186,7 @@ export default function KbcExam() {
             };
           } else {
             // User gives wrong answer: loses 100 points and place in leaderboard drops down!
-            const lostPoints = Math.max(cutoffPoints, (p.points || 0) - 100);
+            const lostPoints = Math.max(0, (p.points || 0) - 100);
             return {
               ...p,
               points: lostPoints,
@@ -194,14 +194,11 @@ export default function KbcExam() {
               wrongCount: p.wrongCount + 1,
               lastPointsGained: -100,
               lastStatus: 'wrong',
-              status: 'OUT'
+              status: 'CONNECTED'
             };
           }
         } else {
           // Competitive classmates simulation:
-          if (p.status === 'OUT' || p.status === 'ELIMINATED') {
-            return p;
-          }
           const levelDifficulty = Math.max(0.35, p.accuracy - (currentLevel * 0.02));
           const compCorrect = Math.random() < levelDifficulty;
           if (compCorrect) {
@@ -218,25 +215,22 @@ export default function KbcExam() {
             };
           } else {
             // Classmate gives wrong answer: loses 100 points and place drops down!
-            const lostPoints = Math.max(cutoffPoints, (p.points || 0) - 100);
+            const lostPoints = Math.max(0, (p.points || 0) - 100);
             return {
               ...p,
               points: lostPoints,
               currentLevel: Math.max(1, p.currentLevel - 1),
-              wrongCount: p.wrongCount + 1,
+              wrongCount: (p.wrongCount || 0) + 1,
               lastPointsGained: -100,
               lastStatus: 'wrong',
-              status: 'OUT'
+              status: 'CONNECTED'
             };
           }
         }
       });
 
-      // Sort: active players above OUT players, then by points descending, then correct count
+      // Sort purely by points descending so every right/wrong answer immediately organizes rank
       return [...updated].sort((a, b) => {
-        const aActive = a.status !== 'OUT' && a.status !== 'ELIMINATED' ? 1 : 0;
-        const bActive = b.status !== 'OUT' && b.status !== 'ELIMINATED' ? 1 : 0;
-        if (bActive !== aActive) return bActive - aActive;
         if (b.points !== a.points) return b.points - a.points;
         return b.correctCount - a.correctCount;
       });
@@ -360,9 +354,6 @@ export default function KbcExam() {
         }
 
         const sorted = teams.sort((a, b) => {
-          const aActive = a.status !== 'OUT' && a.status !== 'ELIMINATED' ? 1 : 0;
-          const bActive = b.status !== 'OUT' && b.status !== 'ELIMINATED' ? 1 : 0;
-          if (bActive !== aActive) return bActive - aActive;
           if (b.points !== a.points) return b.points - a.points;
           return b.correctCount - a.correctCount;
         });
@@ -400,9 +391,6 @@ export default function KbcExam() {
 
     // ── CASE 2: SOLO MODE (Practice Hotseat against dynamic classmates simulation) ──
     const sortedSolo = [...livePlayers].sort((a, b) => {
-      const aActive = a.status !== 'OUT' && a.status !== 'ELIMINATED' ? 1 : 0;
-      const bActive = b.status !== 'OUT' && b.status !== 'ELIMINATED' ? 1 : 0;
-      if (bActive !== aActive) return bActive - aActive;
       if (b.points !== a.points) return b.points - a.points;
       return (b.correctCount || 0) - (a.correctCount || 0);
     });
@@ -742,7 +730,7 @@ export default function KbcExam() {
   const getLevelCountdown = (lvl) => {
     if (lvl <= 5) return 30; // Level 1 to 5: 30 seconds
     if (lvl <= 10) return 45; // Level 6 to 10: 45 seconds
-    return 0; // Level 11 to 16: No time limit (Timer stopped)
+    return 60; // Level 11+: 60 seconds (Tik-Tiki active level to level)
   };
 
   // Handle Timeout (Tik-Tiki Ji ends time)
@@ -757,24 +745,20 @@ export default function KbcExam() {
     calculateRoundPoints(false, 0);
   };
 
-  // Real KBC Countdown Timer Effect (Active on Contestant Laptop when Round is LIVE)
+  // Real KBC Countdown Timer Effect (Active on Contestant Laptop & Solo Mode when Round is LIVE)
   useEffect(() => {
+    const isRoundActive = team
+      ? (adminSession.status === 'LIVE' && !isLocked && revealedCorrect === null)
+      : (gameStarted && !isLocked && revealedCorrect === null && !gameOver);
+
     // If not live, or already locked, or answer revealed -> stop timer and clock sound
-    if (!team || adminSession.status !== 'LIVE' || isLocked || revealedCorrect !== null) {
+    if (!isRoundActive) {
       if (timerRef.current) clearInterval(timerRef.current);
       kbcAudio.stopClock();
       return;
     }
 
     const maxTime = getLevelCountdown(currentLevel);
-    if (maxTime === 0) {
-      // Level 11 to 16: No time limit
-      if (timerRef.current) clearInterval(timerRef.current);
-      kbcAudio.stopClock();
-      setTimeLeft(0);
-      return;
-    }
-
     // Set initial countdown time for this level
     setTimeLeft(maxTime);
 
@@ -798,7 +782,7 @@ export default function KbcExam() {
       if (timerRef.current) clearInterval(timerRef.current);
       kbcAudio.stopClock();
     };
-  }, [adminSession.status, currentLevel, isLocked, revealedCorrect, currentQ?.id, team]);
+  }, [adminSession.status, currentLevel, isLocked, revealedCorrect, currentQ?.id, team, gameStarted, gameOver]);
 
   // Start the Game
   const handleStartGame = () => {
@@ -879,8 +863,9 @@ export default function KbcExam() {
         setSafeWonPrizeLabel(winLabel);
       }
 
-      // 7 Crore Jackpot check!
-      if (currentLevel === 16) {
+      // Jackpot / End of Test Set check!
+      const totalSessionQ = adminSession?.total_questions || (questions?.length || 10);
+      if (currentLevel >= totalSessionQ) {
         handleJackpotWin();
         return;
       }
@@ -1506,7 +1491,7 @@ export default function KbcExam() {
               
               {/* ── Circular Timer (Tik-Tiki Ji) at Top Center (Circle Shape) ── */}
               <div className="flex items-center justify-center pt-1 pb-1 relative z-20">
-                {currentLevel <= 10 ? (
+                {currentLevel <= (adminSession?.total_questions || 30) ? (
                   <div className="relative flex items-center justify-center">
                     {/* Glowing halo behind circle timer */}
                     <div className={`absolute w-24 h-24 rounded-full blur-xl pointer-events-none transition-all ${

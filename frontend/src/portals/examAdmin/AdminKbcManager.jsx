@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, Filter, BookOpen, Trophy, CheckCircle2, PlusCircle, RotateCcw, Sparkles, ExternalLink, 
   HelpCircle, Check, Database, Code2, Server, Globe, Cpu, Layers, AlertCircle,
-  Radio, Play, Square, CheckSquare, Lock, Eye, ArrowRight, ArrowLeft, Users, Laptop, 
+  Radio, Play, Pause, Square, CheckSquare, Lock, Eye, ArrowRight, ArrowLeft, Users, Laptop, 
   Copy, Trash2, ShieldCheck, Flame, RefreshCw, ClipboardList, Edit, FileText, Key, CheckCheck, Box,
   BarChart3
 } from 'lucide-react';
@@ -90,6 +90,46 @@ export default function AdminKbcManager() {
   const [aiCount, setAiCount] = useState(3);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiSetAsActive, setAiSetAsActive] = useState(true);
+
+  // ── Host Screen Tik-Tiki Ji Clock (Live Timer level to level) ──
+  const [hostTimeLeft, setHostTimeLeft] = useState(30);
+  const [hostTimerActive, setHostTimerActive] = useState(true);
+  const hostTimerRef = useRef(null);
+
+  const getHostCountdown = (lvl) => {
+    if (lvl <= 5) return 30;
+    if (lvl <= 10) return 45;
+    return 60;
+  };
+
+  useEffect(() => {
+    const maxT = getHostCountdown(selectedLevel);
+    setHostTimeLeft(maxT);
+    setHostTimerActive(true);
+  }, [selectedLevel, session?.current_question_id]);
+
+  useEffect(() => {
+    if (!hostTimerActive || session?.is_locked || session?.revealed_correct !== null) {
+      if (hostTimerRef.current) clearInterval(hostTimerRef.current);
+      return;
+    }
+
+    if (hostTimerRef.current) clearInterval(hostTimerRef.current);
+    hostTimerRef.current = setInterval(() => {
+      setHostTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(hostTimerRef.current);
+          kbcAudio.playWrong();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (hostTimerRef.current) clearInterval(hostTimerRef.current);
+    };
+  }, [hostTimerActive, session?.is_locked, session?.revealed_correct, selectedLevel]);
 
   // Load KBC Admin Data & Poll Live Session
   useEffect(() => {
@@ -649,7 +689,12 @@ export default function AdminKbcManager() {
   // Advance to Next Level on Admin Monitor
   const handleNextLevel = () => {
     kbcAudio.stopLockSuspense();
-    if (selectedLevel >= 16) return;
+    const activeTestSet = testSets.find(t => t.is_active);
+    const totalQ = session?.total_questions || activeTestSet?.question_count || 10;
+    if (selectedLevel >= totalQ) {
+      handleAnnounceWinner();
+      return;
+    }
     const nextLvl = selectedLevel + 1;
     setSelectedLevel(nextLvl);
     setAdminLaserWrong(false);
@@ -702,6 +747,26 @@ export default function AdminKbcManager() {
     handleUpdateLiveRound({
       revealed_correct: correctIdx
     });
+
+    const activeTestSet = testSets.find(t => t.is_active);
+    const totalQ = session?.total_questions || activeTestSet?.question_count || 10;
+    if (currLvl >= totalQ) {
+      setTimeout(() => {
+        Swal.fire({
+          title: '🎉 All Questions Completed!',
+          text: `All ${totalQ} questions in "${activeTestSet?.title || 'Exam'}" are completed! Declare results and crown the winner.`,
+          icon: 'success',
+          confirmButtonText: '🏆 Declare Winner & End KBC',
+          confirmButtonColor: '#f59e0b',
+          showCancelButton: true,
+          cancelButtonText: 'Review Questions'
+        }).then((res) => {
+          if (res.isConfirmed) {
+            handleAnnounceWinner();
+          }
+        });
+      }, 1800);
+    }
   };
 
   // Trigger Wrong Answer (Downward High-Power Red Lasers) on Host & Laptop screens
@@ -1257,6 +1322,8 @@ export default function AdminKbcManager() {
     setSetImmediatelyActive(true);
   };
 
+  const activeTestSet = testSets.find(t => t.is_active);
+  const totalSessionQuestions = session?.total_questions || activeTestSet?.question_count || 10;
   const currentLevelInfo = KBC_PRIZE_LADDER[selectedLevel - 1] || KBC_PRIZE_LADDER[0];
   const currentLevelData = levelsData[selectedLevel] || { pool: [] };
   const activeQ = currentLevelData.activeQuestion;
@@ -1476,7 +1543,7 @@ export default function AdminKbcManager() {
                         <span>·</span>
                         <span>🎯 Pass: {t.passing_score || 50}%</span>
                         <span>·</span>
-                        <span>🏆 16-Level Ladder</span>
+                        <span>🏆 {t.question_count || 16}-Level Ladder</span>
                         <span>·</span>
                         <span>Max attempts: 1</span>
                       </div>
@@ -1546,7 +1613,7 @@ export default function AdminKbcManager() {
             <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <span className="px-3 py-1 rounded-xl bg-amber-500 text-slate-950 font-black text-sm">
-                  LEVEL {selectedLevel} OF 16
+                  LEVEL {selectedLevel} OF {totalSessionQuestions}
                 </span>
                 <span className="text-xl font-black text-amber-300">
                   {currentLevelInfo.prize}
@@ -1556,6 +1623,42 @@ export default function AdminKbcManager() {
                     Safe Padav
                   </span>
                 )}
+              </div>
+
+              {/* ── Host Tik-Tiki Ji Live Clock (Circular Countdown) ── */}
+              <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-2xl bg-black/70 border border-amber-500/50 shadow-inner">
+                <div className="flex items-center gap-2">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center font-mono font-black text-sm border-2 transition-all ${
+                    hostTimeLeft <= 10 
+                      ? 'border-red-500 text-white bg-red-950/90 shadow-[0_0_15px_#ef4444] animate-pulse' 
+                      : 'border-amber-400 text-amber-300 bg-amber-950/40'
+                  }`}>
+                    {hostTimeLeft}
+                  </div>
+                  <div className="text-left">
+                    <span className="block text-[8px] font-black uppercase tracking-wider text-amber-400">Tik-Tiki Ji</span>
+                    <span className="block text-[11px] font-bold text-slate-300">{hostTimeLeft}s remaining</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 pl-1.5 border-l border-slate-800">
+                  <button
+                    onClick={() => setHostTimerActive(prev => !prev)}
+                    className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition cursor-pointer"
+                    title={hostTimerActive ? 'Pause Clock' : 'Resume Clock'}
+                  >
+                    {hostTimerActive ? <Pause className="w-3.5 h-3.5 text-amber-300" /> : <Play className="w-3.5 h-3.5 text-emerald-400" />}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setHostTimeLeft(getHostCountdown(selectedLevel));
+                      setHostTimerActive(true);
+                    }}
+                    className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition cursor-pointer"
+                    title="Reset Clock for this Question"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-amber-300" />
+                  </button>
+                </div>
               </div>
 
               {/* Host Navigation Buttons & Quick Add */}
@@ -1575,13 +1678,22 @@ export default function AdminKbcManager() {
                 >
                   <ArrowLeft className="w-3.5 h-3.5" /> Prev Level
                 </button>
-                <button
-                  onClick={handleNextLevel}
-                  disabled={selectedLevel >= 16}
-                  className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black flex items-center gap-1 cursor-pointer"
-                >
-                  Next Level <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+                {selectedLevel >= totalSessionQuestions ? (
+                  <button
+                    onClick={handleAnnounceWinner}
+                    className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 text-xs font-black flex items-center gap-1.5 cursor-pointer shadow-lg shadow-amber-500/40 border border-yellow-300 animate-pulse"
+                    title="All questions completed! End KBC & Declare Results"
+                  >
+                    <Trophy className="w-3.5 h-3.5 text-slate-950" /> End KBC & Declare Result
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleNextLevel}
+                    className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black flex items-center gap-1 cursor-pointer"
+                  >
+                    Next Level <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -2042,12 +2154,12 @@ export default function AdminKbcManager() {
             {/* Money Ladder Quick Jump */}
             <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg">
               <div className="text-xs font-black text-amber-400 uppercase tracking-wider mb-2.5 pb-2 border-b border-slate-800 flex items-center justify-between">
-                <span>16-Level Ladder</span>
+                <span>{totalSessionQuestions}-Level Ladder</span>
                 <span className="text-[10px] text-slate-400 font-normal">Click to jump</span>
               </div>
 
               <div className="space-y-1 max-h-[380px] overflow-y-auto pr-1">
-                {KBC_PRIZE_LADDER.slice().reverse().map(step => {
+                {KBC_PRIZE_LADDER.slice(0, totalSessionQuestions).reverse().map(step => {
                   const isCurrent = selectedLevel === step.level;
                   return (
                     <button
@@ -2243,11 +2355,11 @@ export default function AdminKbcManager() {
           <div className="lg:col-span-4 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg h-fit">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Select Level</span>
-              <span className="text-xs text-amber-400 font-bold">16 Questions</span>
+              <span className="text-xs text-amber-400 font-bold">{totalSessionQuestions} Questions</span>
             </div>
 
             <div className="space-y-1.5 max-h-[620px] overflow-y-auto pr-1">
-              {KBC_PRIZE_LADDER.slice().reverse().map(step => {
+              {KBC_PRIZE_LADDER.slice(0, totalSessionQuestions).reverse().map(step => {
                 const isSelected = selectedLevel === step.level;
                 const topic = levelsData[step.level]?.activeQuestion?.topic || 'MERN/SQL';
 

@@ -332,20 +332,41 @@ export async function ensureKbcTable() {
 ensureKbcTable().catch(() => {});
 
 
-// ── 1. PUBLIC: Get Active 16 KBC Exam Questions for Game ──
+// ── 1. PUBLIC: Get Active KBC Exam Questions for Game ──
 router.get('/questions', async (req, res) => {
   const pool = getMySQLPool();
   try {
     await ensureKbcTable();
 
     if (pool) {
-      // Fetch 16 active questions
-      const [activeRows] = await pool.query(`
-        SELECT id, level, topic, question, options_json, correct, explanation 
-        FROM kbc_questions 
-        WHERE is_active = 1 
-        ORDER BY level ASC
-      `);
+      // Check if a specific test set is currently active (e.g. Python, HTML, Excel)
+      let activeSetId = null;
+      try {
+        const [activeSets] = await pool.query('SELECT id FROM kbc_test_sets WHERE is_active = 1 LIMIT 1');
+        if (activeSets.length > 0) activeSetId = activeSets[0].id;
+      } catch (e) {}
+
+      let activeRows = [];
+      if (activeSetId) {
+        const [rows] = await pool.query(`
+          SELECT id, level, topic, question, options_json, correct, explanation 
+          FROM kbc_questions 
+          WHERE test_set_id = ? AND is_active = 1 
+          ORDER BY level ASC
+        `, [activeSetId]);
+        activeRows = rows;
+      }
+
+      if (activeRows.length === 0) {
+        // Fallback to any active questions
+        const [rows] = await pool.query(`
+          SELECT id, level, topic, question, options_json, correct, explanation 
+          FROM kbc_questions 
+          WHERE is_active = 1 
+          ORDER BY level ASC
+        `);
+        activeRows = rows;
+      }
 
       // Fetch alternates for Flip-the-Question lifeline
       const [altRows] = await pool.query(`
@@ -543,22 +564,8 @@ router.post('/admin/test-sets/activate', async (req, res) => {
       const [setRows] = await pool.query('SELECT * FROM kbc_test_sets WHERE id = ?', [setId]);
       const activeSet = setRows[0];
 
-      // 3. Reset live KBC session to Level 1
-      await pool.query(`
-        UPDATE kbc_sessions 
-        SET status = 'LIVE', show_in_navbar = 1, current_level = 1, current_question_id = NULL,
-            is_locked = 0, locked_option = NULL, revealed_correct = NULL, show_winner = 0
-        WHERE id = 'main_session'
-      `);
-
-      // 4. Reset teams to Level 1, 0 points
-      await pool.query(`
-        UPDATE kbc_teams 
-        SET current_level = 1, score_amount = 0, points = 0, correct_count = 0, wrong_count = 0,
-            submitted_option = NULL, status = 'CONNECTED'
-      `);
-
       // 5. If this set is HTML or Excel or MERN, activate its curated questions into kbc_questions
+      let totalQ = 16;
       if (setId === 'kbc-html-quiz') {
         await pool.query("UPDATE kbc_questions SET is_active = 0");
         for (let lvl = 1; lvl <= 16; lvl++) {
@@ -568,6 +575,7 @@ router.post('/admin/test-sets/activate', async (req, res) => {
             WHERE level = ? AND test_set_id = 'kbc-html-quiz' AND id = CONCAT('web_l', ?, '_001')
           `, [lvl, lvl]);
         }
+        totalQ = 16;
       } else if (setId === 'kbc-excel-analytics' && CURATED_TEST_SETS.excel?.length > 0) {
         for (const q of CURATED_TEST_SETS.excel) {
           const shuffled = shuffleOptionsAccurately(q.options, q.correct);
@@ -578,6 +586,7 @@ router.post('/admin/test-sets/activate', async (req, res) => {
               options_json = VALUES(options_json), correct = VALUES(correct), is_active = 1
           `, [q.id, q.level, q.topic, q.question, JSON.stringify(shuffled.options), shuffled.correct, q.explanation]);
         }
+        totalQ = CURATED_TEST_SETS.excel.length || 16;
       } else if (setId === 'kbc-sql-mastery') {
         // Activate standard SQL questions
         for (let lvl = 1; lvl <= 16; lvl++) {
@@ -585,14 +594,32 @@ router.post('/admin/test-sets/activate', async (req, res) => {
             UPDATE kbc_questions SET is_active = (id LIKE 'sql_l${lvl}_001%') WHERE level = ?
           `, [lvl]);
         }
+        totalQ = 16;
       } else {
-        // Custom test set (e.g. 'kal ka test'): activate its selected questions
-        const [customQRows] = await pool.query('SELECT id FROM kbc_questions WHERE test_set_id = ? AND is_active = 1', [setId]);
-        if (customQRows.length > 0) {
-          await pool.query('UPDATE kbc_questions SET is_active = 0 WHERE test_set_id != ?', [setId]);
-          await pool.query('UPDATE kbc_questions SET is_active = 1 WHERE test_set_id = ?', [setId]);
-        }
+        // Custom test set (e.g. 'python' with 10 questions): activate its selected questions
+        await pool.query('UPDATE kbc_questions SET is_active = 0 WHERE test_set_id != ?', [setId]);
+        await pool.query('UPDATE kbc_questions SET is_active = 1 WHERE test_set_id = ?', [setId]);
+
+        const [customQRows] = await pool.query('SELECT COUNT(*) as cnt FROM kbc_questions WHERE test_set_id = ? AND is_active = 1', [setId]);
+        totalQ = customQRows[0]?.cnt || activeSet?.question_count || 10;
+        await pool.query('UPDATE kbc_test_sets SET question_count = ? WHERE id = ?', [totalQ, setId]);
       }
+
+      // 3. Reset live KBC session to Level 1 with exact total_questions
+      const [firstQ] = await pool.query('SELECT id FROM kbc_questions WHERE test_set_id = ? AND level = 1 AND is_active = 1 LIMIT 1', [setId]);
+      await pool.query(`
+        UPDATE kbc_sessions 
+        SET status = 'LIVE', show_in_navbar = 1, current_level = 1, total_questions = ?, current_question_id = ?,
+            is_locked = 0, locked_option = NULL, revealed_correct = NULL, show_winner = 0, show_leaderboard = 0
+        WHERE id = 'main_session'
+      `, [totalQ, firstQ[0]?.id || null]);
+
+      // 4. Reset teams to Level 1, 0 points
+      await pool.query(`
+        UPDATE kbc_teams 
+        SET current_level = 1, score_amount = 0, points = 0, correct_count = 0, wrong_count = 0,
+            submitted_option = NULL, status = 'CONNECTED'
+      `);
 
       return res.json({
         success: true,
@@ -1915,33 +1942,60 @@ router.get('/session/status', async (req, res) => {
       if (rows.length > 0) {
         const s = rows[0];
         
+        // Detect active test set and exact question count
+        let activeSet = null;
+        let totalQ = s.total_questions || 16;
+        try {
+          const [setRows] = await pool.query('SELECT id, title, question_count FROM kbc_test_sets WHERE is_active = 1 LIMIT 1');
+          if (setRows.length > 0) {
+            activeSet = setRows[0];
+            const [cntRows] = await pool.query('SELECT COUNT(*) as cnt FROM kbc_questions WHERE test_set_id = ? AND is_active = 1', [activeSet.id]);
+            if (cntRows[0]?.cnt > 0) {
+              totalQ = cntRows[0].cnt;
+            } else if (activeSet.question_count > 0) {
+              totalQ = activeSet.question_count;
+            }
+          }
+        } catch (e) {}
+
         // Fetch current active question details
         let currentQuestion = null;
-        let query = 'SELECT * FROM kbc_questions WHERE level = ? AND is_active = 1 LIMIT 1';
-        let params = [s.current_level || 1];
+        const curLvl = s.current_level || 1;
 
-        if (s.current_question_id) {
-          query = 'SELECT * FROM kbc_questions WHERE id = ? LIMIT 1';
-          params = [s.current_question_id];
-        }
+        if (curLvl <= totalQ) {
+          let qRows = [];
+          if (s.current_question_id) {
+            const [rows] = await pool.query('SELECT * FROM kbc_questions WHERE id = ? LIMIT 1', [s.current_question_id]);
+            qRows = rows;
+          } else if (activeSet) {
+            const [rows] = await pool.query('SELECT * FROM kbc_questions WHERE test_set_id = ? AND level = ? AND is_active = 1 LIMIT 1', [activeSet.id, curLvl]);
+            qRows = rows;
+          } else {
+            const [rows] = await pool.query('SELECT * FROM kbc_questions WHERE level = ? AND is_active = 1 LIMIT 1', [curLvl]);
+            qRows = rows;
+          }
 
-        let [qRows] = await pool.query(query, params);
-        if (qRows.length === 0) {
-          const [fallbackRows] = await pool.query('SELECT * FROM kbc_questions WHERE level = ? LIMIT 1', [s.current_level || 1]);
-          qRows = fallbackRows;
-        }
+          if (qRows.length === 0 && (!activeSet || activeSet.id === 'kbc-sql-mastery')) {
+            const [fallbackRows] = await pool.query('SELECT * FROM kbc_questions WHERE level = ? LIMIT 1', [curLvl]);
+            qRows = fallbackRows;
+          }
 
-        if (qRows.length > 0) {
-          const q = qRows[0];
-          currentQuestion = {
-            id: q.id,
-            level: q.level,
-            topic: q.topic,
-            question: q.question,
-            options: typeof q.options_json === 'string' ? JSON.parse(q.options_json) : q.options_json,
-            correct: q.correct,
-            explanation: q.explanation
-          };
+          if (qRows.length > 0) {
+            const q = qRows[0];
+            currentQuestion = {
+              id: q.id,
+              level: q.level,
+              topic: q.topic,
+              question: q.question,
+              options: typeof q.options_json === 'string' ? JSON.parse(q.options_json) : q.options_json,
+              correct: q.correct,
+              explanation: q.explanation
+            };
+          }
+        } else {
+          // All test set questions completed! End KBC session and show winner
+          currentQuestion = null;
+          s.show_winner = 1;
         }
 
         // Fetch top scorer / winner if show_winner is true
@@ -1955,12 +2009,11 @@ router.get('/session/status', async (req, res) => {
           if (topRows.length > 0) winner = topRows[0];
         }
 
-        // Leaderboard top teams (Only teams playing in this session, including OUT players with cut-off points)
+        // Leaderboard top teams: Sorted purely by points descending so every right/wrong answer immediately organizes rank
         const [topTeams] = await pool.query(`
           SELECT id, team_name, leader_name, access_code, current_level, points, score_amount, correct_count, wrong_count, submitted_option, status
           FROM kbc_teams 
-          WHERE status IN ('CONNECTED', 'HOTSEAT', 'OUT', 'ELIMINATED', 'REGISTERED')
-          ORDER BY CASE WHEN status IN ('CONNECTED', 'HOTSEAT') THEN 0 ELSE 1 END, points DESC, score_amount DESC, correct_count DESC, created_at ASC 
+          ORDER BY points DESC, score_amount DESC, correct_count DESC, created_at ASC 
           LIMIT 25
         `);
 
@@ -1971,7 +2024,7 @@ router.get('/session/status', async (req, res) => {
             status: s.status,
             show_in_navbar: Boolean(s.show_in_navbar),
             current_level: s.current_level || 1,
-            total_questions: s.total_questions || 16,
+            total_questions: totalQ,
             current_question_id: s.current_question_id,
             is_locked: Boolean(s.is_locked),
             locked_option: s.locked_option,
@@ -2140,6 +2193,10 @@ router.post('/admin/session/update', async (req, res) => {
         // Also clear teams submitted options for the new round
         await pool.query('UPDATE kbc_teams SET submitted_option = NULL');
       } else {
+        // Fetch current session BEFORE updating to check if answer was already revealed
+        const [preSess] = await pool.query('SELECT current_level, total_questions, revealed_correct, active_team_id FROM kbc_sessions WHERE id = "main_session"');
+        const wasAlreadyRevealed = preSess[0]?.revealed_correct !== null && preSess[0]?.revealed_correct !== undefined;
+
         const updates = [];
         const params = [];
 
@@ -2178,54 +2235,63 @@ router.post('/admin/session/update', async (req, res) => {
         }
 
         // ── REAL-TIME POINTS CALCULATION & CUTOFF ON REVEAL ──
-        if (revealed_correct !== undefined && revealed_correct !== null) {
+        if (revealed_correct !== undefined && revealed_correct !== null && !wasAlreadyRevealed) {
           const correctOpt = parseInt(revealed_correct, 10);
-          const [curSess] = await pool.query('SELECT current_level, total_questions, revealed_correct, active_team_id FROM kbc_sessions WHERE id = "main_session"');
-          
-          // Only evaluate points once per question round (avoid duplicate points on multiple clicks / polls)
-          const alreadyRevealed = curSess[0]?.revealed_correct !== null && curSess[0]?.revealed_correct !== undefined;
+          const lvl = preSess[0]?.current_level || current_level || 1;
+          const totalQ = preSess[0]?.total_questions || 16;
+          const prizeInfo = KBC_PRIZE_LADDER_BACKEND[lvl - 1] || { amount: lvl * 1000, prize: `₹${lvl * 1000}` };
+          const pointsEarned = lvl * 100; // Escalating points: L1=100, L2=200, ..., L10=1000, L16=1600 pts
 
-          if (!alreadyRevealed) {
-            const lvl = curSess[0]?.current_level || current_level || 1;
-            const totalQ = curSess[0]?.total_questions || 16;
-            const prizeInfo = KBC_PRIZE_LADDER_BACKEND[lvl - 1] || { amount: lvl * 1000, prize: `₹${lvl * 1000}` };
-            const pointsEarned = lvl * 100; // Escalating points: L1=100, L2=200, ..., L10=1000, L16=1600 pts
-            const { safeLevel, safePoints, safePrize } = getSafePointsAndAmount(lvl, totalQ);
-
-            if (correctOpt !== 99) {
-              // 1. Award points, prize score amount, and correct count to all teams with correct answer (who are not OUT)
-              await pool.query(`
-                UPDATE kbc_teams 
-                SET points = COALESCE(points, 0) + ?,
-                    score_amount = ?,
-                    current_level = ?,
-                    correct_count = COALESCE(correct_count, 0) + 1,
-                    status = 'HOTSEAT'
-                WHERE submitted_option = ? AND status != 'OUT'
-              `, [pointsEarned, prizeInfo.amount, Math.min(lvl + 1, totalQ), correctOpt]);
-
-            // 2. Cut off / lose points for teams that submitted an incorrect answer & drop place down!
+          if (correctOpt !== 99) {
+            // 1. Award points, prize score amount, and correct count to all teams with correct answer
             await pool.query(`
               UPDATE kbc_teams 
-              SET points = GREATEST(?, COALESCE(points, 0) - 100),
-                  current_level = GREATEST(1, current_level - 1),
-                  score_amount = GREATEST(?, COALESCE(score_amount, 0) - 1000),
-                  wrong_count = COALESCE(wrong_count, 0) + 1,
-                  status = 'OUT'
-              WHERE submitted_option IS NOT NULL AND submitted_option != ? AND status != 'OUT'
-            `, [safePoints, safePrize, correctOpt]);
+              SET points = COALESCE(points, 0) + ?,
+                  score_amount = ?,
+                  current_level = ?,
+                  correct_count = COALESCE(correct_count, 0) + 1,
+                  status = 'HOTSEAT'
+              WHERE submitted_option = ?
+            `, [pointsEarned, prizeInfo.amount, Math.min(lvl + 1, totalQ), correctOpt]);
 
-            } else {
-              // 99 = Explicit Wrong Answer triggered by Admin for the round
+            // 2. Cut off / lose 100 points for teams that submitted an incorrect answer & drop place down!
+            await pool.query(`
+              UPDATE kbc_teams 
+              SET points = GREATEST(0, COALESCE(points, 0) - 100),
+                  current_level = GREATEST(1, current_level - 1),
+                  score_amount = GREATEST(0, COALESCE(score_amount, 0) - 1000),
+                  wrong_count = COALESCE(wrong_count, 0) + 1,
+                  status = 'CONNECTED'
+              WHERE submitted_option IS NOT NULL AND submitted_option != ?
+            `, [correctOpt]);
+
+          } else {
+            // 99 = Explicit Wrong Answer triggered by Admin for the round
+            await pool.query(`
+              UPDATE kbc_teams 
+              SET points = GREATEST(0, COALESCE(points, 0) - 100),
+                  current_level = GREATEST(1, current_level - 1),
+                  score_amount = GREATEST(0, COALESCE(score_amount, 0) - 1000),
+                  wrong_count = COALESCE(wrong_count, 0) + 1,
+                  status = 'CONNECTED'
+              WHERE (submitted_option IS NOT NULL OR id = ?)
+            `, [preSess[0]?.active_team_id || '']);
+          }
+        }
+
+        // If advancing past total questions, automatically declare winner and finish KBC!
+        if (current_level !== undefined) {
+          const reqLvl = parseInt(current_level, 10);
+          const totalQ = preSess[0]?.total_questions || 16;
+          if (reqLvl > totalQ) {
+            const [topRows] = await pool.query('SELECT * FROM kbc_teams ORDER BY points DESC, score_amount DESC, correct_count DESC LIMIT 1');
+            if (topRows.length > 0) {
+              const w = topRows[0];
               await pool.query(`
-                UPDATE kbc_teams 
-                SET points = GREATEST(?, COALESCE(points, 0) - 100),
-                    current_level = GREATEST(1, current_level - 1),
-                    score_amount = GREATEST(?, COALESCE(score_amount, 0) - 1000),
-                    wrong_count = COALESCE(wrong_count, 0) + 1,
-                    status = 'OUT'
-                WHERE (submitted_option IS NOT NULL OR id = ?) AND status != 'OUT'
-              `, [safePoints, safePrize, curSess[0]?.active_team_id || '']);
+                UPDATE kbc_sessions 
+                SET show_winner = 1, winner_team_id = ?, winner_name = ?, winner_points = ?, winner_prize = ?
+                WHERE id = 'main_session'
+              `, [w.id, w.leader_name || w.team_name, w.points || 0, 'Champion']);
             }
           }
         }
@@ -2262,26 +2328,26 @@ router.post('/admin/session/update', async (req, res) => {
         const { safePoints, safePrize } = getSafePointsAndAmount(lvl, totalQ);
 
         memoryTeams.forEach(t => {
-          if (correctOpt !== 99 && t.submitted_option === correctOpt && t.status !== 'OUT') {
+          if (correctOpt !== 99 && t.submitted_option === correctOpt) {
             t.points = (t.points || 0) + pointsEarned;
             t.score_amount = prizeInfo.amount;
             t.current_level = Math.min(lvl + 1, totalQ);
             t.correct_count = (t.correct_count || 0) + 1;
             t.status = 'HOTSEAT';
           } else if (correctOpt === 99) {
-            if ((t.submitted_option !== null || t.id === memorySession.active_team_id) && t.status !== 'OUT') {
-              t.points = Math.max(safePoints, (t.points || 0) - 100);
+            if (t.submitted_option !== null || t.id === memorySession.active_team_id) {
+              t.points = Math.max(0, (t.points || 0) - 100);
               t.current_level = Math.max(1, (t.current_level || 1) - 1);
-              t.score_amount = Math.max(safePrize, (t.score_amount || 0) - 1000);
+              t.score_amount = Math.max(0, (t.score_amount || 0) - 1000);
               t.wrong_count = (t.wrong_count || 0) + 1;
-              t.status = 'OUT';
+              t.status = 'CONNECTED';
             }
-          } else if (t.submitted_option !== null && t.submitted_option !== undefined && t.status !== 'OUT') {
-            t.points = Math.max(safePoints, (t.points || 0) - 100);
+          } else if (t.submitted_option !== null && t.submitted_option !== undefined) {
+            t.points = Math.max(0, (t.points || 0) - 100);
             t.current_level = Math.max(1, (t.current_level || 1) - 1);
-            t.score_amount = Math.max(safePrize, (t.score_amount || 0) - 1000);
+            t.score_amount = Math.max(0, (t.score_amount || 0) - 1000);
             t.wrong_count = (t.wrong_count || 0) + 1;
-            t.status = 'OUT';
+            t.status = 'CONNECTED';
           }
         });
       }
