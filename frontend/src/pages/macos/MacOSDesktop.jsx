@@ -1178,6 +1178,19 @@ p {
   ]);
   const [isDraggingVsCodeBottom, setIsDraggingVsCodeBottom] = useState(false);
   const [isVsCodeRunning, setIsVsCodeRunning] = useState(false);
+  const [activeExecutionId, setActiveExecutionId] = useState(null);
+  const [detectedRuntimes, setDetectedRuntimes] = useState(null);
+
+  // Fetch real execution runtime diagnostics on mount
+  useEffect(() => {
+    fetch('/api/ide/diagnostics')
+      .then(res => res.json())
+      .then(data => {
+        setDetectedRuntimes(data);
+      })
+      .catch(() => {});
+  }, []);
+
   const [vsCodeActiveSidebar, setVsCodeActiveSidebar] = useState('explorer'); // 'explorer', 'search', 'git', 'extensions', 'copilot'
   const [vsCodeExtSearch, setVsCodeExtSearch] = useState('');
   const [vsCodeFileSearch, setVsCodeFileSearch] = useState('');
@@ -1321,10 +1334,14 @@ p {
 
   // ── Genuine Code Execution Engine (Synchronized with Monaco Model) ──
   const handleRunVsCodeCode = async () => {
+    if (isVsCodeRunning) return; // Prevent duplicate concurrent runs
     macSound.playPop();
     setIsVsCodeRunning(true);
     setIsVsCodeBottomMinimized(false);
     setVsCodeBottomTab('terminal');
+
+    const execId = `exec-${Date.now()}`;
+    setActiveExecutionId(execId);
 
     const activeFile = vsCodeFiles.find(f => f.id === activeVsCodeFileId) || vsCodeFiles[0];
     const cmdRun = activeFile.lang === 'java' 
@@ -1353,12 +1370,14 @@ p {
           language: activeFile.lang,
           code: activeFile.content,
           fileName: activeFile.name,
-          files: vsCodeFiles
+          files: vsCodeFiles,
+          executionId: execId
         })
       });
 
       const data = await response.json();
       setIsVsCodeRunning(false);
+      setActiveExecutionId(null);
       macSound.playPop();
 
       if (data.stdout) {
@@ -1415,6 +1434,7 @@ p {
 
     } catch (err) {
       setIsVsCodeRunning(false);
+      setActiveExecutionId(null);
       setVsCodeTerminalOutput(prev => [
         ...prev,
         `[stderr] Execution failed: ${err.message}`,
@@ -1423,12 +1443,45 @@ p {
     }
   };
 
-  // ── Genuine Interactive Terminal Command Input ──
+  const handleStopVsCodeExecution = async () => {
+    macSound.playPop();
+    try {
+      await fetch('/api/ide/stop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ executionId: activeExecutionId })
+      });
+      setVsCodeTerminalOutput(prev => [
+        ...prev,
+        '[Process terminated by user (SIGKILL)]'
+      ]);
+    } catch {}
+    setIsVsCodeRunning(false);
+    setActiveExecutionId(null);
+  };
+
+  // ── Genuine Interactive Terminal Command Input (With Scanner & Shell Routing) ──
   const handleVsCodeTerminalSubmit = async (e) => {
     e.preventDefault();
     const cmd = vsCodeTerminalInput.trim();
     if (!cmd) return;
     setVsCodeTerminalInput('');
+
+    // If an execution is running and waiting for input (e.g. Scanner)
+    if (isVsCodeRunning && activeExecutionId) {
+      setVsCodeTerminalOutput(prev => [...prev, cmd]);
+      try {
+        await fetch('/api/ide/input', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            executionId: activeExecutionId,
+            input: cmd
+          })
+        });
+      } catch {}
+      return;
+    }
 
     if (cmd.toLowerCase() === 'clear' || cmd.toLowerCase() === 'cls') {
       setVsCodeTerminalOutput([]);
@@ -2476,15 +2529,25 @@ p {
                 <span>Live Preview</span>
               </button>
 
-              <button
-                onClick={handleRunVsCodeCode}
-                disabled={isVsCodeRunning}
-                className="px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer"
-                title={`Run ${activeVsCodeFile.name} with ${activeVsCodeFile.lang === 'java' ? 'OpenJDK 21 LTS' : 'Python 3.12.2'}`}
-              >
-                <Play className="w-3 h-3 fill-white" />
-                <span>{isVsCodeRunning ? 'Running...' : `Run ${activeVsCodeFile.lang === 'java' ? 'Java 21' : activeVsCodeFile.lang === 'python' ? 'Python' : 'Code'}`}</span>
-              </button>
+              {isVsCodeRunning ? (
+                <button
+                  onClick={handleStopVsCodeExecution}
+                  className="px-2.5 py-1 rounded-md bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer animate-pulse"
+                  title="Stop Running Process (SIGKILL)"
+                >
+                  <Square className="w-3 h-3 fill-white" />
+                  <span>Stop</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleRunVsCodeCode}
+                  className="px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer"
+                  title={`Run ${activeVsCodeFile.name} with ${activeVsCodeFile.lang === 'java' ? 'OpenJDK 27/21' : 'Python 3.12'}`}
+                >
+                  <Play className="w-3 h-3 fill-white" />
+                  <span>{`Run ${activeVsCodeFile.lang === 'java' ? 'Java' : activeVsCodeFile.lang === 'python' ? 'Python' : 'Code'}`}</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -3107,8 +3170,10 @@ p {
                   <span>Spaces: 4</span>
                   <span>UTF-8</span>
                   <span>LF</span>
-                  <span className="font-bold">
-                    {activeVsCodeFile.lang === 'java' ? 'Java 27 (OpenJDK)' : activeVsCodeFile.lang === 'python' ? 'Python 3.12.8' : 'Node.js 20.18'}
+                  <span className="font-bold flex items-center gap-1">
+                    {activeVsCodeFile.lang === 'java' 
+                      ? (detectedRuntimes?.java?.isCompilationReady ? `☕ ${detectedRuntimes.java.javacVersion || 'OpenJDK 27 LTS'}` : '☕ JDK Config Required') 
+                      : activeVsCodeFile.lang === 'python' ? `🐍 ${detectedRuntimes?.python?.version || 'Python 3.12'}` : '🟢 Node.js 20.18'}
                   </span>
                   <span>Prettier ✓</span>
                   <span className="flex items-center gap-1"><Sparkles className="w-2.5 h-2.5 text-fuchsia-300" /> Copilot Ready</span>
