@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import Editor from '@monaco-editor/react';
 import { 
   Wifi, Battery, Search, Sliders, X, Minus, Maximize2, 
   Terminal, Code2, Trophy, Compass, Folder, FileText, 
@@ -13,7 +14,8 @@ import {
   Terminal as TerminalIcon, AlertCircle, HelpCircle,
   Package, Box, CheckCheck, List, Grid, MoreHorizontal,
   ChevronLeft, ArrowUpRight, Globe, CornerDownLeft, GitBranch,
-  PlaySquare, Wrench, FileCheck, Split, BookOpen, Mic
+  PlaySquare, Wrench, FileCheck, Split, BookOpen, Mic,
+  Bot, Send, Sparkle, Minimize2
 } from 'lucide-react';
 
 // ── Pure Web Audio Sound Synthesizer (Instant native macOS sound effects) ──
@@ -87,7 +89,7 @@ class MacAudio {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(987.77, this.ctx.currentTime); // B5
+      osc.frequency.setValueAtTime(987.77, this.ctx.currentTime);
       gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.25);
       osc.connect(gain);
@@ -334,7 +336,6 @@ export default function MacOSDesktop() {
     return () => document.removeEventListener('fullscreenchange', handleFsChange);
   }, []);
 
-  // First interaction auto-trigger fullscreen if user enters page
   const handleDesktopCanvasClick = (e) => {
     if (!document.fullscreenElement && !sessionStorage.getItem('dismissed_fs_session')) {
       if (document.documentElement.requestFullscreen) {
@@ -409,8 +410,7 @@ export default function MacOSDesktop() {
   const [spotlightQuery, setSpotlightQuery] = useState('');
   const [soundVolume, setSoundVolume] = useState(85);
   const [screenBrightness, setScreenBrightness] = useState(100);
-  const [dockSize, setDockSize] = useState(52); // px
-  const [accentColor, setAccentColor] = useState('blue'); // blue, purple, amber, emerald
+  const [dockSize, setDockSize] = useState(52);
   const [bouncingApp, setBouncingApp] = useState(null);
   const [activeSettingsTab, setActiveSettingsTab] = useState('displays');
   const [isSiriOpen, setIsSiriOpen] = useState(false);
@@ -431,8 +431,8 @@ export default function MacOSDesktop() {
       zIndex: 25,
       x: 70,
       y: 40,
-      w: 960,
-      h: 600
+      w: 980,
+      h: 620
     },
     safari: {
       id: 'safari',
@@ -697,29 +697,8 @@ export default function MacOSDesktop() {
     });
   };
 
-  // ── Keyboard Shortcuts (⌘+Space, ⌃⌘F, Esc) ──
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.code === 'Space')) {
-        e.preventDefault();
-        setActiveMenu(prev => prev === 'spotlight' ? null : 'spotlight');
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f' && e.ctrlKey) {
-        e.preventDefault();
-        toggleFullscreenMode();
-      }
-      if (e.key === 'Escape') {
-        setActiveMenu(null);
-        setContextMenu(null);
-        setIsSiriOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
   // ═══════════════════════════════════════════════════════════════
-  // ── VISUAL STUDIO CODE STATE (JDK 21, Python 3.12, Extensions) ──
+  // ── VISUAL STUDIO CODE ADVANCED STATE (MONACO + AI + EXTENSIONS) ──
   // ═══════════════════════════════════════════════════════════════
   const [vsCodeFiles, setVsCodeFiles] = useState([
     {
@@ -728,25 +707,32 @@ export default function MacOSDesktop() {
       folder: 'src',
       lang: 'python',
       content: 
-`#  Visual Studio Code on macOS Sequoia (Python 3.12.2)
+`#  Microsoft Visual Studio Code — Python 3.12.2 Pro Engine
 import sys
+from typing import List, Dict
 
-def master_tech_career():
-    print("🚀 Initializing AppleTree Python & AI Sandbox...")
-    print(f"System: macOS Sequoia 15.2 | Python {sys.version.split()[0]}")
-    
-    tracks = [
-        {"role": "Java Full Stack Developer", "package": "₹8-18 LPA", "status": "Active"},
-        {"role": "AWS DevOps Cloud Architect", "package": "₹10-22 LPA", "status": "Active"},
-        {"role": "Python AI & ML Specialist", "package": "₹12-25 LPA", "status": "Active"},
-        {"role": "React & MERN Stack Lead", "package": "₹8-16 LPA", "status": "Active"}
-    ]
-    for idx, track in enumerate(tracks, start=1):
-        print(f"  [{idx}] {track['role']} -> Target: {track['package']}")
-    print("\\n✓ Status: 100% Industry Certified & Placement Ready!")
+class PlacementEngine:
+    def __init__(self, institute: str):
+        self.institute = institute
+        self.tracks: List[Dict[str, str]] = [
+            {"role": "Java Full Stack Developer", "package": "₹8-18 LPA", "status": "Active"},
+            {"role": "AWS DevOps Cloud Architect", "package": "₹10-22 LPA", "status": "Active"},
+            {"role": "Python AI & ML Specialist", "package": "₹12-25 LPA", "status": "Active"},
+            {"role": "React & MERN Stack Lead", "package": "₹8-16 LPA", "status": "Active"}
+        ]
+
+    def display_pathway(self) -> None:
+        print(f"🚀 Initializing {self.institute} Placement Intelligence...")
+        print(f"Runtime: macOS Sequoia 15.2 | Python {sys.version.split()[0]}")
+        print("=" * 60)
+        for idx, track in enumerate(self.tracks, start=1):
+            print(f" [{idx}] {track['role']:<30} Target: {track['package']}")
+        print("=" * 60)
+        print("✓ Status: 100% Industry Certified & Placement Ready!")
 
 if __name__ == "__main__":
-    master_tech_career()
+    engine = PlacementEngine("AppleTree Infotech Ghaziabad")
+    engine.display_pathway()
 `
     },
     {
@@ -755,13 +741,27 @@ if __name__ == "__main__":
       folder: 'src',
       lang: 'java',
       content:
-`// ☕ OpenJDK 21.0.2 LTS running on AppleTree macOS
+`// ☕ OpenJDK 21.0.2 LTS Enterprise Microservice (Spring Boot 3.3)
+import java.time.LocalDateTime;
+import java.util.List;
+
 public class App {
     public static void main(String[] args) {
         System.out.println("☕ Compiling with OpenJDK 21 LTS (Oracle / RedHat Spec)...");
         System.out.println("Academy: AppleTree Infotech Ghaziabad");
-        System.out.println("Modules: Spring Boot 3.3, Microservices, Hibernate ORM, Kafka");
-        System.out.println("Status: Java Enterprise Engine Active 🚀");
+        System.out.println("Timestamp: " + LocalDateTime.now());
+        
+        List<String> modules = List.of(
+            "Spring Boot 3.3 Web",
+            "Microservices Architecture",
+            "Hibernate ORM & MySQL",
+            "Kafka Event Streaming",
+            "Docker & Kubernetes Cloud"
+        );
+        
+        System.out.println("Active Enterprise Modules:");
+        modules.forEach(m -> System.out.println("  ➜ " + m));
+        System.out.println("Status: Java Enterprise Microservice Running 🚀");
     }
 }`
     },
@@ -771,15 +771,21 @@ public class App {
       folder: 'src',
       lang: 'javascript',
       content:
-`// Node.js 20 LTS Microservice
-const express = {
-  get: (path, cb) => cb({ path }, { send: msg => console.log("Response:", msg) })
-};
+`// Node.js 20.18.0 LTS Enterprise Backend
+const http = require('http');
 
-console.log("Starting AppleTree API Service on port 5000...");
-express.get("/api/status", (req, res) => {
-  res.send("✓ AppleTree Enterprise Server Healthy (Uptime: 99.99%)");
+const PORT = 5000;
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({
+    status: 'online',
+    academy: 'AppleTree Infotech',
+    engine: 'Node.js 20 LTS',
+    uptime: process.uptime()
+  }));
 });
+
+console.log(\`⚡ Server listening on http://localhost:\${PORT}\`);
 `
     },
     {
@@ -792,13 +798,21 @@ express.get("/api/status", (req, res) => {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>AppleTree Infotech Portal</title>
+  <title>AppleTree Live Portal</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-slate-900 text-white font-sans">
-  <div id="root">
-    <h1>AppleTree Infotech Portal</h1>
-    <p>Premier Tech Training & Placements in Delhi NCR</p>
+<body class="dark-body">
+  <div class="card">
+    <div class="logo"> AppleTree Infotech</div>
+    <h1>Professional IT Training & Career Growth</h1>
+    <p>Guaranteed 100% Placement Support in Delhi NCR & Top MNCs</p>
+    <div class="tags">
+      <span class="tag">Java 21 LTS</span>
+      <span class="tag">Python 3.12</span>
+      <span class="tag">AWS DevOps</span>
+      <span class="tag">MERN Stack</span>
+    </div>
+    <button class="cta-btn" onclick="alert('Welcome to AppleTree Tech Career!')">Explore Courses</button>
   </div>
 </body>
 </html>`
@@ -809,15 +823,77 @@ express.get("/api/status", (req, res) => {
       folder: 'public',
       lang: 'css',
       content:
-`/* AppleTree Theme Stylesheet */
-body {
+`/* AppleTree Dark Pro CSS */
+.dark-body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background-color: #0f172a;
+  padding: 30px;
+  background: radial-gradient(circle at 50% 50%, #1e1b4b 0%, #030712 100%);
   color: #f8fafc;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
 }
-.hero-gradient {
-  background: linear-gradient(135deg, #38bdf8 0%, #3b82f6 100%);
+.card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 480px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+}
+.logo {
+  font-size: 13px;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.1em;
+  margin-bottom: 12px;
+}
+h1 {
+  font-size: 22px;
+  margin: 0 0 10px;
+  background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+p {
+  font-size: 13px;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 18px 0;
+}
+.tag {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.cta-btn {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(2, 132, 199, 0.4);
+  transition: transform 0.15s;
+}
+.cta-btn:hover {
+  transform: scale(1.04);
 }`
     },
     {
@@ -832,12 +908,14 @@ body {
   - **Python 3.12.2**
   - **Node.js 20.18.0 LTS**
 - Run any file using the green ▶ Run button or in the integrated terminal!
+- Use **Live Browser Preview** to see HTML & CSS updates live!
+- Use **Copilot AI** for project-wide coding, refactoring, and bug fixes!
 `
     }
   ]);
 
   const [activeVsCodeFileId, setActiveVsCodeFileId] = useState('f-py');
-  const [vsCodeTabs, setVsCodeTabs] = useState(['f-py', 'f-java', 'f-js', 'f-html']);
+  const [vsCodeTabs, setVsCodeTabs] = useState(['f-py', 'f-java', 'f-js', 'f-html', 'f-css']);
   const [vsCodeTerminalOutput, setVsCodeTerminalOutput] = useState([
     'developer@appletree-mac-pro ~/workspace % python3 --version',
     'Python 3.12.2',
@@ -846,26 +924,38 @@ body {
     'OpenJDK Runtime Environment (build 21.0.2+13-LTS)',
     'OpenJDK 64-Bit Server VM (build 21.0.2+13-LTS, mixed mode, sharing)',
     'developer@appletree-mac-pro ~/workspace % python3 main.py',
-    '🚀 Initializing AppleTree Python & AI Sandbox...',
-    'System: macOS Sequoia 15.2 | Python 3.12.2',
-    '  [1] Java Full Stack Developer -> Target: ₹8-18 LPA',
-    '  [2] AWS DevOps Cloud Architect -> Target: ₹10-22 LPA',
-    '  [3] Python AI & ML Specialist -> Target: ₹12-25 LPA',
-    '  [4] React & MERN Stack Lead -> Target: ₹8-16 LPA',
-    '',
+    '🚀 Initializing AppleTree Infotech Ghaziabad Placement Intelligence...',
+    'Runtime: macOS Sequoia 15.2 | Python 3.12.2',
+    '============================================================',
+    ' [1] Java Full Stack Developer      Target: ₹8-18 LPA',
+    ' [2] AWS DevOps Cloud Architect     Target: ₹10-22 LPA',
+    ' [3] Python AI & ML Specialist      Target: ₹12-25 LPA',
+    ' [4] React & MERN Stack Lead        Target: ₹8-16 LPA',
+    '============================================================',
     '✓ Status: 100% Industry Certified & Placement Ready!'
   ]);
   const [vsCodeTerminalInput, setVsCodeTerminalInput] = useState('');
-  const [vsCodeTerminalHistory, setVsCodeTerminalHistory] = useState([]);
-  const [vsCodeHistoryIndex, setVsCodeHistoryIndex] = useState(-1);
   const [vsCodeBottomTab, setVsCodeBottomTab] = useState('terminal'); // terminal, output, problems, debug
   const [isVsCodeRunning, setIsVsCodeRunning] = useState(false);
-  const [vsCodeActiveSidebar, setVsCodeActiveSidebar] = useState('explorer'); // 'explorer', 'search', 'git', 'run', 'extensions'
+  const [vsCodeActiveSidebar, setVsCodeActiveSidebar] = useState('explorer'); // 'explorer', 'search', 'git', 'extensions', 'copilot'
   const [vsCodeExtSearch, setVsCodeExtSearch] = useState('');
   const [vsCodeFileSearch, setVsCodeFileSearch] = useState('');
   const [newFileInputName, setNewFileInputName] = useState('');
   const [isCreatingNewFile, setIsCreatingNewFile] = useState(false);
   const [gitCommitMsg, setGitCommitMsg] = useState('');
+  const [isLivePreviewOpen, setIsLivePreviewOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [commandPaletteSearch, setCommandPaletteSearch] = useState('');
+
+  // ── AI Copilot Project-Aware Chat State ──
+  const [aiChatInput, setAiChatInput] = useState('');
+  const [isAiThinking, setIsAiThinking] = useState(false);
+  const [aiChatMessages, setAiChatMessages] = useState([
+    {
+      role: 'assistant',
+      text: 'Hello! I am your AI Coding Assistant. I have indexed your entire workspace (6 files: main.py, App.java, server.js, index.html, styles.css, README.md). How can I assist you with code generation, debugging, or optimization today?'
+    }
+  ]);
 
   // ── VS Code Extensions List (Marketplace) ──
   const [vsCodeExtensions, setVsCodeExtensions] = useState([
@@ -874,15 +964,41 @@ body {
     { id: 'ext-pylance', name: 'Pylance', publisher: 'Microsoft', version: 'v2026.2', downloads: '88M', desc: 'Performant Python type analysis and auto-imports', installed: true, icon: '⚡' },
     { id: 'ext-prettier', name: 'Prettier - Code Formatter', publisher: 'Prettier', version: 'v10.4', downloads: '42M', desc: 'Opinionated code formatter for JS, CSS, HTML', installed: true, icon: '✨' },
     { id: 'ext-tailwind', name: 'Tailwind CSS IntelliSense', publisher: 'Tailwind Labs', version: 'v0.12', downloads: '18M', desc: 'Intelligent Tailwind CSS class suggestions', installed: true, icon: '🎨' },
+    { id: 'ext-copilot', name: 'GitHub Copilot', publisher: 'GitHub', version: 'v1.178', downloads: '25M', desc: 'Your AI pair programmer directly in VS Code', installed: true, icon: '🤖' },
     { id: 'ext-gitlens', name: 'GitLens — Git supercharged', publisher: 'GitKraken', version: 'v14.8', downloads: '32M', desc: 'Supercharge Git inside VS Code', installed: true, icon: '🌿' },
     { id: 'ext-springboot', name: 'Spring Boot Tools', publisher: 'VMware', version: 'v1.54', downloads: '14M', desc: 'Spring Boot application support for Java microservices', installed: true, icon: '🍃' },
-    { id: 'ext-copilot', name: 'GitHub Copilot', publisher: 'GitHub', version: 'v1.178', downloads: '25M', desc: 'Your AI pair programmer directly in VS Code', installed: false, icon: '🤖' },
     { id: 'ext-docker', name: 'Docker', publisher: 'Microsoft', version: 'v1.29', downloads: '38M', desc: 'Manage containers, images and registries', installed: false, icon: '🐳' },
     { id: 'ext-eslint', name: 'ESLint', publisher: 'Microsoft', version: 'v2.4', downloads: '36M', desc: 'Integrates ESLint into VS Code', installed: false, icon: '🔍' },
     { id: 'ext-icons', name: 'Material Icon Theme', publisher: 'Philipp Kief', version: 'v5.1', downloads: '28M', desc: 'Material Design Icons for VS Code', installed: true, icon: '📁' }
   ]);
 
   const activeVsCodeFile = vsCodeFiles.find(f => f.id === activeVsCodeFileId) || vsCodeFiles[0];
+
+  // ── Keyboard Shortcuts (⌘+Shift+P, ⌘+Space, Esc) ──
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key.toLowerCase() === 'p')) {
+        e.preventDefault();
+        setIsCommandPaletteOpen(prev => !prev);
+      }
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.code === 'Space')) {
+        e.preventDefault();
+        setActiveMenu(prev => prev === 'spotlight' ? null : 'spotlight');
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f' && e.ctrlKey) {
+        e.preventDefault();
+        toggleFullscreenMode();
+      }
+      if (e.key === 'Escape') {
+        setActiveMenu(null);
+        setContextMenu(null);
+        setIsSiriOpen(false);
+        setIsCommandPaletteOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleOpenVsCodeTab = (fileId) => {
     macSound.playClick();
@@ -956,7 +1072,7 @@ body {
     setVsCodeTerminalOutput(prev => [
       ...prev,
       `developer@appletree-mac-pro ~/workspace % ${cmdRun}`,
-      '⚡ Compiling with AppleTree Hostinger & Local Sandbox...'
+      '⚡ Compiling with AppleTree Enterprise Backend Sandbox...'
     ]);
 
     setTimeout(() => {
@@ -967,40 +1083,39 @@ body {
           ...prev,
           '☕ Compiling with OpenJDK 21 LTS (Oracle / RedHat Spec)...',
           'Academy: AppleTree Infotech Ghaziabad',
-          'Modules: Spring Boot 3.3, Microservices, Hibernate ORM, Kafka',
-          'Status: Java Enterprise Engine Active 🚀',
+          'Active Enterprise Modules: Spring Boot 3.3, Hibernate, Kafka, Docker',
+          'Status: Java Enterprise Microservice Running 🚀',
           '[Process exited with code 0]'
         ]);
       } else if (activeVsCodeFile.lang === 'python') {
         setVsCodeTerminalOutput(prev => [
           ...prev,
-          '🚀 Initializing AppleTree Python & AI Sandbox...',
-          'System: macOS Sequoia 15.2 | Python 3.12.2',
-          '  [1] Java Full Stack Developer -> Target: ₹8-18 LPA',
-          '  [2] AWS DevOps Cloud Architect -> Target: ₹10-22 LPA',
-          '  [3] Python AI & ML Specialist -> Target: ₹12-25 LPA',
-          '  [4] React & MERN Stack Lead -> Target: ₹8-16 LPA',
-          '',
+          '🚀 Initializing AppleTree Infotech Ghaziabad Placement Intelligence...',
+          'Runtime: macOS Sequoia 15.2 | Python 3.12.2',
+          '============================================================',
+          ' [1] Java Full Stack Developer      Target: ₹8-18 LPA',
+          ' [2] AWS DevOps Cloud Architect     Target: ₹10-22 LPA',
+          ' [3] Python AI & ML Specialist      Target: ₹12-25 LPA',
+          ' [4] React & MERN Stack Lead        Target: ₹8-16 LPA',
+          '============================================================',
           '✓ Status: 100% Industry Certified & Placement Ready!',
           '[Process exited with code 0]'
         ]);
       } else {
         setVsCodeTerminalOutput(prev => [
           ...prev,
-          'Starting AppleTree API Service on port 5000...',
-          'Response: ✓ AppleTree Enterprise Server Healthy (Uptime: 99.99%)',
+          '⚡ Server listening on http://localhost:5000',
+          '✓ Status: Online (Uptime: 99.99%)',
           '[Process exited with code 0]'
         ]);
       }
-    }, 500);
+    }, 450);
   };
 
   const handleVsCodeTerminalSubmit = (e) => {
     e.preventDefault();
     const cmd = vsCodeTerminalInput.trim();
     if (!cmd) return;
-    setVsCodeTerminalHistory(prev => [...prev, cmd]);
-    setVsCodeHistoryIndex(-1);
 
     const lower = cmd.toLowerCase();
     let res = '';
@@ -1076,6 +1191,109 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
       res
     ]);
     setVsCodeTerminalInput('');
+  };
+
+  // ── Monaco Theme & Colorizer Definition ──
+  const handleMonacoWillMount = (monaco) => {
+    monaco.editor.defineTheme('vs-pitch-black', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: '6A9955', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'C586C0', fontStyle: 'bold' },
+        { token: 'identifier', foreground: '9CDCFE' },
+        { token: 'string', foreground: 'CE9178' },
+        { token: 'number', foreground: 'B5CEA8' },
+        { token: 'type', foreground: '4EC9B0' },
+        { token: 'function', foreground: 'DCDCAA' },
+        { token: 'variable', foreground: '9CDCFE' },
+        { token: 'operator', foreground: 'D4D4D4' }
+      ],
+      colors: {
+        'editor.background': '#0c0e14', // True Pitch Dark Obsidian
+        'editor.foreground': '#d4d4d4',
+        'editorLineNumber.foreground': '#4f5666',
+        'editorLineNumber.activeForeground': '#38bdf8',
+        'editor.lineHighlightBackground': '#161922',
+        'editorCursor.foreground': '#38bdf8',
+        'editorWhitespace.foreground': '#2a2f3d',
+        'editorIndentGuide.background': '#1f2430',
+        'editorIndentGuide.activeBackground': '#38bdf8',
+        'editorBracketHighlight.foreground1': '#ffd700',
+        'editorBracketHighlight.foreground2': '#da70d6',
+        'editorBracketHighlight.foreground3': '#87cefa'
+      }
+    });
+  };
+
+  // ── AI Copilot Whole Project Prompt Handler ──
+  const handleSendAiPrompt = (promptText) => {
+    const query = promptText || aiChatInput;
+    if (!query.trim()) return;
+
+    macSound.playPop();
+    const userMsg = { role: 'user', text: query };
+    setAiChatMessages(prev => [...prev, userMsg]);
+    setAiChatInput('');
+    setIsAiThinking(true);
+
+    setTimeout(() => {
+      setIsAiThinking(false);
+      macSound.playPop();
+      const qLower = query.toLowerCase();
+      let answer = '';
+
+      if (qLower.includes('explain')) {
+        answer = `Here is an explanation of **${activeVsCodeFile.name}** in your workspace:\n\n` +
+          `- **Language & Runtime**: ${activeVsCodeFile.lang.toUpperCase()} (OpenJDK 21 / Python 3.12)\n` +
+          `- **Purpose**: Demonstrates enterprise placement pathway with object-oriented abstractions.\n` +
+          `- **Complexity**: O(N) linear iteration across student career tracks.\n` +
+          `- **Recommendation**: Add async data streaming or Kafka producers for production scalability.`;
+      } else if (qLower.includes('fix') || qLower.includes('bug')) {
+        answer = `✓ Analyzed whole project across all 6 files.\n\n` +
+          `• Syntax check: 0 errors detected.\n` +
+          `• Type safety: All annotations in \`${activeVsCodeFile.name}\` adhere to Python 3.12 / Java 21 specifications.\n` +
+          `• Tip: Ensure UTF-8 encoding is preserved when streaming output.`;
+      } else if (qLower.includes('test') || qLower.includes('unit')) {
+        answer = `Here is a production unit test for **${activeVsCodeFile.name}**:\n\n` +
+          `\`\`\`python\nimport unittest\nfrom main import PlacementEngine\n\nclass TestPlacement(unittest.TestCase):\n    def test_tracks(self):\n        engine = PlacementEngine("AppleTree")\n        self.assertEqual(len(engine.tracks), 4)\n\nif __name__ == '__main__':\n    unittest.main()\n\`\`\``;
+      } else {
+        answer = `I have updated your context for **${activeVsCodeFile.name}**.\n\n` +
+          `Suggestions:\n` +
+          `1. Use \`Live Preview\` to test HTML & CSS changes in real-time.\n` +
+          `2. Run \`javac App.java && java App\` in terminal to execute Java 21.\n` +
+          `3. Run \`python3 main.py\` to verify Python execution.`;
+      }
+
+      setAiChatMessages(prev => [...prev, { role: 'assistant', text: answer }]);
+    }, 600);
+  };
+
+  // ── Live Browser HTML/CSS/JS Document Generator ──
+  const getLivePreviewDoc = () => {
+    const htmlFile = vsCodeFiles.find(f => f.name.endsWith('.html'))?.content || '<h1>Live Preview</h1>';
+    const cssFile = vsCodeFiles.find(f => f.name.endsWith('.css'))?.content || '';
+    const jsFile = vsCodeFiles.find(f => f.name.endsWith('.js'))?.content || '';
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>${cssFile}</style>
+        </head>
+        <body>
+          ${htmlFile.includes('<body>') ? htmlFile.replace(/<!DOCTYPE html>|<\/?html>|<\/?head>[\s\S]*?<\/head>|<\/?body>/gi, '') : htmlFile}
+          <script>
+            try {
+              ${jsFile}
+            } catch(e) {
+              console.error(e);
+            }
+          </script>
+        </body>
+      </html>
+    `;
   };
 
   // ═══════════════════════════════════════════════════════════════
@@ -1362,8 +1580,15 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
             <div className="hidden sm:flex items-center gap-3 text-white/80 text-[11px]">
               <button onClick={() => { setIsCreatingNewFile(true); openApp('vscode'); }} className="hover:text-white transition cursor-pointer font-medium">New File</button>
               <button onClick={() => handleRunVsCodeCode()} className="hover:text-emerald-400 text-emerald-300 transition cursor-pointer font-bold flex items-center gap-1">▶ Run Code</button>
-              <button onClick={() => { setVsCodeActiveSidebar('extensions'); openApp('vscode'); }} className="hover:text-white transition cursor-pointer">Extensions</button>
-              <button onClick={() => { setVsCodeBottomTab('terminal'); openApp('vscode'); }} className="hover:text-white transition cursor-pointer">Terminal</button>
+              <button onClick={() => { setIsLivePreviewOpen(prev => !prev); openApp('vscode'); }} className={`hover:text-white transition cursor-pointer flex items-center gap-1 ${isLivePreviewOpen ? 'text-sky-300 font-bold' : ''}`}>
+                <Globe className="w-3 h-3 text-sky-400" /> Live Preview
+              </button>
+              <button onClick={() => { setVsCodeActiveSidebar('copilot'); openApp('vscode'); }} className="hover:text-fuchsia-300 text-fuchsia-400 font-semibold transition cursor-pointer flex items-center gap-1">
+                <Sparkles className="w-3 h-3" /> Copilot AI
+              </button>
+              <button onClick={() => { setIsCommandPaletteOpen(true); openApp('vscode'); }} className="hover:text-white transition cursor-pointer">
+                Palette (⇧⌘P)
+              </button>
             </div>
           ) : activeAppId === 'safari' ? (
             <div className="hidden sm:flex items-center gap-3 text-white/80 text-[11px]">
@@ -1545,7 +1770,7 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
               <div onClick={() => { openApp('vscode'); setActiveMenu(null); }} className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 transition cursor-pointer">
                 <div className="w-5 h-5"><MacVSCodeIcon /></div>
                 <div className="flex-1">
-                  <p className="font-semibold text-white">Visual Studio Code</p>
+                  <p className="font-semibold text-white">Visual Studio Code (Monaco Editor)</p>
                   <p className="text-[10px] text-white/50">Run Python 3.12 & OpenJDK 21 LTS Code</p>
                 </div>
                 <span className="text-[10px] text-white/40">App</span>
@@ -1566,6 +1791,58 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
                 </div>
                 <span className="text-[10px] text-white/40">App</span>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════ VS CODE COMMAND PALETTE (Ctrl+Shift+P / ⌘+Shift+P) ════════════════ */}
+      {isCommandPaletteOpen && (
+        <div 
+          className="fixed inset-0 z-[99998] flex items-start justify-center pt-16 bg-black/60 backdrop-blur-md"
+          onClick={() => setIsCommandPaletteOpen(false)}
+        >
+          <div 
+            className="w-full max-w-xl rounded-xl backdrop-blur-3xl bg-[#1e1e1e] border border-white/20 shadow-2xl p-2 text-white animate-in zoom-in-95 duration-100 font-sans"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2.5 px-3 py-2 bg-[#252526] rounded-lg border border-[#333333]">
+              <Search className="w-4 h-4 text-sky-400 shrink-0" />
+              <input
+                type="text"
+                autoFocus
+                placeholder="Search files by name (append : to go to line or @ to go to symbol)"
+                value={commandPaletteSearch}
+                onChange={e => setCommandPaletteSearch(e.target.value)}
+                className="w-full bg-transparent text-xs text-white placeholder-slate-400 outline-none font-mono"
+              />
+              <span className="text-[10px] text-slate-400 bg-white/10 px-1.5 py-0.5 rounded font-mono">ESC</span>
+            </div>
+
+            <div className="p-1 mt-2 space-y-1 text-xs">
+              {[
+                { label: 'Show and Run Commands', shortcut: '⇧⌘P', action: () => {} },
+                { label: 'Open Quick Chat (Copilot AI)', shortcut: '⌘I', action: () => { setVsCodeActiveSidebar('copilot'); openApp('vscode'); } },
+                { label: 'Run Python File in Terminal', shortcut: 'F5', action: () => { handleRunVsCodeCode(); } },
+                { label: 'Toggle Live Browser Preview', shortcut: '◫', action: () => { setIsLivePreviewOpen(p => !p); openApp('vscode'); } },
+                { label: 'Format Document (Prettier)', shortcut: '⇧⌥F', action: () => macSound.playPop() },
+                { label: 'Toggle Integrated Terminal', shortcut: '⌃`', action: () => setVsCodeBottomTab(t => t === 'terminal' ? null : 'terminal') },
+                { label: 'Extensions: Open Marketplace', shortcut: '⇧⌘X', action: () => { setVsCodeActiveSidebar('extensions'); openApp('vscode'); } }
+              ]
+                .filter(c => !commandPaletteSearch || c.label.toLowerCase().includes(commandPaletteSearch.toLowerCase()))
+                .map((cmd, i) => (
+                  <div
+                    key={i}
+                    onClick={() => {
+                      cmd.action();
+                      setIsCommandPaletteOpen(false);
+                    }}
+                    className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-[#007acc] text-[#cccccc] hover:text-white cursor-pointer transition select-none"
+                  >
+                    <span className="font-medium text-xs">{cmd.label}</span>
+                    <span className="text-[10px] font-mono opacity-60">{cmd.shortcut}</span>
+                  </div>
+                ))}
             </div>
           </div>
         </div>
@@ -1774,7 +2051,7 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
 
       {/* ════════════════ WINDOWS ECOSYSTEM ════════════════ */}
 
-      {/* ── 1. VISUAL STUDIO CODE (AUTHENTIC WORKING IDE WITH EXTENSIONS & RUNNERS) ── */}
+      {/* ── 1. VISUAL STUDIO CODE (MONACO ENGINE + LIVE PREVIEW + WHOLE PROJECT AI) ── */}
       {windows.vscode.isOpen && !windows.vscode.isMinimized && (
         <div
           onClick={() => focusWindow('vscode')}
@@ -1785,12 +2062,12 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
             width: windows.vscode.isMaximized ? '100vw' : windows.vscode.w,
             height: windows.vscode.isMaximized ? 'calc(100vh - 26px - 80px)' : windows.vscode.h
           }}
-          className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-[#1e1e1e]/98 border border-white/15 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] flex flex-col transition-all duration-150 ${activeAppId === 'vscode' ? 'ring-1 ring-sky-400/50' : 'opacity-95'}`}
+          className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-[#0c0e14]/98 border border-white/15 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] flex flex-col transition-all duration-150 ${activeAppId === 'vscode' ? 'ring-1 ring-sky-400/50' : 'opacity-95'}`}
         >
           {/* VS Code Title Bar */}
           <div 
             onMouseDown={(e) => handleMouseDownHeader(e, 'vscode')}
-            className="h-10 px-4 bg-[#252526] border-b border-[#1e1e1e] flex items-center justify-between cursor-move shrink-0 select-none"
+            className="h-10 px-4 bg-[#181a20] border-b border-black/40 flex items-center justify-between cursor-move shrink-0 select-none"
           >
             <div className="flex items-center gap-2">
               <button onClick={() => closeWindow('vscode')} className="w-3 h-3 rounded-full bg-rose-500 cursor-pointer hover:opacity-80" />
@@ -1800,11 +2077,22 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
 
             <div className="flex items-center gap-2 text-xs font-medium text-[#cccccc] font-sans">
               <div className="w-3.5 h-3.5"><MacVSCodeIcon /></div>
-              <span>{activeVsCodeFile.name} — AppleTree Workspace [macOS Dark Pro]</span>
+              <span>{activeVsCodeFile.name} — AppleTree Workspace [Monaco Pro Engine]</span>
             </div>
 
-            {/* Run Button in Header */}
+            {/* Run & Quick Action Buttons in Header */}
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsLivePreviewOpen(prev => !prev)}
+                className={`px-2.5 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer ${
+                  isLivePreviewOpen ? 'bg-sky-600 text-white' : 'bg-white/10 hover:bg-white/20 text-slate-300'
+                }`}
+                title="Toggle Live Web Browser Preview"
+              >
+                <Globe className="w-3 h-3" />
+                <span>Live Preview</span>
+              </button>
+
               <button
                 onClick={handleRunVsCodeCode}
                 disabled={isVsCodeRunning}
@@ -1820,7 +2108,7 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
           {/* VS Code Body */}
           <div className="flex-1 flex overflow-hidden">
             {/* Left Activity Bar (Icons) */}
-            <div className="w-12 bg-[#333333] flex flex-col items-center py-2.5 gap-4 shrink-0 text-[#858585] select-none border-r border-[#252526]">
+            <div className="w-12 bg-[#12141a] flex flex-col items-center py-2.5 gap-4 shrink-0 text-[#858585] select-none border-r border-white/5">
               <button 
                 onClick={() => setVsCodeActiveSidebar(vsCodeActiveSidebar === 'explorer' ? null : 'explorer')}
                 className={`p-2 rounded hover:text-white transition cursor-pointer relative ${vsCodeActiveSidebar === 'explorer' ? 'text-white border-l-2 border-[#007acc] pl-1.5' : ''}`}
@@ -1844,11 +2132,12 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
                 <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#007acc]" />
               </button>
               <button 
-                onClick={() => handleRunVsCodeCode()}
-                className="p-2 rounded hover:text-emerald-400 text-emerald-500 transition cursor-pointer"
-                title="Run & Debug"
+                onClick={() => setVsCodeActiveSidebar(vsCodeActiveSidebar === 'copilot' ? null : 'copilot')}
+                className={`p-2 rounded hover:text-fuchsia-400 transition cursor-pointer relative ${vsCodeActiveSidebar === 'copilot' ? 'text-fuchsia-400 border-l-2 border-fuchsia-500 pl-1.5' : 'text-fuchsia-400/80'}`}
+                title="GitHub Copilot & Gemini AI (Project-Aware)"
               >
-                <PlaySquare className="w-5 h-5" />
+                <Bot className="w-5 h-5" />
+                <span className="absolute -top-0.5 -right-0.5 px-1 rounded-full bg-fuchsia-600 text-white text-[8px] font-black">AI</span>
               </button>
               <button 
                 onClick={() => setVsCodeActiveSidebar(vsCodeActiveSidebar === 'extensions' ? null : 'extensions')}
@@ -1862,20 +2151,20 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
               </button>
               <div className="flex-1" />
               <button 
-                onClick={() => { openApp('settings'); }}
+                onClick={() => setIsCommandPaletteOpen(true)}
                 className="p-2 rounded hover:text-white transition cursor-pointer"
-                title="Settings"
+                title="Command Palette (⇧⌘P)"
               >
                 <Settings className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Sidebar View (Explorer / Extensions / Git / Search) */}
+            {/* Sidebar View (Explorer / Extensions / Git / Search / Copilot) */}
             {vsCodeActiveSidebar && (
-              <div className="w-56 bg-[#252526] border-r border-[#1e1e1e] flex flex-col shrink-0 overflow-hidden font-sans">
+              <div className="w-60 bg-[#14161f] border-r border-white/5 flex flex-col shrink-0 overflow-hidden font-sans">
                 {vsCodeActiveSidebar === 'explorer' && (
                   <>
-                    <div className="h-9 px-3 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[#bbbbbb] border-b border-[#1e1e1e]">
+                    <div className="h-9 px-3 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[#bbbbbb] border-b border-white/5">
                       <span>Explorer: WORKSPACE</span>
                       <div className="flex items-center gap-1.5">
                         <button 
@@ -1896,7 +2185,7 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
                     </div>
 
                     {isCreatingNewFile && (
-                      <form onSubmit={handleCreateNewVsCodeFile} className="p-2 bg-[#1e1e1e] border-b border-[#333333]">
+                      <form onSubmit={handleCreateNewVsCodeFile} className="p-2 bg-[#0c0e14] border-b border-[#333333]">
                         <input
                           type="text"
                           autoFocus
@@ -1918,11 +2207,11 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
                           key={file.id}
                           onClick={() => handleOpenVsCodeTab(file.id)}
                           className={`group px-2.5 py-1.5 rounded flex items-center justify-between cursor-pointer transition select-none ${
-                            activeVsCodeFileId === file.id ? 'bg-[#37373d] text-white font-bold' : 'text-[#cccccc] hover:bg-[#2a2d2e]'
+                            activeVsCodeFileId === file.id ? 'bg-[#1f2430] text-white font-bold' : 'text-[#cccccc] hover:bg-white/5'
                           }`}
                         >
                           <span className="flex items-center gap-2 truncate">
-                            <span>{file.name.endsWith('.java') ? '☕' : file.name.endsWith('.py') ? '🐍' : file.name.endsWith('.html') ? '🌐' : '📄'}</span>
+                            <span>{file.name.endsWith('.java') ? '☕' : file.name.endsWith('.py') ? '🐍' : file.name.endsWith('.html') ? '🌐' : file.name.endsWith('.css') ? '🎨' : '📄'}</span>
                             <span className="truncate">{file.name}</span>
                           </span>
                           <button
@@ -1938,20 +2227,89 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
                   </>
                 )}
 
+                {vsCodeActiveSidebar === 'copilot' && (
+                  <div className="flex-1 flex flex-col overflow-hidden bg-[#10121a]">
+                    <div className="h-9 px-3 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-fuchsia-300 border-b border-white/5">
+                      <span className="flex items-center gap-1.5"><Bot className="w-3.5 h-3.5 text-fuchsia-400" /> Copilot AI</span>
+                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-fuchsia-500/20 text-fuchsia-300 font-mono">Gemini Pro</span>
+                    </div>
+
+                    <div className="px-3 py-2 bg-black/30 border-b border-white/5 text-[10px] text-slate-400">
+                      <span>📁 Whole Project Aware: 6 files indexed</span>
+                    </div>
+
+                    {/* Quick Action Chips */}
+                    <div className="p-2 flex flex-wrap gap-1 border-b border-white/5 bg-[#14161f]">
+                      <button 
+                        onClick={() => handleSendAiPrompt('Explain the active code in ' + activeVsCodeFile.name)}
+                        className="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[10px] text-sky-300 cursor-pointer"
+                      >
+                        ⚡ Explain Code
+                      </button>
+                      <button 
+                        onClick={() => handleSendAiPrompt('Find and fix any bugs in ' + activeVsCodeFile.name)}
+                        className="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[10px] text-emerald-300 cursor-pointer"
+                      >
+                        🐞 Fix Bugs
+                      </button>
+                      <button 
+                        onClick={() => handleSendAiPrompt('Generate a unit test suite for ' + activeVsCodeFile.name)}
+                        className="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[10px] text-amber-300 cursor-pointer"
+                      >
+                        🚀 Unit Test
+                      </button>
+                    </div>
+
+                    {/* Chat Messages Log */}
+                    <div className="flex-1 p-3 overflow-y-auto space-y-3 text-xs leading-relaxed">
+                      {aiChatMessages.map((msg, i) => (
+                        <div key={i} className={`p-2.5 rounded-xl ${msg.role === 'user' ? 'bg-blue-600/30 text-white border border-blue-500/30 ml-4' : 'bg-black/40 text-slate-200 border border-white/5 mr-2'}`}>
+                          <div className="text-[9px] font-bold uppercase tracking-wider mb-1 opacity-60">
+                            {msg.role === 'user' ? 'You' : 'Copilot AI'}
+                          </div>
+                          <pre className="whitespace-pre-wrap font-sans text-xs">{msg.text}</pre>
+                        </div>
+                      ))}
+                      {isAiThinking && (
+                        <div className="p-2 text-xs text-fuchsia-300 flex items-center gap-2 animate-pulse">
+                          <Sparkles className="w-3.5 h-3.5 animate-spin" /> Analyzing project files...
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Input form */}
+                    <form 
+                      onSubmit={(e) => { e.preventDefault(); handleSendAiPrompt(); }} 
+                      className="p-2 bg-[#0c0e14] border-t border-white/10 flex gap-1.5"
+                    >
+                      <input
+                        type="text"
+                        placeholder="Ask Copilot about any file..."
+                        value={aiChatInput}
+                        onChange={e => setAiChatInput(e.target.value)}
+                        className="flex-1 bg-black/60 border border-white/15 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none"
+                      />
+                      <button type="submit" className="p-2 rounded-lg bg-fuchsia-600 hover:bg-fuchsia-500 text-white cursor-pointer">
+                        <Send className="w-3.5 h-3.5" />
+                      </button>
+                    </form>
+                  </div>
+                )}
+
                 {vsCodeActiveSidebar === 'extensions' && (
                   <>
-                    <div className="h-9 px-3 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[#bbbbbb] border-b border-[#1e1e1e]">
+                    <div className="h-9 px-3 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[#bbbbbb] border-b border-white/5">
                       <span>Extensions: Marketplace</span>
                       <span className="text-[10px] text-emerald-400 font-mono font-bold">100% Free</span>
                     </div>
 
-                    <div className="p-2 border-b border-[#1e1e1e]">
+                    <div className="p-2 border-b border-white/5">
                       <input
                         type="text"
                         placeholder="Search Extensions..."
                         value={vsCodeExtSearch}
                         onChange={(e) => setVsCodeExtSearch(e.target.value)}
-                        className="w-full bg-[#1e1e1e] border border-[#333333] rounded px-2 py-1 text-xs text-white placeholder-slate-500 outline-none"
+                        className="w-full bg-[#0c0e14] border border-[#333333] rounded px-2 py-1 text-xs text-white placeholder-slate-500 outline-none"
                       />
                     </div>
 
@@ -1996,7 +2354,7 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
                         placeholder="Message (⌘Enter to commit)"
                         value={gitCommitMsg}
                         onChange={(e) => setGitCommitMsg(e.target.value)}
-                        className="w-full bg-[#1e1e1e] border border-white/10 rounded p-1.5 text-xs text-white outline-none"
+                        className="w-full bg-[#0c0e14] border border-white/10 rounded p-1.5 text-xs text-white outline-none"
                       />
                       <button
                         onClick={() => {
@@ -2024,7 +2382,7 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
                       placeholder="Search text..."
                       value={vsCodeFileSearch}
                       onChange={(e) => setVsCodeFileSearch(e.target.value)}
-                      className="w-full bg-[#1e1e1e] border border-white/10 rounded p-1.5 text-xs text-white outline-none"
+                      className="w-full bg-[#0c0e14] border border-white/10 rounded p-1.5 text-xs text-white outline-none"
                     />
                     <div className="text-[11px] text-slate-400">
                       {vsCodeFileSearch ? `Matches found in ${vsCodeFiles.filter(f => f.content.toLowerCase().includes(vsCodeFileSearch.toLowerCase())).length} files` : 'Type to search workspace'}
@@ -2034,73 +2392,153 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
               </div>
             )}
 
-            {/* Editor Workspace & Terminal */}
-            <div className="flex-1 flex flex-col bg-[#1e1e1e] overflow-hidden">
+            {/* Editor Workspace & Split Preview & Terminal */}
+            <div className="flex-1 flex flex-col bg-[#0c0e14] overflow-hidden">
               {/* Tab Bar */}
-              <div className="h-9 bg-[#252526] flex items-center overflow-x-auto shrink-0 border-b border-[#1e1e1e]">
-                {vsCodeTabs.map(tabId => {
-                  const file = vsCodeFiles.find(f => f.id === tabId);
-                  if (!file) return null;
-                  const isActive = activeVsCodeFileId === tabId;
+              <div className="h-9 bg-[#14161f] flex items-center justify-between overflow-x-auto shrink-0 border-b border-black/40">
+                <div className="flex items-center h-full">
+                  {vsCodeTabs.map(tabId => {
+                    const file = vsCodeFiles.find(f => f.id === tabId);
+                    if (!file) return null;
+                    const isActive = activeVsCodeFileId === tabId;
 
-                  return (
-                    <div
-                      key={tabId}
-                      onClick={() => setActiveVsCodeFileId(tabId)}
-                      className={`h-full px-3.5 flex items-center gap-2 border-r border-[#1e1e1e] text-xs font-mono cursor-pointer transition select-none ${
-                        isActive ? 'bg-[#1e1e1e] text-white border-t-2 border-t-[#007acc]' : 'bg-[#2d2d2d] text-[#969696] hover:bg-[#252526]'
-                      }`}
-                    >
-                      <span>{file.name.endsWith('.java') ? '☕' : file.name.endsWith('.py') ? '🐍' : '📄'}</span>
-                      <span>{file.name}</span>
-                      <button 
-                        onClick={(e) => handleCloseVsCodeTab(e, tabId)} 
-                        className="hover:bg-white/10 rounded p-0.5 text-[#888888] hover:text-white"
+                    return (
+                      <div
+                        key={tabId}
+                        onClick={() => setActiveVsCodeFileId(tabId)}
+                        className={`h-full px-3.5 flex items-center gap-2 border-r border-black/40 text-xs font-mono cursor-pointer transition select-none ${
+                          isActive ? 'bg-[#0c0e14] text-white border-t-2 border-t-[#007acc]' : 'bg-[#181a24] text-[#969696] hover:bg-[#1f2230]'
+                        }`}
                       >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  );
-                })}
+                        <span>{file.name.endsWith('.java') ? '☕' : file.name.endsWith('.py') ? '🐍' : file.name.endsWith('.html') ? '🌐' : file.name.endsWith('.css') ? '🎨' : '📄'}</span>
+                        <span>{file.name}</span>
+                        <button 
+                          onClick={(e) => handleCloseVsCodeTab(e, tabId)} 
+                          className="hover:bg-white/10 rounded p-0.5 text-[#888888] hover:text-white"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="flex items-center gap-2 px-3 text-slate-400">
+                  <button 
+                    onClick={() => setIsLivePreviewOpen(prev => !prev)}
+                    className={`p-1.5 rounded hover:bg-white/10 hover:text-white cursor-pointer ${isLivePreviewOpen ? 'text-sky-400' : ''}`}
+                    title="Toggle Live Browser Preview"
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                  </button>
+                  <button 
+                    onClick={() => setIsCommandPaletteOpen(true)}
+                    className="p-1.5 rounded hover:bg-white/10 hover:text-white cursor-pointer"
+                    title="Command Palette"
+                  >
+                    <Search className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
 
               {/* Breadcrumb Path Bar */}
-              <div className="h-6 px-4 bg-[#1e1e1e] border-b border-white/5 flex items-center gap-1.5 text-[11px] font-mono text-[#888888]">
+              <div className="h-6 px-4 bg-[#0c0e14] border-b border-white/5 flex items-center gap-1.5 text-[11px] font-mono text-[#888888]">
                 <span>workspace</span>
                 <span>›</span>
                 <span>src</span>
                 <span>›</span>
                 <span className="text-white font-semibold">{activeVsCodeFile.name}</span>
+                <span className="ml-auto text-[10px] text-fuchsia-400 flex items-center gap-1">
+                  <Sparkles className="w-2.5 h-2.5" /> Copilot Ready
+                </span>
               </div>
 
-              {/* Code Editor Surface */}
+              {/* Code Editor Surface with Optional Split Live Preview */}
               <div className="flex-1 flex overflow-hidden">
-                <div className="w-11 bg-[#1e1e1e] py-3 text-right pr-3 font-mono text-xs text-[#858585] select-none shrink-0 leading-relaxed border-r border-white/5">
-                  {(activeVsCodeFile.content.split('\n')).map((_, idx) => (
-                    <div key={idx}>{idx + 1}</div>
-                  ))}
+                {/* Genuine Microsoft Monaco Editor Engine */}
+                <div className={`h-full overflow-hidden transition-all duration-150 ${isLivePreviewOpen ? 'w-1/2 border-r border-white/10' : 'w-full'}`}>
+                  <Editor
+                    height="100%"
+                    language={
+                      activeVsCodeFile.lang === 'python' ? 'python' :
+                      activeVsCodeFile.lang === 'java' ? 'java' :
+                      activeVsCodeFile.lang === 'html' ? 'html' :
+                      activeVsCodeFile.lang === 'css' ? 'css' :
+                      activeVsCodeFile.lang === 'markdown' ? 'markdown' :
+                      'javascript'
+                    }
+                    theme="vs-pitch-black"
+                    beforeMount={handleMonacoWillMount}
+                    value={activeVsCodeFile.content}
+                    onChange={(val) => {
+                      setVsCodeFiles(prev => prev.map(f => f.id === activeVsCodeFileId ? { ...f, content: val || '' } : f));
+                    }}
+                    options={{
+                      fontSize: 13,
+                      fontFamily: "'Fira Code', 'Cascadia Code', 'JetBrains Mono', Menlo, Consolas, monospace",
+                      fontLigatures: true,
+                      minimap: { enabled: true, side: 'right' },
+                      bracketPairColorization: { enabled: true },
+                      scrollBeyondLastLine: false,
+                      lineNumbers: 'on',
+                      renderLineHighlight: 'all',
+                      suggestOnTriggerCharacters: true,
+                      quickSuggestions: { other: true, comments: true, strings: true },
+                      tabSize: 4,
+                      automaticLayout: true,
+                      wordWrap: 'on',
+                      folding: true,
+                      autoClosingBrackets: 'always',
+                      autoClosingQuotes: 'always',
+                      formatOnPaste: true,
+                      formatOnType: true,
+                      cursorBlinking: 'smooth',
+                      smoothScrolling: true,
+                      padding: { top: 8, bottom: 8 }
+                    }}
+                  />
                 </div>
 
-                <textarea
-                  value={activeVsCodeFile.content}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setVsCodeFiles(prev => prev.map(f => f.id === activeVsCodeFileId ? { ...f, content: val } : f));
-                  }}
-                  className="flex-1 h-full p-3 bg-transparent text-[#9cdcfe] font-mono text-xs leading-relaxed outline-none resize-none overflow-y-auto selection:bg-[#264f78]"
-                  spellCheck={false}
-                />
+                {/* Live Browser Preview Panel */}
+                {isLivePreviewOpen && (
+                  <div className="w-1/2 h-full flex flex-col bg-[#14161f] overflow-hidden">
+                    <div className="h-8 px-3 bg-[#1e2029] border-b border-white/10 flex items-center justify-between gap-2 text-xs">
+                      <div className="flex items-center gap-1.5 text-slate-400">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="text-[10px] font-bold text-white">Live Browser Preview</span>
+                      </div>
+                      <div className="flex-1 max-w-xs px-2 py-0.5 rounded bg-black/40 text-[10px] text-slate-300 font-mono truncate text-center">
+                        http://localhost:3000/
+                      </div>
+                      <button 
+                        onClick={() => macSound.playPop()}
+                        className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white cursor-pointer"
+                        title="Reload preview"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <div className="flex-1 bg-white">
+                      <iframe
+                        title="Live Browser Preview"
+                        srcDoc={getLivePreviewDoc()}
+                        className="w-full h-full border-none"
+                        sandbox="allow-scripts"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Bottom Terminal Panel */}
-              <div className="h-48 bg-[#181818] border-t border-[#333333] flex flex-col shrink-0 font-sans">
-                <div className="h-7 px-3 bg-[#1e1e1e] border-b border-[#333333] flex items-center justify-between text-[11px] font-semibold text-[#cccccc]">
+              <div className="h-44 bg-[#0a0c10] border-t border-[#252526] flex flex-col shrink-0 font-sans">
+                <div className="h-7 px-3 bg-[#12141a] border-b border-[#252526] flex items-center justify-between text-[11px] font-semibold text-[#cccccc]">
                   <div className="flex items-center gap-4">
                     <button 
                       onClick={() => setVsCodeBottomTab('terminal')}
                       className={`hover:text-white cursor-pointer ${vsCodeBottomTab === 'terminal' ? 'text-white border-b-2 border-[#007acc] pb-0.5' : 'text-[#888888]'}`}
                     >
-                      TERMINAL
+                      TERMINAL (zsh)
                     </button>
                     <button 
                       onClick={() => setVsCodeBottomTab('output')}
@@ -2152,10 +2590,10 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
                   <span>0 ⊗ 0 △</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span>Ln {activeVsCodeFile.content.split('\n').length}, Col 1</span>
                   <span>UTF-8</span>
                   <span className="font-bold">{activeVsCodeFile.lang === 'java' ? 'OpenJDK 21 LTS' : activeVsCodeFile.lang === 'python' ? 'Python 3.12.2' : 'Node.js 20'}</span>
                   <span>Prettier ✓</span>
+                  <span className="flex items-center gap-1"><Sparkles className="w-2.5 h-2.5 text-fuchsia-300" /> Copilot</span>
                 </div>
               </div>
             </div>
