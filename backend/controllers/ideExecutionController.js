@@ -7,14 +7,32 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Standalone Python embedded directory
+// Standalone Python embedded directory or installed Python path
+const USER_PYTHON = 'C:\\Users\\brayw\\AppData\\Local\\Programs\\Python\\Python312\\python.exe';
 const EMBEDDED_PYTHON = path.join(__dirname, '../bin/python312/python.exe');
 
 function getPythonPath() {
+  if (fs.existsSync(USER_PYTHON)) {
+    return USER_PYTHON;
+  }
   if (fs.existsSync(EMBEDDED_PYTHON)) {
     return EMBEDDED_PYTHON;
   }
   return 'python';
+}
+
+function getJavaPaths() {
+  const java27 = 'C:\\Program Files\\Java\\jdk-27\\bin';
+  if (fs.existsSync(path.join(java27, 'javac.exe'))) {
+    return {
+      javac: path.join(java27, 'javac.exe'),
+      java: path.join(java27, 'java.exe')
+    };
+  }
+  return {
+    javac: 'javac',
+    java: 'java'
+  };
 }
 
 /**
@@ -59,14 +77,15 @@ export async function executeCode(req, res) {
     const normLang = language.toLowerCase();
 
     if (normLang === 'java') {
+      const javaTools = getJavaPaths();
       isCompiled = true;
-      compileCommand = 'javac';
+      compileCommand = javaTools.javac;
       compileArgs = ['-encoding', 'UTF-8', activeFileName];
       
       // Extract class name from code if available
       const classMatch = code.match(/public\s+class\s+(\w+)/);
       const className = classMatch ? classMatch[1] : activeFileName.replace(/\.java$/, '');
-      command = 'java';
+      command = javaTools.java;
       args = [className];
     } else if (normLang === 'python' || normLang === 'py') {
       command = getPythonPath();
@@ -219,9 +238,14 @@ export async function executeTerminalCommand(req, res) {
 
     // Built-in aliases and conversions
     const pyPath = getPythonPath();
+    const javaTools = getJavaPaths();
     let execCmd = rawCmd;
     if (execCmd.startsWith('python3 ') || execCmd === 'python3' || execCmd.startsWith('python ') || execCmd === 'python') {
       execCmd = execCmd.replace(/^python3?/, `"${pyPath}"`);
+    } else if (execCmd.startsWith('javac ') || execCmd === 'javac') {
+      execCmd = execCmd.replace(/^javac/, `"${javaTools.javac}"`);
+    } else if (execCmd.startsWith('java ') || execCmd === 'java') {
+      execCmd = execCmd.replace(/^java/, `"${javaTools.java}"`);
     }
 
     if (execCmd === 'ls' || execCmd === 'dir /b') {

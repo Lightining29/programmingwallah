@@ -29,6 +29,10 @@ import SpotlightModal from './components/SpotlightModal.jsx';
 import LaunchpadModal from './components/LaunchpadModal.jsx';
 import MissionControlModal from './components/MissionControlModal.jsx';
 import WebAppRunner from './components/WebAppRunner.jsx';
+import SafariBrowserApp from './apps/SafariBrowserApp.jsx';
+import { 
+  DesktopWidgetWrapper, WidgetGalleryModal, NotificationCenterDrawer, INITIAL_DESKTOP_WIDGETS 
+} from './components/WidgetSystem.jsx';
 
 // ── AUTHENTIC REAL macOS SQUIRCLE ICONS (Pixel-Perfect SVG Art) ──
 
@@ -309,6 +313,8 @@ export default function MacOSDesktop() {
   }, []);
 
   const handleDesktopCanvasClick = (e) => {
+    setContextMenu(null);
+    setActiveMenu(null);
     if (!document.fullscreenElement && !sessionStorage.getItem('dismissed_fs_session')) {
       if (document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
@@ -368,6 +374,8 @@ export default function MacOSDesktop() {
 
   // ── Desktop Controls, Selection & Spaces ──
   const [contextMenu, setContextMenu] = useState(null);
+  const contextMenuRef = useRef(null);
+  const activeMenuRef = useRef(null);
   const [renamingItemId, setRenamingItemId] = useState(null);
   const [renameValue, setRenameValue] = useState('');
   const [currentWallpaper, setCurrentWallpaper] = useState(WALLPAPERS[0].url);
@@ -381,6 +389,54 @@ export default function MacOSDesktop() {
   const [isSiriOpen, setIsSiriOpen] = useState(false);
   const [siriPrompt, setSiriPrompt] = useState('');
   const [siriResponse, setSiriResponse] = useState('');
+
+  // ── Desktop Widgets & Notification Center State ──
+  const [isWidgetGalleryOpen, setIsWidgetGalleryOpen] = useState(false);
+  const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState(false);
+  const [isEditingWidgets, setIsEditingWidgets] = useState(false);
+  const [desktopWidgets, setDesktopWidgets] = useState(() => {
+    try {
+      const saved = localStorage.getItem('mac_desktop_widgets');
+      return saved ? JSON.parse(saved) : INITIAL_DESKTOP_WIDGETS;
+    } catch {
+      return INITIAL_DESKTOP_WIDGETS;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('mac_desktop_widgets', JSON.stringify(desktopWidgets));
+    } catch {}
+  }, [desktopWidgets]);
+
+  // ── Global Click Outside Dismissal Pipeline ──
+  useEffect(() => {
+    const handleGlobalPointerDown = (e) => {
+      if (contextMenuRef.current && !contextMenuRef.current.contains(e.target)) {
+        setContextMenu(null);
+      }
+      if (activeMenuRef.current && !activeMenuRef.current.contains(e.target)) {
+        setActiveMenu(null);
+      }
+    };
+
+    const handleGlobalEsc = (e) => {
+      if (e.key === 'Escape') {
+        setContextMenu(null);
+        setActiveMenu(null);
+        setIsNotificationCenterOpen(false);
+        setIsWidgetGalleryOpen(false);
+        setIsEditingWidgets(false);
+      }
+    };
+
+    window.addEventListener('pointerdown', handleGlobalPointerDown);
+    window.addEventListener('keydown', handleGlobalEsc);
+    return () => {
+      window.removeEventListener('pointerdown', handleGlobalPointerDown);
+      window.removeEventListener('keydown', handleGlobalEsc);
+    };
+  }, []);
 
   // ── Modals & Spaces State ──
   const [isSpotlightOpen, setIsSpotlightOpen] = useState(false);
@@ -751,14 +807,26 @@ export default function MacOSDesktop() {
     }
   };
 
-  const handleDesktopContextMenu = (e) => {
+  // ── Centralized Context Menu Trigger with Viewport Bounds Clamping ──
+  const openContextMenu = (e, type, targetId = null, data = null) => {
     e.preventDefault();
+    e.stopPropagation();
     macSound.playClick();
+    const menuWidth = 230;
+    const menuHeight = 290;
+    const x = Math.min(e.clientX, window.innerWidth - menuWidth - 12);
+    const y = Math.min(e.clientY, window.innerHeight - menuHeight - 12);
     setContextMenu({
-      x: Math.min(e.clientX, window.innerWidth - 220),
-      y: Math.min(e.clientY, window.innerHeight - 300),
-      targetId: null
+      x: Math.max(12, x),
+      y: Math.max(28, y),
+      type,
+      targetId,
+      data
     });
+  };
+
+  const handleDesktopContextMenu = (e) => {
+    openContextMenu(e, 'desktop');
   };
 
   // ═══════════════════════════════════════════════════════════════
@@ -771,33 +839,130 @@ export default function MacOSDesktop() {
       folder: 'src',
       lang: 'python',
       content: 
-`#  Microsoft Visual Studio Code — Python 3.12.2 Pro Engine
+`#  Visual Studio Code on macOS Sequoia (Python 3.12.2)
 import sys
-from typing import List, Dict
 
-class PlacementEngine:
-    def __init__(self, institute: str):
-        self.institute = institute
-        self.tracks: List[Dict[str, str]] = [
-            {"role": "Java Full Stack Developer", "package": "₹8-18 LPA", "status": "Active"},
-            {"role": "AWS DevOps Cloud Architect", "package": "₹10-22 LPA", "status": "Active"},
-            {"role": "Python AI & ML Specialist", "package": "₹12-25 LPA", "status": "Active"},
-            {"role": "React & MERN Stack Lead", "package": "₹8-16 LPA", "status": "Active"}
-        ]
+def master_tech_career():
+    print("🚀 Initializing AppleTree Python & AI Sandbox...")
+    print(f"System: macOS Sequoia 15.2 | Python {sys.version.split()[0]}")
 
-    def display_pathway(self) -> None:
-        print(f"🚀 Initializing {self.institute} Placement Intelligence...")
-        print(f"Runtime: macOS Sequoia 15.2 | Python {sys.version.split()[0]}")
-        print("=" * 60)
-        for idx, track in enumerate(self.tracks, start=1):
-            print(f" [{idx}] {track['role']:<30} Target: {track['package']}")
-        print("=" * 60)
-        print("✓ Status: 100% Industry Certified & Placement Ready!")
+    tracks = [
+        {"role": "Java Full Stack Developer", "package": "₹8-18 LPA", "status": "Active"},
+        {"role": "AWS DevOps Cloud Architect", "package": "₹10-22 LPA", "status": "Active"},
+        {"role": "Python AI & ML Specialist", "package": "₹12-25 LPA", "status": "Active"},
+        {"role": "React & MERN Stack Lead", "package": "₹8-16 LPA", "status": "Active"}
+    ]
+    for idx, track in enumerate(tracks, start=1):
+        print(f"  [{idx}] {track['role']} -> Target: {track['package']}")
+    print("\n✓ Status: 100% Industry Certified & Placement Ready!")
 
 if __name__ == "__main__":
-    engine = PlacementEngine("AppleTree Infotech Ghaziabad")
-    engine.display_pathway()
+    master_tech_career()
 `
+    },
+    {
+      id: 'f-widget',
+      name: 'isWidget.ts',
+      folder: 'src',
+      lang: 'typescript',
+      content:
+`/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+export interface IWidget {
+    readonly id: string;
+    render(): HTMLElement;
+    layout?(width: number, height: number): void;
+    dispose(): void;
+}
+
+export function isWidget(thing: any): thing is IWidget {
+    return Boolean(thing && typeof thing === 'object' && typeof thing.render === 'function');
+}
+`
+    },
+    {
+      id: 'f-contrib',
+      name: 'CONTRIBUTING.md',
+      folder: 'root',
+      lang: 'markdown',
+      content:
+`# Contributing to AppleTree Monaco & VS Code Engine
+
+Thank you for helping build our next-generation macOS developer workstation.
+
+## Runtimes
+- **Python 3.12.10** Native Isolated Sandbox
+- **Java 27 (OpenJDK)** Native Compiler & JVM
+- **Node.js 20.18 LTS** Enterprise V8 Runtime
+`
+    },
+    {
+      id: 'f-menu',
+      name: 'contextmenu.ts',
+      folder: 'src',
+      lang: 'typescript',
+      content:
+`/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+import 'vs/base/browser/dom';
+import 'vs/base/browser/ui/widget';
+
+export class ContextMenuManager {
+    private static instance: ContextMenuManager;
+    private isOpen: boolean = false;
+
+    public static getInstance(): ContextMenuManager {
+        if (!ContextMenuManager.instance) {
+            ContextMenuManager.instance = new ContextMenuManager();
+        }
+        return ContextMenuManager.instance;
+    }
+
+    public open(x: number, y: number): void {
+        this.isOpen = true;
+    }
+
+    public close(): void {
+        this.isOpen = false;
+    }
+}
+`
+    },
+    {
+      id: 'f-pkg',
+      name: 'package.json',
+      folder: 'root',
+      lang: 'json',
+      content:
+`{
+  "name": "appletree-vscode-engine",
+  "version": "1.19.0",
+  "distro": "610ca6990cab94b59284327a3741a81",
+  "author": {
+    "name": "Microsoft Corporation"
+  },
+  "main": "./out/main",
+  "private": true,
+  "scripts": {
+    "test": "mocha",
+    "preinstall": "node build/npm/preinstall",
+    "postinstall": "node build/npm/postinstall",
+    "compile": "gulp compile --max_old_space_size=4096",
+    "watch": "gulp watch --max_old_space_size=4096",
+    "monaco-editor-test": "mocha --only-monaco",
+    "precommit": "node build/gulpfile.hygiene",
+    "gulp": "gulp --max_old_space_size=4096",
+    "7z": "7z",
+    "update-grammars": "node build/npm/update-grammars",
+    "smoketest": "cd test/smoke && mocha"
+  }
+}`
     },
     {
       id: 'f-java',
@@ -805,13 +970,13 @@ if __name__ == "__main__":
       folder: 'src',
       lang: 'java',
       content:
-`// ☕ OpenJDK 21.0.2 LTS Enterprise Microservice (Spring Boot 3.3)
+`// ☕ OpenJDK 27 LTS Enterprise Microservice (Spring Boot 3.3)
 import java.time.LocalDateTime;
 import java.util.List;
 
 public class App {
     public static void main(String[] args) {
-        System.out.println("☕ Compiling with OpenJDK 21 LTS (Oracle / RedHat Spec)...");
+        System.out.println("☕ Compiling with OpenJDK 27 LTS...");
         System.out.println("Academy: AppleTree Infotech Ghaziabad");
         System.out.println("Timestamp: " + LocalDateTime.now());
         
@@ -871,7 +1036,7 @@ console.log(\`⚡ Server listening on http://localhost:\${PORT}\`);
     <h1>Professional IT Training & Career Growth</h1>
     <p>Guaranteed 100% Placement Support in Delhi NCR & Top MNCs</p>
     <div class="tags">
-      <span class="tag">Java 21 LTS</span>
+      <span class="tag">Java 27 LTS</span>
       <span class="tag">Python 3.12</span>
       <span class="tag">AWS DevOps</span>
       <span class="tag">MERN Stack</span>
@@ -968,8 +1133,8 @@ p {
       content:
 `# AppleTree Developer Workspace
 - Pre-installed Runtimes:
-  - **OpenJDK 21.0.2 LTS**
-  - **Python 3.12.2**
+  - **OpenJDK 27 LTS**
+  - **Python 3.12.10**
   - **Node.js 20.18.0 LTS**
 - Run any file using the green ▶ Run button or in the integrated terminal!
 - Use **Live Browser Preview** to see HTML & CSS updates live!
@@ -979,23 +1144,27 @@ p {
   ]);
 
   const [activeVsCodeFileId, setActiveVsCodeFileId] = useState('f-py');
-  const [vsCodeTabs, setVsCodeTabs] = useState(['f-py', 'f-java', 'f-js', 'f-html', 'f-css']);
+  const [vsCodeTabs, setVsCodeTabs] = useState(['f-widget', 'f-contrib', 'f-menu', 'f-pkg', 'f-py']);
   const [vsCodeTerminalOutput, setVsCodeTerminalOutput] = useState([
-    'developer@appletree-mac-pro ~/workspace % python3 --version',
-    'Python 3.12.2',
-    'developer@appletree-mac-pro ~/workspace % java -version',
-    'openjdk version "21.0.2" 2026-01-16 LTS',
-    'OpenJDK Runtime Environment (build 21.0.2+13-LTS)',
-    'OpenJDK 64-Bit Server VM (build 21.0.2+13-LTS, mixed mode, sharing)',
+    '32 PM          1133 LICENSE.txt',
+    '51 AM        607796 npm-debug.log',
+    '46 AM         42422 OSSREADME.json',
+    '14 PM          3699 package.json',
+    '49 PM           683 product.json',
+    '18 PM          3732 README.md',
+    '14 PM        103675 ThirdPartyNotices.txt',
+    '14 PM           729 tsfmt.json',
+    '14 PM         11050 tslint.json',
+    '14 PM        203283 yarn.lock',
+    '',
     'developer@appletree-mac-pro ~/workspace % python3 main.py',
-    '🚀 Initializing AppleTree Infotech Ghaziabad Placement Intelligence...',
-    'Runtime: macOS Sequoia 15.2 | Python 3.12.2',
-    '============================================================',
-    ' [1] Java Full Stack Developer      Target: ₹8-18 LPA',
-    ' [2] AWS DevOps Cloud Architect     Target: ₹10-22 LPA',
-    ' [3] Python AI & ML Specialist      Target: ₹12-25 LPA',
-    ' [4] React & MERN Stack Lead        Target: ₹8-16 LPA',
-    '============================================================',
+    '🚀 Initializing AppleTree Python & AI Sandbox...',
+    'System: macOS Sequoia 15.2 | Python 3.12.10',
+    '  [1] Java Full Stack Developer -> Target: ₹8-18 LPA',
+    '  [2] AWS DevOps Cloud Architect -> Target: ₹10-22 LPA',
+    '  [3] Python AI & ML Specialist -> Target: ₹12-25 LPA',
+    '  [4] React & MERN Stack Lead -> Target: ₹8-16 LPA',
+    '',
     '✓ Status: 100% Industry Certified & Placement Ready!'
   ]);
   const [vsCodeTerminalInput, setVsCodeTerminalInput] = useState('');
@@ -1303,29 +1472,39 @@ p {
       base: 'vs-dark',
       inherit: true,
       rules: [
-        { token: 'comment', foreground: '6A9955', fontStyle: 'italic' },
-        { token: 'keyword', foreground: 'C586C0', fontStyle: 'bold' },
-        { token: 'identifier', foreground: '9CDCFE' },
-        { token: 'string', foreground: 'CE9178' },
-        { token: 'number', foreground: 'B5CEA8' },
-        { token: 'type', foreground: '4EC9B0' },
-        { token: 'function', foreground: 'DCDCAA' },
-        { token: 'variable', foreground: '9CDCFE' },
-        { token: 'operator', foreground: 'D4D4D4' }
+        { token: 'comment', foreground: '7f848e', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'e06c75', fontStyle: 'bold' },
+        { token: 'keyword.control', foreground: 'c678dd', fontStyle: 'bold' },
+        { token: 'identifier', foreground: '61afef' },
+        { token: 'string', foreground: '98c379' },
+        { token: 'string.escape', foreground: '56b6c2' },
+        { token: 'number', foreground: 'd19a66' },
+        { token: 'type', foreground: 'e5c07b' },
+        { token: 'function', foreground: '61afef', fontStyle: 'bold' },
+        { token: 'variable', foreground: 'e06c75' },
+        { token: 'variable.parameter', foreground: 'abb2bf' },
+        { token: 'operator', foreground: '56b6c2' },
+        { token: 'delimiter', foreground: 'abb2bf' },
+        { token: 'tag', foreground: 'e06c75' },
+        { token: 'attribute.name', foreground: 'd19a66' },
+        { token: 'attribute.value', foreground: '98c379' }
       ],
       colors: {
-        'editor.background': '#0c0e14', // True Pitch Dark Obsidian
-        'editor.foreground': '#d4d4d4',
-        'editorLineNumber.foreground': '#4f5666',
-        'editorLineNumber.activeForeground': '#38bdf8',
-        'editor.lineHighlightBackground': '#161922',
-        'editorCursor.foreground': '#38bdf8',
-        'editorWhitespace.foreground': '#2a2f3d',
-        'editorIndentGuide.background': '#1f2430',
-        'editorIndentGuide.activeBackground': '#38bdf8',
+        'editor.background': '#000000', // Pitch Black Background
+        'editor.foreground': '#abb2bf',
+        'editorLineNumber.foreground': '#4b5263',
+        'editorLineNumber.activeForeground': '#61afef',
+        'editor.lineHighlightBackground': '#111217',
+        'editorCursor.foreground': '#528bff',
+        'editorWhitespace.foreground': '#282c34',
+        'editorIndentGuide.background': '#1e222b',
+        'editorIndentGuide.activeBackground': '#61afef',
         'editorBracketHighlight.foreground1': '#ffd700',
         'editorBracketHighlight.foreground2': '#da70d6',
-        'editorBracketHighlight.foreground3': '#87cefa'
+        'editorBracketHighlight.foreground3': '#61afef',
+        'editorBracketHighlight.foreground4': '#98c379',
+        'editorBracketHighlight.foreground5': '#e06c75',
+        'editorBracketHighlight.foreground6': '#d19a66'
       }
     });
   };
@@ -1860,8 +2039,9 @@ p {
           </div>
 
           <button
-            onClick={() => setActiveMenu(activeMenu === 'calendar' ? null : 'calendar')}
+            onClick={() => setIsNotificationCenterOpen(prev => !prev)}
             className="font-semibold text-white/95 tracking-wide text-[11px] hover:opacity-80 transition cursor-pointer"
+            title="Notification Center & Widgets"
           >
             {formatMacDate(currentTime)}
           </button>
@@ -1960,15 +2140,20 @@ p {
               <span className="text-[10px] text-slate-400 bg-white/10 px-1.5 py-0.5 rounded font-mono">ESC</span>
             </div>
 
-            <div className="p-1 mt-2 space-y-1 text-xs">
+            <div className="p-1 mt-2 space-y-0.5 text-xs">
               {[
-                { label: 'Show and Run Commands', shortcut: '⇧⌘P', action: () => {} },
-                { label: 'Open Quick Chat (Copilot AI)', shortcut: '⌘I', action: () => { setVsCodeActiveSidebar('copilot'); openApp('vscode'); } },
-                { label: 'Run Python File in Terminal', shortcut: 'F5', action: () => { handleRunVsCodeCode(); } },
+                { label: 'Go to File', shortcut: '⌘P', action: () => { setVsCodeActiveSidebar('explorer'); openApp('vscode'); } },
+                { label: 'Show and Run Commands >', shortcut: '⇧⌘P', action: () => {} },
+                { label: 'Open Quick Chat', shortcut: '⌘I', action: () => { setVsCodeActiveSidebar('copilot'); openApp('vscode'); } },
+                { label: 'Go to Symbol in Editor @', shortcut: '⇧⌘O', action: () => {} },
+                { label: 'Start Debugging debug', shortcut: 'F5', action: () => { handleRunVsCodeCode(); } },
+                { label: 'Run Task task', shortcut: '⇧⌘B', action: () => { handleRunVsCodeCode(); } },
+                { label: 'Search for Text (Experimental) %', shortcut: '⇧⌘F', action: () => { setVsCodeActiveSidebar('search'); openApp('vscode'); } },
                 { label: 'Toggle Live Browser Preview', shortcut: '◫', action: () => { setIsLivePreviewOpen(p => !p); openApp('vscode'); } },
                 { label: 'Format Document (Prettier)', shortcut: '⇧⌥F', action: () => macSound.playPop() },
                 { label: 'Toggle Integrated Terminal', shortcut: '⌃`', action: () => setVsCodeBottomTab(t => t === 'terminal' ? null : 'terminal') },
-                { label: 'Extensions: Open Marketplace', shortcut: '⇧⌘X', action: () => { setVsCodeActiveSidebar('extensions'); openApp('vscode'); } }
+                { label: 'Extensions: Open Marketplace', shortcut: '⇧⌘X', action: () => { setVsCodeActiveSidebar('extensions'); openApp('vscode'); } },
+                { label: 'More ?', shortcut: '?', action: () => {} }
               ]
                 .filter(c => !commandPaletteSearch || c.label.toLowerCase().includes(commandPaletteSearch.toLowerCase()))
                 .map((cmd, i) => (
@@ -1978,7 +2163,7 @@ p {
                       cmd.action();
                       setIsCommandPaletteOpen(false);
                     }}
-                    className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-[#007acc] text-[#cccccc] hover:text-white cursor-pointer transition select-none"
+                    className="flex items-center justify-between px-3 py-1.5 rounded-md hover:bg-[#007acc] text-[#cccccc] hover:text-white cursor-pointer transition select-none"
                   >
                     <span className="font-medium text-xs">{cmd.label}</span>
                     <span className="text-[10px] font-mono opacity-60">{cmd.shortcut}</span>
@@ -2032,6 +2217,30 @@ p {
         </div>
       )}
 
+      {/* ════════════════ DESKTOP WIDGETS (SONOMA / SEQUOIA STYLE) ════════════════ */}
+      <aside className="absolute top-12 left-6 z-10 flex flex-col gap-4 pointer-events-auto select-none">
+        {desktopWidgets.map(widget => (
+          <DesktopWidgetWrapper
+            key={widget.id}
+            widget={widget}
+            isEditing={isEditingWidgets}
+            onRemove={(id) => {
+              macSound.playTrash();
+              setDesktopWidgets(prev => prev.filter(w => w.id !== id));
+            }}
+          />
+        ))}
+
+        {isEditingWidgets && (
+          <button
+            onClick={() => setIsWidgetGalleryOpen(true)}
+            className="w-40 h-12 rounded-2xl border-2 border-dashed border-sky-400/60 hover:border-sky-400 hover:bg-sky-500/10 text-sky-300 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition shadow-lg backdrop-blur-md bg-black/40"
+          >
+            <Plus className="w-4 h-4" /> Add Widget...
+          </button>
+        )}
+      </aside>
+
       {/* ════════════════ DESKTOP ICONS GRID (VFS INTEGRATED) ════════════════ */}
       <main className="absolute top-10 right-4 flex flex-col gap-5 items-end z-10 pointer-events-auto select-none">
         {desktopItems.map(item => {
@@ -2044,16 +2253,7 @@ p {
                 else if (item.type === 'folder') openApp('finder');
                 else if (item.type === 'file') handleOpenFileInEditor(item);
               }}
-              onContextMenu={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                macSound.playClick();
-                setContextMenu({
-                  x: Math.min(e.clientX, window.innerWidth - 220),
-                  y: Math.min(e.clientY, window.innerHeight - 280),
-                  targetId: itemKey
-                });
-              }}
+              onContextMenu={(e) => openContextMenu(e, 'item', itemKey, item)}
               className="group flex flex-col items-center w-20 p-2 rounded-xl hover:bg-white/15 border border-transparent hover:border-white/20 transition-all duration-150 cursor-pointer"
             >
               <div className="w-12 h-12 flex items-center justify-center drop-shadow-2xl">
@@ -2086,18 +2286,19 @@ p {
         })}
       </main>
 
-      {/* ════════════════ DESKTOP & FILE CONTEXT MENU ════════════════ */}
+      {/* ════════════════ CENTRALIZED CONTEXT MENU MANAGER ════════════════ */}
       {contextMenu && (
         <div 
+          ref={contextMenuRef}
           style={{ top: contextMenu.y, left: contextMenu.x }}
-          className="fixed z-[99995] w-56 rounded-2xl backdrop-blur-3xl bg-slate-950/95 border border-white/15 p-1.5 shadow-2xl text-slate-200 text-xs select-none animate-in fade-in duration-100"
+          className="fixed z-[99995] w-60 rounded-2xl backdrop-blur-3xl bg-slate-950/95 border border-white/20 p-1.5 shadow-2xl text-slate-200 text-xs select-none animate-in fade-in duration-100"
           onClick={() => setContextMenu(null)}
         >
-          {contextMenu.targetId ? (
+          {contextMenu.type === 'item' ? (
             <>
               <button 
                 onClick={() => {
-                  const item = desktopItems.find(i => i.id === contextMenu.targetId);
+                  const item = desktopItems.find(i => (i.path || i.id) === contextMenu.targetId);
                   if (item?.targetApp) openApp(item.targetApp);
                   else if (item?.type === 'folder') openApp('finder');
                   else openApp('vscode');
@@ -2116,7 +2317,7 @@ p {
               </button>
               <button 
                 onClick={() => {
-                  const itm = desktopItems.find(i => i.id === contextMenu.targetId);
+                  const itm = desktopItems.find(i => (i.path || i.id) === contextMenu.targetId);
                   if (itm) handleStartRename(itm);
                 }}
                 className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
@@ -2132,6 +2333,36 @@ p {
                 <span>Move to Trash</span>
                 <span className="text-[10px] text-white/40">⌘⌫</span>
               </button>
+            </>
+          ) : contextMenu.type === 'dock' ? (
+            <>
+              <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-white/10 mb-1">
+                {contextMenu.data?.title || 'Application'}
+              </div>
+              <button 
+                onClick={() => openApp(contextMenu.targetId)}
+                className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer font-semibold"
+              >
+                <span>Open</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </button>
+              {windows[contextMenu.targetId]?.isOpen && (
+                <>
+                  <button 
+                    onClick={() => minimizeWindow(contextMenu.targetId)}
+                    className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
+                  >
+                    <span>{windows[contextMenu.targetId].isMinimized ? 'Restore Window' : 'Minimize Window'}</span>
+                  </button>
+                  <button 
+                    onClick={() => closeWindow(contextMenu.targetId)}
+                    className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-rose-600 hover:text-white flex items-center justify-between cursor-pointer text-rose-300 font-semibold"
+                  >
+                    <span>Quit</span>
+                    <span className="text-[10px] text-white/40">⌘Q</span>
+                  </button>
+                </>
+              )}
             </>
           ) : (
             <>
@@ -2157,6 +2388,16 @@ p {
                 <FileCode className="w-3.5 h-3.5" />
               </button>
               <div className="h-px bg-white/10 my-1" />
+              <button 
+                onClick={() => {
+                  setIsEditingWidgets(true);
+                  setIsWidgetGalleryOpen(true);
+                }}
+                className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer text-fuchsia-300 font-medium"
+              >
+                <span className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5" /> Edit Widgets...</span>
+                <span className="text-[10px] bg-fuchsia-500/20 px-1 rounded text-fuchsia-300">Sonoma</span>
+              </button>
               <button 
                 onClick={() => openApp('vscode')}
                 className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
@@ -2535,9 +2776,9 @@ p {
             )}
 
             {/* Editor Workspace & Split Preview & Terminal */}
-            <div className="flex-1 flex flex-col bg-[#0c0e14] overflow-hidden">
+            <div className="flex-1 flex flex-col bg-black overflow-hidden">
               {/* Tab Bar */}
-              <div className="h-9 bg-[#14161f] flex items-center justify-between overflow-x-auto shrink-0 border-b border-black/40">
+              <div className="h-9 bg-[#111217] flex items-center justify-between overflow-x-auto shrink-0 border-b border-black">
                 <div className="flex items-center h-full">
                   {vsCodeTabs.map(tabId => {
                     const file = vsCodeFiles.find(f => f.id === tabId);
@@ -2548,11 +2789,11 @@ p {
                       <div
                         key={tabId}
                         onClick={() => setActiveVsCodeFileId(tabId)}
-                        className={`h-full px-3.5 flex items-center gap-2 border-r border-black/40 text-xs font-mono cursor-pointer transition select-none ${
-                          isActive ? 'bg-[#0c0e14] text-white border-t-2 border-t-[#007acc]' : 'bg-[#181a24] text-[#969696] hover:bg-[#1f2230]'
+                        className={`h-full px-3.5 flex items-center gap-2 border-r border-black/80 text-xs font-mono cursor-pointer transition select-none ${
+                          isActive ? 'bg-black text-white border-t-2 border-t-[#007acc]' : 'bg-[#181a20] text-[#969696] hover:bg-[#1f222a]'
                         }`}
                       >
-                        <span>{file.name.endsWith('.java') ? '☕' : file.name.endsWith('.py') ? '🐍' : file.name.endsWith('.html') ? '🌐' : file.name.endsWith('.css') ? '🎨' : '📄'}</span>
+                        <span>{file.name.endsWith('.java') ? '☕' : file.name.endsWith('.py') ? '🐍' : file.name.endsWith('.ts') ? '🔷' : file.name.endsWith('.json') ? '📋' : file.name.endsWith('.html') ? '🌐' : file.name.endsWith('.css') ? '🎨' : '📄'}</span>
                         <span>{file.name}</span>
                         <button 
                           onClick={(e) => handleCloseVsCodeTab(e, tabId)} 
@@ -2584,7 +2825,7 @@ p {
               </div>
 
               {/* Breadcrumb Path Bar */}
-              <div className="h-6 px-4 bg-[#0c0e14] border-b border-white/5 flex items-center gap-1.5 text-[11px] font-mono text-[#888888]">
+              <div className="h-6 px-4 bg-black border-b border-white/5 flex items-center gap-1.5 text-[11px] font-mono text-[#888888]">
                 <span>workspace</span>
                 <span>›</span>
                 <span>src</span>
@@ -2596,9 +2837,9 @@ p {
               </div>
 
               {/* Code Editor Surface with Optional Split Live Preview */}
-              <div className="flex-1 flex overflow-hidden">
+              <div className="flex-1 flex overflow-hidden bg-black">
                 {/* Genuine Microsoft Monaco Editor Engine */}
-                <div className={`h-full overflow-hidden transition-all duration-150 ${isLivePreviewOpen ? 'w-1/2 border-r border-white/10' : 'w-full'}`}>
+                <div className={`h-full overflow-hidden transition-all duration-150 bg-black ${isLivePreviewOpen ? 'w-1/2 border-r border-white/10' : 'w-full'}`}>
                   <Editor
                     height="100%"
                     language={
@@ -2878,7 +3119,7 @@ p {
         </div>
       )}
 
-      {/* ── 2. REAL SAFARI BROWSER WITH SEARCH ENGINE ── */}
+      {/* ── 2. REAL SAFARI BROWSER (PRO BROWSER ENGINE) ── */}
       {windows.safari.isOpen && !windows.safari.isMinimized && (
         <div
           onClick={() => focusWindow('safari')}
@@ -2891,128 +3132,12 @@ p {
           }}
           className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-slate-950/98 border border-white/20 shadow-2xl flex flex-col transition-all duration-150 ${activeAppId === 'safari' ? 'ring-1 ring-sky-400/50' : 'opacity-95'}`}
         >
-          {/* Safari Tab Bar */}
-          <div className="h-9 px-4 bg-slate-900 border-b border-white/10 flex items-center justify-between gap-3 shrink-0 select-none">
-            <div className="flex items-center gap-2">
-              <button onClick={() => closeWindow('safari')} className="w-3 h-3 rounded-full bg-rose-500 cursor-pointer hover:opacity-80" />
-              <button onClick={() => minimizeWindow('safari')} className="w-3 h-3 rounded-full bg-amber-500 cursor-pointer hover:opacity-80" />
-              <button onClick={() => toggleMaximize('safari')} className="w-3 h-3 rounded-full bg-emerald-500 cursor-pointer hover:opacity-80" />
-            </div>
-
-            {/* Browser Tabs */}
-            <div className="flex-1 flex items-center gap-1.5 overflow-x-auto max-w-2xl px-2">
-              {safariTabs.map(tab => (
-                <div
-                  key={tab.id}
-                  onClick={() => {
-                    setActiveSafariTabId(tab.id);
-                    setSafariInput(tab.query || tab.url);
-                  }}
-                  className={`h-7 px-3 rounded-lg flex items-center gap-2 text-xs font-medium cursor-pointer transition select-none truncate ${
-                    activeSafariTabId === tab.id ? 'bg-black/50 text-white font-bold border border-white/15' : 'bg-white/5 text-slate-400 hover:bg-white/10'
-                  }`}
-                >
-                  <Compass className="w-3 h-3 text-sky-400 shrink-0" />
-                  <span className="truncate max-w-[140px]">{tab.title}</span>
-                  <button onClick={(e) => handleCloseSafariTab(e, tab.id)} className="hover:text-white rounded p-0.5">
-                    <X className="w-2.5 h-2.5" />
-                  </button>
-                </div>
-              ))}
-              <button onClick={handleOpenSafariNewTab} className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white cursor-pointer" title="New Tab">
-                <Plus className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            <div className="w-8" />
-          </div>
-
-          {/* Safari Navigation & Search Bar */}
-          <div 
-            onMouseDown={(e) => handleMouseDownHeader(e, 'safari')}
-            className="h-11 px-4 bg-slate-900/90 border-b border-white/10 flex items-center justify-between gap-3 cursor-move shrink-0"
-          >
-            <div className="flex items-center gap-2 text-slate-400">
-              <ChevronLeft className="w-4 h-4 hover:text-white cursor-pointer" />
-              <ChevronRight className="w-4 h-4 hover:text-white cursor-pointer" />
-              <RefreshCw onClick={executeSafariSearch} className="w-3.5 h-3.5 hover:text-white cursor-pointer" />
-            </div>
-
-            {/* Smart URL / Google Search Bar */}
-            <form onSubmit={executeSafariSearch} className="flex-1 max-w-xl mx-auto h-8 px-3 rounded-xl bg-black/60 border border-white/15 flex items-center gap-2.5 text-xs text-slate-300">
-              <Search className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-              <input
-                type="text"
-                value={safariInput}
-                onChange={(e) => setSafariInput(e.target.value)}
-                placeholder="Search Google or type a URL..."
-                className="w-full bg-transparent outline-none text-white text-xs"
-              />
-              <span className="text-[10px] text-slate-400 bg-white/10 px-1.5 py-0.5 rounded font-mono">↵</span>
-            </form>
-
-            <div className="flex items-center gap-2 text-slate-400">
-              <Share2 className="w-3.5 h-3.5 hover:text-white cursor-pointer" />
-            </div>
-          </div>
-
-          {/* Safari Content Body (Search Results Engine or Web View) */}
-          <div className="flex-1 p-6 overflow-y-auto bg-[#121212]">
-            {activeSafariTab.mode === 'search' ? (
-              <div className="max-w-3xl mx-auto space-y-6">
-                <div className="text-xs text-slate-400 pb-2 border-b border-white/10">
-                  About 1,840,000 results for <strong className="text-white">"{activeSafariTab.query || safariInput}"</strong> (0.24 seconds)
-                </div>
-
-                {/* Instant Knowledge Answer Box */}
-                <div className="p-5 rounded-2xl bg-white/5 border border-sky-400/30 space-y-2.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-sky-400">Instant Knowledge Summary</span>
-                  <h3 className="text-base font-bold text-white capitalize">{activeSafariTab.query || safariInput}</h3>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    {(activeSafariTab.query || safariInput).toLowerCase().includes('python') 
-                      ? 'Python 3.12 introduces more clear tracebacks, isolated subinterpreters, comprehension inlining, and extensive built-in list methods (.append, .sort, .pop, .reverse). Fully pre-installed in AppleTree macOS.'
-                      : (activeSafariTab.query || safariInput).toLowerCase().includes('java')
-                      ? 'Java 21 LTS delivers Virtual Threads (Project Loom), Sequenced Collections, and Record Patterns for high-throughput enterprise backends. OpenJDK 21 LTS is active in AppleTree macOS.'
-                      : `Comprehensive documentation and developer resources matching "${activeSafariTab.query || safariInput}". Verified curriculum taught at AppleTree Infotech.`}
-                  </p>
-                  <div className="pt-2 flex gap-2">
-                    <button onClick={() => openApp('vscode')} className="px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-bold flex items-center gap-1 cursor-pointer">
-                      <Code2 className="w-3.5 h-3.5" /> Practice in VS Code
-                    </button>
-                  </div>
-                </div>
-
-                {/* Search Result Cards */}
-                <div className="space-y-4">
-                  {[
-                    { title: `${activeSafariTab.query || safariInput} — Official Developer Guide 2026`, link: 'https://docs.appletree.dev/guide', desc: 'Tutorials, syntax references, production best practices, and hands-on exercises.' },
-                    { title: `Mastering ${activeSafariTab.query || safariInput} with Placement Support`, link: 'https://programmingwala.com/programs', desc: 'ISO certified IT curriculum with mock interviews, live projects, and guaranteed job placements in Delhi NCR.' },
-                    { title: `GitHub Repositories: ${activeSafariTab.query || safariInput} Source Code`, link: 'https://github.com/appletree/mastery', desc: 'Enterprise microservice templates, modern full-stack architectures, and AI integration boilerplates.' }
-                  ].map((res, i) => (
-                    <div key={i} className="p-4 rounded-xl bg-white/5 hover:bg-white/10 transition space-y-1">
-                      <span className="text-[11px] text-sky-400 block truncate">{res.link}</span>
-                      <h4 className="text-sm font-bold text-white hover:underline cursor-pointer">{res.title}</h4>
-                      <p className="text-xs text-slate-400 leading-relaxed">{res.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="max-w-2xl mx-auto p-8 rounded-2xl bg-white/5 border border-white/10 text-center space-y-4">
-                <h2 className="text-xl font-bold text-white">AppleTree Web Explorer</h2>
-                <p className="text-xs text-slate-300">Viewing: {activeSafariTab.url}</p>
-                <div className="flex justify-center gap-3">
-                  <button onClick={() => navigate('/programs')} className="px-4 py-2 rounded-xl bg-sky-500 text-slate-950 font-bold text-xs cursor-pointer">
-                    Browse All Programs
-                  </button>
-                  <button onClick={() => {
-                    setSafariTabs(prev => prev.map(t => t.id === activeSafariTabId ? { ...t, mode: 'search', query: 'apple developer' } : t));
-                  }} className="px-4 py-2 rounded-xl bg-slate-800 text-white font-bold text-xs cursor-pointer">
-                    Back to Search
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          <SafariBrowserApp 
+            onClose={() => closeWindow('safari')}
+            onMinimize={() => minimizeWindow('safari')}
+            onMaximize={() => toggleMaximize('safari')}
+            isMaximized={windows.safari.isMaximized}
+          />
         </div>
       )}
 
@@ -3721,6 +3846,7 @@ p {
                     openApp(app.id);
                   }
                 }}
+                onContextMenu={(e) => openContextMenu(e, 'dock', app.id, app)}
                 className={`w-12 h-12 p-0.5 flex items-center justify-center transition-transform duration-200 hover:scale-125 hover:-translate-y-2 active:scale-95 cursor-pointer relative ${
                   isBouncing ? 'animate-bounce' : ''
                 }`}
@@ -3785,6 +3911,20 @@ p {
         }}
         windows={windows}
         onFocusWindow={(winId) => focusWindow(winId)}
+      />
+
+      {/* ── DESKTOP WIDGET GALLERY MODAL (macOS Sonoma / Sequoia) ── */}
+      <WidgetGalleryModal
+        isOpen={isWidgetGalleryOpen}
+        onClose={() => setIsWidgetGalleryOpen(false)}
+        onAddWidget={(type, size) => setDesktopWidgets(prev => [...prev, { id: 'w-' + Date.now(), type, size }])}
+      />
+
+      {/* ── NOTIFICATION CENTER & TODAY VIEW DRAWER ── */}
+      <NotificationCenterDrawer
+        isOpen={isNotificationCenterOpen}
+        onClose={() => setIsNotificationCenterOpen(false)}
+        onOpenWidgetGallery={() => setIsWidgetGalleryOpen(true)}
       />
 
       {/* ════════════════ LOCK SCREEN OVERLAY ════════════════ */}
