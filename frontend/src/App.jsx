@@ -57,6 +57,7 @@ import ArenaProblem from './pages/arena/ArenaProblem.jsx';
 import ArenaProfile from './pages/arena/ArenaProfile.jsx';
 import PortfolioBuilder from './pages/portfolio/PortfolioBuilder.jsx';
 import PublicPortfolio from './pages/portfolio/PublicPortfolio.jsx';
+import MacOSDesktop from './pages/macos/MacOSDesktop.jsx';
 
 // Layout Components
 import Navbar from './components/Navbar.jsx';
@@ -120,6 +121,7 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
   const isExamPage = location.pathname.startsWith('/test') || location.pathname.startsWith('/kbc') || location.pathname.startsWith('/dashboard/admin/tests') || location.pathname.startsWith('/assessment-admin');
   const isAdminPage = location.pathname.startsWith('/dashboard/admin') || location.pathname.startsWith('/portal/admin');
   const isArenaProblem = location.pathname.startsWith('/arena/problem');
+  const isMacOsPage = location.pathname.startsWith('/macos') || location.pathname.startsWith('/desktop');
 
   // List of standard known root paths that belong to the school portal / main website
   const standardRootPaths = new Set([
@@ -128,7 +130,7 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
     'hackerrank', 'leaderboard', 'tutorials', 'music', 'games', 'payment-demo', 'verify-certificate',
     'certificate', 'cert', 'manish-kumar', 'profile', 'manish', 'careers', 'job-roles', 'trending-tech-jobs',
     'courses-in-ghaziabad', 'coaching-in-rdc-ghaziabad', 'courses', 'coaching', 'lms', 'student',
-    'student-portal', 'dashboard', 'portal', 'test', 'assessment', 'assessment-admin', 'kbc'
+    'student-portal', 'dashboard', 'portal', 'test', 'assessment', 'assessment-admin', 'kbc', 'macos', 'desktop'
   ]);
 
   const pathSegments = location.pathname.split('/').filter(Boolean);
@@ -140,7 +142,7 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
                            location.pathname === '/student/portfolio' ||
                            (pathSegments.length === 1 && !standardRootPaths.has(firstSegment));
 
-  const hideHeaderFooter = isLoginPage || isExamPage || isArenaProblem || isPortfolioRoute;
+  const hideHeaderFooter = isLoginPage || isExamPage || isArenaProblem || isPortfolioRoute || isMacOsPage;
   const hideChatbot = hideHeaderFooter || isAdminPage || isPortfolioRoute;
 
   return (
@@ -279,6 +281,10 @@ function AppLayout({ pointer, glowY, glowX, isDark, onPointerMove }) {
           {/* Direct Personal Portfolio Root URL: https://programmingwala.com/{student-name} */}
           <Route path="/p/:id" element={<PublicPortfolio />} />
           <Route path="/:studentSlug" element={<PublicPortfolio />} />
+
+          {/* macOS Desktop Operating System Experience */}
+          <Route path="/macos" element={<MacOSDesktop />} />
+          <Route path="/desktop" element={<MacOSDesktop />} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />

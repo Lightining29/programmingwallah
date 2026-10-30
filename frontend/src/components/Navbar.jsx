@@ -6,7 +6,7 @@ import { useTheme } from '../context/ThemeContext.jsx';
 import { 
   Menu, X, LogOut, LayoutDashboard, LogIn, UserPlus, BookOpen, 
   Sun, Moon, Home, Info, GraduationCap, Code2, Trophy, 
-  Video, Image, Phone, ChevronRight, Briefcase, Terminal
+  Video, Image, Phone, ChevronRight, Briefcase, Terminal, Monitor
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ConfirmModal from './ConfirmModal.jsx';
@@ -55,6 +55,7 @@ export default function Navbar() {
     { name: 'COURSES', path: '/programs', icon: GraduationCap },
     { name: 'CODING ARENA', path: '/arena', icon: Terminal },
     { name: 'KBC QUIZ', path: '/kbc', icon: Trophy, isBadge: true },
+    { name: ' macOS', path: '/macos', icon: Monitor, isBadge: true, badgeText: 'OS' },
     { name: 'LEADERBOARD', path: '/leaderboard', icon: Trophy },
     { name: 'TUTORIALS', path: '/tutorials', icon: Code2 },
     { name: 'GALLERY', path: '/gallery', icon: Image },
@@ -133,8 +134,8 @@ export default function Navbar() {
                 <span className="inline-flex items-center gap-1">
                   {link.name}
                   {link.isBadge && (
-                    <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-amber-500 text-slate-950 font-black shadow-xs animate-pulse">
-                      HOT
+                    <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black shadow-xs ${link.badgeText === 'OS' ? 'bg-sky-400 text-slate-950 shadow-sky-400/30' : 'bg-amber-500 text-slate-950 animate-pulse'}`}>
+                      {link.badgeText || 'HOT'}
                     </span>
                   )}
                 </span>
@@ -164,6 +165,23 @@ export default function Navbar() {
           >
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
+
+          {/* macOS Mode Desktop Switcher Pill */}
+          <Link
+            to="/macos"
+            className={`flex items-center space-x-1.5 font-quicksand font-extrabold text-xs rounded-full border px-3 py-2 hover:scale-[1.03] active:scale-[0.97] transition-all duration-150 cursor-pointer shadow-sm group ${
+              isDark 
+                ? 'border-sky-400/40 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20 shadow-sky-500/10' 
+                : 'border-sky-400/50 bg-sky-50 text-sky-700 hover:bg-sky-100'
+            }`}
+            title="Open macOS Desktop Operating System Experience"
+          >
+            <span className="text-sm font-bold leading-none select-none"></span>
+            <span className="tracking-wide">macOS</span>
+            <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-sky-500 text-slate-950 font-black">
+              DESKTOP
+            </span>
+          </Link>
           {user ? (
             <>
               {user.role === 'admin' && (
@@ -358,8 +376,8 @@ export default function Navbar() {
                             <span className="tracking-wide flex items-center gap-1.5">
                               {link.name}
                               {link.isBadge && (
-                                <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-amber-500 text-slate-950 font-black">
-                                  HOT
+                                <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black ${link.badgeText === 'OS' ? 'bg-sky-400 text-slate-950' : 'bg-amber-500 text-slate-950'}`}>
+                                  {link.badgeText || 'HOT'}
                                 </span>
                               )}
                             </span>
