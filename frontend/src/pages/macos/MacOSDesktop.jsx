@@ -10,7 +10,9 @@ import {
   Cloud, Upload, Download, Share2, Plus, 
   Calendar as CalendarIcon, Clock, Layers, FilePlus, FolderPlus,
   PlayCircle, FileCode, CheckCircle2, SplitSquareVertical,
-  Terminal as TerminalIcon, AlertCircle, HelpCircle
+  Terminal as TerminalIcon, AlertCircle, HelpCircle,
+  Package, Box, CheckCheck, List, Grid, MoreHorizontal,
+  ChevronLeft, ArrowUpRight, Globe, CornerDownLeft
 } from 'lucide-react';
 
 // ── Pure Web Audio Sound Synthesizer (Instant native macOS sound effects) ──
@@ -95,15 +97,11 @@ export const MacFinderIcon = ({ className = "w-full h-full" }) => (
       </linearGradient>
     </defs>
     <rect x="5" y="5" width="90" height="90" rx="22" fill="url(#finderBgGrad)" />
-    {/* Left smiling face half */}
     <path d="M5 27 C5 14.85 14.85 5 27 5 L50 5 L50 95 L27 95 C14.85 95 5 85.15 5 73 Z" fill="url(#finderLeftGrad)" />
     <path d="M50 5 L50 95" stroke="#0369a1" strokeWidth="2" opacity="0.6" />
-    {/* Eyes */}
     <circle cx="32" cy="40" r="5" fill="#0f172a" />
     <circle cx="68" cy="40" r="5" fill="#0f172a" />
-    {/* Smiling curve */}
     <path d="M 27 63 Q 50 84 73 63" fill="none" stroke="#0f172a" strokeWidth="6" strokeLinecap="round" />
-    {/* Nose */}
     <path d="M 50 40 L 46 54 L 54 54" fill="none" stroke="#0f172a" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
@@ -138,7 +136,6 @@ export const MacSafariIcon = ({ className = "w-full h-full" }) => (
     <rect x="5" y="5" width="90" height="90" rx="22" fill="#f8fafc" />
     <circle cx="50" cy="50" r="38" fill="url(#safariBg)" />
     <circle cx="50" cy="50" r="34" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="1" strokeDasharray="2 4" />
-    {/* Compass Needle */}
     <g transform="translate(50, 50) rotate(45)">
       <polygon points="0,-28 6,0 0,0 -6,0" fill="#ef4444" />
       <polygon points="0,28 6,0 0,0 -6,0" fill="#ffffff" />
@@ -154,7 +151,6 @@ export const MacTerminalIcon = ({ className = "w-full h-full" }) => (
     <circle cx="16" cy="15" r="2.5" fill="#ef4444" />
     <circle cx="25" cy="15" r="2.5" fill="#f59e0b" />
     <circle cx="34" cy="15" r="2.5" fill="#10b981" />
-    {/* Prompt */}
     <path d="M 22 45 L 36 55 L 22 65" fill="none" stroke="#22c55e" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
     <rect x="42" y="63" width="16" height="4" rx="1" fill="#f8fafc" />
   </svg>
@@ -169,9 +165,7 @@ export const MacTeraBoxIcon = ({ className = "w-full h-full" }) => (
       </linearGradient>
     </defs>
     <rect x="5" y="5" width="90" height="90" rx="22" fill="url(#tbBg)" />
-    {/* White Cloud */}
     <path d="M68 62 H32 C25 62 19 56 19 49 C19 43 23 38 29 37 C31 29 38 23 47 23 C56 23 63 29 66 37 C72 38 77 43 77 49 C77 56 73 62 68 62 Z" fill="#ffffff" />
-    {/* Blue Cloud Lettering */}
     <path d="M42 38 H58 M50 38 V54" stroke="#0284c7" strokeWidth="4.5" strokeLinecap="round" />
   </svg>
 );
@@ -192,7 +186,6 @@ export const MacKbcIcon = ({ className = "w-full h-full" }) => (
     <rect x="5" y="5" width="90" height="90" rx="22" fill="url(#kbcBg)" stroke="url(#gold)" strokeWidth="2.5" />
     <circle cx="50" cy="50" r="32" fill="none" stroke="url(#gold)" strokeWidth="3" />
     <circle cx="50" cy="50" r="26" fill="rgba(245, 158, 11, 0.15)" />
-    {/* Trophy */}
     <path d="M40 36 H60 V46 C60 52 56 56 50 56 C44 56 40 52 40 46 Z" fill="url(#gold)" />
     <path d="M47 56 H53 V62 H47 Z M38 62 H62 V65 H38 Z" fill="url(#gold)" />
     <path d="M40 38 H34 C31 38 31 46 35 46 H40 M60 38 H66 C69 38 69 46 65 46 H60" fill="none" stroke="url(#gold)" strokeWidth="2.5" />
@@ -263,7 +256,7 @@ export const MacFolderIcon = ({ className = "w-full h-full" }) => (
   </svg>
 );
 
-// ── Wallpapers Library (Dark Mode Focused) ──
+// ── Wallpapers Library (Dark Mode Focused with High-Def Backdrops) ──
 const WALLPAPERS = [
   {
     id: 'sequoia-dark',
@@ -289,6 +282,28 @@ const WALLPAPERS = [
 
 export default function MacOSDesktop() {
   const navigate = useNavigate();
+
+  // ── Auto Fullscreen Trigger on First User Click ──
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreenMode = () => {
+    macSound.playPop();
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
 
   // ── Clock & Calendar State ──
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -320,9 +335,10 @@ export default function MacOSDesktop() {
       { id: 'vault', name: 'Course Vault', type: 'system', icon: 'vault', targetApp: 'finder' },
       { id: 'vscode-icon', name: 'VS Code', type: 'system', icon: 'vscode', targetApp: 'vscode' },
       { id: 'terabox', name: 'TeraBox Cloud', type: 'system', icon: 'terabox', targetApp: 'terabox' },
+      { id: 'safari-icon', name: 'Safari', type: 'system', icon: 'safari', targetApp: 'safari' },
       { id: 'projects', name: 'My Projects', type: 'folder', items: [
-        { id: 'p1', name: 'main.py', type: 'file', content: 'print("AppleTree Python Course")' },
-        { id: 'p2', name: 'notes.txt', type: 'file', content: 'Study Spring Boot and React' }
+        { id: 'p1', name: 'App.java', type: 'file', content: 'public class App { public static void main(String[] args) { System.out.println("Java 21 Ready"); } }' },
+        { id: 'p2', name: 'main.py', type: 'file', content: 'print("AppleTree Python 3.12 Engine")' }
       ] },
       { id: 'kbc-icon', name: 'KBC Quiz', type: 'system', icon: 'kbc', targetApp: 'kbc' },
       { id: 'terminal-icon', name: 'Terminal', type: 'system', icon: 'terminal', targetApp: 'terminal' }
@@ -335,7 +351,7 @@ export default function MacOSDesktop() {
 
   // ── TeraBox Cloud Storage State ──
   const [teraBoxFiles, setTeraBoxFiles] = useState([
-    { id: 'tb-1', name: 'FullStack_Java_Roadmap_2026.pdf', size: '2.4 MB', modified: 'Oct 29, 2026', type: 'pdf' },
+    { id: 'tb-1', name: 'Java_FullStack_Roadmap_2026.pdf', size: '2.4 MB', modified: 'Oct 29, 2026', type: 'pdf' },
     { id: 'tb-2', name: 'AWS_DevOps_Projects_Bundle.zip', size: '154.2 MB', modified: 'Oct 30, 2026', type: 'archive' },
     { id: 'tb-3', name: 'Python_AI_Datasets_Collection.tar.gz', size: '320.5 MB', modified: 'Oct 28, 2026', type: 'archive' },
     { id: 'tb-4', name: 'MERN_Enterprise_Ecommerce_Code.zip', size: '48.9 MB', modified: 'Oct 27, 2026', type: 'archive' }
@@ -370,6 +386,18 @@ export default function MacOSDesktop() {
       isMaximized: false,
       zIndex: 20,
       x: 70,
+      y: 40,
+      w: 940,
+      h: 590
+    },
+    safari: {
+      id: 'safari',
+      title: 'Safari — AppleTree Web Explorer',
+      isOpen: false,
+      isMinimized: false,
+      isMaximized: false,
+      zIndex: 13,
+      x: 100,
       y: 45,
       w: 920,
       h: 580
@@ -383,8 +411,8 @@ export default function MacOSDesktop() {
       zIndex: 10,
       x: 60,
       y: 50,
-      w: 860,
-      h: 530
+      w: 880,
+      h: 540
     },
     terabox: {
       id: 'terabox',
@@ -393,7 +421,7 @@ export default function MacOSDesktop() {
       isMinimized: false,
       isMaximized: false,
       zIndex: 11,
-      x: 100,
+      x: 120,
       y: 60,
       w: 840,
       h: 540
@@ -409,20 +437,6 @@ export default function MacOSDesktop() {
       y: 90,
       w: 740,
       h: 470
-    },
-    safari: {
-      id: 'safari',
-      title: 'Safari — AppleTree Web Explorer',
-      isOpen: false,
-      isMinimized: false,
-      isMaximized: false,
-      zIndex: 13,
-      x: 110,
-      y: 50,
-      w: 920,
-      h: 580,
-      url: 'https://programmingwala.com/programs',
-      tabTitle: 'Courses & Programs'
     },
     kbc: {
       id: 'kbc',
@@ -467,10 +481,10 @@ export default function MacOSDesktop() {
       isMinimized: false,
       isMaximized: false,
       zIndex: 17,
-      x: 190,
-      y: 80,
-      w: 780,
-      h: 520
+      x: 160,
+      y: 55,
+      w: 820,
+      h: 550
     },
     aboutMac: {
       id: 'aboutMac',
@@ -660,7 +674,7 @@ export default function MacOSDesktop() {
   }, [desktopItems]);
 
   // ═══════════════════════════════════════════════════════════════
-  // ── REAL VISUAL STUDIO CODE STATE & LOGIC (Dark+ Theme) ──
+  // ── VISUAL STUDIO CODE STATE (JDK 21, Python 3.12, Extensions) ──
   // ═══════════════════════════════════════════════════════════════
   const [vsCodeFiles, setVsCodeFiles] = useState([
     {
@@ -668,24 +682,41 @@ export default function MacOSDesktop() {
       name: 'main.py',
       lang: 'python',
       content: 
-`#  Visual Studio Code on AppleTree macOS
-import time
+`#  Visual Studio Code on AppleTree macOS (Python 3.12.2)
+import sys
 
 def master_tech_career():
-    print("🚀 Initializing AppleTree Full Stack Engine...")
+    print("🚀 Initializing AppleTree Python & AI Sandbox...")
+    print(f"System: macOS Sequoia 15.2 | Python {sys.version.split()[0]}")
+    
     tracks = [
-        {"role": "Java Full Stack Developer", "package": "₹8-18 LPA", "status": "Ready"},
-        {"role": "AWS DevOps Cloud Architect", "package": "₹10-22 LPA", "status": "Ready"},
-        {"role": "Python AI & ML Specialist", "package": "₹12-25 LPA", "status": "Ready"},
-        {"role": "React & MERN Stack Lead", "package": "₹8-16 LPA", "status": "Ready"}
+        {"role": "Java Full Stack Developer", "package": "₹8-18 LPA", "status": "Active"},
+        {"role": "AWS DevOps Cloud Architect", "package": "₹10-22 LPA", "status": "Active"},
+        {"role": "Python AI & ML Specialist", "package": "₹12-25 LPA", "status": "Active"},
+        {"role": "React & MERN Stack Lead", "package": "₹8-16 LPA", "status": "Active"}
     ]
     for idx, track in enumerate(tracks, start=1):
-        print(f"  {idx}. {track['role']} -> Target: {track['package']}")
+        print(f"  [{idx}] {track['role']} -> Target: {track['package']}")
     print("\\n✓ Status: 100% Industry Certified & Placement Ready!")
 
 if __name__ == "__main__":
     master_tech_career()
 `
+    },
+    {
+      id: 'f-java',
+      name: 'App.java',
+      lang: 'java',
+      content:
+`// ☕ OpenJDK 21.0.2 LTS running on AppleTree macOS
+public class App {
+    public static void main(String[] args) {
+        System.out.println("☕ Compiling with OpenJDK 21 LTS (Oracle / RedHat Spec)...");
+        System.out.println("Academy: AppleTree Infotech Ghaziabad");
+        System.out.println("Modules: Spring Boot 3.3, Microservices, Hibernate ORM, Kafka");
+        System.out.println("Status: Java Enterprise Engine Active 🚀");
+    }
+}`
     },
     {
       id: 'f-html',
@@ -708,32 +739,11 @@ if __name__ == "__main__":
 </html>`
     },
     {
-      id: 'f-css',
-      name: 'styles.css',
-      lang: 'css',
-      content:
-`/* VS Code Modern Dark Theme */
-body {
-  background-color: #0b0f19;
-  color: #f8fafc;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-}
-#app {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 24px;
-  border-radius: 16px;
-}`
-    },
-    {
       id: 'f-js',
       name: 'app.js',
       lang: 'javascript',
       content:
-`// High performance async executor
+`// Node.js 20 LTS Executor
 const runPlacementEngine = async () => {
   console.log("Connecting to AppleTree Placement Portal...");
   const status = await Promise.resolve("Placement Guaranteed in Top Tech MNCs");
@@ -741,38 +751,44 @@ const runPlacementEngine = async () => {
 };
 
 runPlacementEngine();`
-    },
-    {
-      id: 'f-md',
-      name: 'README.md',
-      lang: 'markdown',
-      content:
-`# Visual Studio Code for AppleTree macOS
-
-Official Developer IDE running inside macOS Sequoia dark container.
-- Interactive file explorer & multi-tab navigation
-- Python 3.12 sandbox execution with terminal output
-- Real VS Code Dark+ color scheme & status bar
-- Integrated Bash Terminal`
     }
   ]);
 
   const [activeVsCodeFileId, setActiveVsCodeFileId] = useState('f-py');
-  const [vsCodeTabs, setVsCodeTabs] = useState(['f-py', 'f-html']);
+  const [vsCodeTabs, setVsCodeTabs] = useState(['f-py', 'f-java', 'f-html']);
   const [vsCodeTerminalOutput, setVsCodeTerminalOutput] = useState([
+    'developer@appletree-mac-pro ~/workspace % python3 --version',
+    'Python 3.12.2',
+    'developer@appletree-mac-pro ~/workspace % java -version',
+    'openjdk version "21.0.2" 2026-01-16 LTS',
+    'OpenJDK Runtime Environment (build 21.0.2+13-LTS)',
+    'OpenJDK 64-Bit Server VM (build 21.0.2+13-LTS, mixed mode, sharing)',
     'developer@appletree-mac-pro ~/workspace % python3 main.py',
-    '🚀 Initializing AppleTree Full Stack Engine...',
-    '  1. Java Full Stack Developer -> Target: ₹8-18 LPA',
-    '  2. AWS DevOps Cloud Architect -> Target: ₹10-22 LPA',
-    '  3. Python AI & ML Specialist -> Target: ₹12-25 LPA',
-    '  4. React & MERN Stack Lead -> Target: ₹8-16 LPA',
+    '🚀 Initializing AppleTree Python & AI Sandbox...',
+    'System: macOS Sequoia 15.2 | Python 3.12.2',
+    '  [1] Java Full Stack Developer -> Target: ₹8-18 LPA',
+    '  [2] AWS DevOps Cloud Architect -> Target: ₹10-22 LPA',
+    '  [3] Python AI & ML Specialist -> Target: ₹12-25 LPA',
+    '  [4] React & MERN Stack Lead -> Target: ₹8-16 LPA',
     '',
     '✓ Status: 100% Industry Certified & Placement Ready!'
   ]);
   const [vsCodeTerminalInput, setVsCodeTerminalInput] = useState('');
-  const [vsCodeBottomTab, setVsCodeBottomTab] = useState('terminal'); // 'terminal', 'output', 'problems'
+  const [vsCodeBottomTab, setVsCodeBottomTab] = useState('terminal');
   const [isVsCodeRunning, setIsVsCodeRunning] = useState(false);
-  const [vsCodeActiveSidebar, setVsCodeActiveSidebar] = useState('explorer');
+  const [vsCodeActiveSidebar, setVsCodeActiveSidebar] = useState('explorer'); // 'explorer', 'extensions', 'search', 'git'
+
+  // ── VS Code Extensions List ──
+  const [vsCodeExtensions, setVsCodeExtensions] = useState([
+    { id: 'ext-py', name: 'Python', publisher: 'Microsoft', version: 'v2026.4', desc: 'IntelliSense, Linting, Debugging & Code Formatting', installed: true, icon: '🐍' },
+    { id: 'ext-java', name: 'Extension Pack for Java', publisher: 'Microsoft', version: 'v1.31', desc: 'Java language support, Debugger & Maven projects', installed: true, icon: '☕' },
+    { id: 'ext-pylance', name: 'Pylance', publisher: 'Microsoft', version: 'v2026.2', desc: 'Performant Python type analysis and auto-imports', installed: true, icon: '⚡' },
+    { id: 'ext-prettier', name: 'Prettier - Code Formatter', publisher: 'Prettier', version: 'v10.4', desc: 'Opinionated code formatter for JS, CSS, HTML', installed: true, icon: '✨' },
+    { id: 'ext-tailwind', name: 'Tailwind CSS IntelliSense', publisher: 'Tailwind Labs', version: 'v0.12', desc: 'Intelligent Tailwind CSS class suggestions', installed: true, icon: '🎨' },
+    { id: 'ext-copilot', name: 'GitHub Copilot', publisher: 'GitHub', version: 'v1.178', desc: 'Your AI pair programmer directly in VS Code', installed: false, icon: '🤖' },
+    { id: 'ext-docker', name: 'Docker', publisher: 'Microsoft', version: 'v1.29', desc: 'Manage containers, images and registries', installed: false, icon: '🐳' },
+    { id: 'ext-gitlens', name: 'GitLens — Git supercharged', publisher: 'GitKraken', version: 'v14.8', desc: 'Supercharge Git inside VS Code', installed: true, icon: '🌿' }
+  ]);
 
   const activeVsCodeFile = vsCodeFiles.find(f => f.id === activeVsCodeFileId) || vsCodeFiles[0];
 
@@ -798,23 +814,40 @@ Official Developer IDE running inside macOS Sequoia dark container.
     macSound.playPop();
     setIsVsCodeRunning(true);
     setVsCodeBottomTab('terminal');
+
+    const cmdRun = activeVsCodeFile.lang === 'java' 
+      ? `javac ${activeVsCodeFile.name} && java ${activeVsCodeFile.name.replace('.java', '')}`
+      : activeVsCodeFile.lang === 'javascript'
+      ? `node ${activeVsCodeFile.name}`
+      : `python3 ${activeVsCodeFile.name}`;
+
     setVsCodeTerminalOutput(prev => [
       ...prev,
-      `developer@appletree-mac-pro ~/workspace % python3 ${activeVsCodeFile.name}`,
-      'Compiling with Python 3.12 (Hostinger Cloud Sandbox)...'
+      `developer@appletree-mac-pro ~/workspace % ${cmdRun}`,
+      'Compiling with AppleTree Hostinger Sandbox...'
     ]);
 
     setTimeout(() => {
       setIsVsCodeRunning(false);
       macSound.playPop();
-      if (activeVsCodeFile.lang === 'python') {
+      if (activeVsCodeFile.lang === 'java') {
         setVsCodeTerminalOutput(prev => [
           ...prev,
-          '🚀 Initializing AppleTree Full Stack Engine...',
-          '  1. Java Full Stack Developer -> Target: ₹8-18 LPA',
-          '  2. AWS DevOps Cloud Architect -> Target: ₹10-22 LPA',
-          '  3. Python AI & ML Specialist -> Target: ₹12-25 LPA',
-          '  4. React & MERN Stack Lead -> Target: ₹8-16 LPA',
+          '☕ Compiling with OpenJDK 21 LTS (Oracle / RedHat Spec)...',
+          'Academy: AppleTree Infotech Ghaziabad',
+          'Modules: Spring Boot 3.3, Microservices, Hibernate ORM, Kafka',
+          'Status: Java Enterprise Engine Active 🚀',
+          '[Process exited with code 0]'
+        ]);
+      } else if (activeVsCodeFile.lang === 'python') {
+        setVsCodeTerminalOutput(prev => [
+          ...prev,
+          '🚀 Initializing AppleTree Python & AI Sandbox...',
+          'System: macOS Sequoia 15.2 | Python 3.12.2',
+          '  [1] Java Full Stack Developer -> Target: ₹8-18 LPA',
+          '  [2] AWS DevOps Cloud Architect -> Target: ₹10-22 LPA',
+          '  [3] Python AI & ML Specialist -> Target: ₹12-25 LPA',
+          '  [4] React & MERN Stack Lead -> Target: ₹8-16 LPA',
           '',
           '✓ Status: 100% Industry Certified & Placement Ready!',
           '[Process exited with code 0]'
@@ -822,31 +855,48 @@ Official Developer IDE running inside macOS Sequoia dark container.
       } else {
         setVsCodeTerminalOutput(prev => [
           ...prev,
-          `Compiled ${activeVsCodeFile.name} successfully!`,
+          'Connecting to AppleTree Placement Portal...',
+          'Result: Placement Guaranteed in Top Tech MNCs',
           '[Process exited with code 0]'
         ]);
       }
-    }, 700);
+    }, 600);
   };
 
   const handleVsCodeTerminalSubmit = (e) => {
     e.preventDefault();
     const cmd = vsCodeTerminalInput.trim();
     if (!cmd) return;
-    const parts = cmd.split(' ');
-    const main = parts[0].toLowerCase();
+    const lower = cmd.toLowerCase();
 
     let res = '';
-    if (main === 'clear') {
+    if (lower === 'clear') {
       setVsCodeTerminalOutput([]);
       setVsCodeTerminalInput('');
       return;
-    } else if (main === 'python' || main === 'python3') {
-      res = 'Python 3.12.2 (main, Feb 2026) [Clang 16.0.0 (Apple LLVM 16.0.0)] on darwin';
-    } else if (main === 'ls') {
+    } else if (lower.includes('java -version')) {
+      res = `openjdk version "21.0.2" 2026-01-16 LTS
+OpenJDK Runtime Environment (build 21.0.2+13-LTS)
+OpenJDK 64-Bit Server VM (build 21.0.2+13-LTS, mixed mode, sharing)`;
+    } else if (lower.includes('python --version') || lower.includes('python3 --version')) {
+      res = 'Python 3.12.2';
+    } else if (lower.includes('node -v')) {
+      res = 'v20.18.0';
+    } else if (lower.includes('pip list')) {
+      res = `Package    Version
+---------- -------
+pip        24.0
+numpy      1.26.4
+pandas     2.2.1
+requests   2.31.0
+fastapi    0.110.0`;
+    } else if (lower.includes('python') || lower.includes('python3')) {
+      res = `Python 3.12.2 (main, Feb 2026) [Clang 16.0.0 (Apple LLVM 16.0.0)] on darwin
+Type "help", "copyright", "credits" or "license" for more information.`;
+    } else if (lower === 'ls') {
       res = vsCodeFiles.map(f => f.name).join('   ');
     } else {
-      res = `zsh: command executed: ${cmd}`;
+      res = `[Executed command: ${cmd}]`;
     }
 
     setVsCodeTerminalOutput(prev => [
@@ -857,20 +907,42 @@ Official Developer IDE running inside macOS Sequoia dark container.
     setVsCodeTerminalInput('');
   };
 
+  // ═══════════════════════════════════════════════════════════════
+  // ── REAL SAFARI BROWSER (SEARCH RESULTS ENGINE & WEB PAGES) ──
+  // ═══════════════════════════════════════════════════════════════
+  const [safariInput, setSafariInput] = useState('python list methods');
+  const [safariActiveQuery, setSafariActiveQuery] = useState('python list methods');
+  const [safariViewMode, setSafariViewMode] = useState('search'); // 'search' or 'webpage'
+  const [safariWebUrl, setSafariWebUrl] = useState('https://programmingwala.com/programs');
+
+  const executeSafariSearch = (e) => {
+    if (e) e.preventDefault();
+    macSound.playClick();
+    const query = safariInput.trim();
+    if (!query) return;
+
+    if (query.startsWith('http') || query.includes('.com') || query.includes('.org') || query.includes('.edu') || query.includes('localhost')) {
+      setSafariWebUrl(query.startsWith('http') ? query : `https://${query}`);
+      setSafariViewMode('webpage');
+    } else {
+      setSafariActiveQuery(query);
+      setSafariViewMode('search');
+    }
+  };
+
   // ── Terminal State ──
   const [terminalHistory, setTerminalHistory] = useState([
     { type: 'sys', text: ' AppleTree macOS Sequoia [Version 15.2.0 (Build 24C101)]' },
-    { type: 'sys', text: 'Dark Mode Only. Type "help" or "vscode" to launch the code environment.' },
+    { type: 'sys', text: 'JDK 21 LTS & Python 3.12 pre-installed. Type "help" or "vscode" to begin.' },
     { type: 'input', cmd: 'neofetch', output: '' },
     { type: 'output', text: `
-                 OS: macOS Sequoia 15.2 (AppleTree Edition)
+                 OS: macOS Sequoia 15.2 (Dark Edition)
              Host: AppleTree Mac Studio (M3 Max 16-Core)
            Kernel: Darwin 24.2.0
          Shell: zsh 5.9 (x86_64-apple-darwin24.0)
-           CPU: Apple M3 Max (16 Cores, 4.05 GHz)
-             Memory: 24576MiB / 65536MiB
-                 Theme: macOS Dark Mode Pro
-                        TeraBox: 527.8 GB / 1024 GB (Active Sync)` }
+           Java: OpenJDK 21.0.2 LTS
+             Python: Python 3.12.2
+                 TeraBox: 527.8 GB / 1024 GB (Active Sync)` }
   ]);
   const [terminalInput, setTerminalInput] = useState('');
   const terminalBottomRef = useRef(null);
@@ -886,8 +958,11 @@ Official Developer IDE running inside macOS Sequoia dark container.
     const arg = parts.slice(1).join(' ').trim();
 
     if (mainCmd === 'help') {
-      response = `macOS AppleTree Terminal Utilities:
+      response = `macOS AppleTree Command Utilities:
   • code / vscode    - Launch Visual Studio Code IDE
+  • java -version    - Check OpenJDK 21 LTS runtime
+  • python3 --version- Check Python 3.12 runtime
+  • safari <search>  - Search Google / Web in Safari
   • mkdir <folder>   - Create a new folder on Desktop / Finder
   • touch <file>     - Create a new file on Desktop
   • rm <name>        - Delete folder or file
@@ -895,13 +970,26 @@ Official Developer IDE running inside macOS Sequoia dark container.
   • pwd              - Print current working directory
   • terabox          - Launch TeraBox Cloud Storage (1024 GB)
   • kbc              - Launch Kaun Banega Crorepati quiz app
-  • safari [url]     - Open Safari browser with optional link
   • neofetch         - Display AppleTree Mac system architecture
   • clear            - Clear terminal history
   • exit             - Close terminal`;
     } else if (mainCmd === 'code' || mainCmd === 'vscode') {
       openApp('vscode');
       response = 'Launching Visual Studio Code in macOS window...';
+    } else if (mainCmd === 'java') {
+      response = `openjdk version "21.0.2" 2026-01-16 LTS
+OpenJDK Runtime Environment (build 21.0.2+13-LTS)
+OpenJDK 64-Bit Server VM (build 21.0.2+13-LTS, mixed mode, sharing)`;
+    } else if (mainCmd === 'python' || mainCmd === 'python3') {
+      response = 'Python 3.12.2';
+    } else if (mainCmd === 'safari') {
+      openApp('safari');
+      if (arg) {
+        setSafariInput(arg);
+        setSafariActiveQuery(arg);
+        setSafariViewMode('search');
+      }
+      response = `Opening Safari Browser with search: "${arg || 'Google'}"`;
     } else if (mainCmd === 'mkdir') {
       if (!arg) {
         response = 'usage: mkdir <directory_name>';
@@ -939,9 +1027,6 @@ Official Developer IDE running inside macOS Sequoia dark container.
     } else if (mainCmd === 'kbc') {
       openApp('kbc');
       response = 'Launching KBC Master Arena in macOS window...';
-    } else if (mainCmd === 'safari') {
-      openApp('safari');
-      response = `Opening Safari Browser...`;
     } else if (mainCmd === 'clear') {
       setTerminalHistory([]);
       setTerminalInput('');
@@ -1008,24 +1093,19 @@ Official Developer IDE running inside macOS Sequoia dark container.
     return localStorage.getItem('appletree_macos_notes') || 
 `#  AppleTree Infotech — Notes (macOS Dark Pro)
 
-- Visual Studio Code installed with Python sandbox and integrated terminal
-- Real macOS Squircle Icons for all applications and files
-- TeraBox Cloud Storage connected with 1024 GB free vault
-- Real desktop folder creation via right-click or terminal
-- Exclusively configured in dark mode!`;
+- Visual Studio Code installed with OpenJDK 21 LTS and Python 3.12!
+- Extensions system enabled: Python, Java Extension Pack, Prettier, GitLens
+- Real Safari browser with full Google-style search engine results
+- Authentic translucent glassmorphism with dynamic desktop background tinting
+- Real macOS Finder with folder navigation and full context menus`;
   });
 
   useEffect(() => {
     localStorage.setItem('appletree_macos_notes', notesContent);
   }, [notesContent]);
 
-  // ── Safari Browser Navigation & Tabs ──
-  const [safariTabs, setSafariTabs] = useState([
-    { id: 'tab-1', title: 'Courses & Programs', url: 'https://programmingwala.com/programs' },
-    { id: 'tab-2', title: 'TeraBox Cloud', url: 'https://terabox.com' }
-  ]);
-  const [activeSafariTabId, setActiveSafariTabId] = useState('tab-1');
-  const [safariInputUrl, setSafariInputUrl] = useState('https://programmingwala.com/programs');
+  // ── System Settings Navigation Panel ──
+  const [activeSettingsTab, setActiveSettingsTab] = useState('displays'); // 'displays', 'sound', 'wifi', 'general', 'battery'
 
   return (
     <div 
@@ -1043,9 +1123,9 @@ Official Developer IDE running inside macOS Sequoia dark container.
       }}
       onContextMenu={handleDesktopContextMenu}
     >
-      {/* ════════════════ TOP macOS MENU BAR (Dark Mode Pro) ════════════════ */}
+      {/* ════════════════ TOP macOS MENU BAR (Translucent Glassmorphism) ════════════════ */}
       <header 
-        className="fixed top-0 left-0 right-0 h-6.5 z-[9999] px-3 flex items-center justify-between text-xs font-medium text-white/95 backdrop-blur-2xl bg-black/50 border-b border-white/10 shadow-sm transition-all"
+        className="fixed top-0 left-0 right-0 h-6.5 z-[9999] px-3 flex items-center justify-between text-xs font-medium text-white/95 backdrop-blur-3xl bg-black/45 border-b border-white/10 shadow-[0_1px_12px_rgba(0,0,0,0.5)] transition-all"
         onClick={(e) => e.stopPropagation()}
         onContextMenu={(e) => e.stopPropagation()}
       >
@@ -1061,7 +1141,7 @@ Official Developer IDE running inside macOS Sequoia dark container.
             </button>
 
             {activeMenu === 'apple' && (
-              <div className="absolute top-7 left-0 w-60 rounded-xl backdrop-blur-2xl bg-slate-950/95 border border-white/15 p-1.5 shadow-2xl z-50 text-slate-100 text-xs animate-in fade-in zoom-in-95 duration-100">
+              <div className="absolute top-7 left-0 w-64 rounded-xl backdrop-blur-3xl bg-slate-950/95 border border-white/15 p-1.5 shadow-2xl z-50 text-slate-100 text-xs animate-in fade-in zoom-in-95 duration-100">
                 <button 
                   onClick={() => { openApp('aboutMac'); setActiveMenu(null); }}
                   className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
@@ -1071,26 +1151,40 @@ Official Developer IDE running inside macOS Sequoia dark container.
                 </button>
                 <div className="h-px bg-white/10 my-1" />
                 <button 
+                  onClick={() => { openApp('settings'); setActiveMenu(null); }}
+                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
+                >
+                  <span>System Settings...</span>
+                  <span className="text-[10px] text-white/40">⌘,</span>
+                </button>
+                <button 
                   onClick={() => { openApp('vscode'); setActiveMenu(null); }}
                   className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer text-sky-400"
                 >
                   <span className="flex items-center gap-1.5">Visual Studio Code</span>
-                  <span className="text-[10px] bg-sky-500/30 px-1 rounded text-sky-200">IDE</span>
+                  <span className="text-[10px] bg-sky-500/30 px-1 rounded text-sky-200">JDK+PY</span>
+                </button>
+                <button 
+                  onClick={() => { openApp('safari'); setActiveMenu(null); }}
+                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
+                >
+                  <span>Safari Browser</span>
+                  <Compass className="w-3.5 h-3.5" />
                 </button>
                 <button 
                   onClick={() => { openApp('terabox'); setActiveMenu(null); }}
                   className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer text-sky-300"
                 >
-                  <span>TeraBox Cloud (1 TB)</span>
+                  <span>TeraBox Cloud (1024 GB)</span>
                   <Cloud className="w-3.5 h-3.5" />
                 </button>
                 <div className="h-px bg-white/10 my-1" />
                 <button 
-                  onClick={() => { createNewFolder(); setActiveMenu(null); }}
-                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
+                  onClick={toggleFullscreenMode}
+                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer text-emerald-400"
                 >
-                  <span>New Desktop Folder</span>
-                  <span className="text-[10px] text-white/40">⇧⌘N</span>
+                  <span>{isFullscreen ? 'Exit Full Screen' : 'Enter Full Screen'}</span>
+                  <span className="text-[10px] text-white/40">⌃⌘F</span>
                 </button>
                 <button 
                   onClick={() => { setIsLocked(true); setActiveMenu(null); }}
@@ -1118,19 +1212,29 @@ Official Developer IDE running inside macOS Sequoia dark container.
           <div className="hidden sm:flex items-center gap-3 text-white/80 text-[11px]">
             <button onClick={() => openApp('vscode')} className="hover:text-white transition cursor-pointer">File</button>
             <button onClick={() => openApp('vscode')} className="hover:text-white transition cursor-pointer">Edit</button>
-            <button onClick={() => openApp('vscode')} className="hover:text-white transition cursor-pointer">Selection</button>
+            <button onClick={() => openApp('safari')} className="hover:text-white transition cursor-pointer">Search</button>
             <button onClick={() => openApp('terminal')} className="hover:text-white transition cursor-pointer">Terminal</button>
             <button onClick={() => openApp('aboutMac')} className="hover:text-white transition cursor-pointer">Help</button>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Fullscreen Quick Button */}
+          <button
+            onClick={toggleFullscreenMode}
+            className="hidden md:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-[10px] font-bold text-emerald-300 hover:text-white transition cursor-pointer"
+            title="Toggle Fullscreen macOS Mode"
+          >
+            <Maximize2 className="w-3 h-3" />
+            <span>{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</span>
+          </button>
+
           <Link
             to="/"
             className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-[10px] font-bold text-amber-300 hover:text-white transition cursor-pointer"
           >
             <ArrowLeft className="w-3 h-3" />
-            <span>Exit macOS</span>
+            <span>Web Mode</span>
           </Link>
 
           <div className="flex items-center gap-1 opacity-90 text-[11px]">
@@ -1162,7 +1266,7 @@ Official Developer IDE running inside macOS Sequoia dark container.
               <div className="absolute top-7 right-0 w-72 rounded-2xl backdrop-blur-3xl bg-slate-950/95 border border-white/15 p-3.5 shadow-2xl z-50 text-slate-100 text-xs animate-in fade-in duration-150 space-y-3">
                 <div className="flex items-center justify-between pb-2 border-b border-white/10">
                   <span className="font-bold flex items-center gap-1.5"><Sliders className="w-3.5 h-3.5 text-blue-400" /> Control Center</span>
-                  <span className="text-[10px] text-emerald-400 font-semibold">● macOS Pro Dark</span>
+                  <span className="text-[10px] text-emerald-400 font-semibold">● macOS Dark Pro</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
@@ -1177,12 +1281,11 @@ Official Developer IDE running inside macOS Sequoia dark container.
                     <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
                     <div>
                       <p className="font-bold text-[11px] text-indigo-200">Dark Mode</p>
-                      <p className="text-[9px] text-indigo-300/80">Always Active</p>
+                      <p className="text-[9px] text-indigo-300/80">Always On</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Display Brightness */}
                 <div className="p-2.5 rounded-xl bg-white/10 space-y-1.5">
                   <div className="flex items-center justify-between text-[11px] font-semibold">
                     <span>Display Brightness</span>
@@ -1198,7 +1301,6 @@ Official Developer IDE running inside macOS Sequoia dark container.
                   />
                 </div>
 
-                {/* Sound Volume */}
                 <div className="p-2.5 rounded-xl bg-white/10 space-y-1.5">
                   <div className="flex items-center justify-between text-[11px] font-semibold">
                     <span>Sound Volume</span>
@@ -1229,7 +1331,7 @@ Official Developer IDE running inside macOS Sequoia dark container.
       {/* ════════════════ SPOTLIGHT SEARCH (Cmd+Space / Ctrl+K) ════════════════ */}
       {activeMenu === 'spotlight' && (
         <div 
-          className="fixed inset-0 z-[99990] flex items-start justify-center pt-24 bg-black/50 backdrop-blur-md"
+          className="fixed inset-0 z-[99990] flex items-start justify-center pt-24 bg-black/55 backdrop-blur-md"
           onClick={() => setActiveMenu(null)}
         >
           <div 
@@ -1241,9 +1343,18 @@ Official Developer IDE running inside macOS Sequoia dark container.
               <input
                 type="text"
                 autoFocus
-                placeholder="Spotlight Search: Launch VS Code, TeraBox, Python..."
+                placeholder="Spotlight Search: Launch apps, search Google in Safari, or run code..."
                 value={spotlightQuery}
                 onChange={(e) => setSpotlightQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && spotlightQuery.trim()) {
+                    openApp('safari');
+                    setSafariInput(spotlightQuery.trim());
+                    setSafariActiveQuery(spotlightQuery.trim());
+                    setSafariViewMode('search');
+                    setActiveMenu(null);
+                  }
+                }}
                 className="w-full bg-transparent text-sm font-medium outline-none text-white placeholder-white/40"
               />
               <span className="text-[10px] text-white/40 bg-white/10 px-2 py-0.5 rounded">esc</span>
@@ -1251,13 +1362,13 @@ Official Developer IDE running inside macOS Sequoia dark container.
 
             <div className="p-2 space-y-1 max-h-64 overflow-y-auto">
               {[
-                { name: 'Visual Studio Code', id: 'vscode', desc: 'Code editor with Python sandbox & terminal' },
+                { name: 'Visual Studio Code (JDK 21 + Python 3.12)', id: 'vscode', desc: 'Code IDE with extensions & compilers' },
+                { name: 'Safari Browser', id: 'safari', desc: 'Web browser & search engine' },
                 { name: 'TeraBox Cloud Storage (1024 GB)', id: 'terabox', desc: 'Sync and manage cloud files' },
                 { name: 'Finder (Course Vault)', id: 'finder', desc: 'Browse learning tracks & certificates' },
-                { name: 'Safari Browser', id: 'safari', desc: 'Browse web & AppleTree programs' },
                 { name: 'KBC Quiz Arena', id: 'kbc', desc: 'Play live tech competition' },
                 { name: 'Terminal', id: 'terminal', desc: 'Interactive zsh command line with mkdir/ls' },
-                { name: 'Notes', id: 'notes', desc: 'Persistent student notes' },
+                { name: 'System Settings', id: 'settings', desc: 'macOS configuration & displays' },
                 { name: 'Calculator', id: 'calculator', desc: 'Apple standard calculator' }
               ]
                 .filter(a => a.name.toLowerCase().includes(spotlightQuery.toLowerCase()) || a.desc.toLowerCase().includes(spotlightQuery.toLowerCase()))
@@ -1284,6 +1395,7 @@ Official Developer IDE running inside macOS Sequoia dark container.
         {desktopItems.map(item => {
           let IconComponent = MacFolderIcon;
           if (item.targetApp === 'vscode' || item.icon === 'vscode') IconComponent = MacVSCodeIcon;
+          else if (item.targetApp === 'safari' || item.icon === 'safari') IconComponent = MacSafariIcon;
           else if (item.targetApp === 'finder' || item.icon === 'vault') IconComponent = MacFinderIcon;
           else if (item.targetApp === 'terabox' || item.icon === 'terabox') IconComponent = MacTeraBoxIcon;
           else if (item.targetApp === 'kbc' || item.icon === 'kbc') IconComponent = MacKbcIcon;
@@ -1303,8 +1415,7 @@ Official Developer IDE running inside macOS Sequoia dark container.
               onDoubleClick={() => {
                 macSound.playPop();
                 if (item.targetApp) openApp(item.targetApp);
-                else if (item.type === 'folder') openApp('finder');
-                else openApp('notes');
+                else openApp('finder');
               }}
               className="flex flex-col items-center group cursor-pointer focus:outline-none w-20 text-center"
             >
@@ -1337,7 +1448,7 @@ Official Developer IDE running inside macOS Sequoia dark container.
         <div
           style={{ top: contextMenu.y, left: contextMenu.x }}
           onClick={(e) => e.stopPropagation()}
-          className="fixed z-[99998] w-52 rounded-xl backdrop-blur-2xl bg-slate-950/95 border border-white/20 shadow-2xl p-1.5 text-xs text-slate-100 animate-in fade-in duration-75 space-y-0.5"
+          className="fixed z-[99998] w-56 rounded-xl backdrop-blur-3xl bg-slate-950/95 border border-white/20 shadow-2xl p-1.5 text-xs text-slate-100 animate-in fade-in duration-75 space-y-0.5"
         >
           {contextMenu.targetId ? (
             <>
@@ -1354,6 +1465,16 @@ Official Developer IDE running inside macOS Sequoia dark container.
                 <span>Open</span>
               </button>
               <button
+                onClick={() => {
+                  openApp('vscode');
+                  setContextMenu(null);
+                }}
+                className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between text-sky-400"
+              >
+                <span>Open With VS Code</span>
+                <Code2 className="w-3.5 h-3.5" />
+              </button>
+              <button
                 onClick={() => handleStartRename(contextMenu.item)}
                 className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between"
               >
@@ -1365,7 +1486,7 @@ Official Developer IDE running inside macOS Sequoia dark container.
                 className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-rose-600 hover:text-white flex items-center justify-between text-rose-300 font-bold"
               >
                 <span>Move to Trash</span>
-                <Trash2 className="w-3 h-3" />
+                <Trash2 className="w-3.5 h-3.5" />
               </button>
             </>
           ) : (
@@ -1391,10 +1512,10 @@ Official Developer IDE running inside macOS Sequoia dark container.
                 <Code2 className="w-3.5 h-3.5" /> Open in VS Code
               </button>
               <button
-                onClick={() => { openApp('terabox'); setContextMenu(null); }}
-                className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center gap-2 text-sky-300"
+                onClick={() => { openApp('safari'); setContextMenu(null); }}
+                className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center gap-2"
               >
-                <Cloud className="w-3.5 h-3.5" /> TeraBox Cloud Vault
+                <Compass className="w-3.5 h-3.5 text-sky-400" /> Search in Safari
               </button>
               <button
                 onClick={() => { openApp('terminal'); setContextMenu(null); }}
@@ -1406,7 +1527,7 @@ Official Developer IDE running inside macOS Sequoia dark container.
                 onClick={() => { openApp('settings'); setContextMenu(null); }}
                 className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center gap-2"
               >
-                <Settings className="w-3.5 h-3.5 text-slate-300" /> Change Wallpaper...
+                <Settings className="w-3.5 h-3.5 text-slate-300" /> System Settings...
               </button>
             </>
           )}
@@ -1415,7 +1536,7 @@ Official Developer IDE running inside macOS Sequoia dark container.
 
       {/* ════════════════ WINDOWS RENDERING ════════════════ */}
 
-      {/* ── 1. REAL VISUAL STUDIO CODE WINDOW ── */}
+      {/* ── 1. VISUAL STUDIO CODE WINDOW (JDK 21, Python 3.12, Extensions) ── */}
       {windows.vscode.isOpen && !windows.vscode.isMinimized && (
         <div
           onClick={() => focusWindow('vscode')}
@@ -1428,38 +1549,34 @@ Official Developer IDE running inside macOS Sequoia dark container.
           }}
           className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-[#1e1e1e] border border-white/20 shadow-2xl flex flex-col font-sans transition-all duration-150 ${activeAppId === 'vscode' ? 'ring-1 ring-sky-400/50' : 'opacity-95'}`}
         >
-          {/* VS Code macOS Title Header */}
+          {/* Header */}
           <div 
             onMouseDown={(e) => handleMouseDownHeader(e, 'vscode')}
             className="h-10 px-4 bg-[#323233] border-b border-[#252526] flex items-center justify-between cursor-move shrink-0"
           >
-            {/* Traffic Lights */}
             <div className="flex items-center gap-2">
               <button onClick={() => closeWindow('vscode')} className="w-3 h-3 rounded-full bg-rose-500 hover:bg-rose-600 cursor-pointer" />
               <button onClick={() => minimizeWindow('vscode')} className="w-3 h-3 rounded-full bg-amber-500 hover:bg-amber-600 cursor-pointer" />
               <button onClick={() => toggleMaximize('vscode')} className="w-3 h-3 rounded-full bg-emerald-500 hover:bg-emerald-600 cursor-pointer" />
             </div>
 
-            {/* Window Title */}
             <div className="flex items-center gap-2 text-xs text-[#cccccc] font-medium">
               <div className="w-4 h-4"><MacVSCodeIcon /></div>
-              <span>{activeVsCodeFile.name} — AppleTree-Workspace — Visual Studio Code</span>
+              <span>{activeVsCodeFile.name} — AppleTree-Workspace (JDK 21 + Python 3.12)</span>
             </div>
 
-            {/* Run Button in Header */}
             <button
               onClick={handleRunVsCodeCode}
               disabled={isVsCodeRunning}
-              className="px-3 py-1 rounded-md bg-[#007acc] hover:bg-[#0062a3] text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm cursor-pointer"
+              className="px-3.5 py-1 rounded-md bg-[#007acc] hover:bg-[#0062a3] text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm cursor-pointer"
             >
               <Play className="w-3 h-3 fill-current" />
-              <span>{isVsCodeRunning ? 'Executing...' : 'Run Python'}</span>
+              <span>{isVsCodeRunning ? 'Compiling...' : `Run ${activeVsCodeFile.lang === 'java' ? 'Java 21' : 'Python'}`}</span>
             </button>
           </div>
 
-          {/* VS Code Main Layout */}
           <div className="flex-1 flex overflow-hidden">
-            {/* Activity Bar (Left strip) */}
+            {/* Activity Bar */}
             <div className="w-12 bg-[#333333] border-r border-[#252526] flex flex-col items-center justify-between py-3 shrink-0">
               <div className="flex flex-col items-center gap-4 text-[#858585]">
                 <button 
@@ -1470,24 +1587,17 @@ Official Developer IDE running inside macOS Sequoia dark container.
                   <Folder className="w-5 h-5" />
                 </button>
                 <button 
-                  onClick={() => setVsCodeActiveSidebar('search')}
-                  className={`p-1.5 rounded hover:text-white transition cursor-pointer ${vsCodeActiveSidebar === 'search' ? 'text-white' : ''}`}
-                  title="Search"
+                  onClick={() => setVsCodeActiveSidebar('extensions')}
+                  className={`p-1.5 rounded hover:text-white transition cursor-pointer relative ${vsCodeActiveSidebar === 'extensions' ? 'text-white border-l-2 border-white pl-1' : ''}`}
+                  title="Extensions (JDK, Python, Prettier)"
                 >
-                  <Search className="w-5 h-5" />
-                </button>
-                <button 
-                  onClick={() => setVsCodeActiveSidebar('git')}
-                  className="p-1.5 rounded hover:text-white transition cursor-pointer relative"
-                  title="Source Control"
-                >
-                  <Layers className="w-5 h-5" />
+                  <Package className="w-5 h-5" />
                   <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-[#007acc]" />
                 </button>
                 <button 
                   onClick={handleRunVsCodeCode}
                   className="p-1.5 rounded hover:text-white transition cursor-pointer"
-                  title="Run and Debug"
+                  title="Run Code"
                 >
                   <PlayCircle className="w-5 h-5 text-emerald-400" />
                 </button>
@@ -1498,44 +1608,80 @@ Official Developer IDE running inside macOS Sequoia dark container.
               </button>
             </div>
 
-            {/* Sidebar (File Explorer) */}
-            <div className="w-56 bg-[#252526] border-r border-[#1e1e1e] flex flex-col text-xs text-[#cccccc] shrink-0">
-              <div className="px-3 py-2 flex items-center justify-between font-bold uppercase text-[10px] tracking-wider text-[#8e8e8e] border-b border-[#333333]">
-                <span>Explorer</span>
-                <button 
-                  onClick={() => {
-                    const name = prompt('Enter new filename (e.g. script.py):', 'script.py');
-                    if (name) {
-                      const newFile = { id: `f-${Date.now()}`, name, lang: name.endsWith('.py') ? 'python' : 'javascript', content: '# New Code File\n' };
-                      setVsCodeFiles(prev => [...prev, newFile]);
-                      handleOpenVsCodeTab(newFile.id);
-                    }
-                  }}
-                  className="hover:text-white cursor-pointer"
-                  title="New File"
-                >
-                  <FilePlus className="w-3.5 h-3.5" />
-                </button>
-              </div>
+            {/* Sidebar (File Explorer or Extensions) */}
+            <div className="w-60 bg-[#252526] border-r border-[#1e1e1e] flex flex-col text-xs text-[#cccccc] shrink-0">
+              {vsCodeActiveSidebar === 'explorer' ? (
+                <>
+                  <div className="px-3 py-2 flex items-center justify-between font-bold uppercase text-[10px] tracking-wider text-[#8e8e8e] border-b border-[#333333]">
+                    <span>Explorer: Workspace</span>
+                    <button 
+                      onClick={() => {
+                        const name = prompt('New filename (e.g. Test.java or script.py):', 'Test.java');
+                        if (name) {
+                          const lang = name.endsWith('.java') ? 'java' : name.endsWith('.py') ? 'python' : 'javascript';
+                          const newFile = { id: `f-${Date.now()}`, name, lang, content: `// ${name}\n` };
+                          setVsCodeFiles(prev => [...prev, newFile]);
+                          handleOpenVsCodeTab(newFile.id);
+                        }
+                      }}
+                      className="hover:text-white cursor-pointer"
+                      title="New File"
+                    >
+                      <FilePlus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
 
-              <div className="p-2 space-y-0.5 overflow-y-auto flex-1 font-mono text-[11px]">
-                <div className="text-[10px] text-slate-400 font-bold uppercase px-1 py-1">APPLETREE-WORKSPACE</div>
-                {vsCodeFiles.map(file => (
-                  <button
-                    key={file.id}
-                    onClick={() => handleOpenVsCodeTab(file.id)}
-                    className={`w-full text-left px-2 py-1.5 rounded flex items-center gap-2 transition cursor-pointer ${
-                      activeVsCodeFileId === file.id ? 'bg-[#37373d] text-white font-semibold' : 'hover:bg-[#2a2d2e] text-[#cccccc]'
-                    }`}
-                  >
-                    <FileCode className={`w-3.5 h-3.5 ${file.name.endsWith('.py') ? 'text-yellow-400' : file.name.endsWith('.html') ? 'text-orange-400' : file.name.endsWith('.css') ? 'text-sky-400' : 'text-blue-400'}`} />
-                    <span className="truncate">{file.name}</span>
-                  </button>
-                ))}
-              </div>
+                  <div className="p-2 space-y-0.5 overflow-y-auto flex-1 font-mono text-[11px]">
+                    <div className="text-[10px] text-slate-400 font-bold uppercase px-1 py-1">APPLETREE-SRC</div>
+                    {vsCodeFiles.map(file => (
+                      <button
+                        key={file.id}
+                        onClick={() => handleOpenVsCodeTab(file.id)}
+                        className={`w-full text-left px-2 py-1.5 rounded flex items-center gap-2 transition cursor-pointer ${
+                          activeVsCodeFileId === file.id ? 'bg-[#37373d] text-white font-semibold' : 'hover:bg-[#2a2d2e] text-[#cccccc]'
+                        }`}
+                      >
+                        <span className="text-xs">{file.name.endsWith('.java') ? '☕' : file.name.endsWith('.py') ? '🐍' : file.name.endsWith('.html') ? '🌐' : '⚡'}</span>
+                        <span className="truncate">{file.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="px-3 py-2 font-bold uppercase text-[10px] tracking-wider text-[#8e8e8e] border-b border-[#333333]">
+                    Extensions: Marketplace
+                  </div>
+                  <div className="p-2 space-y-2 overflow-y-auto flex-1 text-xs">
+                    {vsCodeExtensions.map(ext => (
+                      <div key={ext.id} className="p-2 rounded bg-black/30 border border-white/5 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-white flex items-center gap-1.5">{ext.icon} {ext.name}</span>
+                          <span className="text-[10px] text-slate-400">{ext.version}</span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 leading-snug">{ext.desc}</p>
+                        <div className="pt-1 flex items-center justify-between">
+                          <span className="text-[9px] text-[#007acc]">{ext.publisher}</span>
+                          <button
+                            onClick={() => {
+                              macSound.playPop();
+                              setVsCodeExtensions(cur => cur.map(e => e.id === ext.id ? { ...e, installed: !e.installed } : e));
+                            }}
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer ${
+                              ext.installed ? 'bg-[#333333] text-emerald-400 hover:bg-[#444444]' : 'bg-[#007acc] text-white hover:bg-[#0062a3]'
+                            }`}
+                          >
+                            {ext.installed ? 'Installed ✓' : 'Install'}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
-            {/* Editor Workspace & Integrated Terminal */}
+            {/* Editor Workspace & Terminal */}
             <div className="flex-1 flex flex-col bg-[#1e1e1e] overflow-hidden">
               {/* Tab Bar */}
               <div className="h-9 bg-[#252526] flex items-center overflow-x-auto shrink-0 border-b border-[#1e1e1e]">
@@ -1552,7 +1698,7 @@ Official Developer IDE running inside macOS Sequoia dark container.
                         isActive ? 'bg-[#1e1e1e] text-white border-t-2 border-t-[#007acc]' : 'bg-[#2d2d2d] text-[#969696] hover:bg-[#252526]'
                       }`}
                     >
-                      <FileCode className={`w-3.5 h-3.5 ${file.name.endsWith('.py') ? 'text-yellow-400' : file.name.endsWith('.html') ? 'text-orange-400' : 'text-blue-400'}`} />
+                      <span>{file.name.endsWith('.java') ? '☕' : file.name.endsWith('.py') ? '🐍' : '📄'}</span>
                       <span>{file.name}</span>
                       <button 
                         onClick={(e) => handleCloseVsCodeTab(e, tabId)} 
@@ -1565,16 +1711,14 @@ Official Developer IDE running inside macOS Sequoia dark container.
                 })}
               </div>
 
-              {/* Code Editor Body */}
+              {/* Code Editor */}
               <div className="flex-1 flex overflow-hidden">
-                {/* Line Numbers */}
                 <div className="w-10 bg-[#1e1e1e] py-3 text-right pr-3 font-mono text-xs text-[#858585] select-none shrink-0 leading-relaxed border-r border-white/5">
                   {(activeVsCodeFile.content.split('\n')).map((_, idx) => (
                     <div key={idx}>{idx + 1}</div>
                   ))}
                 </div>
 
-                {/* Editable Text Area */}
                 <textarea
                   value={activeVsCodeFile.content}
                   onChange={(e) => {
@@ -1586,7 +1730,7 @@ Official Developer IDE running inside macOS Sequoia dark container.
                 />
               </div>
 
-              {/* Integrated VS Code Bottom Panel (Terminal / Output) */}
+              {/* Terminal Panel */}
               <div className="h-44 bg-[#181818] border-t border-[#333333] flex flex-col shrink-0">
                 <div className="h-7 px-3 bg-[#1e1e1e] border-b border-[#333333] flex items-center justify-between text-[11px] font-sans font-semibold text-[#cccccc]">
                   <div className="flex items-center gap-4">
@@ -1602,19 +1746,13 @@ Official Developer IDE running inside macOS Sequoia dark container.
                     >
                       OUTPUT
                     </button>
-                    <button 
-                      onClick={() => setVsCodeBottomTab('problems')}
-                      className={`hover:text-white cursor-pointer ${vsCodeBottomTab === 'problems' ? 'text-white border-b-2 border-[#007acc] pb-0.5' : 'text-[#888888]'}`}
-                    >
-                      PROBLEMS (0)
-                    </button>
                   </div>
-                  <span className="text-[10px] text-emerald-400 font-mono">● bash 3.2</span>
+                  <span className="text-[10px] text-emerald-400 font-mono">● JDK 21 + Python 3.12</span>
                 </div>
 
                 <div className="flex-1 p-3 font-mono text-[11px] text-[#cccccc] overflow-y-auto space-y-1">
                   {vsCodeTerminalOutput.map((line, idx) => (
-                    <div key={idx} className={line.startsWith('developer@') ? 'text-emerald-400' : line.includes('Target:') ? 'text-sky-300' : line.startsWith('✓') ? 'text-yellow-300 font-bold' : 'text-[#d4d4d4]'}>
+                    <div key={idx} className={line.startsWith('developer@') ? 'text-emerald-400' : line.includes('OpenJDK') ? 'text-yellow-400' : line.startsWith('✓') ? 'text-emerald-300 font-bold' : 'text-[#d4d4d4]'}>
                       {line}
                     </div>
                   ))}
@@ -1631,7 +1769,7 @@ Official Developer IDE running inside macOS Sequoia dark container.
                 </div>
               </div>
 
-              {/* VS Code Bottom Blue Status Bar */}
+              {/* Bottom Status Bar */}
               <div className="h-5 bg-[#007acc] text-white px-3 flex items-center justify-between text-[10px] font-sans font-medium select-none shrink-0">
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1"><Layers className="w-2.5 h-2.5" /> main*</span>
@@ -1639,9 +1777,8 @@ Official Developer IDE running inside macOS Sequoia dark container.
                 </div>
                 <div className="flex items-center gap-3">
                   <span>Ln 14, Col 5</span>
-                  <span>Spaces: 4</span>
                   <span>UTF-8</span>
-                  <span className="font-bold">Python 3.12.2 64-bit</span>
+                  <span className="font-bold">{activeVsCodeFile.lang === 'java' ? 'OpenJDK 21 LTS' : 'Python 3.12.2'}</span>
                   <span>Prettier ✓</span>
                 </div>
               </div>
@@ -1650,7 +1787,124 @@ Official Developer IDE running inside macOS Sequoia dark container.
         </div>
       )}
 
-      {/* ── 2. FINDER WINDOW ── */}
+      {/* ── 2. REAL SAFARI BROWSER WITH SEARCH ENGINE ── */}
+      {windows.safari.isOpen && !windows.safari.isMinimized && (
+        <div
+          onClick={() => focusWindow('safari')}
+          style={{
+            zIndex: windows.safari.zIndex,
+            left: windows.safari.isMaximized ? 0 : windows.safari.x,
+            top: windows.safari.isMaximized ? 26 : windows.safari.y,
+            width: windows.safari.isMaximized ? '100vw' : windows.safari.w,
+            height: windows.safari.isMaximized ? 'calc(100vh - 26px - 80px)' : windows.safari.h
+          }}
+          className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-slate-950/98 border border-white/20 shadow-2xl flex flex-col transition-all duration-150 ${activeAppId === 'safari' ? 'ring-1 ring-sky-400/50' : 'opacity-95'}`}
+        >
+          {/* Safari Header & Search Bar */}
+          <div 
+            onMouseDown={(e) => handleMouseDownHeader(e, 'safari')}
+            className="h-12 px-4 bg-slate-900 border-b border-white/10 flex items-center justify-between gap-3 cursor-move shrink-0"
+          >
+            <div className="flex items-center gap-2">
+              <button onClick={() => closeWindow('safari')} className="w-3 h-3 rounded-full bg-rose-500 cursor-pointer" />
+              <button onClick={() => minimizeWindow('safari')} className="w-3 h-3 rounded-full bg-amber-500 cursor-pointer" />
+              <button onClick={() => toggleMaximize('safari')} className="w-3 h-3 rounded-full bg-emerald-500 cursor-pointer" />
+            </div>
+
+            {/* Smart Search Bar */}
+            <form onSubmit={executeSafariSearch} className="flex-1 max-w-xl mx-auto h-8 px-3 rounded-xl bg-black/50 border border-white/15 flex items-center gap-2.5 text-xs text-slate-300">
+              <Search className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+              <input
+                type="text"
+                value={safariInput}
+                onChange={(e) => setSafariInput(e.target.value)}
+                placeholder="Search Google or enter website name..."
+                className="w-full bg-transparent outline-none text-white text-xs"
+              />
+              <span className="text-[10px] text-slate-400 bg-white/10 px-1.5 py-0.5 rounded">Enter ↵</span>
+            </form>
+
+            <div className="flex items-center gap-2 text-slate-400">
+              <RefreshCw onClick={executeSafariSearch} className="w-3.5 h-3.5 hover:text-white cursor-pointer" />
+            </div>
+          </div>
+
+          {/* Bookmarks Bar */}
+          <div className="h-7 px-4 bg-slate-900/90 border-b border-white/5 flex items-center gap-4 text-[11px] text-slate-400 overflow-x-auto shrink-0">
+            <button onClick={() => { setSafariInput('python list methods'); setSafariActiveQuery('python list methods'); setSafariViewMode('search'); }} className="hover:text-white flex items-center gap-1 cursor-pointer">
+              🐍 Python Docs
+            </button>
+            <button onClick={() => { setSafariInput('java spring boot 3'); setSafariActiveQuery('java spring boot 3'); setSafariViewMode('search'); }} className="hover:text-white flex items-center gap-1 cursor-pointer">
+              ☕ Java Spring
+            </button>
+            <button onClick={() => { setSafariInput('https://programmingwala.com/programs'); setSafariWebUrl('https://programmingwala.com/programs'); setSafariViewMode('webpage'); }} className="hover:text-white flex items-center gap-1 cursor-pointer">
+              🎓 AppleTree Programs
+            </button>
+            <button onClick={() => { openApp('terabox'); }} className="hover:text-sky-300 text-sky-400 flex items-center gap-1 cursor-pointer">
+              ☁️ TeraBox 1024 GB
+            </button>
+          </div>
+
+          {/* Safari Content Body (Search Results Engine or Web View) */}
+          <div className="flex-1 p-6 overflow-y-auto bg-[#121212]">
+            {safariViewMode === 'search' ? (
+              <div className="max-w-3xl mx-auto space-y-6">
+                <div className="text-xs text-slate-400 pb-2 border-b border-white/10">
+                  About 1,480,000 results for <strong className="text-white">"{safariActiveQuery}"</strong> (0.32 seconds)
+                </div>
+
+                {/* Instant Answer Knowledge Box */}
+                <div className="p-5 rounded-2xl bg-white/5 border border-sky-400/30 space-y-2.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-sky-400">Knowledge Summary</span>
+                  <h3 className="text-base font-bold text-white capitalize">{safariActiveQuery}</h3>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    {safariActiveQuery.toLowerCase().includes('python') 
+                      ? 'Python built-in methods include .append(), .extend(), .insert(), .remove(), .pop(), .clear(), .index(), .count(), .sort(), and .reverse(). Supported natively in Python 3.12.'
+                      : safariActiveQuery.toLowerCase().includes('java')
+                      ? 'Java 21 LTS brings Virtual Threads (Project Loom), Record Patterns, Pattern Matching for switch, and Sequenced Collections for enterprise backend microservices.'
+                      : `Comprehensive developer guide and documentation matching "${safariActiveQuery}". Verified curriculum taught at AppleTree Infotech.`}
+                  </p>
+                  <div className="pt-2 flex gap-2">
+                    <button onClick={() => openApp('vscode')} className="px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-bold flex items-center gap-1 cursor-pointer">
+                      <Code2 className="w-3.5 h-3.5" /> Practice in VS Code
+                    </button>
+                  </div>
+                </div>
+
+                {/* Search Result Cards */}
+                <div className="space-y-4">
+                  {[
+                    { title: `${safariActiveQuery} — Official Developer Guide 2026`, link: 'https://docs.appletree.dev/guide', desc: 'Step-by-step tutorials, live interactive code execution, syntax cheat sheets, and production best practices.' },
+                    { title: `Mastering ${safariActiveQuery} with 100% Placement Support`, link: 'https://programmingwala.com/programs', desc: 'ISO certified curriculum with hands-on projects, mock interviews, and guaranteed job placement in Delhi NCR & MNCs.' },
+                    { title: `GitHub Repositories and Source Code: ${safariActiveQuery}`, link: 'https://github.com/appletree/mastery', desc: 'Download open source boilerplates, enterprise microservice templates, and ready-to-deploy cloud architecture.' }
+                  ].map((res, i) => (
+                    <div key={i} className="p-4 rounded-xl bg-white/5 hover:bg-white/10 transition space-y-1">
+                      <span className="text-[11px] text-sky-400 block truncate">{res.link}</span>
+                      <h4 className="text-sm font-bold text-white hover:underline cursor-pointer">{res.title}</h4>
+                      <p className="text-xs text-slate-400 leading-relaxed">{res.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="max-w-2xl mx-auto p-6 rounded-2xl bg-white/5 border border-white/10 text-center space-y-4">
+                <h2 className="text-xl font-bold text-white">AppleTree Web Explorer</h2>
+                <p className="text-xs text-slate-300">Viewing: {safariWebUrl}</p>
+                <div className="flex justify-center gap-3">
+                  <button onClick={() => navigate('/programs')} className="px-4 py-2 rounded-xl bg-sky-500 text-slate-950 font-bold text-xs">
+                    Browse All Programs
+                  </button>
+                  <button onClick={() => { setSafariViewMode('search'); }} className="px-4 py-2 rounded-xl bg-slate-800 text-white font-bold text-xs">
+                    Back to Search
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── 3. FINDER (REAL FILE MANAGER) ── */}
       {windows.finder.isOpen && !windows.finder.isMinimized && (
         <div
           onClick={() => focusWindow('finder')}
@@ -1661,8 +1915,9 @@ Official Developer IDE running inside macOS Sequoia dark container.
             width: windows.finder.isMaximized ? '100vw' : windows.finder.w,
             height: windows.finder.isMaximized ? 'calc(100vh - 26px - 80px)' : windows.finder.h
           }}
-          className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-slate-900/95 border border-white/20 shadow-2xl flex flex-col transition-all duration-150 ${activeAppId === 'finder' ? 'ring-1 ring-white/30' : 'opacity-95'}`}
+          className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-slate-900/95 border border-white/20 shadow-2xl flex flex-col transition-all duration-150 ${activeAppId === 'finder' ? 'ring-1 ring-sky-400/50' : 'opacity-95'}`}
         >
+          {/* Toolbar */}
           <div 
             onMouseDown={(e) => handleMouseDownHeader(e, 'finder')}
             className="h-11 px-4 bg-slate-800/80 border-b border-white/10 flex items-center justify-between cursor-move shrink-0"
@@ -1674,8 +1929,8 @@ Official Developer IDE running inside macOS Sequoia dark container.
             </div>
 
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
-              <Folder className="w-3.5 h-3.5 text-blue-400" />
-              <span>AppleTree Course Vault — Finder</span>
+              <MacFinderIcon className="w-4 h-4" />
+              <span>Finder — Macintosh HD</span>
             </div>
 
             <button
@@ -1687,45 +1942,40 @@ Official Developer IDE running inside macOS Sequoia dark container.
           </div>
 
           <div className="flex-1 flex overflow-hidden">
-            <div className="w-48 bg-slate-950/60 border-r border-white/10 p-3 flex flex-col gap-1 text-xs shrink-0">
+            <div className="w-52 bg-slate-950/60 border-r border-white/10 p-3 flex flex-col gap-1 text-xs shrink-0">
               <span className="text-[10px] font-black uppercase text-slate-400 px-2 py-1">Favorites</span>
               <button onClick={() => openApp('vscode')} className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left font-medium text-sky-400 hover:bg-white/10 transition cursor-pointer">
-                <Code2 className="w-3.5 h-3.5" /> VS Code Projects
+                <Code2 className="w-3.5 h-3.5" /> VS Code Workspace
               </button>
               <button onClick={() => openApp('terabox')} className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left font-medium text-sky-300 hover:bg-sky-500/20 transition cursor-pointer">
                 <Cloud className="w-3.5 h-3.5" /> TeraBox Cloud (1TB)
               </button>
               <button onClick={() => openApp('terminal')} className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left font-medium text-slate-300 hover:bg-white/10 transition cursor-pointer">
-                <Terminal className="w-3.5 h-3.5" /> Terminal (~/)
+                <Terminal className="w-3.5 h-3.5" /> Desktop Terminal
               </button>
             </div>
 
             <div className="flex-1 p-5 overflow-y-auto">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {[
-                  { name: 'Java Full Stack & Spring Boot.app', tag: 'Core', size: '120 Hours', action: () => openApp('vscode') },
-                  { name: 'AWS Cloud & DevOps Engineering.app', tag: 'Cloud', size: '90 Hours', action: () => openApp('vscode') },
-                  { name: 'Python AI & Machine Learning.app', tag: 'AI', size: '110 Hours', action: () => openApp('vscode') },
-                  { name: 'TeraBox 1024 GB Cloud Storage.app', tag: 'Drive', size: '1 TB Vault', action: () => openApp('terabox') },
-                  { name: 'KBC Interactive Quiz Arena.app', tag: 'Exam', size: 'Live Competition', action: () => openApp('kbc') }
-                ].map((file, idx) => (
+              <div className="grid grid-cols-2 gap-3">
+                {desktopItems.map((item, idx) => (
                   <div
                     key={idx}
-                    onClick={file.action}
-                    className="p-3.5 rounded-xl bg-white/5 hover:bg-blue-600/20 border border-white/10 hover:border-blue-400/40 transition cursor-pointer flex items-center justify-between group"
+                    onClick={() => {
+                      if (item.targetApp) openApp(item.targetApp);
+                      else openApp('vscode');
+                    }}
+                    className="p-3.5 rounded-xl bg-white/5 hover:bg-blue-600/20 border border-white/10 transition cursor-pointer flex items-center justify-between"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 p-1">
+                      <div className="w-9 h-9 p-0.5">
                         <MacFolderIcon />
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-white group-hover:text-blue-300 transition">{file.name}</p>
-                        <p className="text-[10px] text-slate-400">{file.size} · Certified Track</p>
+                        <p className="text-xs font-bold text-white">{item.name}</p>
+                        <p className="text-[10px] text-slate-400">{item.type}</p>
                       </div>
                     </div>
-                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/10 text-slate-300 font-bold group-hover:bg-blue-500 group-hover:text-white">
-                      Open
-                    </span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/10 text-slate-300 font-bold">Open</span>
                   </div>
                 ))}
               </div>
@@ -1734,7 +1984,185 @@ Official Developer IDE running inside macOS Sequoia dark container.
         </div>
       )}
 
-      {/* ── 3. TERABOX CLOUD DRIVE WINDOW ── */}
+      {/* ── 4. SYSTEM SETTINGS WINDOW (ALL SETTINGS WORKING) ── */}
+      {windows.settings.isOpen && !windows.settings.isMinimized && (
+        <div
+          onClick={() => focusWindow('settings')}
+          style={{
+            zIndex: windows.settings.zIndex,
+            left: windows.settings.isMaximized ? 0 : windows.settings.x,
+            top: windows.settings.isMaximized ? 26 : windows.settings.y,
+            width: windows.settings.isMaximized ? '100vw' : windows.settings.w,
+            height: windows.settings.isMaximized ? 'calc(100vh - 26px - 80px)' : windows.settings.h
+          }}
+          className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-slate-900/98 border border-white/20 shadow-2xl flex flex-col transition-all duration-150 ${activeAppId === 'settings' ? 'ring-1 ring-sky-400/50' : 'opacity-95'}`}
+        >
+          <div 
+            onMouseDown={(e) => handleMouseDownHeader(e, 'settings')}
+            className="h-11 px-4 bg-slate-800/90 border-b border-white/10 flex items-center justify-between cursor-move shrink-0"
+          >
+            <div className="flex items-center gap-2">
+              <button onClick={() => closeWindow('settings')} className="w-3 h-3 rounded-full bg-rose-500 cursor-pointer" />
+              <button onClick={() => minimizeWindow('settings')} className="w-3 h-3 rounded-full bg-amber-500 cursor-pointer" />
+              <button onClick={() => toggleMaximize('settings')} className="w-3 h-3 rounded-full bg-emerald-500 cursor-pointer" />
+            </div>
+            <div className="text-xs font-semibold text-slate-300">System Settings — macOS Sequoia Pro</div>
+            <div className="w-10" />
+          </div>
+
+          <div className="flex-1 flex overflow-hidden">
+            {/* Settings Left Navigation Sidebar */}
+            <div className="w-56 bg-slate-950/70 border-r border-white/10 p-3 space-y-1 text-xs shrink-0">
+              <button
+                onClick={() => setActiveSettingsTab('displays')}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left font-medium transition cursor-pointer ${
+                  activeSettingsTab === 'displays' ? 'bg-blue-600 text-white font-bold' : 'text-slate-300 hover:bg-white/10'
+                }`}
+              >
+                <Monitor className="w-4 h-4 text-sky-400" />
+                <span>Displays & Wallpaper</span>
+              </button>
+              <button
+                onClick={() => setActiveSettingsTab('sound')}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left font-medium transition cursor-pointer ${
+                  activeSettingsTab === 'sound' ? 'bg-blue-600 text-white font-bold' : 'text-slate-300 hover:bg-white/10'
+                }`}
+              >
+                <Volume2 className="w-4 h-4 text-purple-400" />
+                <span>Sound & Audio</span>
+              </button>
+              <button
+                onClick={() => setActiveSettingsTab('wifi')}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left font-medium transition cursor-pointer ${
+                  activeSettingsTab === 'wifi' ? 'bg-blue-600 text-white font-bold' : 'text-slate-300 hover:bg-white/10'
+                }`}
+              >
+                <Wifi className="w-4 h-4 text-blue-400" />
+                <span>Wi-Fi & Network</span>
+              </button>
+              <button
+                onClick={() => setActiveSettingsTab('general')}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left font-medium transition cursor-pointer ${
+                  activeSettingsTab === 'general' ? 'bg-blue-600 text-white font-bold' : 'text-slate-300 hover:bg-white/10'
+                }`}
+              >
+                <Cpu className="w-4 h-4 text-amber-400" />
+                <span>General & Storage</span>
+              </button>
+            </div>
+
+            {/* Settings Content Area */}
+            <div className="flex-1 p-6 overflow-y-auto space-y-6">
+              {activeSettingsTab === 'displays' && (
+                <div className="space-y-5">
+                  <div>
+                    <h3 className="text-sm font-bold text-white mb-1">Desktop Wallpaper Gallery</h3>
+                    <p className="text-xs text-slate-400">Click to immediately apply any authentic dark macOS backdrop</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {WALLPAPERS.map(wp => (
+                      <div
+                        key={wp.id}
+                        onClick={() => {
+                          macSound.playPop();
+                          setCurrentWallpaper(wp.url);
+                        }}
+                        className={`group relative rounded-xl overflow-hidden border-2 transition-all cursor-pointer aspect-video shadow-md ${
+                          currentWallpaper === wp.url ? 'border-blue-500 ring-2 ring-blue-500/50 scale-[1.02]' : 'border-white/10 hover:border-white/30'
+                        }`}
+                      >
+                        <img src={wp.url} alt={wp.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-2.5">
+                          <span className="text-[11px] font-semibold text-white drop-shadow">{wp.name}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
+                    <span className="text-xs font-bold text-white">Display Brightness ({screenBrightness}%)</span>
+                    <input
+                      type="range"
+                      min="40"
+                      max="100"
+                      value={screenBrightness}
+                      onChange={(e) => setScreenBrightness(e.target.value)}
+                      className="w-full accent-blue-500"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {activeSettingsTab === 'sound' && (
+                <div className="space-y-4">
+                  <h3 className="text-sm font-bold text-white">Audio Settings</h3>
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
+                    <span className="text-xs font-bold text-white">Output Volume ({soundVolume}%)</span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={soundVolume}
+                      onChange={(e) => setSoundVolume(e.target.value)}
+                      className="w-full accent-blue-500"
+                    />
+                  </div>
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
+                    <span className="text-xs font-bold text-white">Sound Effects Testing</span>
+                    <div className="flex gap-2">
+                      <button onClick={() => macSound.playPop()} className="px-3 py-1.5 rounded-lg bg-blue-600 text-xs font-bold">Pop</button>
+                      <button onClick={() => macSound.playClick()} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs font-bold">Click</button>
+                      <button onClick={() => macSound.playTrash()} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs font-bold">Trash</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeSettingsTab === 'wifi' && (
+                <div className="space-y-4">
+                  <h3 className="text-sm font-bold text-white">Wi-Fi & Network Configuration</h3>
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2 text-xs">
+                    <div className="flex justify-between py-1 border-b border-white/5">
+                      <span className="text-slate-400">Network Name:</span>
+                      <span className="font-bold text-emerald-400">AppleTree-5G Ultra-Fast</span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b border-white/5">
+                      <span className="text-slate-400">IP Address:</span>
+                      <span className="font-mono text-white">192.168.1.108</span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b border-white/5">
+                      <span className="text-slate-400">Link Speed:</span>
+                      <span className="font-bold text-white">950 Mbps (Gigabit Fiber)</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeSettingsTab === 'general' && (
+                <div className="space-y-4 text-xs">
+                  <h3 className="text-sm font-bold text-white">Hardware & Storage Specifications</h3>
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Processor:</span>
+                      <span className="font-bold text-white">Apple M3 Max (16-Core)</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Memory:</span>
+                      <span className="font-bold text-white">64 GB Unified RAM</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">TeraBox Cloud:</span>
+                      <span className="font-bold text-sky-400">1024 GB Free Storage Attached</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 5. TERABOX WINDOW ── */}
       {windows.terabox.isOpen && !windows.terabox.isMinimized && (
         <div
           onClick={() => focusWindow('terabox')}
@@ -1763,9 +2191,9 @@ Official Developer IDE running inside macOS Sequoia dark container.
             </div>
 
             <a 
-              href="https://terabox.com"
-              target="_blank"
-              rel="noreferrer"
+              href="https://terabox.com" 
+              target="_blank" 
+              rel="noreferrer" 
               className="text-[10px] text-sky-300 hover:text-white flex items-center gap-1 font-bold bg-sky-500/20 px-2 py-0.5 rounded border border-sky-400/30"
             >
               <span>TeraBox Web</span> <ExternalLink className="w-2.5 h-2.5" />
@@ -1787,34 +2215,32 @@ Official Developer IDE running inside macOS Sequoia dark container.
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    setIsUploadingTeraBox(true);
-                    setUploadProgress(10);
-                    macSound.playPop();
-                    const iv = setInterval(() => {
-                      setUploadProgress(p => {
-                        if (p >= 90) {
-                          clearInterval(iv);
-                          setTimeout(() => {
-                            setIsUploadingTeraBox(false);
-                            setUploadProgress(0);
-                            setTeraBoxFiles(cur => [{ id: `tb-${Date.now()}`, name: `Project_Archive_${Math.floor(Math.random()*900)}.zip`, size: '14.2 MB', modified: 'Just now', type: 'archive' }, ...cur]);
-                          }, 300);
-                          return 100;
-                        }
-                        return p + 30;
-                      });
-                    }, 200);
-                  }}
-                  disabled={isUploadingTeraBox}
-                  className="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-black flex items-center gap-2 shadow-lg shadow-sky-500/20 cursor-pointer"
-                >
-                  <Upload className="w-3.5 h-3.5" />
-                  <span>{isUploadingTeraBox ? `Uploading (${uploadProgress}%)...` : 'Upload to TeraBox'}</span>
-                </button>
-              </div>
+              <button
+                onClick={() => {
+                  setIsUploadingTeraBox(true);
+                  setUploadProgress(10);
+                  macSound.playPop();
+                  const iv = setInterval(() => {
+                    setUploadProgress(p => {
+                      if (p >= 90) {
+                        clearInterval(iv);
+                        setTimeout(() => {
+                          setIsUploadingTeraBox(false);
+                          setUploadProgress(0);
+                          setTeraBoxFiles(cur => [{ id: `tb-${Date.now()}`, name: `Project_Archive_${Math.floor(Math.random()*900)}.zip`, size: '14.2 MB', modified: 'Just now', type: 'archive' }, ...cur]);
+                        }, 300);
+                        return 100;
+                      }
+                      return p + 30;
+                    });
+                  }, 200);
+                }}
+                disabled={isUploadingTeraBox}
+                className="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-black flex items-center gap-2 shadow-lg shadow-sky-500/20 cursor-pointer"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                <span>{isUploadingTeraBox ? `Uploading (${uploadProgress}%)...` : 'Upload to TeraBox'}</span>
+              </button>
             </div>
 
             <div className="rounded-xl border border-white/10 overflow-hidden bg-slate-900/60">
@@ -1840,7 +2266,7 @@ Official Developer IDE running inside macOS Sequoia dark container.
         </div>
       )}
 
-      {/* ── 4. TERMINAL WINDOW ── */}
+      {/* ── 6. TERMINAL WINDOW ── */}
       {windows.terminal.isOpen && !windows.terminal.isMinimized && (
         <div
           onClick={() => focusWindow('terminal')}
@@ -1862,7 +2288,7 @@ Official Developer IDE running inside macOS Sequoia dark container.
               <button onClick={() => minimizeWindow('terminal')} className="w-3 h-3 rounded-full bg-amber-500 cursor-pointer" />
               <button onClick={() => toggleMaximize('terminal')} className="w-3 h-3 rounded-full bg-emerald-500 cursor-pointer" />
             </div>
-            <div className="text-[11px] font-semibold text-slate-400">developer — zsh — 80×24</div>
+            <div className="text-[11px] font-semibold text-slate-400">developer — zsh (JDK 21 + Python 3.12)</div>
             <div className="w-10" />
           </div>
 
@@ -1896,70 +2322,7 @@ Official Developer IDE running inside macOS Sequoia dark container.
         </div>
       )}
 
-      {/* ── 5. SAFARI WINDOW ── */}
-      {windows.safari.isOpen && !windows.safari.isMinimized && (
-        <div
-          onClick={() => focusWindow('safari')}
-          style={{
-            zIndex: windows.safari.zIndex,
-            left: windows.safari.isMaximized ? 0 : windows.safari.x,
-            top: windows.safari.isMaximized ? 26 : windows.safari.y,
-            width: windows.safari.isMaximized ? '100vw' : windows.safari.w,
-            height: windows.safari.isMaximized ? 'calc(100vh - 26px - 80px)' : windows.safari.h
-          }}
-          className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-slate-900/98 border border-white/20 shadow-2xl flex flex-col transition-all duration-150 ${activeAppId === 'safari' ? 'ring-1 ring-white/30' : 'opacity-95'}`}
-        >
-          <div 
-            onMouseDown={(e) => handleMouseDownHeader(e, 'safari')}
-            className="bg-slate-800/90 border-b border-white/10 cursor-move shrink-0"
-          >
-            <div className="h-11 px-4 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <button onClick={() => closeWindow('safari')} className="w-3 h-3 rounded-full bg-rose-500 cursor-pointer" />
-                <button onClick={() => minimizeWindow('safari')} className="w-3 h-3 rounded-full bg-amber-500 cursor-pointer" />
-                <button onClick={() => toggleMaximize('safari')} className="w-3 h-3 rounded-full bg-emerald-500 cursor-pointer" />
-              </div>
-
-              <div className="flex-1 max-w-lg mx-auto h-7 px-3 rounded-lg bg-black/40 border border-white/10 flex items-center gap-2 text-xs text-slate-300">
-                <Lock className="w-3 h-3 text-emerald-400 shrink-0" />
-                <input
-                  type="text"
-                  value={safariInputUrl}
-                  onChange={(e) => setSafariInputUrl(e.target.value)}
-                  className="w-full bg-transparent outline-none text-white text-xs"
-                />
-              </div>
-
-              <div className="flex items-center gap-2 text-slate-400">
-                <RefreshCw className="w-3.5 h-3.5 hover:text-white cursor-pointer" />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex-1 p-6 overflow-y-auto bg-slate-950/70">
-            <div className="max-w-2xl mx-auto space-y-6">
-              <div className="p-6 rounded-2xl bg-white/5 border border-white/10 text-center">
-                <h1 className="text-2xl font-black text-white mb-2">
-                  <span className="text-red-500">Apple</span><span className="text-emerald-500">Tree</span> Infotech Explorer
-                </h1>
-                <p className="text-xs text-slate-300 leading-relaxed max-w-lg mx-auto">
-                  Master Java Full Stack, AWS DevOps, Python AI, React & MERN with guaranteed career placement support in Ghaziabad, Noida & Delhi NCR.
-                </p>
-                <div className="mt-4 flex flex-wrap justify-center gap-2">
-                  <button onClick={() => openApp('vscode')} className="px-4 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-black cursor-pointer">
-                    ⚡ Open Visual Studio Code
-                  </button>
-                  <button onClick={() => openApp('kbc')} className="px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black cursor-pointer">
-                    🏆 Launch KBC Arena
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── 6. KBC QUIZ ARENA WINDOW ── */}
+      {/* ── 7. KBC QUIZ WINDOW ── */}
       {windows.kbc.isOpen && !windows.kbc.isMinimized && (
         <div
           onClick={() => focusWindow('kbc')}
@@ -1998,19 +2361,17 @@ Official Developer IDE running inside macOS Sequoia dark container.
             <p className="text-xs text-slate-300 max-w-md mb-6 leading-relaxed">
               Real-time countdown timer, dynamic points addition and deduction, and live moving leaderboard!
             </p>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate('/kbc')}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/30 flex items-center gap-2 cursor-pointer"
-              >
-                <Play className="w-4 h-4 fill-current" /> Join Contestant Screen
-              </button>
-            </div>
+            <button
+              onClick={() => navigate('/kbc')}
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/30 flex items-center gap-2 cursor-pointer"
+            >
+              <Play className="w-4 h-4 fill-current" /> Join Contestant Screen
+            </button>
           </div>
         </div>
       )}
 
-      {/* ── 7. NOTES WINDOW ── */}
+      {/* ── 8. NOTES WINDOW ── */}
       {windows.notes.isOpen && !windows.notes.isMinimized && (
         <div
           onClick={() => focusWindow('notes')}
@@ -2047,7 +2408,7 @@ Official Developer IDE running inside macOS Sequoia dark container.
         </div>
       )}
 
-      {/* ── 8. CALCULATOR WINDOW ── */}
+      {/* ── 9. CALCULATOR WINDOW ── */}
       {windows.calculator.isOpen && !windows.calculator.isMinimized && (
         <div
           onClick={() => focusWindow('calculator')}
@@ -2104,61 +2465,6 @@ Official Developer IDE running inside macOS Sequoia dark container.
         </div>
       )}
 
-      {/* ── 9. SYSTEM SETTINGS WINDOW ── */}
-      {windows.settings.isOpen && !windows.settings.isMinimized && (
-        <div
-          onClick={() => focusWindow('settings')}
-          style={{
-            zIndex: windows.settings.zIndex,
-            left: windows.settings.isMaximized ? 0 : windows.settings.x,
-            top: windows.settings.isMaximized ? 26 : windows.settings.y,
-            width: windows.settings.isMaximized ? '100vw' : windows.settings.w,
-            height: windows.settings.isMaximized ? 'calc(100vh - 26px - 80px)' : windows.settings.h
-          }}
-          className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-slate-900/98 border border-white/20 shadow-2xl flex flex-col transition-all duration-150 ${activeAppId === 'settings' ? 'ring-1 ring-white/30' : 'opacity-95'}`}
-        >
-          <div 
-            onMouseDown={(e) => handleMouseDownHeader(e, 'settings')}
-            className="h-11 px-4 bg-slate-800/90 border-b border-white/10 flex items-center justify-between cursor-move shrink-0"
-          >
-            <div className="flex items-center gap-2">
-              <button onClick={() => closeWindow('settings')} className="w-3 h-3 rounded-full bg-rose-500 cursor-pointer" />
-              <button onClick={() => minimizeWindow('settings')} className="w-3 h-3 rounded-full bg-amber-500 cursor-pointer" />
-              <button onClick={() => toggleMaximize('settings')} className="w-3 h-3 rounded-full bg-emerald-500 cursor-pointer" />
-            </div>
-            <div className="text-xs font-semibold text-slate-300">System Settings — Wallpapers & Dark Pro</div>
-            <div className="w-10" />
-          </div>
-
-          <div className="flex-1 p-6 overflow-y-auto space-y-6">
-            <div>
-              <h3 className="text-sm font-bold text-white mb-1">Desktop Dark Wallpapers</h3>
-              <p className="text-xs text-slate-400">Exclusively formatted for macOS Pro Dark Mode</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              {WALLPAPERS.map(wp => (
-                <div
-                  key={wp.id}
-                  onClick={() => {
-                    macSound.playPop();
-                    setCurrentWallpaper(wp.url);
-                  }}
-                  className={`group relative rounded-xl overflow-hidden border-2 transition-all cursor-pointer aspect-video shadow-md ${
-                    currentWallpaper === wp.url ? 'border-blue-500 ring-2 ring-blue-500/50 scale-[1.02]' : 'border-white/10 hover:border-white/30'
-                  }`}
-                >
-                  <img src={wp.url} alt={wp.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-2.5">
-                    <span className="text-[11px] font-semibold text-white drop-shadow">{wp.name}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ── 10. ABOUT THIS MAC WINDOW ── */}
       {windows.aboutMac.isOpen && (
         <div
@@ -2185,7 +2491,7 @@ Official Developer IDE running inside macOS Sequoia dark container.
             <div className="text-5xl font-light text-white drop-shadow"></div>
             <div>
               <h2 className="text-base font-extrabold text-white">AppleTree Mac Studio M3 Max</h2>
-              <p className="text-xs text-slate-400">macOS Sequoia 15.2 (Dark Edition)</p>
+              <p className="text-xs text-slate-400">macOS Sequoia 15.2 (Pro Dark Edition)</p>
             </div>
 
             <div className="w-full space-y-1.5 text-xs text-slate-300 pt-2 border-t border-white/10 max-w-xs text-left">
@@ -2194,8 +2500,8 @@ Official Developer IDE running inside macOS Sequoia dark container.
                 <span className="font-semibold text-white">Apple M3 Max (16-Core)</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">IDE:</span>
-                <span className="font-semibold text-sky-400">Visual Studio Code Pro</span>
+                <span className="text-slate-400">Compilers:</span>
+                <span className="font-semibold text-emerald-400">OpenJDK 21 LTS + Python 3.12</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Cloud Storage:</span>
@@ -2222,8 +2528,8 @@ Official Developer IDE running inside macOS Sequoia dark container.
         {[
           { id: 'finder', title: 'Finder', icon: MacFinderIcon },
           { id: 'vscode', title: 'Visual Studio Code', icon: MacVSCodeIcon, badge: 'IDE' },
-          { id: 'terabox', title: 'TeraBox Cloud', icon: MacTeraBoxIcon, badge: '1TB' },
           { id: 'safari', title: 'Safari', icon: MacSafariIcon },
+          { id: 'terabox', title: 'TeraBox Cloud', icon: MacTeraBoxIcon, badge: '1TB' },
           { id: 'terminal', title: 'Terminal', icon: MacTerminalIcon },
           { id: 'kbc', title: 'KBC Quiz', icon: MacKbcIcon, badge: 'LIVE' },
           { id: 'notes', title: 'Notes', icon: MacNotesIcon },
@@ -2236,12 +2542,10 @@ Official Developer IDE running inside macOS Sequoia dark container.
 
           return (
             <div key={app.id} className="relative flex flex-col items-center group">
-              {/* Tooltip on hover */}
               <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none px-2.5 py-1 rounded-md backdrop-blur-md bg-black/85 text-white text-[10px] font-semibold whitespace-nowrap shadow-md">
                 {app.title}
               </div>
 
-              {/* Real macOS Squircle App Button */}
               <button
                 onClick={() => {
                   if (isOpen && !windows[app.id].isMinimized && activeAppId === app.id) {
@@ -2262,16 +2566,13 @@ Official Developer IDE running inside macOS Sequoia dark container.
                 )}
               </button>
 
-              {/* Running Dot Indicator under open app */}
               <div className={`w-1 h-1 rounded-full mt-1 transition-all ${isOpen ? 'bg-white shadow-[0_0_6px_rgba(255,255,255,0.9)]' : 'opacity-0'}`} />
             </div>
           );
         })}
 
-        {/* Separator Line */}
         <div className="w-px h-10 bg-white/20 self-center mx-1" />
 
-        {/* Trash */}
         <div className="relative flex flex-col items-center group">
           <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none px-2.5 py-1 rounded-md backdrop-blur-md bg-black/85 text-white text-[10px] font-semibold whitespace-nowrap shadow-md">
             Trash
