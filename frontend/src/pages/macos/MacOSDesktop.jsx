@@ -18,88 +18,17 @@ import {
   Bot, Send, Sparkle, Minimize2
 } from 'lucide-react';
 
-// ── Pure Web Audio Sound Synthesizer (Instant native macOS sound effects) ──
-class MacAudio {
-  constructor() {
-    this.ctx = null;
-  }
-  init() {
-    if (!this.ctx) {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (AudioCtx) this.ctx = new AudioCtx();
-    }
-    if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
-    }
-  }
-  playPop() {
-    try {
-      this.init();
-      if (!this.ctx) return;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(440, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.08);
-      gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.08);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start();
-      osc.stop(this.ctx.currentTime + 0.08);
-    } catch (e) {}
-  }
-  playClick() {
-    try {
-      this.init();
-      if (!this.ctx) return;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(220, this.ctx.currentTime);
-      gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.04);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start();
-      osc.stop(this.ctx.currentTime + 0.04);
-    } catch (e) {}
-  }
-  playTrash() {
-    try {
-      this.init();
-      if (!this.ctx) return;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(150, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(60, this.ctx.currentTime + 0.15);
-      gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.15);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start();
-      osc.stop(this.ctx.currentTime + 0.15);
-    } catch (e) {}
-  }
-  playTink() {
-    try {
-      this.init();
-      if (!this.ctx) return;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(987.77, this.ctx.currentTime);
-      gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.25);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start();
-      osc.stop(this.ctx.currentTime + 0.25);
-    } catch (e) {}
-  }
-}
-const macSound = new MacAudio();
+import vfs from './services/vfs.js';
+import appRegistry from './services/appRegistry.js';
+import macSound from './services/sound.js';
+import FinderApp from './apps/FinderApp.jsx';
+import AppStoreApp from './apps/AppStoreApp.jsx';
+import TerminalApp from './apps/TerminalApp.jsx';
+import ActivityMonitorApp from './apps/ActivityMonitorApp.jsx';
+import SpotlightModal from './components/SpotlightModal.jsx';
+import LaunchpadModal from './components/LaunchpadModal.jsx';
+import MissionControlModal from './components/MissionControlModal.jsx';
+import WebAppRunner from './components/WebAppRunner.jsx';
 
 // ── AUTHENTIC REAL macOS SQUIRCLE ICONS (Pixel-Perfect SVG Art) ──
 
@@ -275,6 +204,49 @@ export const MacFolderIcon = ({ className = "w-full h-full" }) => (
   </svg>
 );
 
+export const MacAppStoreIcon = ({ className = "w-full h-full" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <defs>
+      <linearGradient id="appStoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#38bdf8" />
+        <stop offset="100%" stopColor="#0284c7" />
+      </linearGradient>
+    </defs>
+    <rect width="100" height="100" rx="22" fill="url(#appStoreGrad)" />
+    <path d="M50 20 L28 62 H38 L43 52 H57 L62 62 H72 Z M47 42 L50 34 L53 42 Z" fill="#ffffff" />
+    <path d="M22 68 H78 M35 74 H65" stroke="#ffffff" strokeWidth="4" strokeLinecap="round" />
+  </svg>
+);
+
+export const MacActivityMonitorIcon = ({ className = "w-full h-full" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <defs>
+      <linearGradient id="actMonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#1e293b" />
+        <stop offset="100%" stopColor="#0f172a" />
+      </linearGradient>
+    </defs>
+    <rect width="100" height="100" rx="22" fill="url(#actMonGrad)" stroke="#38bdf8" strokeWidth="2" />
+    <polyline points="15,50 35,50 45,25 55,75 65,45 75,55 85,50" fill="none" stroke="#22c55e" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+export const MacLaunchpadIcon = ({ className = "w-full h-full" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <defs>
+      <linearGradient id="launchGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#475569" />
+        <stop offset="100%" stopColor="#1e293b" />
+      </linearGradient>
+    </defs>
+    <rect width="100" height="100" rx="22" fill="url(#launchGrad)" />
+    <circle cx="34" cy="34" r="8" fill="#38bdf8" />
+    <circle cx="66" cy="34" r="8" fill="#f43f5e" />
+    <circle cx="34" cy="66" r="8" fill="#eab308" />
+    <circle cx="66" cy="66" r="8" fill="#22c55e" />
+  </svg>
+);
+
 // ── Wallpapers Library (Dark Mode Focused with High-Def Backdrops) ──
 const WALLPAPERS = [
   {
@@ -364,29 +336,23 @@ export default function MacOSDesktop() {
     return `${day} ${month} ${dateNum}  ${hours}:${minutes} ${ampm}`;
   };
 
-  // ── Virtual File System (Desktop & Finder Persistence) ──
-  const [desktopItems, setDesktopItems] = useState(() => {
-    const saved = localStorage.getItem('appletree_macos_desktop_items');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
+  // ── Persistent IndexedDB Virtual File System Integration ──
+  const [desktopItems, setDesktopItems] = useState([]);
+
+  const reloadDesktopItems = async () => {
+    try {
+      const files = await vfs.list('/Users/admin/Desktop');
+      setDesktopItems(files);
+    } catch (e) {
+      console.error('Failed to load desktop items from VFS:', e);
     }
-    return [
-      { id: 'vault', name: 'Course Vault', type: 'system', icon: 'vault', targetApp: 'finder' },
-      { id: 'vscode-icon', name: 'VS Code', type: 'system', icon: 'vscode', targetApp: 'vscode' },
-      { id: 'terabox', name: 'TeraBox Cloud', type: 'system', icon: 'terabox', targetApp: 'terabox' },
-      { id: 'safari-icon', name: 'Safari', type: 'system', icon: 'safari', targetApp: 'safari' },
-      { id: 'projects', name: 'My Projects', type: 'folder', items: [
-        { id: 'p1', name: 'App.java', type: 'file', content: 'public class App { public static void main(String[] args) { System.out.println("Java 21 Ready"); } }' },
-        { id: 'p2', name: 'main.py', type: 'file', content: 'print("AppleTree Python 3.12 Engine")' }
-      ] },
-      { id: 'kbc-icon', name: 'KBC Quiz', type: 'system', icon: 'kbc', targetApp: 'kbc' },
-      { id: 'terminal-icon', name: 'Terminal', type: 'system', icon: 'terminal', targetApp: 'terminal' }
-    ];
-  });
+  };
 
   useEffect(() => {
-    localStorage.setItem('appletree_macos_desktop_items', JSON.stringify(desktopItems));
-  }, [desktopItems]);
+    vfs.readyPromise.then(() => reloadDesktopItems());
+    const unsub = vfs.subscribe(() => reloadDesktopItems());
+    return unsub;
+  }, []);
 
   // ── TeraBox Cloud Storage State ──
   const [teraBoxFiles, setTeraBoxFiles] = useState([
@@ -400,14 +366,13 @@ export default function MacOSDesktop() {
   const [isUploadingTeraBox, setIsUploadingTeraBox] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // ── Desktop Controls & Selection ──
+  // ── Desktop Controls, Selection & Spaces ──
   const [contextMenu, setContextMenu] = useState(null);
   const [renamingItemId, setRenamingItemId] = useState(null);
   const [renameValue, setRenameValue] = useState('');
   const [currentWallpaper, setCurrentWallpaper] = useState(WALLPAPERS[0].url);
   const [isLocked, setIsLocked] = useState(false);
   const [activeMenu, setActiveMenu] = useState(null);
-  const [spotlightQuery, setSpotlightQuery] = useState('');
   const [soundVolume, setSoundVolume] = useState(85);
   const [screenBrightness, setScreenBrightness] = useState(100);
   const [dockSize, setDockSize] = useState(52);
@@ -416,6 +381,16 @@ export default function MacOSDesktop() {
   const [isSiriOpen, setIsSiriOpen] = useState(false);
   const [siriPrompt, setSiriPrompt] = useState('');
   const [siriResponse, setSiriResponse] = useState('');
+
+  // ── Modals & Spaces State ──
+  const [isSpotlightOpen, setIsSpotlightOpen] = useState(false);
+  const [isLaunchpadOpen, setIsLaunchpadOpen] = useState(false);
+  const [isMissionControlOpen, setIsMissionControlOpen] = useState(false);
+  const [workspaces, setWorkspaces] = useState([
+    { id: 'ws-1', name: 'Desktop 1' },
+    { id: 'ws-2', name: 'Desktop 2' }
+  ]);
+  const [activeWorkspace, setActiveWorkspace] = useState('ws-1');
 
   // ── Window Management State ──
   const [highestZ, setHighestZ] = useState(30);
@@ -458,6 +433,30 @@ export default function MacOSDesktop() {
       w: 880,
       h: 540
     },
+    appstore: {
+      id: 'appstore',
+      title: 'App Store',
+      isOpen: false,
+      isMinimized: false,
+      isMaximized: false,
+      zIndex: 13,
+      x: 100,
+      y: 55,
+      w: 940,
+      h: 580
+    },
+    activitymonitor: {
+      id: 'activitymonitor',
+      title: 'Activity Monitor',
+      isOpen: false,
+      isMinimized: false,
+      isMaximized: false,
+      zIndex: 14,
+      x: 150,
+      y: 70,
+      w: 800,
+      h: 500
+    },
     terabox: {
       id: 'terabox',
       title: 'TeraBox Cloud Drive (1024 GB Free Storage)',
@@ -472,7 +471,7 @@ export default function MacOSDesktop() {
     },
     terminal: {
       id: 'terminal',
-      title: 'Terminal — zsh (JDK 21 + Python 3.12)',
+      title: 'Terminal — zsh (POSIX VFS)',
       isOpen: false,
       isMinimized: false,
       isMaximized: false,
@@ -562,12 +561,31 @@ export default function MacOSDesktop() {
     setBouncingApp(id);
     setTimeout(() => setBouncingApp(null), 1200);
 
+    const pkg = appRegistry.getApp(id);
+    const title = pkg ? pkg.name : (windows[id]?.title || id);
+
     setHighestZ(prev => {
       const nextZ = prev + 1;
-      setWindows(curr => ({
-        ...curr,
-        [id]: { ...curr[id], isOpen: true, isMinimized: false, zIndex: nextZ }
-      }));
+      setWindows(curr => {
+        const existing = curr[id] || {
+          id,
+          title,
+          isOpen: true,
+          isMinimized: false,
+          isMaximized: false,
+          zIndex: nextZ,
+          x: 110 + ((nextZ * 25) % 240),
+          y: 50 + ((nextZ * 20) % 180),
+          w: pkg?.window?.w || 820,
+          h: pkg?.window?.h || 540,
+          isPackage: Boolean(pkg),
+          packageData: pkg
+        };
+        return {
+          ...curr,
+          [id]: { ...existing, isOpen: true, isMinimized: false, zIndex: nextZ }
+        };
+      });
       return nextZ;
     });
     setActiveAppId(id);
@@ -641,50 +659,96 @@ export default function MacOSDesktop() {
     window.addEventListener('mouseup', handleMouseUp);
   };
 
-  // ── Folder & File Operations ──
-  const createNewFolder = (folderName = 'untitled folder') => {
+  // ── Global Desktop Keyboard Shortcuts (⌘+Space, ⌘+W, ⌘+M) ──
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.code === 'Space') {
+        e.preventDefault();
+        setIsSpotlightOpen(prev => !prev);
+      }
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'w' || e.key === 'W') && !e.shiftKey) {
+        if (activeAppId && windows[activeAppId]?.isOpen && !e.target.closest('input') && !e.target.closest('textarea')) {
+          e.preventDefault();
+          closeWindow(activeAppId);
+        }
+      }
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'm' || e.key === 'M')) {
+        if (activeAppId && windows[activeAppId]?.isOpen && !e.target.closest('input') && !e.target.closest('textarea')) {
+          e.preventDefault();
+          minimizeWindow(activeAppId);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [activeAppId, windows]);
+
+  // ── Folder & File Operations (Direct VFS Connection) ──
+  const createNewFolder = async (folderName = 'untitled folder') => {
     macSound.playPop();
     const existing = desktopItems.filter(i => i.name.startsWith(folderName));
     const finalName = existing.length > 0 ? `${folderName} ${existing.length + 1}` : folderName;
-    const newFolder = {
-      id: `folder-${Date.now()}`,
-      name: finalName,
-      type: 'folder',
-      items: []
-    };
-    setDesktopItems(prev => [...prev, newFolder]);
+    await vfs.mkdir(`/Users/admin/Desktop/${finalName}`);
     setContextMenu(null);
   };
 
-  const createNewTextFile = (fileName = 'untitled.py') => {
+  const createNewTextFile = async (fileName = 'untitled.py') => {
     macSound.playPop();
-    const newFile = {
-      id: `file-${Date.now()}`,
-      name: fileName,
-      type: 'file',
-      content: '# New file in AppleTree Workspace\nprint("Hello from macOS")\n'
-    };
-    setDesktopItems(prev => [...prev, newFile]);
+    const existing = desktopItems.filter(i => i.name.startsWith(fileName.split('.')[0]));
+    const finalName = existing.length > 0 ? `untitled_${existing.length + 1}.py` : fileName;
+    await vfs.writeFile(`/Users/admin/Desktop/${finalName}`, '#!/usr/bin/env python3\nprint("Hello from macOS Sequoia!")\n', 'text/x-python');
     setContextMenu(null);
   };
 
-  const deleteDesktopItem = (id) => {
+  const deleteDesktopItem = async (pathOrId) => {
     macSound.playTrash();
-    setDesktopItems(prev => prev.filter(i => i.id !== id));
+    const item = desktopItems.find(i => i.path === pathOrId || i.id === pathOrId);
+    if (item && item.path) {
+      await vfs.delete(item.path, true);
+    }
     setContextMenu(null);
   };
 
   const handleStartRename = (item) => {
-    setRenamingItemId(item.id);
+    setRenamingItemId(item.path || item.id);
     setRenameValue(item.name);
     setContextMenu(null);
   };
 
-  const handleFinishRename = () => {
+  const handleFinishRename = async () => {
     if (renamingItemId && renameValue.trim()) {
-      setDesktopItems(prev => prev.map(item => item.id === renamingItemId ? { ...item, name: renameValue.trim() } : item));
+      try {
+        await vfs.rename(renamingItemId, renameValue.trim());
+      } catch (err) {
+        console.error('Rename failed:', err);
+      }
     }
     setRenamingItemId(null);
+  };
+
+  const handleOpenFileInEditor = async (fileNode) => {
+    macSound.playPop();
+    openApp('vscode');
+    const existingTab = vsCodeFiles.find(f => f.path === fileNode.path || f.name === fileNode.name);
+    if (existingTab) {
+      setActiveVsCodeFileId(existingTab.id);
+    } else {
+      let content = fileNode.content;
+      if (content === undefined) {
+        try { content = await vfs.readFile(fileNode.path); } catch (e) { content = ''; }
+      }
+      const ext = fileNode.name.split('.').pop().toLowerCase();
+      const lang = ext === 'py' ? 'python' : ext === 'java' ? 'java' : ext === 'js' ? 'javascript' : ext === 'json' ? 'json' : ext === 'html' ? 'html' : ext === 'css' ? 'css' : 'markdown';
+      const newTab = {
+        id: `file-${Date.now()}`,
+        name: fileNode.name,
+        path: fileNode.path,
+        language: lang,
+        content: content || ''
+      };
+      setVsCodeFiles(prev => [...prev, newTab]);
+      setActiveVsCodeFileId(newTab.id);
+    }
   };
 
   const handleDesktopContextMenu = (e) => {
@@ -1524,11 +1588,40 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
                   <span className="text-[10px] text-white/40">⌘,</span>
                 </button>
                 <button 
+                  onClick={() => { openApp('appstore'); setActiveMenu(null); }}
+                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer text-sky-300 font-semibold"
+                >
+                  <span>App Store...</span>
+                  <span className="text-[9px] bg-sky-500/30 px-1 rounded text-sky-200">Store</span>
+                </button>
+                <button 
+                  onClick={() => { setIsLaunchpadOpen(true); setActiveMenu(null); }}
+                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
+                >
+                  <span>Launchpad</span>
+                  <span className="text-[10px] text-white/40">F4</span>
+                </button>
+                <button 
+                  onClick={() => { setIsMissionControlOpen(true); setActiveMenu(null); }}
+                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
+                >
+                  <span>Mission Control</span>
+                  <span className="text-[10px] text-white/40">⌃↑</span>
+                </button>
+                <button 
+                  onClick={() => { openApp('activitymonitor'); setActiveMenu(null); }}
+                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer text-emerald-300"
+                >
+                  <span>Activity Monitor...</span>
+                  <Activity className="w-3.5 h-3.5 opacity-60" />
+                </button>
+                <div className="h-px bg-white/10 my-1" />
+                <button 
                   onClick={() => { openApp('vscode'); setActiveMenu(null); }}
                   className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer text-sky-400"
                 >
                   <span className="flex items-center gap-1.5 font-semibold">Visual Studio Code</span>
-                  <span className="text-[10px] bg-sky-500/30 px-1 rounded text-sky-200">JDK+PY</span>
+                  <span className="text-[10px] bg-sky-500/30 px-1 rounded text-sky-200">IDE</span>
                 </button>
                 <button 
                   onClick={() => { openApp('safari'); setActiveMenu(null); }}
@@ -1644,7 +1737,7 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
           </button>
 
           <button
-            onClick={() => setActiveMenu(activeMenu === 'spotlight' ? null : 'spotlight')}
+            onClick={() => setIsSpotlightOpen(true)}
             className="hover:opacity-75 transition-opacity cursor-pointer p-0.5"
             title="Spotlight Search (Cmd+Space)"
           >
@@ -1891,16 +1984,17 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
         </div>
       )}
 
-      {/* ════════════════ DESKTOP ICONS GRID ════════════════ */}
+      {/* ════════════════ DESKTOP ICONS GRID (VFS INTEGRATED) ════════════════ */}
       <main className="absolute top-10 right-4 flex flex-col gap-5 items-end z-10 pointer-events-auto select-none">
         {desktopItems.map(item => {
+          const itemKey = item.path || item.id;
           return (
             <div
-              key={item.id}
+              key={itemKey}
               onDoubleClick={() => {
                 if (item.targetApp) openApp(item.targetApp);
                 else if (item.type === 'folder') openApp('finder');
-                else if (item.type === 'file') openApp('vscode');
+                else if (item.type === 'file') handleOpenFileInEditor(item);
               }}
               onContextMenu={(e) => {
                 e.stopPropagation();
@@ -1909,7 +2003,7 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
                 setContextMenu({
                   x: Math.min(e.clientX, window.innerWidth - 220),
                   y: Math.min(e.clientY, window.innerHeight - 280),
-                  targetId: item.id
+                  targetId: itemKey
                 });
               }}
               className="group flex flex-col items-center w-20 p-2 rounded-xl hover:bg-white/15 border border-transparent hover:border-white/20 transition-all duration-150 cursor-pointer"
@@ -1924,7 +2018,7 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
                  <FileText className="w-10 h-10 text-sky-400" />}
               </div>
 
-              {renamingItemId === item.id ? (
+              {renamingItemId === itemKey ? (
                 <input
                   type="text"
                   autoFocus
@@ -2739,7 +2833,7 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
         </div>
       )}
 
-      {/* ── 3. FINDER (FILE MANAGER) ── */}
+      {/* ── 3. FINDER (FULL POSIX VFS & MULTI-VIEW) ── */}
       {windows.finder.isOpen && !windows.finder.isMinimized && (
         <div
           onClick={() => focusWindow('finder')}
@@ -2752,10 +2846,9 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
           }}
           className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-slate-900/95 border border-white/20 shadow-2xl flex flex-col transition-all duration-150 ${activeAppId === 'finder' ? 'ring-1 ring-sky-400/50' : 'opacity-95'}`}
         >
-          {/* Toolbar */}
           <div 
             onMouseDown={(e) => handleMouseDownHeader(e, 'finder')}
-            className="h-11 px-4 bg-slate-800/80 border-b border-white/10 flex items-center justify-between cursor-move shrink-0"
+            className="h-10 px-4 bg-slate-800/80 border-b border-white/10 flex items-center justify-between cursor-move shrink-0"
           >
             <div className="flex items-center gap-2">
               <button onClick={() => closeWindow('finder')} className="w-3 h-3 rounded-full bg-rose-500 cursor-pointer" />
@@ -2767,51 +2860,122 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
               <MacFinderIcon className="w-4 h-4" />
               <span>Finder — Macintosh HD</span>
             </div>
-
-            <button
-              onClick={() => createNewFolder()}
-              className="text-[10px] bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded text-white font-bold flex items-center gap-1 cursor-pointer"
-            >
-              <Plus className="w-2.5 h-2.5" /> Folder
-            </button>
+            <div className="w-12" />
           </div>
 
-          <div className="flex-1 flex overflow-hidden">
-            <div className="w-52 bg-slate-950/60 border-r border-white/10 p-3 flex flex-col gap-1 text-xs shrink-0">
-              <span className="text-[10px] font-black uppercase text-slate-400 px-2 py-1">Favorites</span>
-              <button onClick={() => openApp('vscode')} className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left font-medium text-sky-400 hover:bg-white/10 transition cursor-pointer">
-                <Code2 className="w-3.5 h-3.5" /> VS Code Workspace
-              </button>
-              <button onClick={() => openApp('terabox')} className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left font-medium text-sky-300 hover:bg-sky-500/20 transition cursor-pointer">
-                <Cloud className="w-3.5 h-3.5" /> TeraBox Cloud (1TB)
-              </button>
-              <button onClick={() => openApp('terminal')} className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left font-medium text-emerald-400 hover:bg-white/10 transition cursor-pointer">
-                <TerminalIcon className="w-3.5 h-3.5" /> Terminal (~/Desktop)
-              </button>
-            </div>
-
-            <div className="flex-1 p-6 overflow-y-auto">
-              <div className="grid grid-cols-4 sm:grid-cols-6 gap-4">
-                {desktopItems.map(item => (
-                  <div
-                    key={item.id}
-                    onDoubleClick={() => {
-                      if (item.targetApp) openApp(item.targetApp);
-                      else if (item.type === 'file') openApp('vscode');
-                    }}
-                    className="flex flex-col items-center p-3 rounded-xl hover:bg-white/10 cursor-pointer text-center group"
-                  >
-                    <div className="w-12 h-12 flex items-center justify-center">
-                      {item.type === 'folder' ? <MacFolderIcon /> : <FileText className="w-10 h-10 text-sky-400" />}
-                    </div>
-                    <span className="mt-2 text-xs font-medium text-white truncate max-w-[90px]">{item.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <FinderApp 
+            onOpenFile={(file) => handleOpenFileInEditor(file)}
+            onOpenTerminal={() => openApp('terminal')}
+          />
         </div>
       )}
+
+      {/* ── APP STORE (DYNAMIC .WEBAPP ENGINE & CATALOG) ── */}
+      {windows.appstore?.isOpen && !windows.appstore.isMinimized && (
+        <div
+          onClick={() => focusWindow('appstore')}
+          style={{
+            zIndex: windows.appstore.zIndex,
+            left: windows.appstore.isMaximized ? 0 : windows.appstore.x,
+            top: windows.appstore.isMaximized ? 26 : windows.appstore.y,
+            width: windows.appstore.isMaximized ? '100vw' : windows.appstore.w,
+            height: windows.appstore.isMaximized ? 'calc(100vh - 26px - 80px)' : windows.appstore.h
+          }}
+          className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-slate-900/95 border border-white/20 shadow-2xl flex flex-col transition-all duration-150 ${activeAppId === 'appstore' ? 'ring-1 ring-sky-400/50' : 'opacity-95'}`}
+        >
+          <div 
+            onMouseDown={(e) => handleMouseDownHeader(e, 'appstore')}
+            className="h-10 px-4 bg-slate-800/80 border-b border-white/10 flex items-center justify-between cursor-move shrink-0"
+          >
+            <div className="flex items-center gap-2">
+              <button onClick={() => closeWindow('appstore')} className="w-3 h-3 rounded-full bg-rose-500 cursor-pointer" />
+              <button onClick={() => minimizeWindow('appstore')} className="w-3 h-3 rounded-full bg-amber-500 cursor-pointer" />
+              <button onClick={() => toggleMaximize('appstore')} className="w-3 h-3 rounded-full bg-emerald-500 cursor-pointer" />
+            </div>
+
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
+              <MacAppStoreIcon className="w-4 h-4" />
+              <span>App Store</span>
+            </div>
+            <div className="w-12" />
+          </div>
+
+          <AppStoreApp onLaunchApp={(appId) => openApp(appId)} />
+        </div>
+      )}
+
+      {/* ── ACTIVITY MONITOR (REAL-TIME CPU/MEM & FORCE QUIT) ── */}
+      {windows.activitymonitor?.isOpen && !windows.activitymonitor.isMinimized && (
+        <div
+          onClick={() => focusWindow('activitymonitor')}
+          style={{
+            zIndex: windows.activitymonitor.zIndex,
+            left: windows.activitymonitor.isMaximized ? 0 : windows.activitymonitor.x,
+            top: windows.activitymonitor.isMaximized ? 26 : windows.activitymonitor.y,
+            width: windows.activitymonitor.isMaximized ? '100vw' : windows.activitymonitor.w,
+            height: windows.activitymonitor.isMaximized ? 'calc(100vh - 26px - 80px)' : windows.activitymonitor.h
+          }}
+          className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-slate-900/95 border border-white/20 shadow-2xl flex flex-col transition-all duration-150 ${activeAppId === 'activitymonitor' ? 'ring-1 ring-sky-400/50' : 'opacity-95'}`}
+        >
+          <div 
+            onMouseDown={(e) => handleMouseDownHeader(e, 'activitymonitor')}
+            className="h-10 px-4 bg-slate-800/80 border-b border-white/10 flex items-center justify-between cursor-move shrink-0"
+          >
+            <div className="flex items-center gap-2">
+              <button onClick={() => closeWindow('activitymonitor')} className="w-3 h-3 rounded-full bg-rose-500 cursor-pointer" />
+              <button onClick={() => minimizeWindow('activitymonitor')} className="w-3 h-3 rounded-full bg-amber-500 cursor-pointer" />
+              <button onClick={() => toggleMaximize('activitymonitor')} className="w-3 h-3 rounded-full bg-emerald-500 cursor-pointer" />
+            </div>
+
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
+              <MacActivityMonitorIcon className="w-4 h-4" />
+              <span>Activity Monitor</span>
+            </div>
+            <div className="w-12" />
+          </div>
+
+          <ActivityMonitorApp 
+            activeWindows={windows}
+            onCloseWindow={(winId) => closeWindow(winId)}
+          />
+        </div>
+      )}
+
+      {/* ── DYNAMIC INSTALLED .WEBAPP PACKAGES ── */}
+      {Object.values(windows).filter(w => w.isPackage && w.isOpen && !w.isMinimized).map(win => (
+        <div
+          key={win.id}
+          onClick={() => focusWindow(win.id)}
+          style={{
+            zIndex: win.zIndex,
+            left: win.isMaximized ? 0 : win.x,
+            top: win.isMaximized ? 26 : win.y,
+            width: win.isMaximized ? '100vw' : win.w,
+            height: win.isMaximized ? 'calc(100vh - 26px - 80px)' : win.h
+          }}
+          className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-slate-900/98 border border-white/20 shadow-2xl flex flex-col transition-all duration-150 ${activeAppId === win.id ? 'ring-1 ring-sky-400/50' : 'opacity-95'}`}
+        >
+          <div 
+            onMouseDown={(e) => handleMouseDownHeader(e, win.id)}
+            className="h-10 px-4 bg-slate-800/90 border-b border-white/10 flex items-center justify-between cursor-move shrink-0"
+          >
+            <div className="flex items-center gap-2">
+              <button onClick={() => closeWindow(win.id)} className="w-3 h-3 rounded-full bg-rose-500 cursor-pointer" />
+              <button onClick={() => minimizeWindow(win.id)} className="w-3 h-3 rounded-full bg-amber-500 cursor-pointer" />
+              <button onClick={() => toggleMaximize(win.id)} className="w-3 h-3 rounded-full bg-emerald-500 cursor-pointer" />
+            </div>
+
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
+              <span className="text-sm">📦</span>
+              <span>{win.title}</span>
+              <span className="text-[9px] bg-sky-500/20 text-sky-300 px-1.5 py-0.2 rounded font-mono">.webapp</span>
+            </div>
+            <div className="w-12" />
+          </div>
+
+          <WebAppRunner appPackage={win.packageData || appRegistry.getApp(win.id)} />
+        </div>
+      ))}
 
       {/* ── 4. SYSTEM SETTINGS (ALL SETTINGS WORKING) ── */}
       {windows.settings.isOpen && !windows.settings.isMinimized && (
@@ -3100,7 +3264,7 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
         </div>
       )}
 
-      {/* ── 6. TERMINAL WINDOW ── */}
+      {/* ── 6. TERMINAL WINDOW (REAL POSIX VFS & OS COMMANDS) ── */}
       {windows.terminal.isOpen && !windows.terminal.isMinimized && (
         <div
           onClick={() => focusWindow('terminal')}
@@ -3111,7 +3275,7 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
             width: windows.terminal.isMaximized ? '100vw' : windows.terminal.w,
             height: windows.terminal.isMaximized ? 'calc(100vh - 26px - 80px)' : windows.terminal.h
           }}
-          className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-slate-950/95 border border-white/20 shadow-2xl flex flex-col font-mono text-xs transition-all duration-150 ${activeAppId === 'terminal' ? 'ring-1 ring-white/30' : 'opacity-95'}`}
+          className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-slate-950/98 border border-white/20 shadow-2xl flex flex-col font-mono text-xs transition-all duration-150 ${activeAppId === 'terminal' ? 'ring-1 ring-emerald-400/50' : 'opacity-95'}`}
         >
           <div 
             onMouseDown={(e) => handleMouseDownHeader(e, 'terminal')}
@@ -3122,37 +3286,17 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
               <button onClick={() => minimizeWindow('terminal')} className="w-3 h-3 rounded-full bg-amber-500 cursor-pointer" />
               <button onClick={() => toggleMaximize('terminal')} className="w-3 h-3 rounded-full bg-emerald-500 cursor-pointer" />
             </div>
-            <div className="text-[11px] font-semibold text-slate-400">developer — zsh (JDK 21 + Python 3.12)</div>
+            <div className="text-[11px] font-semibold text-slate-300 font-sans flex items-center gap-2">
+              <MacTerminalIcon className="w-3.5 h-3.5" />
+              <span>Terminal — zsh (POSIX VFS)</span>
+            </div>
             <div className="w-10" />
           </div>
 
-          <div className="flex-1 p-4 overflow-y-auto space-y-2 text-emerald-400">
-            {terminalHistory.map((item, idx) => (
-              <div key={idx} className="leading-relaxed">
-                {item.type === 'sys' && <p className="text-slate-400">{item.text}</p>}
-                {item.type === 'input' && (
-                  <p className="text-white">
-                    <span className="text-emerald-400 font-bold">developer@appletree-mac</span>
-                    <span className="text-blue-400"> ~/Desktop %</span> {item.cmd}
-                  </p>
-                )}
-                {item.type === 'output' && <pre className="whitespace-pre-wrap text-emerald-300 font-mono text-[11px]">{item.text}</pre>}
-              </div>
-            ))}
-
-            <form onSubmit={handleTerminalSubmit} className="flex items-center gap-2 pt-1">
-              <span className="text-emerald-400 font-bold shrink-0">developer@appletree-mac</span>
-              <span className="text-blue-400 shrink-0">~/Desktop %</span>
-              <input
-                type="text"
-                value={terminalInput}
-                onChange={(e) => setTerminalInput(e.target.value)}
-                autoFocus
-                className="flex-1 bg-transparent border-none outline-none text-white font-mono"
-              />
-            </form>
-            <div ref={terminalBottomRef} />
-          </div>
+          <TerminalApp 
+            onOpenApp={(appId) => openApp(appId)}
+            onOpenFile={(file) => handleOpenFileInEditor(file)}
+          />
         </div>
       )}
 
@@ -3361,10 +3505,13 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
       <footer className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[9999] px-3 py-2 rounded-2xl backdrop-blur-3xl bg-black/45 border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.6)] flex items-end gap-2.5 transition-all">
         {[
           { id: 'finder', title: 'Finder', icon: MacFinderIcon },
-          { id: 'vscode', title: 'Visual Studio Code', icon: MacVSCodeIcon, badge: 'IDE' },
+          { id: 'launchpad', title: 'Launchpad', icon: MacLaunchpadIcon, isAction: true, onClick: () => setIsLaunchpadOpen(true) },
+          { id: 'appstore', title: 'App Store', icon: MacAppStoreIcon, badge: 'STORE' },
           { id: 'safari', title: 'Safari', icon: MacSafariIcon },
-          { id: 'terabox', title: 'TeraBox Cloud', icon: MacTeraBoxIcon, badge: '1TB' },
+          { id: 'vscode', title: 'Visual Studio Code', icon: MacVSCodeIcon, badge: 'IDE' },
           { id: 'terminal', title: 'Terminal', icon: MacTerminalIcon },
+          { id: 'activitymonitor', title: 'Activity Monitor', icon: MacActivityMonitorIcon },
+          { id: 'terabox', title: 'TeraBox Cloud', icon: MacTeraBoxIcon, badge: '1TB' },
           { id: 'kbc', title: 'KBC Quiz', icon: MacKbcIcon, badge: 'LIVE' },
           { id: 'notes', title: 'Notes', icon: MacNotesIcon },
           { id: 'calculator', title: 'Calculator', icon: MacCalculatorIcon },
@@ -3382,7 +3529,10 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
 
               <button
                 onClick={() => {
-                  if (isOpen && !windows[app.id].isMinimized && activeAppId === app.id) {
+                  if (app.isAction && app.onClick) {
+                    macSound.playPop();
+                    app.onClick();
+                  } else if (isOpen && !windows[app.id].isMinimized && activeAppId === app.id) {
                     minimizeWindow(app.id);
                   } else {
                     openApp(app.id);
@@ -3409,12 +3559,13 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
 
         <div className="relative flex flex-col items-center group">
           <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none px-2.5 py-1 rounded-md backdrop-blur-md bg-black/85 text-white text-[10px] font-semibold whitespace-nowrap shadow-md">
-            Trash
+            Trash (Clean)
           </div>
           <button
             onClick={() => {
               macSound.playTrash();
-              alert('Trash is clean and empty!');
+              vfs.emptyTrash();
+              alert('Trash has been emptied.');
             }}
             className="w-12 h-12 p-0.5 flex items-center justify-center transition-transform duration-200 hover:scale-125 hover:-translate-y-2 cursor-pointer"
           >
@@ -3423,6 +3574,35 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
           <div className="w-1 h-1 rounded-full mt-1 opacity-0" />
         </div>
       </footer>
+
+      {/* ── SPOTLIGHT SEARCH MODAL (⌘+Space) ── */}
+      <SpotlightModal
+        isOpen={isSpotlightOpen}
+        onClose={() => setIsSpotlightOpen(false)}
+        onOpenApp={(id) => openApp(id)}
+        onOpenFile={(file) => handleOpenFileInEditor(file)}
+      />
+
+      {/* ── LAUNCHPAD FULL-SCREEN MODAL ── */}
+      <LaunchpadModal
+        isOpen={isLaunchpadOpen}
+        onClose={() => setIsLaunchpadOpen(false)}
+        onLaunchApp={(id) => openApp(id)}
+      />
+
+      {/* ── MISSION CONTROL & VIRTUAL SPACES MODAL ── */}
+      <MissionControlModal
+        isOpen={isMissionControlOpen}
+        onClose={() => setIsMissionControlOpen(false)}
+        workspaces={workspaces}
+        activeWorkspace={activeWorkspace}
+        onSelectWorkspace={(wsId) => setActiveWorkspace(wsId)}
+        onAddWorkspace={() => {
+          setWorkspaces(prev => [...prev, { id: `ws-${Date.now()}`, name: `Desktop ${prev.length + 1}` }]);
+        }}
+        windows={windows}
+        onFocusWindow={(winId) => focusWindow(winId)}
+      />
 
       {/* ════════════════ LOCK SCREEN OVERLAY ════════════════ */}
       {isLocked && (
