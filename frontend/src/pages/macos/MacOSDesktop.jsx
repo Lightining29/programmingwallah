@@ -15,7 +15,7 @@ import {
   Package, Box, CheckCheck, List, Grid, MoreHorizontal,
   ChevronLeft, ArrowUpRight, Globe, CornerDownLeft, GitBranch,
   PlaySquare, Wrench, FileCheck, Split, BookOpen, Mic,
-  Bot, Send, Sparkle, Minimize2
+  Bot, Send, Sparkle, Minimize2, ChevronDown, ChevronUp, Square, AlertTriangle
 } from 'lucide-react';
 
 import vfs from './services/vfs.js';
@@ -1000,6 +1000,14 @@ p {
   ]);
   const [vsCodeTerminalInput, setVsCodeTerminalInput] = useState('');
   const [vsCodeBottomTab, setVsCodeBottomTab] = useState('terminal'); // terminal, output, problems, debug
+  const [vsCodeBottomPanelHeight, setVsCodeBottomPanelHeight] = useState(230);
+  const [isVsCodeBottomMinimized, setIsVsCodeBottomMinimized] = useState(false);
+  const [isVsCodeBottomMaximized, setIsVsCodeBottomMaximized] = useState(false);
+  const [vsCodeProblems, setVsCodeProblems] = useState([]);
+  const [vsCodeOutputLog, setVsCodeOutputLog] = useState([
+    '[AppleTree Compiler Engine: OpenJDK 27 LTS & Python 3.12.8 & Node.js 20.18 Active]'
+  ]);
+  const [isDraggingVsCodeBottom, setIsDraggingVsCodeBottom] = useState(false);
   const [isVsCodeRunning, setIsVsCodeRunning] = useState(false);
   const [vsCodeActiveSidebar, setVsCodeActiveSidebar] = useState('explorer'); // 'explorer', 'search', 'git', 'extensions', 'copilot'
   const [vsCodeExtSearch, setVsCodeExtSearch] = useState('');
@@ -1122,139 +1130,171 @@ p {
     }
   };
 
-  const handleRunVsCodeCode = () => {
+  // ── Drag-to-Resize VS Code Bottom Panel ──
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isDraggingVsCodeBottom) return;
+      const newHeight = window.innerHeight - e.clientY - 60;
+      setVsCodeBottomPanelHeight(Math.max(100, Math.min(newHeight, 650)));
+    };
+    const handleMouseUp = () => {
+      if (isDraggingVsCodeBottom) setIsDraggingVsCodeBottom(false);
+    };
+    if (isDraggingVsCodeBottom) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDraggingVsCodeBottom]);
+
+  // ── Genuine Code Execution Engine (Synchronized with Monaco Model) ──
+  const handleRunVsCodeCode = async () => {
     macSound.playPop();
     setIsVsCodeRunning(true);
+    setIsVsCodeBottomMinimized(false);
     setVsCodeBottomTab('terminal');
 
-    const cmdRun = activeVsCodeFile.lang === 'java' 
-      ? `javac ${activeVsCodeFile.name} && java ${activeVsCodeFile.name.replace('.java', '')}`
-      : activeVsCodeFile.lang === 'javascript'
-      ? `node ${activeVsCodeFile.name}`
-      : `python3 ${activeVsCodeFile.name}`;
+    const activeFile = vsCodeFiles.find(f => f.id === activeVsCodeFileId) || vsCodeFiles[0];
+    const cmdRun = activeFile.lang === 'java' 
+      ? `javac ${activeFile.name} && java ${activeFile.name.replace('.java', '')}`
+      : activeFile.lang === 'javascript'
+      ? `node ${activeFile.name}`
+      : `python3 ${activeFile.name}`;
 
     setVsCodeTerminalOutput(prev => [
       ...prev,
       `developer@appletree-mac-pro ~/workspace % ${cmdRun}`,
-      '⚡ Compiling with AppleTree Enterprise Backend Sandbox...'
+      `⚡ Executing ${activeFile.name} in isolated native runtime...`
     ]);
 
-    setTimeout(() => {
+    setVsCodeOutputLog(prev => [
+      ...prev,
+      `[${new Date().toLocaleTimeString()}] Executing: ${cmdRun}`,
+      `[Workspace snapshot initialized for ${activeFile.name}]`
+    ]);
+
+    try {
+      const response = await fetch('/api/ide/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          language: activeFile.lang,
+          code: activeFile.content,
+          fileName: activeFile.name,
+          files: vsCodeFiles
+        })
+      });
+
+      const data = await response.json();
       setIsVsCodeRunning(false);
       macSound.playPop();
-      if (activeVsCodeFile.lang === 'java') {
-        setVsCodeTerminalOutput(prev => [
-          ...prev,
-          '☕ Compiling with OpenJDK 21 LTS (Oracle / RedHat Spec)...',
-          'Academy: AppleTree Infotech Ghaziabad',
-          'Active Enterprise Modules: Spring Boot 3.3, Hibernate, Kafka, Docker',
-          'Status: Java Enterprise Microservice Running 🚀',
-          '[Process exited with code 0]'
-        ]);
-      } else if (activeVsCodeFile.lang === 'python') {
-        setVsCodeTerminalOutput(prev => [
-          ...prev,
-          '🚀 Initializing AppleTree Infotech Ghaziabad Placement Intelligence...',
-          'Runtime: macOS Sequoia 15.2 | Python 3.12.2',
-          '============================================================',
-          ' [1] Java Full Stack Developer      Target: ₹8-18 LPA',
-          ' [2] AWS DevOps Cloud Architect     Target: ₹10-22 LPA',
-          ' [3] Python AI & ML Specialist      Target: ₹12-25 LPA',
-          ' [4] React & MERN Stack Lead        Target: ₹8-16 LPA',
-          '============================================================',
-          '✓ Status: 100% Industry Certified & Placement Ready!',
-          '[Process exited with code 0]'
-        ]);
-      } else {
-        setVsCodeTerminalOutput(prev => [
-          ...prev,
-          '⚡ Server listening on http://localhost:5000',
-          '✓ Status: Online (Uptime: 99.99%)',
-          '[Process exited with code 0]'
-        ]);
+
+      if (data.stdout) {
+        const outLines = data.stdout.trim().split(/\r?\n/);
+        setVsCodeTerminalOutput(prev => [...prev, ...outLines]);
       }
-    }, 450);
+
+      if (data.stderr) {
+        const errLines = data.stderr.trim().split(/\r?\n/);
+        setVsCodeTerminalOutput(prev => [
+          ...prev, 
+          ...errLines.map(l => `[stderr] ${l}`)
+        ]);
+
+        // Parse compiler / runtime error diagnostics for the Problems tab
+        const extractedProblems = [];
+        for (const line of errLines) {
+          const javaMatch = line.match(/^(.*?):(\d+):\s*(error|warning):\s*(.*)$/);
+          if (javaMatch) {
+            extractedProblems.push({
+              file: javaMatch[1],
+              line: parseInt(javaMatch[2], 10),
+              severity: javaMatch[3],
+              message: javaMatch[4]
+            });
+            continue;
+          }
+          const pyMatch = line.match(/File "(.*?)", line (\d+)/);
+          if (pyMatch) {
+            extractedProblems.push({
+              file: pyMatch[1],
+              line: parseInt(pyMatch[2], 10),
+              severity: 'error',
+              message: line
+            });
+          }
+        }
+        if (extractedProblems.length > 0) {
+          setVsCodeProblems(extractedProblems);
+        }
+      } else {
+        setVsCodeProblems([]);
+      }
+
+      setVsCodeTerminalOutput(prev => [
+        ...prev,
+        `[Process completed with exit code ${data.exitCode} in ${data.durationMs}ms]`
+      ]);
+
+      setVsCodeOutputLog(prev => [
+        ...prev,
+        `[${new Date().toLocaleTimeString()}] Finished with exitCode ${data.exitCode} (${data.durationMs}ms)`
+      ]);
+
+    } catch (err) {
+      setIsVsCodeRunning(false);
+      setVsCodeTerminalOutput(prev => [
+        ...prev,
+        `[stderr] Execution failed: ${err.message}`,
+        '[Process terminated with error code 1]'
+      ]);
+    }
   };
 
-  const handleVsCodeTerminalSubmit = (e) => {
+  // ── Genuine Interactive Terminal Command Input ──
+  const handleVsCodeTerminalSubmit = async (e) => {
     e.preventDefault();
     const cmd = vsCodeTerminalInput.trim();
     if (!cmd) return;
+    setVsCodeTerminalInput('');
 
-    const lower = cmd.toLowerCase();
-    let res = '';
-
-    if (lower === 'clear') {
+    if (cmd.toLowerCase() === 'clear' || cmd.toLowerCase() === 'cls') {
       setVsCodeTerminalOutput([]);
-      setVsCodeTerminalInput('');
       return;
-    } else if (lower.includes('java -version')) {
-      res = `openjdk version "21.0.2" 2026-01-16 LTS
-OpenJDK Runtime Environment (build 21.0.2+13-LTS)
-OpenJDK 64-Bit Server VM (build 21.0.2+13-LTS, mixed mode, sharing)`;
-    } else if (lower.includes('python --version') || lower.includes('python3 --version')) {
-      res = 'Python 3.12.2';
-    } else if (lower.includes('node -v')) {
-      res = 'v20.18.0 LTS';
-    } else if (lower.includes('git status')) {
-      res = `On branch main
-Your branch is up to date with 'origin/main'.
-Changes to be committed:
-  (use "git restore --staged <file>..." to unstage)
-	modified:   src/main.py
-	modified:   src/App.java`;
-    } else if (lower.startsWith('pip install')) {
-      const pkg = cmd.replace(/pip install/i, '').trim();
-      res = `Collecting ${pkg || 'package'}
-  Downloading ${pkg || 'package'}-2.4.1-py3-none-any.whl (1.2 MB)
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 18.4 MB/s eta 0:00:00
-Installing collected packages: ${pkg || 'package'}
-Successfully installed ${pkg || 'package'}-2.4.1`;
-    } else if (lower.includes('pip list')) {
-      res = `Package            Version
------------------- ---------
-pip                24.0
-numpy              1.26.4
-pandas             2.2.1
-requests           2.31.0
-fastapi            0.110.0
-torch              2.2.1
-spring-boot-starter 3.3.0`;
-    } else if (lower.startsWith('python') || lower.startsWith('python3')) {
-      res = `🚀 Initializing AppleTree Python & AI Sandbox...
-System: macOS Sequoia 15.2 | Python 3.12.2
-Execution completed successfully [Code: 0]`;
-    } else if (lower.startsWith('javac') || lower.startsWith('java')) {
-      res = `☕ OpenJDK 21.0.2 LTS Execution Complete.
-Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
-    } else if (lower === 'ls' || lower === 'dir') {
-      res = vsCodeFiles.map(f => f.name).join('   ');
-    } else if (lower.startsWith('cat ')) {
-      const fn = cmd.replace(/^cat /i, '').trim();
-      const target = vsCodeFiles.find(f => f.name.toLowerCase() === fn.toLowerCase());
-      res = target ? target.content : `cat: ${fn}: No such file or directory`;
-    } else if (lower === 'help') {
-      res = `Available Commands:
-  python3 <file>    Run Python 3.12 file
-  javac <file>      Compile Java 21 file
-  java -version     Display OpenJDK 21 LTS spec
-  python --version  Display Python version
-  node -v           Display Node.js runtime
-  pip install <pkg> Install Python package
-  pip list          List installed packages
-  ls                List workspace files
-  cat <file>        Print file content
-  clear             Clear terminal screen`;
-    } else {
-      res = `[developer@appletree-mac-pro: ${cmd} executed successfully]`;
     }
 
     setVsCodeTerminalOutput(prev => [
       ...prev,
-      `developer@appletree-mac-pro ~/workspace % ${cmd}`,
-      res
+      `developer@appletree-mac-pro ~/workspace % ${cmd}`
     ]);
-    setVsCodeTerminalInput('');
+
+    try {
+      const response = await fetch('/api/ide/command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          command: cmd,
+          files: vsCodeFiles
+        })
+      });
+      const data = await response.json();
+      if (data.stdout) {
+        const outLines = data.stdout.trim().split(/\r?\n/);
+        setVsCodeTerminalOutput(prev => [...prev, ...outLines]);
+      }
+      if (data.stderr) {
+        const errLines = data.stderr.trim().split(/\r?\n/);
+        setVsCodeTerminalOutput(prev => [...prev, ...errLines.map(l => `[stderr] ${l}`)]);
+      }
+      if (!data.stdout && !data.stderr) {
+        setVsCodeTerminalOutput(prev => [...prev, `[Command completed with exit code ${data.exitCode}]`]);
+      }
+    } catch (err) {
+      setVsCodeTerminalOutput(prev => [...prev, `[stderr] Command failed: ${err.message}`]);
+    }
   };
 
   // ── Monaco Theme & Colorizer Definition ──
@@ -1291,7 +1331,7 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
   };
 
   // ── AI Copilot Whole Project Prompt Handler ──
-  const handleSendAiPrompt = (promptText) => {
+  const handleSendAiPrompt = async (promptText) => {
     const query = promptText || aiChatInput;
     if (!query.trim()) return;
 
@@ -1301,36 +1341,44 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
     setAiChatInput('');
     setIsAiThinking(true);
 
-    setTimeout(() => {
+    try {
+      const activeFile = vsCodeFiles.find(f => f.id === activeVsCodeFileId) || vsCodeFiles[0];
+      const action = query.toLowerCase().includes('fix') ? 'fix' 
+                   : query.toLowerCase().includes('test') ? 'tests' 
+                   : 'explain';
+      
+      const response = await fetch('/api/ide/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: query,
+          action,
+          code: activeFile.content,
+          fileName: activeFile.name,
+          language: activeFile.lang,
+          error: vsCodeTerminalOutput.filter(l => l.includes('[stderr]') || l.includes('Error')).join('\n')
+        })
+      });
+
+      const data = await response.json();
       setIsAiThinking(false);
       macSound.playPop();
-      const qLower = query.toLowerCase();
-      let answer = '';
 
-      if (qLower.includes('explain')) {
-        answer = `Here is an explanation of **${activeVsCodeFile.name}** in your workspace:\n\n` +
-          `- **Language & Runtime**: ${activeVsCodeFile.lang.toUpperCase()} (OpenJDK 21 / Python 3.12)\n` +
-          `- **Purpose**: Demonstrates enterprise placement pathway with object-oriented abstractions.\n` +
-          `- **Complexity**: O(N) linear iteration across student career tracks.\n` +
-          `- **Recommendation**: Add async data streaming or Kafka producers for production scalability.`;
-      } else if (qLower.includes('fix') || qLower.includes('bug')) {
-        answer = `✓ Analyzed whole project across all 6 files.\n\n` +
-          `• Syntax check: 0 errors detected.\n` +
-          `• Type safety: All annotations in \`${activeVsCodeFile.name}\` adhere to Python 3.12 / Java 21 specifications.\n` +
-          `• Tip: Ensure UTF-8 encoding is preserved when streaming output.`;
-      } else if (qLower.includes('test') || qLower.includes('unit')) {
-        answer = `Here is a production unit test for **${activeVsCodeFile.name}**:\n\n` +
-          `\`\`\`python\nimport unittest\nfrom main import PlacementEngine\n\nclass TestPlacement(unittest.TestCase):\n    def test_tracks(self):\n        engine = PlacementEngine("AppleTree")\n        self.assertEqual(len(engine.tracks), 4)\n\nif __name__ == '__main__':\n    unittest.main()\n\`\`\``;
-      } else {
-        answer = `I have updated your context for **${activeVsCodeFile.name}**.\n\n` +
-          `Suggestions:\n` +
-          `1. Use \`Live Preview\` to test HTML & CSS changes in real-time.\n` +
-          `2. Run \`javac App.java && java App\` in terminal to execute Java 21.\n` +
-          `3. Run \`python3 main.py\` to verify Python execution.`;
+      setAiChatMessages(prev => [
+        ...prev,
+        { role: 'assistant', text: data.reply || 'AI Assistant successfully analyzed the project.' }
+      ]);
+
+      if (data.proposedPatch) {
+        setVsCodeFiles(prev => prev.map(f => f.id === activeFile.id ? { ...f, content: data.proposedPatch } : f));
       }
-
-      setAiChatMessages(prev => [...prev, { role: 'assistant', text: answer }]);
-    }, 600);
+    } catch (err) {
+      setIsAiThinking(false);
+      setAiChatMessages(prev => [
+        ...prev,
+        { role: 'assistant', text: `AI Service note: ${err.message}. Ready for next prompt.` }
+      ]);
+    }
   };
 
   // ── Live Browser HTML/CSS/JS Document Generator ──
@@ -2624,70 +2672,205 @@ Class App compiled without errors. Spring Boot 3.3 runtime verified.`;
                 )}
               </div>
 
-              {/* Bottom Terminal Panel */}
-              <div className="h-44 bg-[#0a0c10] border-t border-[#252526] flex flex-col shrink-0 font-sans">
-                <div className="h-7 px-3 bg-[#12141a] border-b border-[#252526] flex items-center justify-between text-[11px] font-semibold text-[#cccccc]">
-                  <div className="flex items-center gap-4">
-                    <button 
-                      onClick={() => setVsCodeBottomTab('terminal')}
-                      className={`hover:text-white cursor-pointer ${vsCodeBottomTab === 'terminal' ? 'text-white border-b-2 border-[#007acc] pb-0.5' : 'text-[#888888]'}`}
-                    >
-                      TERMINAL (zsh)
-                    </button>
-                    <button 
-                      onClick={() => setVsCodeBottomTab('output')}
-                      className={`hover:text-white cursor-pointer ${vsCodeBottomTab === 'output' ? 'text-white border-b-2 border-[#007acc] pb-0.5' : 'text-[#888888]'}`}
-                    >
-                      OUTPUT
-                    </button>
-                    <button 
-                      onClick={() => setVsCodeBottomTab('problems')}
-                      className={`hover:text-white cursor-pointer ${vsCodeBottomTab === 'problems' ? 'text-white border-b-2 border-[#007acc] pb-0.5' : 'text-[#888888]'}`}
-                    >
-                      PROBLEMS (0)
-                    </button>
+              {/* Bottom Panel (Resizable, Minimizable, Multi-Tab) */}
+              {vsCodeBottomTab && (
+                <div 
+                  style={{
+                    height: isVsCodeBottomMinimized ? '28px' : isVsCodeBottomMaximized ? '100%' : `${vsCodeBottomPanelHeight}px`,
+                    transition: isDraggingVsCodeBottom ? 'none' : 'height 0.15s ease'
+                  }}
+                  className={`bg-[#0a0c10] border-t border-[#252526] flex flex-col shrink-0 font-sans relative ${isVsCodeBottomMaximized ? 'absolute inset-0 z-30' : ''}`}
+                >
+                  {/* Resizer Handle at Top Edge */}
+                  {!isVsCodeBottomMinimized && !isVsCodeBottomMaximized && (
+                    <div 
+                      onMouseDown={(e) => { e.preventDefault(); setIsDraggingVsCodeBottom(true); }}
+                      className="absolute -top-1 left-0 right-0 h-2 cursor-row-resize z-20 hover:bg-[#007acc]/60 transition-colors"
+                      title="Drag to resize panel (double-click to reset)"
+                      onDoubleClick={() => setVsCodeBottomPanelHeight(230)}
+                    />
+                  )}
+
+                  {/* Panel Header Bar */}
+                  <div 
+                    onDoubleClick={() => setIsVsCodeBottomMaximized(prev => !prev)}
+                    className="h-7 px-3 bg-[#12141a] border-b border-[#252526] flex items-center justify-between text-[11px] font-semibold text-[#cccccc] select-none shrink-0"
+                  >
+                    {/* Left Tabs */}
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={() => { setVsCodeBottomTab('problems'); setIsVsCodeBottomMinimized(false); }}
+                        className={`hover:text-white cursor-pointer flex items-center gap-1.5 transition ${vsCodeBottomTab === 'problems' && !isVsCodeBottomMinimized ? 'text-white border-b-2 border-[#007acc] pb-0.5' : 'text-[#888888]'}`}
+                      >
+                        <span>PROBLEMS</span>
+                        <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-mono ${vsCodeProblems.length > 0 ? 'bg-rose-500 text-white font-bold' : 'bg-white/10 text-slate-400'}`}>
+                          {vsCodeProblems.length}
+                        </span>
+                      </button>
+                      <button 
+                        onClick={() => { setVsCodeBottomTab('output'); setIsVsCodeBottomMinimized(false); }}
+                        className={`hover:text-white cursor-pointer transition ${vsCodeBottomTab === 'output' && !isVsCodeBottomMinimized ? 'text-white border-b-2 border-[#007acc] pb-0.5' : 'text-[#888888]'}`}
+                      >
+                        OUTPUT
+                      </button>
+                      <button 
+                        onClick={() => { setVsCodeBottomTab('debug'); setIsVsCodeBottomMinimized(false); }}
+                        className={`hover:text-white cursor-pointer transition ${vsCodeBottomTab === 'debug' && !isVsCodeBottomMinimized ? 'text-white border-b-2 border-[#007acc] pb-0.5' : 'text-[#888888]'}`}
+                      >
+                        DEBUG CONSOLE
+                      </button>
+                      <button 
+                        onClick={() => { setVsCodeBottomTab('terminal'); setIsVsCodeBottomMinimized(false); }}
+                        className={`hover:text-white cursor-pointer transition ${vsCodeBottomTab === 'terminal' && !isVsCodeBottomMinimized ? 'text-white border-b-2 border-[#007acc] pb-0.5' : 'text-[#888888]'}`}
+                      >
+                        TERMINAL
+                      </button>
+                    </div>
+
+                    {/* Right Control Icons */}
+                    <div className="flex items-center gap-2 text-slate-400">
+                      <div className="hidden sm:flex items-center gap-1 bg-black/40 px-2 py-0.5 rounded text-[10px] text-slate-300 font-mono border border-white/5">
+                        <span>1: powershell</span>
+                      </div>
+                      <button 
+                        onClick={() => setVsCodeTerminalOutput(prev => [...prev, '--- Terminal Session Active ---'])}
+                        className="p-1 hover:text-white hover:bg-white/10 rounded cursor-pointer transition"
+                        title="New Terminal"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                      <button 
+                        onClick={() => setVsCodeTerminalOutput([])}
+                        className="p-1 hover:text-white hover:bg-white/10 rounded cursor-pointer transition"
+                        title="Clear Terminal Output"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                      <button 
+                        onClick={() => setIsVsCodeBottomMinimized(prev => !prev)}
+                        className="p-1 hover:text-white hover:bg-white/10 rounded cursor-pointer transition"
+                        title={isVsCodeBottomMinimized ? "Restore Panel" : "Minimize Panel"}
+                      >
+                        {isVsCodeBottomMinimized ? <ChevronUp className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
+                      </button>
+                      <button 
+                        onClick={() => { setIsVsCodeBottomMaximized(prev => !prev); setIsVsCodeBottomMinimized(false); }}
+                        className="p-1 hover:text-white hover:bg-white/10 rounded cursor-pointer transition"
+                        title={isVsCodeBottomMaximized ? "Restore Size" : "Maximize Panel"}
+                      >
+                        <Maximize2 className="w-3 h-3" />
+                      </button>
+                      <button 
+                        onClick={() => setIsVsCodeBottomMinimized(true)}
+                        className="p-1 hover:text-white hover:bg-white/10 rounded cursor-pointer transition"
+                        title="Close Panel"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
-                  <span className="text-[10px] text-emerald-400 font-mono">● OpenJDK 21 LTS + Python 3.12 Ready</span>
-                </div>
 
-                <div className="flex-1 p-3 font-mono text-[11px] text-[#cccccc] overflow-y-auto space-y-1">
-                  {vsCodeBottomTab === 'terminal' ? (
-                    <>
-                      {vsCodeTerminalOutput.map((line, idx) => (
-                        <div key={idx} className={line.startsWith('developer@') ? 'text-emerald-400 font-bold' : line.includes('OpenJDK') ? 'text-yellow-400' : line.startsWith('✓') ? 'text-emerald-300 font-bold' : 'text-[#d4d4d4]'}>
-                          {line}
+                  {/* Panel Content (Hidden if Minimized) */}
+                  {!isVsCodeBottomMinimized && (
+                    <div className="flex-1 p-3 font-mono text-[11px] text-[#cccccc] overflow-y-auto space-y-1">
+                      {vsCodeBottomTab === 'terminal' && (
+                        <>
+                          {vsCodeTerminalOutput.map((line, idx) => (
+                            <div 
+                              key={idx} 
+                              className={
+                                line.startsWith('developer@') ? 'text-emerald-400 font-bold' :
+                                line.startsWith('[stderr]') ? 'text-rose-400 font-mono font-semibold' :
+                                line.includes('completed with exit code 0') ? 'text-emerald-300 font-bold' :
+                                line.includes('exit code') ? 'text-amber-400 font-bold' :
+                                line.includes('OpenJDK') || line.includes('Python') ? 'text-yellow-400' :
+                                'text-[#d4d4d4]'
+                              }
+                            >
+                              {line}
+                            </div>
+                          ))}
+
+                          <form onSubmit={handleVsCodeTerminalSubmit} className="flex items-center gap-1.5 pt-1">
+                            <span className="text-emerald-400 font-bold shrink-0">developer@appletree-mac-pro ~/workspace %</span>
+                            <input
+                              type="text"
+                              value={vsCodeTerminalInput}
+                              onChange={(e) => setVsCodeTerminalInput(e.target.value)}
+                              className="flex-1 bg-transparent border-none outline-none text-white font-mono"
+                              placeholder="type python, javac, node, ls, git..."
+                            />
+                          </form>
+                        </>
+                      )}
+
+                      {vsCodeBottomTab === 'problems' && (
+                        <div className="space-y-2">
+                          {vsCodeProblems.length === 0 ? (
+                            <div className="text-slate-400 italic py-2 flex items-center gap-2">
+                              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                              No problems have been detected in the workspace.
+                            </div>
+                          ) : (
+                            vsCodeProblems.map((prob, idx) => (
+                              <div key={idx} className="p-2.5 rounded bg-rose-950/40 border border-rose-500/30 flex items-center justify-between text-xs">
+                                <div className="flex items-center gap-2">
+                                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                                  <span className="font-bold text-white">{prob.file}:{prob.line}</span>
+                                  <span className="text-rose-300 font-mono">{prob.message}</span>
+                                </div>
+                                <button 
+                                  onClick={() => handleSendAiPrompt(`Explain and fix this compiler error in ${prob.file}: ${prob.message}`)}
+                                  className="px-2 py-1 rounded bg-fuchsia-600 hover:bg-fuchsia-500 text-white text-[10px] font-sans font-bold flex items-center gap-1 cursor-pointer transition"
+                                >
+                                  <Sparkles className="w-3 h-3" /> Fix with AI
+                                </button>
+                              </div>
+                            ))
+                          )}
                         </div>
-                      ))}
+                      )}
 
-                      <form onSubmit={handleVsCodeTerminalSubmit} className="flex items-center gap-1.5 pt-1">
-                        <span className="text-emerald-400 font-bold">developer@appletree-mac-pro ~/workspace %</span>
-                        <input
-                          type="text"
-                          value={vsCodeTerminalInput}
-                          onChange={(e) => setVsCodeTerminalInput(e.target.value)}
-                          className="flex-1 bg-transparent border-none outline-none text-white font-mono"
-                        />
-                      </form>
-                    </>
-                  ) : (
-                    <div className="text-slate-400">
-                      [Compiling with AppleTree Enterprise Backend Build System: No errors detected]
+                      {vsCodeBottomTab === 'output' && (
+                        <div className="space-y-1 text-slate-300">
+                          {vsCodeOutputLog.map((log, idx) => (
+                            <div key={idx} className="text-sky-300/90">{log}</div>
+                          ))}
+                        </div>
+                      )}
+
+                      {vsCodeBottomTab === 'debug' && (
+                        <div className="text-slate-400 italic">
+                          [Debug Console connected. No breakpoint halts active.]
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              </div>
+              )}
 
               {/* Bottom Blue Status Bar */}
               <div className="h-5 bg-[#007acc] text-white px-3 flex items-center justify-between text-[10px] font-sans font-medium select-none shrink-0">
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1"><GitBranch className="w-2.5 h-2.5" /> main*</span>
-                  <span>0 ⊗ 0 △</span>
+                  <button 
+                    onClick={() => { setVsCodeBottomTab('problems'); setIsVsCodeBottomMinimized(false); }}
+                    className="flex items-center gap-1 hover:text-white transition cursor-pointer"
+                  >
+                    <AlertCircle className="w-2.5 h-2.5" />
+                    <span>{vsCodeProblems.length} ⊗ 0 △</span>
+                  </button>
                 </div>
                 <div className="flex items-center gap-3">
+                  <span>Ln 1, Col 1</span>
+                  <span>Spaces: 4</span>
                   <span>UTF-8</span>
-                  <span className="font-bold">{activeVsCodeFile.lang === 'java' ? 'OpenJDK 21 LTS' : activeVsCodeFile.lang === 'python' ? 'Python 3.12.2' : 'Node.js 20'}</span>
+                  <span>LF</span>
+                  <span className="font-bold">
+                    {activeVsCodeFile.lang === 'java' ? 'Java 27 (OpenJDK)' : activeVsCodeFile.lang === 'python' ? 'Python 3.12.8' : 'Node.js 20.18'}
+                  </span>
                   <span>Prettier ✓</span>
-                  <span className="flex items-center gap-1"><Sparkles className="w-2.5 h-2.5 text-fuchsia-300" /> Copilot</span>
+                  <span className="flex items-center gap-1"><Sparkles className="w-2.5 h-2.5 text-fuchsia-300" /> Copilot Ready</span>
                 </div>
               </div>
             </div>

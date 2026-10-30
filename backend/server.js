@@ -23,6 +23,7 @@ import assessmentRoutes from './routes/assessment.js';
 import arenaRoutes from './routes/arena.js';
 import portfolioRoutes from './routes/portfolio.js';
 import kbcRoutes from './routes/kbc.js';
+import ideRoutes from './routes/ide.js';
 import { initExamDatabase } from './models/exam/index.js';
 
 // Load environment variables from multiple possible locations (root .env and backend/.env)
@@ -135,6 +136,7 @@ app.use('/api/assessment', assessmentRoutes);
 app.use('/api/arena', arenaRoutes);
 app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/kbc', kbcRoutes);
+app.use('/api/ide', ideRoutes);
 
 // Dynamic Sitemap for Search Engines & AI Crawlers
 app.get('/sitemap.xml', (req, res) => {
