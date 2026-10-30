@@ -128,6 +128,15 @@ export default function Navbar() {
               <Link
                 key={link.name}
                 to={link.path}
+                onClick={() => {
+                  if (link.path === '/macos') {
+                    try {
+                      if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                        document.documentElement.requestFullscreen().catch(() => {});
+                      }
+                    } catch (e) {}
+                  }
+                }}
                 className={`font-quicksand font-extrabold text-xs tracking-wider relative py-1 transition-colors duration-200 hover:text-brandCoral ${isActive ? 'text-brandCoral' : isDark ? 'text-slate-200' : 'text-slate-600'
                   }`}
               >
@@ -169,6 +178,13 @@ export default function Navbar() {
           {/* macOS Mode Desktop Switcher Pill */}
           <Link
             to="/macos"
+            onClick={() => {
+              try {
+                if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                  document.documentElement.requestFullscreen().catch(() => {});
+                }
+              } catch (e) {}
+            }}
             className={`flex items-center space-x-1.5 font-quicksand font-extrabold text-xs rounded-full border px-3 py-2 hover:scale-[1.03] active:scale-[0.97] transition-all duration-150 cursor-pointer shadow-sm group ${
               isDark 
                 ? 'border-sky-400/40 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20 shadow-sky-500/10' 
@@ -354,7 +370,16 @@ export default function Navbar() {
                         <Link
                           key={link.name}
                           to={link.path}
-                          onClick={() => setIsOpen(false)}
+                          onClick={() => {
+                            setIsOpen(false);
+                            if (link.path === '/macos') {
+                              try {
+                                if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                                  document.documentElement.requestFullscreen().catch(() => {});
+                                }
+                              } catch (e) {}
+                            }
+                          }}
                           className={`flex items-center justify-between font-quicksand font-extrabold text-sm py-3 px-4 rounded-2xl transition-all ${
                             isActive
                               ? isDark
