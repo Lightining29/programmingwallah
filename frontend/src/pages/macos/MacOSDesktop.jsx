@@ -4,13 +4,13 @@ import {
   Wifi, Battery, Search, Sliders, X, Minus, Maximize2, 
   Terminal, Code2, Trophy, Compass, Folder, FileText, 
   Settings, Calculator, Trash2, ExternalLink, RefreshCw, 
-  Volume2, Sun, Moon, Lock, Play, Copy, Check, Info, 
+  Volume2, Lock, Play, Copy, Check, Info, 
   GraduationCap, Briefcase, Phone, Sparkles, ChevronRight,
   Monitor, Cpu, HardDrive, ShieldCheck, ArrowLeft, Eye,
-  Cloud, CloudRain, Upload, Download, Share2, Plus, 
-  CornerDownLeft, Calendar as CalendarIcon, Clock, 
-  Layers, AppWindow, ArrowRight, CornerDownRight, CheckCircle2,
-  FolderPlus, FilePlus, Edit3
+  Cloud, Upload, Download, Share2, Plus, 
+  Calendar as CalendarIcon, Clock, Layers, FilePlus, FolderPlus,
+  PlayCircle, FileCode, CheckCircle2, SplitSquareVertical,
+  Terminal as TerminalIcon, AlertCircle, HelpCircle
 } from 'lucide-react';
 
 // ── Pure Web Audio Sound Synthesizer (Instant native macOS sound effects) ──
@@ -80,37 +80,210 @@ class MacAudio {
 }
 const macSound = new MacAudio();
 
-// ── macOS Wallpaper Gallery ──
+// ── AUTHENTIC REAL macOS SQUIRCLE ICONS (Pixel-Perfect SVG Art) ──
+
+export const MacFinderIcon = ({ className = "w-full h-full" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <defs>
+      <linearGradient id="finderBgGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#38bdf8" />
+        <stop offset="100%" stopColor="#0284c7" />
+      </linearGradient>
+      <linearGradient id="finderLeftGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#7dd3fc" />
+        <stop offset="100%" stopColor="#38bdf8" />
+      </linearGradient>
+    </defs>
+    <rect x="5" y="5" width="90" height="90" rx="22" fill="url(#finderBgGrad)" />
+    {/* Left smiling face half */}
+    <path d="M5 27 C5 14.85 14.85 5 27 5 L50 5 L50 95 L27 95 C14.85 95 5 85.15 5 73 Z" fill="url(#finderLeftGrad)" />
+    <path d="M50 5 L50 95" stroke="#0369a1" strokeWidth="2" opacity="0.6" />
+    {/* Eyes */}
+    <circle cx="32" cy="40" r="5" fill="#0f172a" />
+    <circle cx="68" cy="40" r="5" fill="#0f172a" />
+    {/* Smiling curve */}
+    <path d="M 27 63 Q 50 84 73 63" fill="none" stroke="#0f172a" strokeWidth="6" strokeLinecap="round" />
+    {/* Nose */}
+    <path d="M 50 40 L 46 54 L 54 54" fill="none" stroke="#0f172a" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+export const MacVSCodeIcon = ({ className = "w-full h-full" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <defs>
+      <linearGradient id="vscBg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#1e293b" />
+        <stop offset="100%" stopColor="#0f172a" />
+      </linearGradient>
+    </defs>
+    <rect x="5" y="5" width="90" height="90" rx="22" fill="url(#vscBg)" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+    <g transform="translate(18, 16) scale(0.64)">
+      <path d="M74.9 97.4L98.5 86V14L74.9 2.6c-2.4-1.2-5.3-.9-7.5.7L25.3 35.8 8.8 23.3c-2.1-1.6-5.1-1.6-7.2.1-2.1 1.7-2.6 4.7-1.1 7L17 50 .5 69.6c-1.5 2.3-1 5.3 1.1 7 2.1 1.7 5.1 1.7 7.2.1l16.5-12.5 42.1 32.5c2.2 1.6 5.1 1.9 7.5.7zM77 24.3l10.3 5v41.4l-10.3 5V24.3zm-42 25.7l28-21.7v43.4L35 50z" fill="#007acc"/>
+      <path d="M74.9 2.6c-2.4-1.2-5.3-.9-7.5.7L25.3 35.8l9.7 7.5 39.9-30.8V2.6c0-.1 0-.1 0 0z" fill="#0065a9"/>
+      <path d="M74.9 97.4c-2.4 1.2-5.3.9-7.5-.7L25.3 64.2l9.7-7.5 39.9 30.8v9.9z" fill="#005085"/>
+      <path d="M8.8 23.3c-2.1-1.6-5.1-1.6-7.2.1-2.1 1.7-2.6 4.7-1.1 7L17 50 .5 69.6c-1.5 2.3-1 5.3 1.1 7 2.1 1.7 5.1 1.7 7.2.1l16.5-12.5 4-3.1L21 50l8.3-11.2-4-3L8.8 23.3z" fill="#1f9cf0"/>
+    </g>
+  </svg>
+);
+
+export const MacSafariIcon = ({ className = "w-full h-full" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <defs>
+      <radialGradient id="safariBg" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stopColor="#38bdf8" />
+        <stop offset="70%" stopColor="#0284c7" />
+        <stop offset="100%" stopColor="#0369a1" />
+      </radialGradient>
+    </defs>
+    <rect x="5" y="5" width="90" height="90" rx="22" fill="#f8fafc" />
+    <circle cx="50" cy="50" r="38" fill="url(#safariBg)" />
+    <circle cx="50" cy="50" r="34" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="1" strokeDasharray="2 4" />
+    {/* Compass Needle */}
+    <g transform="translate(50, 50) rotate(45)">
+      <polygon points="0,-28 6,0 0,0 -6,0" fill="#ef4444" />
+      <polygon points="0,28 6,0 0,0 -6,0" fill="#ffffff" />
+      <circle cx="0" cy="0" r="3.5" fill="#ffffff" />
+    </g>
+  </svg>
+);
+
+export const MacTerminalIcon = ({ className = "w-full h-full" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <rect x="5" y="5" width="90" height="90" rx="22" fill="#18181b" stroke="rgba(255,255,255,0.18)" strokeWidth="1.5" />
+    <path d="M5 26 L95 26" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+    <circle cx="16" cy="15" r="2.5" fill="#ef4444" />
+    <circle cx="25" cy="15" r="2.5" fill="#f59e0b" />
+    <circle cx="34" cy="15" r="2.5" fill="#10b981" />
+    {/* Prompt */}
+    <path d="M 22 45 L 36 55 L 22 65" fill="none" stroke="#22c55e" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
+    <rect x="42" y="63" width="16" height="4" rx="1" fill="#f8fafc" />
+  </svg>
+);
+
+export const MacTeraBoxIcon = ({ className = "w-full h-full" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <defs>
+      <linearGradient id="tbBg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stopColor="#38bdf8" />
+        <stop offset="100%" stopColor="#2563eb" />
+      </linearGradient>
+    </defs>
+    <rect x="5" y="5" width="90" height="90" rx="22" fill="url(#tbBg)" />
+    {/* White Cloud */}
+    <path d="M68 62 H32 C25 62 19 56 19 49 C19 43 23 38 29 37 C31 29 38 23 47 23 C56 23 63 29 66 37 C72 38 77 43 77 49 C77 56 73 62 68 62 Z" fill="#ffffff" />
+    {/* Blue Cloud Lettering */}
+    <path d="M42 38 H58 M50 38 V54" stroke="#0284c7" strokeWidth="4.5" strokeLinecap="round" />
+  </svg>
+);
+
+export const MacKbcIcon = ({ className = "w-full h-full" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <defs>
+      <linearGradient id="kbcBg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stopColor="#0f172a" />
+        <stop offset="100%" stopColor="#1e1b4b" />
+      </linearGradient>
+      <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stopColor="#fbbf24" />
+        <stop offset="50%" stopColor="#fef08a" />
+        <stop offset="100%" stopColor="#d97706" />
+      </linearGradient>
+    </defs>
+    <rect x="5" y="5" width="90" height="90" rx="22" fill="url(#kbcBg)" stroke="url(#gold)" strokeWidth="2.5" />
+    <circle cx="50" cy="50" r="32" fill="none" stroke="url(#gold)" strokeWidth="3" />
+    <circle cx="50" cy="50" r="26" fill="rgba(245, 158, 11, 0.15)" />
+    {/* Trophy */}
+    <path d="M40 36 H60 V46 C60 52 56 56 50 56 C44 56 40 52 40 46 Z" fill="url(#gold)" />
+    <path d="M47 56 H53 V62 H47 Z M38 62 H62 V65 H38 Z" fill="url(#gold)" />
+    <path d="M40 38 H34 C31 38 31 46 35 46 H40 M60 38 H66 C69 38 69 46 65 46 H60" fill="none" stroke="url(#gold)" strokeWidth="2.5" />
+  </svg>
+);
+
+export const MacSettingsIcon = ({ className = "w-full h-full" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <defs>
+      <linearGradient id="gearBg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stopColor="#71717a" />
+        <stop offset="100%" stopColor="#3f3f46" />
+      </linearGradient>
+    </defs>
+    <rect x="5" y="5" width="90" height="90" rx="22" fill="#27272a" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
+    <circle cx="50" cy="50" r="30" fill="url(#gearBg)" />
+    <g transform="translate(50,50)" fill="#71717a">
+      {[0, 45, 90, 135, 180, 225, 270, 315].map(deg => (
+        <rect key={deg} x="-4" y="-34" width="8" height="8" rx="2" transform={`rotate(${deg})`} />
+      ))}
+    </g>
+    <circle cx="50" cy="50" r="14" fill="#18181b" />
+  </svg>
+);
+
+export const MacNotesIcon = ({ className = "w-full h-full" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <rect x="5" y="5" width="90" height="90" rx="22" fill="#fef08a" />
+    <path d="M5 24 L95 24" stroke="#eab308" strokeWidth="6" />
+    <line x1="16" y1="38" x2="84" y2="38" stroke="#cbd5e1" strokeWidth="2" />
+    <line x1="16" y1="52" x2="84" y2="52" stroke="#cbd5e1" strokeWidth="2" />
+    <line x1="16" y1="66" x2="84" y2="66" stroke="#cbd5e1" strokeWidth="2" />
+    <line x1="16" y1="80" x2="60" y2="80" stroke="#cbd5e1" strokeWidth="2" />
+  </svg>
+);
+
+export const MacCalculatorIcon = ({ className = "w-full h-full" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <rect x="5" y="5" width="90" height="90" rx="22" fill="#27272a" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+    <circle cx="34" cy="36" r="11" fill="#71717a" />
+    <circle cx="66" cy="36" r="11" fill="#f97316" />
+    <circle cx="34" cy="66" r="11" fill="#52525b" />
+    <circle cx="66" cy="66" r="11" fill="#f97316" />
+    <text x="34" y="40" fill="#ffffff" fontSize="13" fontWeight="bold" textAnchor="middle">AC</text>
+    <text x="66" y="40" fill="#ffffff" fontSize="16" fontWeight="bold" textAnchor="middle">÷</text>
+    <text x="34" y="71" fill="#ffffff" fontSize="15" fontWeight="bold" textAnchor="middle">7</text>
+    <text x="66" y="71" fill="#ffffff" fontSize="17" fontWeight="bold" textAnchor="middle">=</text>
+  </svg>
+);
+
+export const MacTrashIcon = ({ className = "w-full h-full" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <rect x="5" y="5" width="90" height="90" rx="22" fill="#3f3f46" opacity="0.3" />
+    <g transform="translate(26, 20) scale(0.48)" fill="none" stroke="#e4e4e7" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 28 H88 M36 28 V16 C36 12 40 8 44 8 H56 C60 8 64 12 64 16 V28" />
+      <path d="M20 28 L28 88 C29 93 33 96 38 96 H62 C67 96 71 93 72 88 L80 28" fill="rgba(255,255,255,0.08)" />
+      <line x1="40" y1="44" x2="40" y2="80" />
+      <line x1="50" y1="44" x2="50" y2="80" />
+      <line x1="60" y1="44" x2="60" y2="80" />
+    </g>
+  </svg>
+);
+
+export const MacFolderIcon = ({ className = "w-full h-full" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <path d="M10 26 C10 20 14 16 20 16 H38 L46 24 H80 C86 24 90 28 90 34 V74 C90 80 86 84 80 84 H20 C14 84 10 80 10 74 Z" fill="#0284c7" />
+    <path d="M10 38 C10 32 14 30 20 30 H80 C86 30 90 32 90 38 V74 C90 80 86 84 80 84 H20 C14 84 10 80 10 74 Z" fill="#38bdf8" />
+  </svg>
+);
+
+// ── Wallpapers Library (Dark Mode Focused) ──
 const WALLPAPERS = [
   {
     id: 'sequoia-dark',
-    name: 'macOS Sequoia Night',
-    url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2850&q=80',
-    type: 'nature'
+    name: 'macOS Sequoia Dark Pro',
+    url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2850&q=80'
   },
   {
-    id: 'sonoma-horizon',
-    name: 'macOS Sonoma Horizon',
-    url: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?auto=format&fit=crop&w=2850&q=80',
-    type: 'abstract'
+    id: 'cyber-nebula',
+    name: 'Deep Space Galaxy',
+    url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=2850&q=80'
   },
   {
     id: 'monterey-glow',
     name: 'macOS Monterey Dark',
-    url: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=2850&q=80',
-    type: 'abstract'
-  },
-  {
-    id: 'cyber-nebula',
-    name: 'Deep Space Nebula',
-    url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=2850&q=80',
-    type: 'galaxy'
+    url: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=2850&q=80'
   },
   {
     id: 'nordic-mountains',
     name: 'Alps Aurora Peak',
-    url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=2850&q=80',
-    type: 'nature'
+    url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=2850&q=80'
   }
 ];
 
@@ -145,13 +318,13 @@ export default function MacOSDesktop() {
     }
     return [
       { id: 'vault', name: 'Course Vault', type: 'system', icon: 'vault', targetApp: 'finder' },
-      { id: 'terabox', name: 'TeraBox Cloud', type: 'system', icon: 'cloud', targetApp: 'terabox' },
+      { id: 'vscode-icon', name: 'VS Code', type: 'system', icon: 'vscode', targetApp: 'vscode' },
+      { id: 'terabox', name: 'TeraBox Cloud', type: 'system', icon: 'terabox', targetApp: 'terabox' },
       { id: 'projects', name: 'My Projects', type: 'folder', items: [
-        { id: 'p1', name: 'python_practice.py', type: 'file', content: 'print("AppleTree Python Course")' },
-        { id: 'p2', name: 'spring_boot_notes.txt', type: 'file', content: 'REST APIs, Microservices, Security' }
+        { id: 'p1', name: 'main.py', type: 'file', content: 'print("AppleTree Python Course")' },
+        { id: 'p2', name: 'notes.txt', type: 'file', content: 'Study Spring Boot and React' }
       ] },
       { id: 'kbc-icon', name: 'KBC Quiz', type: 'system', icon: 'kbc', targetApp: 'kbc' },
-      { id: 'code-icon', name: 'Code Studio', type: 'system', icon: 'code', targetApp: 'code' },
       { id: 'terminal-icon', name: 'Terminal', type: 'system', icon: 'terminal', targetApp: 'terminal' }
     ];
   });
@@ -162,52 +335,56 @@ export default function MacOSDesktop() {
 
   // ── TeraBox Cloud Storage State ──
   const [teraBoxFiles, setTeraBoxFiles] = useState([
-    { id: 'tb-1', name: 'FullStack_Java_Roadmap_2026.pdf', size: '2.4 MB', modified: 'Oct 29, 2026', type: 'pdf', downloads: 142 },
-    { id: 'tb-2', name: 'AWS_DevOps_Projects_Bundle.zip', size: '154.2 MB', modified: 'Oct 30, 2026', type: 'archive', downloads: 89 },
-    { id: 'tb-3', name: 'Python_AI_Datasets_Collection.tar.gz', size: '320.5 MB', modified: 'Oct 28, 2026', type: 'archive', downloads: 215 },
-    { id: 'tb-4', name: 'MERN_Enterprise_Ecommerce_Code.zip', size: '48.9 MB', modified: 'Oct 27, 2026', type: 'archive', downloads: 97 },
-    { id: 'tb-5', name: 'Placement_Preparation_QnA.docx', size: '1.8 MB', modified: 'Oct 26, 2026', type: 'doc', downloads: 410 }
+    { id: 'tb-1', name: 'FullStack_Java_Roadmap_2026.pdf', size: '2.4 MB', modified: 'Oct 29, 2026', type: 'pdf' },
+    { id: 'tb-2', name: 'AWS_DevOps_Projects_Bundle.zip', size: '154.2 MB', modified: 'Oct 30, 2026', type: 'archive' },
+    { id: 'tb-3', name: 'Python_AI_Datasets_Collection.tar.gz', size: '320.5 MB', modified: 'Oct 28, 2026', type: 'archive' },
+    { id: 'tb-4', name: 'MERN_Enterprise_Ecommerce_Code.zip', size: '48.9 MB', modified: 'Oct 27, 2026', type: 'archive' }
   ]);
   const [teraBoxUsedGB, setTeraBoxUsedGB] = useState(527.8);
   const [teraBoxTotalGB] = useState(1024);
-  const [teraBoxShareLink, setTeraBoxShareLink] = useState('https://terabox.com/s/1appletree-infotech-vault');
   const [isUploadingTeraBox, setIsUploadingTeraBox] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // ── Desktop Context Menu & Selection ──
-  const [contextMenu, setContextMenu] = useState(null); // { x, y, targetId }
+  // ── Desktop Controls & Selection ──
+  const [contextMenu, setContextMenu] = useState(null);
   const [renamingItemId, setRenamingItemId] = useState(null);
   const [renameValue, setRenameValue] = useState('');
-
-  // ── Desktop Configuration & UI Controls ──
   const [currentWallpaper, setCurrentWallpaper] = useState(WALLPAPERS[0].url);
   const [isLocked, setIsLocked] = useState(false);
-  const [activeMenu, setActiveMenu] = useState(null); // 'apple', 'controlCenter', 'spotlight', 'calendar', 'topFile', etc.
+  const [activeMenu, setActiveMenu] = useState(null);
   const [spotlightQuery, setSpotlightQuery] = useState('');
-  const [isDarkMode, setIsDarkMode] = useState(true);
   const [soundVolume, setSoundVolume] = useState(85);
   const [screenBrightness, setScreenBrightness] = useState(95);
-
-  // ── Bouncing App in Dock on launch ──
   const [bouncingApp, setBouncingApp] = useState(null);
 
   // ── Window Management State ──
-  const [highestZ, setHighestZ] = useState(20);
-  const [activeAppId, setActiveAppId] = useState('finder');
+  const [highestZ, setHighestZ] = useState(25);
+  const [activeAppId, setActiveAppId] = useState('vscode');
 
   const [windows, setWindows] = useState({
+    vscode: {
+      id: 'vscode',
+      title: 'Visual Studio Code — main.py',
+      isOpen: true,
+      isMinimized: false,
+      isMaximized: false,
+      zIndex: 20,
+      x: 70,
+      y: 45,
+      w: 920,
+      h: 580
+    },
     finder: {
       id: 'finder',
       title: 'Finder — AppleTree Vault',
-      isOpen: true,
+      isOpen: false,
       isMinimized: false,
       isMaximized: false,
       zIndex: 10,
       x: 60,
       y: 50,
       w: 860,
-      h: 530,
-      folderPath: 'root'
+      h: 530
     },
     terabox: {
       id: 'terabox',
@@ -259,25 +436,13 @@ export default function MacOSDesktop() {
       w: 900,
       h: 580
     },
-    code: {
-      id: 'code',
-      title: 'Code Studio — Python & Web Sandbox',
-      isOpen: false,
-      isMinimized: false,
-      isMaximized: false,
-      zIndex: 15,
-      x: 150,
-      y: 70,
-      w: 880,
-      h: 550
-    },
     notes: {
       id: 'notes',
       title: 'Notes',
       isOpen: false,
       isMinimized: false,
       isMaximized: false,
-      zIndex: 16,
+      zIndex: 15,
       x: 220,
       y: 110,
       w: 660,
@@ -289,7 +454,7 @@ export default function MacOSDesktop() {
       isOpen: false,
       isMinimized: false,
       isMaximized: false,
-      zIndex: 17,
+      zIndex: 16,
       x: 340,
       y: 130,
       w: 300,
@@ -301,7 +466,7 @@ export default function MacOSDesktop() {
       isOpen: false,
       isMinimized: false,
       isMaximized: false,
-      zIndex: 18,
+      zIndex: 17,
       x: 190,
       y: 80,
       w: 780,
@@ -321,7 +486,6 @@ export default function MacOSDesktop() {
     }
   });
 
-  // Focus and Bring Window to Front
   const focusWindow = (id) => {
     setHighestZ(prev => {
       const nextZ = prev + 1;
@@ -381,7 +545,7 @@ export default function MacOSDesktop() {
   const dragRef = useRef({ id: null, startX: 0, startY: 0, winX: 0, winY: 0 });
 
   const handleMouseDownHeader = (e, id) => {
-    if (e.target.closest('button')) return; // Ignore traffic lights clicks
+    if (e.target.closest('button')) return;
     focusWindow(id);
     dragRef.current = {
       id,
@@ -419,7 +583,7 @@ export default function MacOSDesktop() {
     window.addEventListener('mouseup', handleMouseUp);
   };
 
-  // ── Folder & Desktop Operations (Creating, Renaming, Deleting) ──
+  // ── Folder Operations ──
   const createNewFolder = (folderName = 'untitled folder') => {
     macSound.playPop();
     const existing = desktopItems.filter(i => i.name.startsWith(folderName));
@@ -465,7 +629,6 @@ export default function MacOSDesktop() {
     setRenamingItemId(null);
   };
 
-  // ── Desktop Right-Click Context Menu ──
   const handleDesktopContextMenu = (e) => {
     e.preventDefault();
     macSound.playClick();
@@ -496,23 +659,220 @@ export default function MacOSDesktop() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [desktopItems]);
 
-  // ── Interactive Terminal with Filesystem Commands ──
+  // ═══════════════════════════════════════════════════════════════
+  // ── REAL VISUAL STUDIO CODE STATE & LOGIC (Dark+ Theme) ──
+  // ═══════════════════════════════════════════════════════════════
+  const [vsCodeFiles, setVsCodeFiles] = useState([
+    {
+      id: 'f-py',
+      name: 'main.py',
+      lang: 'python',
+      content: 
+`#  Visual Studio Code on AppleTree macOS
+import time
+
+def master_tech_career():
+    print("🚀 Initializing AppleTree Full Stack Engine...")
+    tracks = [
+        {"role": "Java Full Stack Developer", "package": "₹8-18 LPA", "status": "Ready"},
+        {"role": "AWS DevOps Cloud Architect", "package": "₹10-22 LPA", "status": "Ready"},
+        {"role": "Python AI & ML Specialist", "package": "₹12-25 LPA", "status": "Ready"},
+        {"role": "React & MERN Stack Lead", "package": "₹8-16 LPA", "status": "Ready"}
+    ]
+    for idx, track in enumerate(tracks, start=1):
+        print(f"  {idx}. {track['role']} -> Target: {track['package']}")
+    print("\\n✓ Status: 100% Industry Certified & Placement Ready!")
+
+if __name__ == "__main__":
+    master_tech_career()
+`
+    },
+    {
+      id: 'f-html',
+      name: 'index.html',
+      lang: 'html',
+      content:
+`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AppleTree Infotech Portal</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <h1>AppleTree Infotech</h1>
+    <p>Premier Tech Training & Placements in Ghaziabad</p>
+  </div>
+</body>
+</html>`
+    },
+    {
+      id: 'f-css',
+      name: 'styles.css',
+      lang: 'css',
+      content:
+`/* VS Code Modern Dark Theme */
+body {
+  background-color: #0b0f19;
+  color: #f8fafc;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+#app {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 24px;
+  border-radius: 16px;
+}`
+    },
+    {
+      id: 'f-js',
+      name: 'app.js',
+      lang: 'javascript',
+      content:
+`// High performance async executor
+const runPlacementEngine = async () => {
+  console.log("Connecting to AppleTree Placement Portal...");
+  const status = await Promise.resolve("Placement Guaranteed in Top Tech MNCs");
+  console.log("Result:", status);
+};
+
+runPlacementEngine();`
+    },
+    {
+      id: 'f-md',
+      name: 'README.md',
+      lang: 'markdown',
+      content:
+`# Visual Studio Code for AppleTree macOS
+
+Official Developer IDE running inside macOS Sequoia dark container.
+- Interactive file explorer & multi-tab navigation
+- Python 3.12 sandbox execution with terminal output
+- Real VS Code Dark+ color scheme & status bar
+- Integrated Bash Terminal`
+    }
+  ]);
+
+  const [activeVsCodeFileId, setActiveVsCodeFileId] = useState('f-py');
+  const [vsCodeTabs, setVsCodeTabs] = useState(['f-py', 'f-html']);
+  const [vsCodeTerminalOutput, setVsCodeTerminalOutput] = useState([
+    'developer@appletree-mac-pro ~/workspace % python3 main.py',
+    '🚀 Initializing AppleTree Full Stack Engine...',
+    '  1. Java Full Stack Developer -> Target: ₹8-18 LPA',
+    '  2. AWS DevOps Cloud Architect -> Target: ₹10-22 LPA',
+    '  3. Python AI & ML Specialist -> Target: ₹12-25 LPA',
+    '  4. React & MERN Stack Lead -> Target: ₹8-16 LPA',
+    '',
+    '✓ Status: 100% Industry Certified & Placement Ready!'
+  ]);
+  const [vsCodeTerminalInput, setVsCodeTerminalInput] = useState('');
+  const [vsCodeBottomTab, setVsCodeBottomTab] = useState('terminal'); // 'terminal', 'output', 'problems'
+  const [isVsCodeRunning, setIsVsCodeRunning] = useState(false);
+  const [vsCodeActiveSidebar, setVsCodeActiveSidebar] = useState('explorer');
+
+  const activeVsCodeFile = vsCodeFiles.find(f => f.id === activeVsCodeFileId) || vsCodeFiles[0];
+
+  const handleOpenVsCodeTab = (fileId) => {
+    macSound.playClick();
+    if (!vsCodeTabs.includes(fileId)) {
+      setVsCodeTabs(prev => [...prev, fileId]);
+    }
+    setActiveVsCodeFileId(fileId);
+  };
+
+  const handleCloseVsCodeTab = (e, fileId) => {
+    e.stopPropagation();
+    macSound.playClick();
+    const newTabs = vsCodeTabs.filter(id => id !== fileId);
+    setVsCodeTabs(newTabs);
+    if (activeVsCodeFileId === fileId && newTabs.length > 0) {
+      setActiveVsCodeFileId(newTabs[newTabs.length - 1]);
+    }
+  };
+
+  const handleRunVsCodeCode = () => {
+    macSound.playPop();
+    setIsVsCodeRunning(true);
+    setVsCodeBottomTab('terminal');
+    setVsCodeTerminalOutput(prev => [
+      ...prev,
+      `developer@appletree-mac-pro ~/workspace % python3 ${activeVsCodeFile.name}`,
+      'Compiling with Python 3.12 (Hostinger Cloud Sandbox)...'
+    ]);
+
+    setTimeout(() => {
+      setIsVsCodeRunning(false);
+      macSound.playPop();
+      if (activeVsCodeFile.lang === 'python') {
+        setVsCodeTerminalOutput(prev => [
+          ...prev,
+          '🚀 Initializing AppleTree Full Stack Engine...',
+          '  1. Java Full Stack Developer -> Target: ₹8-18 LPA',
+          '  2. AWS DevOps Cloud Architect -> Target: ₹10-22 LPA',
+          '  3. Python AI & ML Specialist -> Target: ₹12-25 LPA',
+          '  4. React & MERN Stack Lead -> Target: ₹8-16 LPA',
+          '',
+          '✓ Status: 100% Industry Certified & Placement Ready!',
+          '[Process exited with code 0]'
+        ]);
+      } else {
+        setVsCodeTerminalOutput(prev => [
+          ...prev,
+          `Compiled ${activeVsCodeFile.name} successfully!`,
+          '[Process exited with code 0]'
+        ]);
+      }
+    }, 700);
+  };
+
+  const handleVsCodeTerminalSubmit = (e) => {
+    e.preventDefault();
+    const cmd = vsCodeTerminalInput.trim();
+    if (!cmd) return;
+    const parts = cmd.split(' ');
+    const main = parts[0].toLowerCase();
+
+    let res = '';
+    if (main === 'clear') {
+      setVsCodeTerminalOutput([]);
+      setVsCodeTerminalInput('');
+      return;
+    } else if (main === 'python' || main === 'python3') {
+      res = 'Python 3.12.2 (main, Feb 2026) [Clang 16.0.0 (Apple LLVM 16.0.0)] on darwin';
+    } else if (main === 'ls') {
+      res = vsCodeFiles.map(f => f.name).join('   ');
+    } else {
+      res = `zsh: command executed: ${cmd}`;
+    }
+
+    setVsCodeTerminalOutput(prev => [
+      ...prev,
+      `developer@appletree-mac-pro ~/workspace % ${cmd}`,
+      res
+    ]);
+    setVsCodeTerminalInput('');
+  };
+
+  // ── Terminal State ──
   const [terminalHistory, setTerminalHistory] = useState([
     { type: 'sys', text: ' AppleTree macOS Sequoia [Version 15.2.0 (Build 24C101)]' },
-    { type: 'sys', text: 'Type "help" to view full command suite or "mkdir <name>" to create desktop folders.' },
+    { type: 'sys', text: 'Dark Mode Only. Type "help" or "vscode" to launch the code environment.' },
     { type: 'input', cmd: 'neofetch', output: '' },
     { type: 'output', text: `
                  OS: macOS Sequoia 15.2 (AppleTree Edition)
              Host: AppleTree Mac Studio (M3 Max 16-Core)
            Kernel: Darwin 24.2.0
-         Uptime: 1 hour, 15 mins
          Shell: zsh 5.9 (x86_64-apple-darwin24.0)
            CPU: Apple M3 Max (16 Cores, 4.05 GHz)
              Memory: 24576MiB / 65536MiB
-                 TeraBox: 527.8 GB / 1024 GB (Active Sync)` }
+                 Theme: macOS Dark Mode Pro
+                        TeraBox: 527.8 GB / 1024 GB (Active Sync)` }
   ]);
   const [terminalInput, setTerminalInput] = useState('');
-  const [terminalPath, setTerminalPath] = useState('~/Desktop');
   const terminalBottomRef = useRef(null);
 
   const handleTerminalSubmit = (e) => {
@@ -527,19 +887,21 @@ export default function MacOSDesktop() {
 
     if (mainCmd === 'help') {
       response = `macOS AppleTree Terminal Utilities:
-  • mkdir <folder>   - Create a new folder directly on Desktop / Finder
+  • code / vscode    - Launch Visual Studio Code IDE
+  • mkdir <folder>   - Create a new folder on Desktop / Finder
   • touch <file>     - Create a new file on Desktop
   • rm <name>        - Delete folder or file
   • ls               - List files & folders in current path
   • pwd              - Print current working directory
-  • cat <file>       - Read file content
   • terabox          - Launch TeraBox Cloud Storage (1024 GB)
   • kbc              - Launch Kaun Banega Crorepati quiz app
   • safari [url]     - Open Safari browser with optional link
-  • python [file]    - Launch Python & Web Code Studio
   • neofetch         - Display AppleTree Mac system architecture
   • clear            - Clear terminal history
   • exit             - Close terminal`;
+    } else if (mainCmd === 'code' || mainCmd === 'vscode') {
+      openApp('vscode');
+      response = 'Launching Visual Studio Code in macOS window...';
     } else if (mainCmd === 'mkdir') {
       if (!arg) {
         response = 'usage: mkdir <directory_name>';
@@ -570,7 +932,7 @@ export default function MacOSDesktop() {
       const names = desktopItems.map(i => i.type === 'folder' ? `${i.name}/` : i.name).join('   ');
       response = names || '(empty directory)';
     } else if (mainCmd === 'pwd') {
-      response = `/Users/developer/${terminalPath.replace('~/', '')}`;
+      response = `/Users/developer/Desktop`;
     } else if (mainCmd === 'terabox') {
       openApp('terabox');
       response = 'Opening TeraBox Cloud Drive...';
@@ -579,16 +941,7 @@ export default function MacOSDesktop() {
       response = 'Launching KBC Master Arena in macOS window...';
     } else if (mainCmd === 'safari') {
       openApp('safari');
-      if (arg) {
-        setWindows(c => ({
-          ...c,
-          safari: { ...c.safari, url: arg.startsWith('http') ? arg : `https://${arg}`, tabTitle: arg }
-        }));
-      }
-      response = `Opening Safari Browser (${arg || 'AppleTree Programs'})...`;
-    } else if (mainCmd === 'python' || mainCmd === 'code') {
-      openApp('code');
-      response = 'Launching Python Code Studio Playground...';
+      response = `Opening Safari Browser...`;
     } else if (mainCmd === 'clear') {
       setTerminalHistory([]);
       setTerminalInput('');
@@ -597,22 +950,8 @@ export default function MacOSDesktop() {
       closeWindow('terminal');
       setTerminalInput('');
       return;
-    } else if (mainCmd === 'neofetch') {
-      response = `
-                 OS: macOS Sequoia 15.2 (AppleTree Edition)
-             Host: AppleTree Mac Studio (M3 Max 16-Core)
-           Kernel: Darwin 24.2.0
-         Uptime: 1 hour, 15 mins
-         Shell: zsh 5.9 (x86_64-apple-darwin24.0)
-           CPU: Apple M3 Max (16 Cores, 4.05 GHz)
-             Memory: 24576MiB / 65536MiB
-                 TeraBox: 527.8 GB / 1024 GB (Active Sync)`;
-    } else if (mainCmd === 'date') {
-      response = new Date().toString();
-    } else if (mainCmd === 'whoami') {
-      response = 'developer@appletree-mac-pro';
     } else {
-      response = `zsh: command not found: ${cmd}. Type "help" to see all commands.`;
+      response = `zsh: command not found: ${cmd}. Type "help" to see commands.`;
     }
 
     setTerminalHistory(prev => [
@@ -624,38 +963,6 @@ export default function MacOSDesktop() {
     setTimeout(() => {
       terminalBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 50);
-  };
-
-  // ── TeraBox Cloud Storage Upload Simulation ──
-  const handleSimulateTeraBoxUpload = () => {
-    setIsUploadingTeraBox(true);
-    setUploadProgress(10);
-    macSound.playPop();
-
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 95) {
-          clearInterval(interval);
-          setTimeout(() => {
-            setIsUploadingTeraBox(false);
-            setUploadProgress(0);
-            macSound.playPop();
-            const newFile = {
-              id: `tb-${Date.now()}`,
-              name: `Uploaded_Project_${Math.floor(Math.random() * 900 + 100)}.zip`,
-              size: `${(Math.random() * 40 + 5).toFixed(1)} MB`,
-              modified: 'Just now',
-              type: 'archive',
-              downloads: 1
-            };
-            setTeraBoxFiles(cur => [newFile, ...cur]);
-            setTeraBoxUsedGB(g => parseFloat((g + 0.1).toFixed(1)));
-          }, 400);
-          return 100;
-        }
-        return prev + 25;
-      });
-    }, 250);
   };
 
   // ── Calculator State ──
@@ -699,80 +1006,30 @@ export default function MacOSDesktop() {
   // ── Notes State ──
   const [notesContent, setNotesContent] = useState(() => {
     return localStorage.getItem('appletree_macos_notes') || 
-`#  AppleTree Infotech — Student Notes
+`#  AppleTree Infotech — Notes (macOS Dark Pro)
 
-Welcome to the full macOS Operating System Experience!
-• Create real folders on Desktop and inside Finder
-• Run zsh commands in Terminal (mkdir, ls, rm, neofetch, python)
-• TeraBox Cloud Storage connected with 1024 GB free cloud vault
-• Safari Browser with multi-tabs and bookmarks
-• Everything runs seamlessly without page refreshes!`;
+- Visual Studio Code installed with Python sandbox and integrated terminal
+- Real macOS Squircle Icons for all applications and files
+- TeraBox Cloud Storage connected with 1024 GB free vault
+- Real desktop folder creation via right-click or terminal
+- Exclusively configured in dark mode!`;
   });
 
   useEffect(() => {
     localStorage.setItem('appletree_macos_notes', notesContent);
   }, [notesContent]);
 
-  // ── Code Studio State ──
-  const [codeContent, setCodeContent] = useState(
-`# AppleTree Infotech Code Studio — Python 3.12
-def generate_placement_roadmap():
-    skills = ["Java Full Stack", "AWS DevOps", "Python AI", "MERN Stack"]
-    print("🚀 Flagship Industry Programs:")
-    for idx, skill in enumerate(skills, start=1):
-        print(f"  {idx}. {skill} — 100% Placement Support")
-
-generate_placement_roadmap()
-`
-  );
-  const [codeOutput, setCodeOutput] = useState('');
-  const [isCodeRunning, setIsCodeRunning] = useState(false);
-
-  const runCode = () => {
-    macSound.playPop();
-    setIsCodeRunning(true);
-    setCodeOutput('Compiling in AppleTree Sandbox Runner...\n');
-    setTimeout(() => {
-      setIsCodeRunning(false);
-      setCodeOutput(
-`🚀 Flagship Industry Programs:
-  1. Java Full Stack — 100% Placement Support
-  2. AWS DevOps — 100% Placement Support
-  3. Python AI — 100% Placement Support
-  4. MERN Stack — 100% Placement Support
-
-[Process completed with exit code 0]`
-      );
-    }, 600);
-  };
-
   // ── Safari Browser Navigation & Tabs ──
   const [safariTabs, setSafariTabs] = useState([
     { id: 'tab-1', title: 'Courses & Programs', url: 'https://programmingwala.com/programs' },
-    { id: 'tab-2', title: 'Tech Careers', url: 'https://programmingwala.com/careers' },
-    { id: 'tab-3', title: 'TeraBox Web Vault', url: 'https://terabox.com' }
+    { id: 'tab-2', title: 'TeraBox Cloud', url: 'https://terabox.com' }
   ]);
   const [activeSafariTabId, setActiveSafariTabId] = useState('tab-1');
   const [safariInputUrl, setSafariInputUrl] = useState('https://programmingwala.com/programs');
 
-  const handleSafariNavigate = (e) => {
-    if (e) e.preventDefault();
-    macSound.playClick();
-    const finalUrl = safariInputUrl.startsWith('http') ? safariInputUrl : `https://${safariInputUrl}`;
-    setSafariTabs(tabs => tabs.map(t => t.id === activeSafariTabId ? { ...t, url: finalUrl, title: finalUrl.replace('https://', '') } : t));
-  };
-
-  // ── Selected Desktop Folder Preview inside Finder ──
-  const [selectedFolderInFinder, setSelectedFolderInFinder] = useState(null);
-
-  const openFolderInFinder = (folderItem) => {
-    setSelectedFolderInFinder(folderItem);
-    openApp('finder');
-  };
-
   return (
     <div 
-      className={`fixed inset-0 w-screen h-screen overflow-hidden select-none font-sans ${isDarkMode ? 'dark text-white' : 'text-slate-900'}`}
+      className="fixed inset-0 w-screen h-screen overflow-hidden select-none font-sans dark text-white"
       style={{
         backgroundImage: `url(${currentWallpaper})`,
         backgroundSize: 'cover',
@@ -786,13 +1043,12 @@ generate_placement_roadmap()
       }}
       onContextMenu={handleDesktopContextMenu}
     >
-      {/* ════════════════ TOP macOS MENU BAR ════════════════ */}
+      {/* ════════════════ TOP macOS MENU BAR (Dark Mode Pro) ════════════════ */}
       <header 
-        className="fixed top-0 left-0 right-0 h-6.5 z-[9999] px-3 flex items-center justify-between text-xs font-medium text-white/95 backdrop-blur-2xl bg-black/40 border-b border-white/10 shadow-sm transition-all"
+        className="fixed top-0 left-0 right-0 h-6.5 z-[9999] px-3 flex items-center justify-between text-xs font-medium text-white/95 backdrop-blur-2xl bg-black/50 border-b border-white/10 shadow-sm transition-all"
         onClick={(e) => e.stopPropagation()}
         onContextMenu={(e) => e.stopPropagation()}
       >
-        {/* Left Side: Apple Logo & App Dropdown Menus */}
         <div className="flex items-center gap-3">
           {/*  Apple Menu */}
           <div className="relative">
@@ -805,7 +1061,7 @@ generate_placement_roadmap()
             </button>
 
             {activeMenu === 'apple' && (
-              <div className="absolute top-7 left-0 w-60 rounded-xl backdrop-blur-2xl bg-slate-950/90 border border-white/15 p-1.5 shadow-2xl z-50 text-slate-100 text-xs animate-in fade-in zoom-in-95 duration-100">
+              <div className="absolute top-7 left-0 w-60 rounded-xl backdrop-blur-2xl bg-slate-950/95 border border-white/15 p-1.5 shadow-2xl z-50 text-slate-100 text-xs animate-in fade-in zoom-in-95 duration-100">
                 <button 
                   onClick={() => { openApp('aboutMac'); setActiveMenu(null); }}
                   className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
@@ -815,18 +1071,18 @@ generate_placement_roadmap()
                 </button>
                 <div className="h-px bg-white/10 my-1" />
                 <button 
-                  onClick={() => { openApp('settings'); setActiveMenu(null); }}
-                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
+                  onClick={() => { openApp('vscode'); setActiveMenu(null); }}
+                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer text-sky-400"
                 >
-                  <span>System Settings...</span>
-                  <span className="text-[10px] text-white/40">⌘,</span>
+                  <span className="flex items-center gap-1.5">Visual Studio Code</span>
+                  <span className="text-[10px] bg-sky-500/30 px-1 rounded text-sky-200">IDE</span>
                 </button>
                 <button 
                   onClick={() => { openApp('terabox'); setActiveMenu(null); }}
-                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer text-sky-300 hover:text-white"
+                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer text-sky-300"
                 >
-                  <span className="flex items-center gap-1.5"><Cloud className="w-3.5 h-3.5" /> TeraBox Cloud Drive</span>
-                  <span className="text-[10px] bg-sky-500/30 px-1 rounded text-sky-200">1 TB</span>
+                  <span>TeraBox Cloud (1 TB)</span>
+                  <Cloud className="w-3.5 h-3.5" />
                 </button>
                 <div className="h-px bg-white/10 my-1" />
                 <button 
@@ -855,122 +1111,20 @@ generate_placement_roadmap()
             )}
           </div>
 
-          {/* Current Active App Name */}
           <span className="font-extrabold tracking-tight capitalize text-white">
-            {windows[activeAppId]?.title?.split('—')[0]?.split('(')[0]?.trim() || 'Finder'}
+            {windows[activeAppId]?.title?.split('—')[0]?.split('(')[0]?.trim() || 'Visual Studio Code'}
           </span>
 
-          {/* Native Dropdown Menus: File, Edit, View, Go, Window, Help */}
           <div className="hidden sm:flex items-center gap-3 text-white/80 text-[11px]">
-            {/* File Menu */}
-            <div className="relative">
-              <button 
-                onClick={() => setActiveMenu(activeMenu === 'fileMenu' ? null : 'fileMenu')} 
-                className="hover:text-white transition cursor-pointer"
-              >
-                File
-              </button>
-              {activeMenu === 'fileMenu' && (
-                <div className="absolute top-6 left-0 w-52 rounded-xl backdrop-blur-2xl bg-slate-950/90 border border-white/15 p-1.5 shadow-2xl z-50 text-slate-100 text-xs animate-in fade-in duration-100">
-                  <button onClick={() => { createNewFolder(); setActiveMenu(null); }} className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-blue-600 flex items-center justify-between">
-                    <span>New Folder</span>
-                    <span className="text-[10px] text-white/40">⇧⌘N</span>
-                  </button>
-                  <button onClick={() => { createNewTextFile(); setActiveMenu(null); }} className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-blue-600 flex items-center justify-between">
-                    <span>New Text Document</span>
-                  </button>
-                  <button onClick={() => { openApp('finder'); setActiveMenu(null); }} className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-blue-600 flex items-center justify-between">
-                    <span>New Finder Window</span>
-                    <span className="text-[10px] text-white/40">⌘N</span>
-                  </button>
-                  <div className="h-px bg-white/10 my-1" />
-                  <button onClick={() => { closeWindow(activeAppId); setActiveMenu(null); }} className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-rose-600 flex items-center justify-between">
-                    <span>Close Active Window</span>
-                    <span className="text-[10px] text-white/40">⌘W</span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Edit Menu */}
-            <div className="relative">
-              <button 
-                onClick={() => setActiveMenu(activeMenu === 'editMenu' ? null : 'editMenu')} 
-                className="hover:text-white transition cursor-pointer"
-              >
-                Edit
-              </button>
-              {activeMenu === 'editMenu' && (
-                <div className="absolute top-6 left-0 w-44 rounded-xl backdrop-blur-2xl bg-slate-950/90 border border-white/15 p-1.5 shadow-2xl z-50 text-slate-100 text-xs">
-                  <button onClick={() => { openApp('notes'); setActiveMenu(null); }} className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-blue-600 flex items-center justify-between">
-                    <span>Open Notes</span>
-                  </button>
-                  <button onClick={() => { setActiveMenu(null); }} className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-blue-600 flex items-center justify-between">
-                    <span>Copy</span>
-                    <span className="text-[10px] text-white/40">⌘C</span>
-                  </button>
-                  <button onClick={() => { setActiveMenu(null); }} className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-blue-600 flex items-center justify-between">
-                    <span>Paste</span>
-                    <span className="text-[10px] text-white/40">⌘V</span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* View Menu */}
-            <div className="relative">
-              <button 
-                onClick={() => setActiveMenu(activeMenu === 'viewMenu' ? null : 'viewMenu')} 
-                className="hover:text-white transition cursor-pointer"
-              >
-                View
-              </button>
-              {activeMenu === 'viewMenu' && (
-                <div className="absolute top-6 left-0 w-48 rounded-xl backdrop-blur-2xl bg-slate-950/90 border border-white/15 p-1.5 shadow-2xl z-50 text-slate-100 text-xs">
-                  <button onClick={() => { setIsDarkMode(!isDarkMode); setActiveMenu(null); }} className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-blue-600 flex items-center justify-between">
-                    <span>Toggle Dark Mode</span>
-                    <span>{isDarkMode ? '🌙' : '☀️'}</span>
-                  </button>
-                  <button onClick={() => { openApp('settings'); setActiveMenu(null); }} className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-blue-600 flex items-center justify-between">
-                    <span>Change Wallpapers...</span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Go Menu */}
-            <div className="relative">
-              <button 
-                onClick={() => setActiveMenu(activeMenu === 'goMenu' ? null : 'goMenu')} 
-                className="hover:text-white transition cursor-pointer"
-              >
-                Go
-              </button>
-              {activeMenu === 'goMenu' && (
-                <div className="absolute top-6 left-0 w-52 rounded-xl backdrop-blur-2xl bg-slate-950/90 border border-white/15 p-1.5 shadow-2xl z-50 text-slate-100 text-xs">
-                  <button onClick={() => { openApp('terabox'); setActiveMenu(null); }} className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-blue-600 flex items-center gap-2">
-                    <Cloud className="w-3.5 h-3.5 text-sky-400" /> TeraBox Cloud Drive
-                  </button>
-                  <button onClick={() => { openApp('finder'); setActiveMenu(null); }} className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-blue-600 flex items-center gap-2">
-                    <Folder className="w-3.5 h-3.5 text-blue-400" /> Course Vault
-                  </button>
-                  <button onClick={() => { openApp('terminal'); setActiveMenu(null); }} className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-blue-600 flex items-center gap-2">
-                    <Terminal className="w-3.5 h-3.5 text-purple-400" /> Terminal (~/Desktop)
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Help */}
-            <button onClick={() => openApp('aboutMac')} className="hover:text-white transition cursor-pointer">
-              Help
-            </button>
+            <button onClick={() => openApp('vscode')} className="hover:text-white transition cursor-pointer">File</button>
+            <button onClick={() => openApp('vscode')} className="hover:text-white transition cursor-pointer">Edit</button>
+            <button onClick={() => openApp('vscode')} className="hover:text-white transition cursor-pointer">Selection</button>
+            <button onClick={() => openApp('terminal')} className="hover:text-white transition cursor-pointer">Terminal</button>
+            <button onClick={() => openApp('aboutMac')} className="hover:text-white transition cursor-pointer">Help</button>
           </div>
         </div>
 
-        {/* Right Side: Battery, Wi-Fi, Spotlight, Control Center, Clock, Calendar */}
         <div className="flex items-center gap-3">
-          {/* Quick Exit to Web */}
           <Link
             to="/"
             className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-[10px] font-bold text-amber-300 hover:text-white transition cursor-pointer"
@@ -979,16 +1133,13 @@ generate_placement_roadmap()
             <span>Exit macOS</span>
           </Link>
 
-          {/* Battery */}
           <div className="flex items-center gap-1 opacity-90 text-[11px]">
             <span>100%</span>
             <Battery className="w-4 h-4 text-emerald-400 rotate-90" />
           </div>
 
-          {/* Wi-Fi */}
           <Wifi className="w-3.5 h-3.5 text-white/90" />
 
-          {/* Spotlight Search Toggle */}
           <button
             onClick={() => setActiveMenu(activeMenu === 'spotlight' ? null : 'spotlight')}
             className="hover:opacity-75 transition-opacity cursor-pointer p-0.5"
@@ -1007,12 +1158,11 @@ generate_placement_roadmap()
               <Sliders className="w-3.5 h-3.5 text-white/90" />
             </button>
 
-            {/* Control Center Flyout */}
             {activeMenu === 'controlCenter' && (
-              <div className="absolute top-7 right-0 w-72 rounded-2xl backdrop-blur-3xl bg-slate-950/90 border border-white/15 p-3.5 shadow-2xl z-50 text-slate-100 text-xs animate-in fade-in duration-150 space-y-3">
+              <div className="absolute top-7 right-0 w-72 rounded-2xl backdrop-blur-3xl bg-slate-950/95 border border-white/15 p-3.5 shadow-2xl z-50 text-slate-100 text-xs animate-in fade-in duration-150 space-y-3">
                 <div className="flex items-center justify-between pb-2 border-b border-white/10">
                   <span className="font-bold flex items-center gap-1.5"><Sliders className="w-3.5 h-3.5 text-blue-400" /> Control Center</span>
-                  <span className="text-[10px] text-emerald-400 font-semibold">● Active</span>
+                  <span className="text-[10px] text-emerald-400 font-semibold">● macOS Pro Dark</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
@@ -1020,45 +1170,27 @@ generate_placement_roadmap()
                     <Wifi className="w-4 h-4 text-blue-400" />
                     <div>
                       <p className="font-bold text-[11px]">Wi-Fi</p>
-                      <p className="text-[9px] text-white/60">AppleTree-HighSpeed</p>
+                      <p className="text-[9px] text-white/60">AppleTree-5G</p>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => { setIsDarkMode(!isDarkMode); macSound.playClick(); }}
-                    className="p-2.5 rounded-xl bg-white/10 hover:bg-white/15 transition flex items-center gap-2 text-left cursor-pointer"
-                  >
-                    {isDarkMode ? <Moon className="w-4 h-4 text-indigo-400" /> : <Sun className="w-4 h-4 text-amber-400" />}
+                  <div className="p-2.5 rounded-xl bg-indigo-950/60 border border-indigo-400/30 flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
                     <div>
-                      <p className="font-bold text-[11px]">Dark Mode</p>
-                      <p className="text-[9px] text-white/60">{isDarkMode ? 'On' : 'Off'}</p>
-                    </div>
-                  </button>
-                </div>
-
-                {/* TeraBox Cloud Quick Status */}
-                <div 
-                  onClick={() => { openApp('terabox'); setActiveMenu(null); }}
-                  className="p-2.5 rounded-xl bg-sky-500/15 border border-sky-400/30 hover:bg-sky-500/25 transition cursor-pointer flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-2">
-                    <Cloud className="w-4 h-4 text-sky-400" />
-                    <div>
-                      <p className="font-bold text-[11px] text-sky-200">TeraBox Cloud Drive</p>
-                      <p className="text-[9px] text-sky-300/80">{teraBoxUsedGB} GB of 1024 GB used</p>
+                      <p className="font-bold text-[11px] text-indigo-200">Dark Mode</p>
+                      <p className="text-[9px] text-indigo-300/80">Always Active</p>
                     </div>
                   </div>
-                  <span className="text-[9px] px-2 py-0.5 rounded bg-sky-400 text-slate-950 font-black">OPEN</span>
                 </div>
 
                 {/* Display Brightness */}
                 <div className="p-2.5 rounded-xl bg-white/10 space-y-1.5">
                   <div className="flex items-center justify-between text-[11px] font-semibold">
-                    <span className="flex items-center gap-1.5"><Sun className="w-3.5 h-3.5 text-amber-400" /> Display</span>
+                    <span>Display Brightness</span>
                     <span>{screenBrightness}%</span>
                   </div>
                   <input
                     type="range"
-                    min="35"
+                    min="40"
                     max="100"
                     value={screenBrightness}
                     onChange={(e) => setScreenBrightness(e.target.value)}
@@ -1069,7 +1201,7 @@ generate_placement_roadmap()
                 {/* Sound Volume */}
                 <div className="p-2.5 rounded-xl bg-white/10 space-y-1.5">
                   <div className="flex items-center justify-between text-[11px] font-semibold">
-                    <span className="flex items-center gap-1.5"><Volume2 className="w-3.5 h-3.5 text-blue-400" /> Sound</span>
+                    <span>Sound Volume</span>
                     <span>{soundVolume}%</span>
                   </div>
                   <input
@@ -1085,49 +1217,23 @@ generate_placement_roadmap()
             )}
           </div>
 
-          {/* Calendar & Clock Button */}
-          <div className="relative">
-            <button
-              onClick={() => setActiveMenu(activeMenu === 'calendar' ? null : 'calendar')}
-              className="font-semibold text-white/95 tracking-wide text-[11px] hover:opacity-80 transition cursor-pointer"
-            >
-              {formatMacDate(currentTime)}
-            </button>
-
-            {/* Calendar Notification Center Dropdown */}
-            {activeMenu === 'calendar' && (
-              <div className="absolute top-7 right-0 w-64 rounded-2xl backdrop-blur-3xl bg-slate-950/90 border border-white/15 p-4 shadow-2xl z-50 text-slate-100 text-xs animate-in fade-in duration-100">
-                <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                  <span className="font-bold text-amber-300">{currentTime.toLocaleDateString([], { month: 'long', year: 'numeric' })}</span>
-                  <CalendarIcon className="w-4 h-4 text-slate-400" />
-                </div>
-                <div className="py-3 text-center">
-                  <div className="text-3xl font-extralight text-white mb-1">
-                    {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </div>
-                  <p className="text-[11px] text-slate-400">
-                    {currentTime.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}
-                  </p>
-                </div>
-                <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-[11px] space-y-1">
-                  <p className="font-bold text-emerald-400">● Today's Schedule</p>
-                  <p className="text-slate-300">Java Full Stack & AWS DevOps Workshop</p>
-                  <p className="text-[9px] text-slate-500">AppleTree Infotech RDC Center</p>
-                </div>
-              </div>
-            )}
-          </div>
+          <button
+            onClick={() => setActiveMenu(activeMenu === 'calendar' ? null : 'calendar')}
+            className="font-semibold text-white/95 tracking-wide text-[11px] hover:opacity-80 transition cursor-pointer"
+          >
+            {formatMacDate(currentTime)}
+          </button>
         </div>
       </header>
 
       {/* ════════════════ SPOTLIGHT SEARCH (Cmd+Space / Ctrl+K) ════════════════ */}
       {activeMenu === 'spotlight' && (
         <div 
-          className="fixed inset-0 z-[99990] flex items-start justify-center pt-24 bg-black/45 backdrop-blur-md"
+          className="fixed inset-0 z-[99990] flex items-start justify-center pt-24 bg-black/50 backdrop-blur-md"
           onClick={() => setActiveMenu(null)}
         >
           <div 
-            className="w-full max-w-lg rounded-2xl backdrop-blur-3xl bg-slate-900/90 border border-white/20 shadow-2xl p-3 text-white animate-in zoom-in-95 duration-150"
+            className="w-full max-w-lg rounded-2xl backdrop-blur-3xl bg-slate-900/95 border border-white/20 shadow-2xl p-3 text-white animate-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 px-3 py-2 border-b border-white/10">
@@ -1135,7 +1241,7 @@ generate_placement_roadmap()
               <input
                 type="text"
                 autoFocus
-                placeholder="Spotlight Search: Launch apps, TeraBox, courses, files..."
+                placeholder="Spotlight Search: Launch VS Code, TeraBox, Python..."
                 value={spotlightQuery}
                 onChange={(e) => setSpotlightQuery(e.target.value)}
                 className="w-full bg-transparent text-sm font-medium outline-none text-white placeholder-white/40"
@@ -1145,57 +1251,43 @@ generate_placement_roadmap()
 
             <div className="p-2 space-y-1 max-h-64 overflow-y-auto">
               {[
-                { name: 'TeraBox Cloud Storage (1024 GB)', id: 'terabox', icon: Cloud, desc: 'Sync and manage cloud files' },
-                { name: 'Finder (Course Vault)', id: 'finder', icon: Folder, desc: 'Browse learning tracks & certificates' },
-                { name: 'Safari Browser', id: 'safari', icon: Compass, desc: 'Browse web & AppleTree programs' },
-                { name: 'KBC Quiz Arena', id: 'kbc', icon: Trophy, desc: 'Play live tech competition' },
-                { name: 'Terminal', id: 'terminal', icon: Terminal, desc: 'Interactive zsh command line with mkdir/ls' },
-                { name: 'Code Studio', id: 'code', icon: Code2, desc: 'Write and test Python code' },
-                { name: 'Notes', id: 'notes', icon: FileText, desc: 'Persistent student notes' },
-                { name: 'Calculator', id: 'calculator', icon: Calculator, desc: 'Apple standard calculator' },
-                { name: 'System Settings', id: 'settings', icon: Settings, desc: 'Change wallpaper & appearance' }
+                { name: 'Visual Studio Code', id: 'vscode', desc: 'Code editor with Python sandbox & terminal' },
+                { name: 'TeraBox Cloud Storage (1024 GB)', id: 'terabox', desc: 'Sync and manage cloud files' },
+                { name: 'Finder (Course Vault)', id: 'finder', desc: 'Browse learning tracks & certificates' },
+                { name: 'Safari Browser', id: 'safari', desc: 'Browse web & AppleTree programs' },
+                { name: 'KBC Quiz Arena', id: 'kbc', desc: 'Play live tech competition' },
+                { name: 'Terminal', id: 'terminal', desc: 'Interactive zsh command line with mkdir/ls' },
+                { name: 'Notes', id: 'notes', desc: 'Persistent student notes' },
+                { name: 'Calculator', id: 'calculator', desc: 'Apple standard calculator' }
               ]
                 .filter(a => a.name.toLowerCase().includes(spotlightQuery.toLowerCase()) || a.desc.toLowerCase().includes(spotlightQuery.toLowerCase()))
-                .map(app => {
-                  const Icon = app.icon;
-                  return (
-                    <button
-                      key={app.id}
-                      onClick={() => { openApp(app.id); setActiveMenu(null); }}
-                      className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-blue-600 transition text-left cursor-pointer group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center">
-                          <Icon className="w-4 h-4 text-blue-300 group-hover:text-white" />
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold">{app.name}</p>
-                          <p className="text-[10px] text-white/60 group-hover:text-white/80">{app.desc}</p>
-                        </div>
-                      </div>
-                      <ChevronRight className="w-3.5 h-3.5 text-white/30 group-hover:text-white" />
-                    </button>
-                  );
-                })}
+                .map(app => (
+                  <button
+                    key={app.id}
+                    onClick={() => { openApp(app.id); setActiveMenu(null); }}
+                    className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-blue-600 transition text-left cursor-pointer group"
+                  >
+                    <div>
+                      <p className="text-xs font-semibold">{app.name}</p>
+                      <p className="text-[10px] text-white/60 group-hover:text-white/80">{app.desc}</p>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-white/30 group-hover:text-white" />
+                  </button>
+                ))}
             </div>
           </div>
         </div>
       )}
 
-      {/* ════════════════ DESKTOP ICONS GRID (Folders & Apps) ════════════════ */}
+      {/* ════════════════ DESKTOP REAL macOS ICONS GRID ════════════════ */}
       <div className="absolute top-10 right-4 flex flex-col gap-4 items-center z-10 max-h-[calc(100vh-100px)] flex-wrap">
         {desktopItems.map(item => {
-          let IconComponent = Folder;
-          let iconColor = 'text-sky-400';
-          if (item.type === 'system') {
-            if (item.icon === 'cloud') { IconComponent = Cloud; iconColor = 'text-sky-300'; }
-            else if (item.icon === 'kbc') { IconComponent = Trophy; iconColor = 'text-amber-400'; }
-            else if (item.icon === 'code') { IconComponent = Code2; iconColor = 'text-emerald-400'; }
-            else if (item.icon === 'terminal') { IconComponent = Terminal; iconColor = 'text-purple-400'; }
-          } else if (item.type === 'file') {
-            IconComponent = FileText;
-            iconColor = 'text-slate-300';
-          }
+          let IconComponent = MacFolderIcon;
+          if (item.targetApp === 'vscode' || item.icon === 'vscode') IconComponent = MacVSCodeIcon;
+          else if (item.targetApp === 'finder' || item.icon === 'vault') IconComponent = MacFinderIcon;
+          else if (item.targetApp === 'terabox' || item.icon === 'terabox') IconComponent = MacTeraBoxIcon;
+          else if (item.targetApp === 'kbc' || item.icon === 'kbc') IconComponent = MacKbcIcon;
+          else if (item.targetApp === 'terminal' || item.icon === 'terminal') IconComponent = MacTerminalIcon;
 
           const isRenaming = renamingItemId === item.id;
 
@@ -1210,19 +1302,14 @@ generate_placement_roadmap()
               }}
               onDoubleClick={() => {
                 macSound.playPop();
-                if (item.targetApp) {
-                  openApp(item.targetApp);
-                } else if (item.type === 'folder') {
-                  openFolderInFinder(item);
-                } else if (item.type === 'file') {
-                  openApp('notes');
-                  if (item.content) setNotesContent(item.content);
-                }
+                if (item.targetApp) openApp(item.targetApp);
+                else if (item.type === 'folder') openApp('finder');
+                else openApp('notes');
               }}
               className="flex flex-col items-center group cursor-pointer focus:outline-none w-20 text-center"
             >
-              <div className="w-14 h-14 rounded-2xl backdrop-blur-xl bg-black/45 border border-white/20 p-2.5 flex items-center justify-center shadow-lg group-hover:scale-105 group-hover:bg-black/65 transition-all">
-                <IconComponent className={`w-8 h-8 ${iconColor}`} />
+              <div className="w-14 h-14 p-1 flex items-center justify-center group-hover:scale-105 transition-all">
+                <IconComponent className="w-full h-full drop-shadow-xl" />
               </div>
 
               {isRenaming ? (
@@ -1236,7 +1323,7 @@ generate_placement_roadmap()
                   className="mt-1 w-full bg-blue-600/90 text-white text-[11px] font-semibold text-center rounded px-1 outline-none border border-blue-400"
                 />
               ) : (
-                <span className="mt-1 text-[11px] font-semibold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] px-1.5 py-0.5 rounded group-hover:bg-blue-600/70 transition line-clamp-2 max-w-full">
+                <span className="mt-1 text-[11px] font-semibold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] px-1.5 py-0.5 rounded group-hover:bg-blue-600/80 transition line-clamp-2 max-w-full">
                   {item.name}
                 </span>
               )}
@@ -1250,7 +1337,7 @@ generate_placement_roadmap()
         <div
           style={{ top: contextMenu.y, left: contextMenu.x }}
           onClick={(e) => e.stopPropagation()}
-          className="fixed z-[99998] w-52 rounded-xl backdrop-blur-2xl bg-slate-950/90 border border-white/20 shadow-2xl p-1.5 text-xs text-slate-100 animate-in fade-in duration-75 space-y-0.5"
+          className="fixed z-[99998] w-52 rounded-xl backdrop-blur-2xl bg-slate-950/95 border border-white/20 shadow-2xl p-1.5 text-xs text-slate-100 animate-in fade-in duration-75 space-y-0.5"
         >
           {contextMenu.targetId ? (
             <>
@@ -1259,8 +1346,7 @@ generate_placement_roadmap()
                   macSound.playPop();
                   const it = contextMenu.item;
                   if (it?.targetApp) openApp(it.targetApp);
-                  else if (it?.type === 'folder') openFolderInFinder(it);
-                  else openApp('notes');
+                  else openApp('finder');
                   setContextMenu(null);
                 }}
                 className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between font-semibold"
@@ -1272,7 +1358,6 @@ generate_placement_roadmap()
                 className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between"
               >
                 <span>Rename...</span>
-                <Edit3 className="w-3 h-3 opacity-60" />
               </button>
               <div className="h-px bg-white/10 my-1" />
               <button
@@ -1300,6 +1385,12 @@ generate_placement_roadmap()
               </button>
               <div className="h-px bg-white/10 my-1" />
               <button
+                onClick={() => { openApp('vscode'); setContextMenu(null); }}
+                className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center gap-2 text-sky-400"
+              >
+                <Code2 className="w-3.5 h-3.5" /> Open in VS Code
+              </button>
+              <button
                 onClick={() => { openApp('terabox'); setContextMenu(null); }}
                 className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center gap-2 text-sky-300"
               >
@@ -1324,7 +1415,326 @@ generate_placement_roadmap()
 
       {/* ════════════════ WINDOWS RENDERING ════════════════ */}
 
-      {/* ── 1. TERABOX CLOUD DRIVE WINDOW ── */}
+      {/* ── 1. REAL VISUAL STUDIO CODE WINDOW ── */}
+      {windows.vscode.isOpen && !windows.vscode.isMinimized && (
+        <div
+          onClick={() => focusWindow('vscode')}
+          style={{
+            zIndex: windows.vscode.zIndex,
+            left: windows.vscode.isMaximized ? 0 : windows.vscode.x,
+            top: windows.vscode.isMaximized ? 26 : windows.vscode.y,
+            width: windows.vscode.isMaximized ? '100vw' : windows.vscode.w,
+            height: windows.vscode.isMaximized ? 'calc(100vh - 26px - 80px)' : windows.vscode.h
+          }}
+          className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-[#1e1e1e] border border-white/20 shadow-2xl flex flex-col font-sans transition-all duration-150 ${activeAppId === 'vscode' ? 'ring-1 ring-sky-400/50' : 'opacity-95'}`}
+        >
+          {/* VS Code macOS Title Header */}
+          <div 
+            onMouseDown={(e) => handleMouseDownHeader(e, 'vscode')}
+            className="h-10 px-4 bg-[#323233] border-b border-[#252526] flex items-center justify-between cursor-move shrink-0"
+          >
+            {/* Traffic Lights */}
+            <div className="flex items-center gap-2">
+              <button onClick={() => closeWindow('vscode')} className="w-3 h-3 rounded-full bg-rose-500 hover:bg-rose-600 cursor-pointer" />
+              <button onClick={() => minimizeWindow('vscode')} className="w-3 h-3 rounded-full bg-amber-500 hover:bg-amber-600 cursor-pointer" />
+              <button onClick={() => toggleMaximize('vscode')} className="w-3 h-3 rounded-full bg-emerald-500 hover:bg-emerald-600 cursor-pointer" />
+            </div>
+
+            {/* Window Title */}
+            <div className="flex items-center gap-2 text-xs text-[#cccccc] font-medium">
+              <div className="w-4 h-4"><MacVSCodeIcon /></div>
+              <span>{activeVsCodeFile.name} — AppleTree-Workspace — Visual Studio Code</span>
+            </div>
+
+            {/* Run Button in Header */}
+            <button
+              onClick={handleRunVsCodeCode}
+              disabled={isVsCodeRunning}
+              className="px-3 py-1 rounded-md bg-[#007acc] hover:bg-[#0062a3] text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm cursor-pointer"
+            >
+              <Play className="w-3 h-3 fill-current" />
+              <span>{isVsCodeRunning ? 'Executing...' : 'Run Python'}</span>
+            </button>
+          </div>
+
+          {/* VS Code Main Layout */}
+          <div className="flex-1 flex overflow-hidden">
+            {/* Activity Bar (Left strip) */}
+            <div className="w-12 bg-[#333333] border-r border-[#252526] flex flex-col items-center justify-between py-3 shrink-0">
+              <div className="flex flex-col items-center gap-4 text-[#858585]">
+                <button 
+                  onClick={() => setVsCodeActiveSidebar('explorer')}
+                  className={`p-1.5 rounded hover:text-white transition cursor-pointer ${vsCodeActiveSidebar === 'explorer' ? 'text-white border-l-2 border-white pl-1' : ''}`}
+                  title="Explorer (Files)"
+                >
+                  <Folder className="w-5 h-5" />
+                </button>
+                <button 
+                  onClick={() => setVsCodeActiveSidebar('search')}
+                  className={`p-1.5 rounded hover:text-white transition cursor-pointer ${vsCodeActiveSidebar === 'search' ? 'text-white' : ''}`}
+                  title="Search"
+                >
+                  <Search className="w-5 h-5" />
+                </button>
+                <button 
+                  onClick={() => setVsCodeActiveSidebar('git')}
+                  className="p-1.5 rounded hover:text-white transition cursor-pointer relative"
+                  title="Source Control"
+                >
+                  <Layers className="w-5 h-5" />
+                  <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-[#007acc]" />
+                </button>
+                <button 
+                  onClick={handleRunVsCodeCode}
+                  className="p-1.5 rounded hover:text-white transition cursor-pointer"
+                  title="Run and Debug"
+                >
+                  <PlayCircle className="w-5 h-5 text-emerald-400" />
+                </button>
+              </div>
+
+              <button onClick={() => openApp('settings')} className="text-[#858585] hover:text-white cursor-pointer" title="Settings">
+                <Settings className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Sidebar (File Explorer) */}
+            <div className="w-56 bg-[#252526] border-r border-[#1e1e1e] flex flex-col text-xs text-[#cccccc] shrink-0">
+              <div className="px-3 py-2 flex items-center justify-between font-bold uppercase text-[10px] tracking-wider text-[#8e8e8e] border-b border-[#333333]">
+                <span>Explorer</span>
+                <button 
+                  onClick={() => {
+                    const name = prompt('Enter new filename (e.g. script.py):', 'script.py');
+                    if (name) {
+                      const newFile = { id: `f-${Date.now()}`, name, lang: name.endsWith('.py') ? 'python' : 'javascript', content: '# New Code File\n' };
+                      setVsCodeFiles(prev => [...prev, newFile]);
+                      handleOpenVsCodeTab(newFile.id);
+                    }
+                  }}
+                  className="hover:text-white cursor-pointer"
+                  title="New File"
+                >
+                  <FilePlus className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div className="p-2 space-y-0.5 overflow-y-auto flex-1 font-mono text-[11px]">
+                <div className="text-[10px] text-slate-400 font-bold uppercase px-1 py-1">APPLETREE-WORKSPACE</div>
+                {vsCodeFiles.map(file => (
+                  <button
+                    key={file.id}
+                    onClick={() => handleOpenVsCodeTab(file.id)}
+                    className={`w-full text-left px-2 py-1.5 rounded flex items-center gap-2 transition cursor-pointer ${
+                      activeVsCodeFileId === file.id ? 'bg-[#37373d] text-white font-semibold' : 'hover:bg-[#2a2d2e] text-[#cccccc]'
+                    }`}
+                  >
+                    <FileCode className={`w-3.5 h-3.5 ${file.name.endsWith('.py') ? 'text-yellow-400' : file.name.endsWith('.html') ? 'text-orange-400' : file.name.endsWith('.css') ? 'text-sky-400' : 'text-blue-400'}`} />
+                    <span className="truncate">{file.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Editor Workspace & Integrated Terminal */}
+            <div className="flex-1 flex flex-col bg-[#1e1e1e] overflow-hidden">
+              {/* Tab Bar */}
+              <div className="h-9 bg-[#252526] flex items-center overflow-x-auto shrink-0 border-b border-[#1e1e1e]">
+                {vsCodeTabs.map(tabId => {
+                  const file = vsCodeFiles.find(f => f.id === tabId);
+                  if (!file) return null;
+                  const isActive = activeVsCodeFileId === tabId;
+
+                  return (
+                    <div
+                      key={tabId}
+                      onClick={() => setActiveVsCodeFileId(tabId)}
+                      className={`h-full px-3.5 flex items-center gap-2 border-r border-[#1e1e1e] text-xs font-mono cursor-pointer transition select-none ${
+                        isActive ? 'bg-[#1e1e1e] text-white border-t-2 border-t-[#007acc]' : 'bg-[#2d2d2d] text-[#969696] hover:bg-[#252526]'
+                      }`}
+                    >
+                      <FileCode className={`w-3.5 h-3.5 ${file.name.endsWith('.py') ? 'text-yellow-400' : file.name.endsWith('.html') ? 'text-orange-400' : 'text-blue-400'}`} />
+                      <span>{file.name}</span>
+                      <button 
+                        onClick={(e) => handleCloseVsCodeTab(e, tabId)} 
+                        className="hover:bg-white/10 rounded p-0.5 text-[#888888] hover:text-white"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Code Editor Body */}
+              <div className="flex-1 flex overflow-hidden">
+                {/* Line Numbers */}
+                <div className="w-10 bg-[#1e1e1e] py-3 text-right pr-3 font-mono text-xs text-[#858585] select-none shrink-0 leading-relaxed border-r border-white/5">
+                  {(activeVsCodeFile.content.split('\n')).map((_, idx) => (
+                    <div key={idx}>{idx + 1}</div>
+                  ))}
+                </div>
+
+                {/* Editable Text Area */}
+                <textarea
+                  value={activeVsCodeFile.content}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setVsCodeFiles(prev => prev.map(f => f.id === activeVsCodeFileId ? { ...f, content: val } : f));
+                  }}
+                  className="flex-1 h-full p-3 bg-transparent text-[#9cdcfe] font-mono text-xs leading-relaxed outline-none resize-none overflow-y-auto selection:bg-[#264f78]"
+                  spellCheck={false}
+                />
+              </div>
+
+              {/* Integrated VS Code Bottom Panel (Terminal / Output) */}
+              <div className="h-44 bg-[#181818] border-t border-[#333333] flex flex-col shrink-0">
+                <div className="h-7 px-3 bg-[#1e1e1e] border-b border-[#333333] flex items-center justify-between text-[11px] font-sans font-semibold text-[#cccccc]">
+                  <div className="flex items-center gap-4">
+                    <button 
+                      onClick={() => setVsCodeBottomTab('terminal')}
+                      className={`hover:text-white cursor-pointer ${vsCodeBottomTab === 'terminal' ? 'text-white border-b-2 border-[#007acc] pb-0.5' : 'text-[#888888]'}`}
+                    >
+                      TERMINAL
+                    </button>
+                    <button 
+                      onClick={() => setVsCodeBottomTab('output')}
+                      className={`hover:text-white cursor-pointer ${vsCodeBottomTab === 'output' ? 'text-white border-b-2 border-[#007acc] pb-0.5' : 'text-[#888888]'}`}
+                    >
+                      OUTPUT
+                    </button>
+                    <button 
+                      onClick={() => setVsCodeBottomTab('problems')}
+                      className={`hover:text-white cursor-pointer ${vsCodeBottomTab === 'problems' ? 'text-white border-b-2 border-[#007acc] pb-0.5' : 'text-[#888888]'}`}
+                    >
+                      PROBLEMS (0)
+                    </button>
+                  </div>
+                  <span className="text-[10px] text-emerald-400 font-mono">● bash 3.2</span>
+                </div>
+
+                <div className="flex-1 p-3 font-mono text-[11px] text-[#cccccc] overflow-y-auto space-y-1">
+                  {vsCodeTerminalOutput.map((line, idx) => (
+                    <div key={idx} className={line.startsWith('developer@') ? 'text-emerald-400' : line.includes('Target:') ? 'text-sky-300' : line.startsWith('✓') ? 'text-yellow-300 font-bold' : 'text-[#d4d4d4]'}>
+                      {line}
+                    </div>
+                  ))}
+
+                  <form onSubmit={handleVsCodeTerminalSubmit} className="flex items-center gap-1.5 pt-1">
+                    <span className="text-emerald-400">developer@appletree-mac-pro ~/workspace %</span>
+                    <input
+                      type="text"
+                      value={vsCodeTerminalInput}
+                      onChange={(e) => setVsCodeTerminalInput(e.target.value)}
+                      className="flex-1 bg-transparent border-none outline-none text-white font-mono"
+                    />
+                  </form>
+                </div>
+              </div>
+
+              {/* VS Code Bottom Blue Status Bar */}
+              <div className="h-5 bg-[#007acc] text-white px-3 flex items-center justify-between text-[10px] font-sans font-medium select-none shrink-0">
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1"><Layers className="w-2.5 h-2.5" /> main*</span>
+                  <span>0 ⊗ 0 △</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span>Ln 14, Col 5</span>
+                  <span>Spaces: 4</span>
+                  <span>UTF-8</span>
+                  <span className="font-bold">Python 3.12.2 64-bit</span>
+                  <span>Prettier ✓</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 2. FINDER WINDOW ── */}
+      {windows.finder.isOpen && !windows.finder.isMinimized && (
+        <div
+          onClick={() => focusWindow('finder')}
+          style={{
+            zIndex: windows.finder.zIndex,
+            left: windows.finder.isMaximized ? 0 : windows.finder.x,
+            top: windows.finder.isMaximized ? 26 : windows.finder.y,
+            width: windows.finder.isMaximized ? '100vw' : windows.finder.w,
+            height: windows.finder.isMaximized ? 'calc(100vh - 26px - 80px)' : windows.finder.h
+          }}
+          className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-slate-900/95 border border-white/20 shadow-2xl flex flex-col transition-all duration-150 ${activeAppId === 'finder' ? 'ring-1 ring-white/30' : 'opacity-95'}`}
+        >
+          <div 
+            onMouseDown={(e) => handleMouseDownHeader(e, 'finder')}
+            className="h-11 px-4 bg-slate-800/80 border-b border-white/10 flex items-center justify-between cursor-move shrink-0"
+          >
+            <div className="flex items-center gap-2">
+              <button onClick={() => closeWindow('finder')} className="w-3 h-3 rounded-full bg-rose-500 cursor-pointer" />
+              <button onClick={() => minimizeWindow('finder')} className="w-3 h-3 rounded-full bg-amber-500 cursor-pointer" />
+              <button onClick={() => toggleMaximize('finder')} className="w-3 h-3 rounded-full bg-emerald-500 cursor-pointer" />
+            </div>
+
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
+              <Folder className="w-3.5 h-3.5 text-blue-400" />
+              <span>AppleTree Course Vault — Finder</span>
+            </div>
+
+            <button
+              onClick={() => createNewFolder()}
+              className="text-[10px] bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded text-white font-bold flex items-center gap-1 cursor-pointer"
+            >
+              <Plus className="w-2.5 h-2.5" /> Folder
+            </button>
+          </div>
+
+          <div className="flex-1 flex overflow-hidden">
+            <div className="w-48 bg-slate-950/60 border-r border-white/10 p-3 flex flex-col gap-1 text-xs shrink-0">
+              <span className="text-[10px] font-black uppercase text-slate-400 px-2 py-1">Favorites</span>
+              <button onClick={() => openApp('vscode')} className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left font-medium text-sky-400 hover:bg-white/10 transition cursor-pointer">
+                <Code2 className="w-3.5 h-3.5" /> VS Code Projects
+              </button>
+              <button onClick={() => openApp('terabox')} className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left font-medium text-sky-300 hover:bg-sky-500/20 transition cursor-pointer">
+                <Cloud className="w-3.5 h-3.5" /> TeraBox Cloud (1TB)
+              </button>
+              <button onClick={() => openApp('terminal')} className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left font-medium text-slate-300 hover:bg-white/10 transition cursor-pointer">
+                <Terminal className="w-3.5 h-3.5" /> Terminal (~/)
+              </button>
+            </div>
+
+            <div className="flex-1 p-5 overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {[
+                  { name: 'Java Full Stack & Spring Boot.app', tag: 'Core', size: '120 Hours', action: () => openApp('vscode') },
+                  { name: 'AWS Cloud & DevOps Engineering.app', tag: 'Cloud', size: '90 Hours', action: () => openApp('vscode') },
+                  { name: 'Python AI & Machine Learning.app', tag: 'AI', size: '110 Hours', action: () => openApp('vscode') },
+                  { name: 'TeraBox 1024 GB Cloud Storage.app', tag: 'Drive', size: '1 TB Vault', action: () => openApp('terabox') },
+                  { name: 'KBC Interactive Quiz Arena.app', tag: 'Exam', size: 'Live Competition', action: () => openApp('kbc') }
+                ].map((file, idx) => (
+                  <div
+                    key={idx}
+                    onClick={file.action}
+                    className="p-3.5 rounded-xl bg-white/5 hover:bg-blue-600/20 border border-white/10 hover:border-blue-400/40 transition cursor-pointer flex items-center justify-between group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 p-1">
+                        <MacFolderIcon />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-white group-hover:text-blue-300 transition">{file.name}</p>
+                        <p className="text-[10px] text-slate-400">{file.size} · Certified Track</p>
+                      </div>
+                    </div>
+                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/10 text-slate-300 font-bold group-hover:bg-blue-500 group-hover:text-white">
+                      Open
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 3. TERABOX CLOUD DRIVE WINDOW ── */}
       {windows.terabox.isOpen && !windows.terabox.isMinimized && (
         <div
           onClick={() => focusWindow('terabox')}
@@ -1337,24 +1747,23 @@ generate_placement_roadmap()
           }}
           className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-slate-900/98 border border-sky-400/30 shadow-2xl flex flex-col transition-all duration-150 ${activeAppId === 'terabox' ? 'ring-1 ring-sky-400/50' : 'opacity-95'}`}
         >
-          {/* Header */}
           <div 
             onMouseDown={(e) => handleMouseDownHeader(e, 'terabox')}
             className="h-11 px-4 bg-gradient-to-r from-sky-950/80 to-slate-900 border-b border-white/10 flex items-center justify-between cursor-move shrink-0"
           >
             <div className="flex items-center gap-2">
-              <button onClick={() => closeWindow('terabox')} className="w-3 h-3 rounded-full bg-rose-500 hover:bg-rose-600 cursor-pointer" title="Close" />
-              <button onClick={() => minimizeWindow('terabox')} className="w-3 h-3 rounded-full bg-amber-500 hover:bg-amber-600 cursor-pointer" title="Minimize" />
-              <button onClick={() => toggleMaximize('terabox')} className="w-3 h-3 rounded-full bg-emerald-500 hover:bg-emerald-600 cursor-pointer" title="Maximize" />
+              <button onClick={() => closeWindow('terabox')} className="w-3 h-3 rounded-full bg-rose-500 cursor-pointer" />
+              <button onClick={() => minimizeWindow('terabox')} className="w-3 h-3 rounded-full bg-amber-500 cursor-pointer" />
+              <button onClick={() => toggleMaximize('terabox')} className="w-3 h-3 rounded-full bg-emerald-500 cursor-pointer" />
             </div>
 
             <div className="flex items-center gap-2 text-xs font-bold text-sky-300">
-              <Cloud className="w-4 h-4 text-sky-400" />
+              <div className="w-4 h-4"><MacTeraBoxIcon /></div>
               <span>TeraBox Cloud Storage — 1024 GB Ultra Free Storage</span>
             </div>
 
             <a 
-              href={teraBoxShareLink}
+              href="https://terabox.com"
               target="_blank"
               rel="noreferrer"
               className="text-[10px] text-sky-300 hover:text-white flex items-center gap-1 font-bold bg-sky-500/20 px-2 py-0.5 rounded border border-sky-400/30"
@@ -1363,9 +1772,7 @@ generate_placement_roadmap()
             </a>
           </div>
 
-          {/* Body: Cloud Quota Card + File Explorer */}
           <div className="flex-1 p-5 overflow-y-auto space-y-4 bg-slate-950/60">
-            {/* Storage Progress Card */}
             <div className="p-4 rounded-2xl bg-gradient-to-r from-sky-900/40 via-blue-900/20 to-slate-900 border border-sky-400/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-sky-400">Cloud Capacity Status</span>
@@ -1382,351 +1789,51 @@ generate_placement_roadmap()
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={handleSimulateTeraBoxUpload}
+                  onClick={() => {
+                    setIsUploadingTeraBox(true);
+                    setUploadProgress(10);
+                    macSound.playPop();
+                    const iv = setInterval(() => {
+                      setUploadProgress(p => {
+                        if (p >= 90) {
+                          clearInterval(iv);
+                          setTimeout(() => {
+                            setIsUploadingTeraBox(false);
+                            setUploadProgress(0);
+                            setTeraBoxFiles(cur => [{ id: `tb-${Date.now()}`, name: `Project_Archive_${Math.floor(Math.random()*900)}.zip`, size: '14.2 MB', modified: 'Just now', type: 'archive' }, ...cur]);
+                          }, 300);
+                          return 100;
+                        }
+                        return p + 30;
+                      });
+                    }, 200);
+                  }}
                   disabled={isUploadingTeraBox}
                   className="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-black flex items-center gap-2 shadow-lg shadow-sky-500/20 cursor-pointer"
                 >
                   <Upload className="w-3.5 h-3.5" />
                   <span>{isUploadingTeraBox ? `Uploading (${uploadProgress}%)...` : 'Upload to TeraBox'}</span>
                 </button>
-                <a
-                  href="https://terabox.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/15 flex items-center gap-1.5"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" /> Connect TeraBox
-                </a>
               </div>
             </div>
 
-            {/* Upload Progress Bar if active */}
-            {isUploadingTeraBox && (
-              <div className="p-3 rounded-xl bg-sky-950/60 border border-sky-400/40 animate-pulse">
-                <div className="flex justify-between text-xs text-sky-200 mb-1">
-                  <span>Uploading project archive to TeraBox cloud...</span>
-                  <span>{uploadProgress}%</span>
-                </div>
-                <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-sky-400 transition-all duration-200" style={{ width: `${uploadProgress}%` }} />
-                </div>
-              </div>
-            )}
-
-            {/* Cloud Files Table */}
             <div className="rounded-xl border border-white/10 overflow-hidden bg-slate-900/60">
               <div className="grid grid-cols-12 px-4 py-2.5 bg-slate-800/80 text-[11px] font-bold text-slate-400 border-b border-white/10 uppercase tracking-wider">
-                <div className="col-span-6">File Name</div>
+                <div className="col-span-7">File Name</div>
                 <div className="col-span-2">Size</div>
-                <div className="col-span-2">Date Modified</div>
-                <div className="col-span-2 text-right">Actions</div>
+                <div className="col-span-3">Date Modified</div>
               </div>
-
               <div className="divide-y divide-white/5">
                 {teraBoxFiles.map(file => (
-                  <div key={file.id} className="grid grid-cols-12 px-4 py-3 text-xs items-center hover:bg-white/5 transition group">
-                    <div className="col-span-6 flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0">
-                        {file.type === 'pdf' ? <FileText className="w-4 h-4" /> : <HardDrive className="w-4 h-4" />}
-                      </div>
-                      <span className="font-semibold text-white group-hover:text-sky-300 transition truncate">{file.name}</span>
+                  <div key={file.id} className="grid grid-cols-12 px-4 py-3 text-xs items-center hover:bg-white/5 transition">
+                    <div className="col-span-7 font-semibold text-white truncate flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-sky-400" />
+                      <span>{file.name}</span>
                     </div>
                     <div className="col-span-2 text-slate-400 text-[11px]">{file.size}</div>
-                    <div className="col-span-2 text-slate-400 text-[11px]">{file.modified}</div>
-                    <div className="col-span-2 flex items-center justify-end gap-2">
-                      <button 
-                        onClick={() => {
-                          macSound.playPop();
-                          alert(`Downloading ${file.name} from TeraBox Cloud...`);
-                        }}
-                        className="p-1.5 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white"
-                        title="Download File"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                      </button>
-                      <button 
-                        onClick={() => {
-                          macSound.playPop();
-                          navigator.clipboard.writeText(`${teraBoxShareLink}/${file.id}`);
-                          alert(`TeraBox share link copied to clipboard!`);
-                        }}
-                        className="p-1.5 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white"
-                        title="Copy TeraBox Share Link"
-                      >
-                        <Share2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                    <div className="col-span-3 text-slate-400 text-[11px]">{file.modified}</div>
                   </div>
                 ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── 2. FINDER WINDOW (Course Vault & Folder Explorer) ── */}
-      {windows.finder.isOpen && !windows.finder.isMinimized && (
-        <div
-          onClick={() => focusWindow('finder')}
-          style={{
-            zIndex: windows.finder.zIndex,
-            left: windows.finder.isMaximized ? 0 : windows.finder.x,
-            top: windows.finder.isMaximized ? 26 : windows.finder.y,
-            width: windows.finder.isMaximized ? '100vw' : windows.finder.w,
-            height: windows.finder.isMaximized ? 'calc(100vh - 26px - 80px)' : windows.finder.h
-          }}
-          className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-slate-900/95 border border-white/20 shadow-2xl flex flex-col transition-all duration-150 ${activeAppId === 'finder' ? 'ring-1 ring-white/30' : 'opacity-95'}`}
-        >
-          {/* Header */}
-          <div 
-            onMouseDown={(e) => handleMouseDownHeader(e, 'finder')}
-            className="h-11 px-4 bg-slate-800/80 border-b border-white/10 flex items-center justify-between cursor-move shrink-0"
-          >
-            <div className="flex items-center gap-2">
-              <button onClick={() => closeWindow('finder')} className="w-3 h-3 rounded-full bg-rose-500 hover:bg-rose-600 cursor-pointer" />
-              <button onClick={() => minimizeWindow('finder')} className="w-3 h-3 rounded-full bg-amber-500 hover:bg-amber-600 cursor-pointer" />
-              <button onClick={() => toggleMaximize('finder')} className="w-3 h-3 rounded-full bg-emerald-500 hover:bg-emerald-600 cursor-pointer" />
-            </div>
-
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
-              <Folder className="w-3.5 h-3.5 text-blue-400" />
-              <span>{selectedFolderInFinder ? selectedFolderInFinder.name : 'AppleTree Course Vault — Finder'}</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => createNewFolder()}
-                className="text-[10px] bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded text-white font-bold flex items-center gap-1 cursor-pointer"
-                title="Create New Folder"
-              >
-                <Plus className="w-2.5 h-2.5" /> Folder
-              </button>
-            </div>
-          </div>
-
-          {/* Body: Sidebar + Main Area */}
-          <div className="flex-1 flex overflow-hidden">
-            <div className="w-48 bg-slate-950/60 border-r border-white/10 p-3 flex flex-col gap-1 text-xs shrink-0">
-              <span className="text-[10px] font-black uppercase text-slate-400 px-2 py-1">Favorites</span>
-              <button 
-                onClick={() => setSelectedFolderInFinder(null)}
-                className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left font-medium transition cursor-pointer ${!selectedFolderInFinder ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-white/10'}`}
-              >
-                <GraduationCap className="w-3.5 h-3.5" /> Programs & Tracks
-              </button>
-              <button 
-                onClick={() => openApp('terabox')}
-                className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left font-medium text-sky-300 hover:bg-sky-500/20 transition cursor-pointer"
-              >
-                <Cloud className="w-3.5 h-3.5" /> TeraBox Cloud
-              </button>
-              <button 
-                onClick={() => openApp('terminal')}
-                className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left font-medium text-slate-300 hover:bg-white/10 transition cursor-pointer"
-              >
-                <Terminal className="w-3.5 h-3.5" /> Terminal (~/)
-              </button>
-              <button 
-                onClick={() => openApp('kbc')}
-                className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left font-medium text-amber-300 hover:bg-amber-500/20 transition cursor-pointer"
-              >
-                <Trophy className="w-3.5 h-3.5" /> KBC Quiz Arena
-              </button>
-            </div>
-
-            <div className="flex-1 p-5 overflow-y-auto">
-              {selectedFolderInFinder ? (
-                <div>
-                  <div className="flex items-center justify-between pb-3 mb-4 border-b border-white/10">
-                    <div className="flex items-center gap-2">
-                      <Folder className="w-5 h-5 text-sky-400" />
-                      <h3 className="text-sm font-bold text-white">{selectedFolderInFinder.name}</h3>
-                    </div>
-                    <button onClick={() => setSelectedFolderInFinder(null)} className="text-xs text-blue-400 hover:underline">
-                      Back to All
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    {(selectedFolderInFinder.items || []).map((subItem, idx) => (
-                      <div key={idx} className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
-                        <FileText className="w-5 h-5 text-slate-300" />
-                        <div>
-                          <p className="text-xs font-semibold text-white">{subItem.name}</p>
-                          <p className="text-[10px] text-slate-400">{subItem.type}</p>
-                        </div>
-                      </div>
-                    ))}
-                    {(!selectedFolderInFinder.items || selectedFolderInFinder.items.length === 0) && (
-                      <p className="text-xs text-slate-400 col-span-2 py-8 text-center">Folder is currently empty. Create files using Terminal or New Document!</p>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {[
-                    { name: 'Java Full Stack & Spring Boot.app', tag: 'Core', size: '120 Hours', icon: Code2, action: () => { openApp('safari'); setSafariInputUrl('https://programmingwala.com/programs'); } },
-                    { name: 'AWS Cloud & DevOps Engineering.app', tag: 'Cloud', size: '90 Hours', icon: Cpu, action: () => { openApp('safari'); setSafariInputUrl('https://programmingwala.com/careers/aws-cloud-engineer'); } },
-                    { name: 'Python AI & Machine Learning.app', tag: 'AI', size: '110 Hours', icon: Sparkles, action: () => openApp('code') },
-                    { name: 'TeraBox 1024 GB Cloud Storage.app', tag: 'Drive', size: '1 TB Vault', icon: Cloud, action: () => openApp('terabox') },
-                    { name: 'KBC Interactive Quiz Arena.app', tag: 'Exam', size: 'Live Competition', icon: Trophy, action: () => openApp('kbc') }
-                  ].map((file, idx) => {
-                    const Icon = file.icon;
-                    return (
-                      <div
-                        key={idx}
-                        onClick={file.action}
-                        className="p-3.5 rounded-xl bg-white/5 hover:bg-blue-600/20 border border-white/10 hover:border-blue-400/40 transition cursor-pointer flex items-center justify-between group"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md">
-                            <Icon className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <p className="text-xs font-bold text-white group-hover:text-blue-300 transition">{file.name}</p>
-                            <p className="text-[10px] text-slate-400">{file.size} · Certified Track</p>
-                          </div>
-                        </div>
-                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/10 text-slate-300 font-bold group-hover:bg-blue-500 group-hover:text-white">
-                          Open
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── 3. SAFARI BROWSER WINDOW (No Page Refreshes) ── */}
-      {windows.safari.isOpen && !windows.safari.isMinimized && (
-        <div
-          onClick={() => focusWindow('safari')}
-          style={{
-            zIndex: windows.safari.zIndex,
-            left: windows.safari.isMaximized ? 0 : windows.safari.x,
-            top: windows.safari.isMaximized ? 26 : windows.safari.y,
-            width: windows.safari.isMaximized ? '100vw' : windows.safari.w,
-            height: windows.safari.isMaximized ? 'calc(100vh - 26px - 80px)' : windows.safari.h
-          }}
-          className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-slate-900/98 border border-white/20 shadow-2xl flex flex-col transition-all duration-150 ${activeAppId === 'safari' ? 'ring-1 ring-white/30' : 'opacity-95'}`}
-        >
-          {/* Safari Header & Tab Bar */}
-          <div 
-            onMouseDown={(e) => handleMouseDownHeader(e, 'safari')}
-            className="bg-slate-800/90 border-b border-white/10 cursor-move shrink-0"
-          >
-            {/* Top Row: Traffic Lights + URL Bar */}
-            <div className="h-11 px-4 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <button onClick={() => closeWindow('safari')} className="w-3 h-3 rounded-full bg-rose-500 cursor-pointer" />
-                <button onClick={() => minimizeWindow('safari')} className="w-3 h-3 rounded-full bg-amber-500 cursor-pointer" />
-                <button onClick={() => toggleMaximize('safari')} className="w-3 h-3 rounded-full bg-emerald-500 cursor-pointer" />
-              </div>
-
-              {/* URL Address Bar */}
-              <form onSubmit={handleSafariNavigate} className="flex-1 max-w-lg mx-auto h-7 px-3 rounded-lg bg-black/40 border border-white/10 flex items-center gap-2 text-xs text-slate-300">
-                <Lock className="w-3 h-3 text-emerald-400 shrink-0" />
-                <input
-                  type="text"
-                  value={safariInputUrl}
-                  onChange={(e) => setSafariInputUrl(e.target.value)}
-                  className="w-full bg-transparent outline-none text-white text-xs"
-                />
-              </form>
-
-              <div className="flex items-center gap-2 text-slate-400">
-                <RefreshCw onClick={handleSafariNavigate} className="w-3.5 h-3.5 hover:text-white cursor-pointer" />
-                <button onClick={() => window.open(safariInputUrl, '_blank')} title="Open in real browser tab">
-                  <ExternalLink className="w-3.5 h-3.5 hover:text-white cursor-pointer" />
-                </button>
-              </div>
-            </div>
-
-            {/* Safari Tabs Bar */}
-            <div className="flex items-center gap-1 px-3 pb-1.5 overflow-x-auto text-xs">
-              {safariTabs.map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    macSound.playClick();
-                    setActiveSafariTabId(tab.id);
-                    setSafariInputUrl(tab.url);
-                  }}
-                  className={`px-3 py-1 rounded-lg flex items-center gap-2 text-[11px] font-semibold transition cursor-pointer ${
-                    activeSafariTabId === tab.id ? 'bg-slate-900 text-white border border-white/10 shadow-sm' : 'text-slate-400 hover:bg-white/5'
-                  }`}
-                >
-                  <Compass className="w-3 h-3 text-sky-400" />
-                  <span className="truncate max-w-[120px]">{tab.title}</span>
-                </button>
-              ))}
-              <button
-                onClick={() => {
-                  macSound.playPop();
-                  const newTab = { id: `tab-${Date.now()}`, title: 'New Tab', url: 'https://programmingwala.com' };
-                  setSafariTabs(cur => [...cur, newTab]);
-                  setActiveSafariTabId(newTab.id);
-                  setSafariInputUrl(newTab.url);
-                }}
-                className="w-6 h-6 rounded-lg bg-white/5 hover:bg-white/10 text-white flex items-center justify-center text-xs"
-                title="New Tab"
-              >
-                +
-              </button>
-            </div>
-          </div>
-
-          {/* Bookmarks Bar */}
-          <div className="h-7 px-4 bg-slate-900/80 border-b border-white/5 flex items-center gap-4 text-[11px] text-slate-400 overflow-x-auto">
-            <button onClick={() => { setSafariInputUrl('https://programmingwala.com'); handleSafariNavigate(); }} className="hover:text-white flex items-center gap-1 cursor-pointer">
-              🍎 AppleTree Home
-            </button>
-            <button onClick={() => { setSafariInputUrl('https://programmingwala.com/programs'); handleSafariNavigate(); }} className="hover:text-white flex items-center gap-1 cursor-pointer">
-              🎓 All Courses
-            </button>
-            <button onClick={() => { setSafariInputUrl('https://programmingwala.com/careers'); handleSafariNavigate(); }} className="hover:text-white flex items-center gap-1 cursor-pointer">
-              💼 Career Tracks
-            </button>
-            <button onClick={() => { setSafariInputUrl('https://terabox.com'); handleSafariNavigate(); }} className="hover:text-sky-300 text-sky-400 flex items-center gap-1 cursor-pointer">
-              ☁️ TeraBox Cloud
-            </button>
-          </div>
-
-          {/* Safari Content Area */}
-          <div className="flex-1 p-6 overflow-y-auto bg-slate-950/70">
-            <div className="max-w-2xl mx-auto space-y-6">
-              <div className="p-6 rounded-2xl bg-white/5 border border-white/10 text-center">
-                <h1 className="text-2xl font-black text-white mb-2">
-                  <span className="text-red-500">Apple</span><span className="text-emerald-500">Tree</span> Infotech Web Explorer
-                </h1>
-                <p className="text-xs text-slate-300 leading-relaxed max-w-lg mx-auto">
-                  Master Java Full Stack, AWS DevOps, Python AI, React & MERN with guaranteed career placement support in Ghaziabad, Noida & Delhi NCR.
-                </p>
-                <div className="mt-4 flex flex-wrap justify-center gap-2">
-                  <button onClick={() => openApp('kbc')} className="px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black cursor-pointer">
-                    🏆 Launch KBC Arena
-                  </button>
-                  <button onClick={() => openApp('terabox')} className="px-4 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-black cursor-pointer">
-                    ☁️ Open TeraBox Cloud
-                  </button>
-                  <button onClick={() => openApp('code')} className="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black cursor-pointer">
-                    ⚡ Code Studio
-                  </button>
-                </div>
-              </div>
-
-              {/* In-Browser Course Preview */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                  <h4 className="font-bold text-white text-xs mb-1">Full Stack Java & Spring Boot</h4>
-                  <p className="text-[10px] text-slate-400">Microservices, Hibernate, Kafka & Enterprise Architecture</p>
-                </div>
-                <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                  <h4 className="font-bold text-white text-xs mb-1">AWS DevOps Cloud Architect</h4>
-                  <p className="text-[10px] text-slate-400">Docker, Kubernetes, Terraform, CI/CD Pipeline & Linux</p>
-                </div>
               </div>
             </div>
           </div>
@@ -1746,7 +1853,6 @@ generate_placement_roadmap()
           }}
           className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-slate-950/95 border border-white/20 shadow-2xl flex flex-col font-mono text-xs transition-all duration-150 ${activeAppId === 'terminal' ? 'ring-1 ring-white/30' : 'opacity-95'}`}
         >
-          {/* Header */}
           <div 
             onMouseDown={(e) => handleMouseDownHeader(e, 'terminal')}
             className="h-10 px-4 bg-slate-900 border-b border-white/10 flex items-center justify-between cursor-move shrink-0"
@@ -1760,7 +1866,6 @@ generate_placement_roadmap()
             <div className="w-10" />
           </div>
 
-          {/* Terminal Body */}
           <div className="flex-1 p-4 overflow-y-auto space-y-2 text-emerald-400">
             {terminalHistory.map((item, idx) => (
               <div key={idx} className="leading-relaxed">
@@ -1768,7 +1873,7 @@ generate_placement_roadmap()
                 {item.type === 'input' && (
                   <p className="text-white">
                     <span className="text-emerald-400 font-bold">developer@appletree-mac</span>
-                    <span className="text-blue-400"> {terminalPath} %</span> {item.cmd}
+                    <span className="text-blue-400"> ~/Desktop %</span> {item.cmd}
                   </p>
                 )}
                 {item.type === 'output' && <pre className="whitespace-pre-wrap text-emerald-300 font-mono text-[11px]">{item.text}</pre>}
@@ -1777,7 +1882,7 @@ generate_placement_roadmap()
 
             <form onSubmit={handleTerminalSubmit} className="flex items-center gap-2 pt-1">
               <span className="text-emerald-400 font-bold shrink-0">developer@appletree-mac</span>
-              <span className="text-blue-400 shrink-0">{terminalPath} %</span>
+              <span className="text-blue-400 shrink-0">~/Desktop %</span>
               <input
                 type="text"
                 value={terminalInput}
@@ -1791,7 +1896,70 @@ generate_placement_roadmap()
         </div>
       )}
 
-      {/* ── 5. KBC MASTER QUIZ WINDOW ── */}
+      {/* ── 5. SAFARI WINDOW ── */}
+      {windows.safari.isOpen && !windows.safari.isMinimized && (
+        <div
+          onClick={() => focusWindow('safari')}
+          style={{
+            zIndex: windows.safari.zIndex,
+            left: windows.safari.isMaximized ? 0 : windows.safari.x,
+            top: windows.safari.isMaximized ? 26 : windows.safari.y,
+            width: windows.safari.isMaximized ? '100vw' : windows.safari.w,
+            height: windows.safari.isMaximized ? 'calc(100vh - 26px - 80px)' : windows.safari.h
+          }}
+          className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-slate-900/98 border border-white/20 shadow-2xl flex flex-col transition-all duration-150 ${activeAppId === 'safari' ? 'ring-1 ring-white/30' : 'opacity-95'}`}
+        >
+          <div 
+            onMouseDown={(e) => handleMouseDownHeader(e, 'safari')}
+            className="bg-slate-800/90 border-b border-white/10 cursor-move shrink-0"
+          >
+            <div className="h-11 px-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <button onClick={() => closeWindow('safari')} className="w-3 h-3 rounded-full bg-rose-500 cursor-pointer" />
+                <button onClick={() => minimizeWindow('safari')} className="w-3 h-3 rounded-full bg-amber-500 cursor-pointer" />
+                <button onClick={() => toggleMaximize('safari')} className="w-3 h-3 rounded-full bg-emerald-500 cursor-pointer" />
+              </div>
+
+              <div className="flex-1 max-w-lg mx-auto h-7 px-3 rounded-lg bg-black/40 border border-white/10 flex items-center gap-2 text-xs text-slate-300">
+                <Lock className="w-3 h-3 text-emerald-400 shrink-0" />
+                <input
+                  type="text"
+                  value={safariInputUrl}
+                  onChange={(e) => setSafariInputUrl(e.target.value)}
+                  className="w-full bg-transparent outline-none text-white text-xs"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 text-slate-400">
+                <RefreshCw className="w-3.5 h-3.5 hover:text-white cursor-pointer" />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 p-6 overflow-y-auto bg-slate-950/70">
+            <div className="max-w-2xl mx-auto space-y-6">
+              <div className="p-6 rounded-2xl bg-white/5 border border-white/10 text-center">
+                <h1 className="text-2xl font-black text-white mb-2">
+                  <span className="text-red-500">Apple</span><span className="text-emerald-500">Tree</span> Infotech Explorer
+                </h1>
+                <p className="text-xs text-slate-300 leading-relaxed max-w-lg mx-auto">
+                  Master Java Full Stack, AWS DevOps, Python AI, React & MERN with guaranteed career placement support in Ghaziabad, Noida & Delhi NCR.
+                </p>
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                  <button onClick={() => openApp('vscode')} className="px-4 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-black cursor-pointer">
+                    ⚡ Open Visual Studio Code
+                  </button>
+                  <button onClick={() => openApp('kbc')} className="px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black cursor-pointer">
+                    🏆 Launch KBC Arena
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 6. KBC QUIZ ARENA WINDOW ── */}
       {windows.kbc.isOpen && !windows.kbc.isMinimized && (
         <div
           onClick={() => focusWindow('kbc')}
@@ -1828,7 +1996,7 @@ generate_placement_roadmap()
             </div>
             <h2 className="text-xl font-black text-amber-400 mb-2">Kaun Banega Crorepati Competition</h2>
             <p className="text-xs text-slate-300 max-w-md mb-6 leading-relaxed">
-              Real-time countdown timer, dynamic points addition and subtraction, and live moving leaderboard!
+              Real-time countdown timer, dynamic points addition and deduction, and live moving leaderboard!
             </p>
             <div className="flex items-center gap-3">
               <button
@@ -1837,70 +2005,6 @@ generate_placement_roadmap()
               >
                 <Play className="w-4 h-4 fill-current" /> Join Contestant Screen
               </button>
-              <button
-                onClick={() => navigate('/dashboard/admin/kbc')}
-                className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-white/10 cursor-pointer"
-              >
-                Host Monitor
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── 6. CODE STUDIO WINDOW ── */}
-      {windows.code.isOpen && !windows.code.isMinimized && (
-        <div
-          onClick={() => focusWindow('code')}
-          style={{
-            zIndex: windows.code.zIndex,
-            left: windows.code.isMaximized ? 0 : windows.code.x,
-            top: windows.code.isMaximized ? 26 : windows.code.y,
-            width: windows.code.isMaximized ? '100vw' : windows.code.w,
-            height: windows.code.isMaximized ? 'calc(100vh - 26px - 80px)' : windows.code.h
-          }}
-          className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-slate-950/98 border border-white/20 shadow-2xl flex flex-col font-mono transition-all duration-150 ${activeAppId === 'code' ? 'ring-1 ring-emerald-400/50' : 'opacity-95'}`}
-        >
-          <div 
-            onMouseDown={(e) => handleMouseDownHeader(e, 'code')}
-            className="h-11 px-4 bg-slate-900 border-b border-white/10 flex items-center justify-between cursor-move shrink-0"
-          >
-            <div className="flex items-center gap-2">
-              <button onClick={() => closeWindow('code')} className="w-3 h-3 rounded-full bg-rose-500 cursor-pointer" />
-              <button onClick={() => minimizeWindow('code')} className="w-3 h-3 rounded-full bg-amber-500 cursor-pointer" />
-              <button onClick={() => toggleMaximize('code')} className="w-3 h-3 rounded-full bg-emerald-500 cursor-pointer" />
-            </div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-300 font-sans">
-              <Code2 className="w-4 h-4 text-emerald-400" />
-              <span>AppleTree Code Studio (Python 3.12 Sandbox)</span>
-            </div>
-            <button
-              onClick={runCode}
-              disabled={isCodeRunning}
-              className="px-3.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold font-sans flex items-center gap-1.5 shadow-md cursor-pointer"
-            >
-              <Play className="w-3 h-3 fill-current" /> {isCodeRunning ? 'Running...' : 'Run Code'}
-            </button>
-          </div>
-
-          <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-            <div className="flex-1 p-4 bg-slate-950/80 border-r border-white/10 flex flex-col">
-              <div className="text-[11px] font-sans text-slate-400 mb-2 flex items-center justify-between">
-                <span>main.py</span>
-                <span>Python 3.12 Ready</span>
-              </div>
-              <textarea
-                value={codeContent}
-                onChange={(e) => setCodeContent(e.target.value)}
-                className="flex-1 w-full bg-transparent text-emerald-300 font-mono text-xs outline-none resize-none leading-relaxed"
-                spellCheck={false}
-              />
-            </div>
-            <div className="w-full md:w-80 p-4 bg-black/60 flex flex-col">
-              <span className="text-[11px] font-sans text-slate-400 mb-2">Terminal Output</span>
-              <pre className="flex-1 font-mono text-[11px] text-slate-200 whitespace-pre-wrap overflow-y-auto">
-                {codeOutput || '// Click "Run Code" to compile...'}
-              </pre>
             </div>
           </div>
         </div>
@@ -1928,7 +2032,7 @@ generate_placement_roadmap()
               <button onClick={() => minimizeWindow('notes')} className="w-3 h-3 rounded-full bg-amber-500 cursor-pointer" />
               <button onClick={() => toggleMaximize('notes')} className="w-3 h-3 rounded-full bg-emerald-500 cursor-pointer" />
             </div>
-            <div className="text-xs font-semibold text-slate-300">Notes (Auto-Saved)</div>
+            <div className="text-xs font-semibold text-slate-300">Notes (macOS Dark Pro)</div>
             <div className="w-10" />
           </div>
 
@@ -2022,17 +2126,17 @@ generate_placement_roadmap()
               <button onClick={() => minimizeWindow('settings')} className="w-3 h-3 rounded-full bg-amber-500 cursor-pointer" />
               <button onClick={() => toggleMaximize('settings')} className="w-3 h-3 rounded-full bg-emerald-500 cursor-pointer" />
             </div>
-            <div className="text-xs font-semibold text-slate-300">System Settings — Desktop & Wallpaper</div>
+            <div className="text-xs font-semibold text-slate-300">System Settings — Wallpapers & Dark Pro</div>
             <div className="w-10" />
           </div>
 
           <div className="flex-1 p-6 overflow-y-auto space-y-6">
             <div>
-              <h3 className="text-sm font-bold text-white mb-1">Desktop Wallpaper Gallery</h3>
-              <p className="text-xs text-slate-400">Select authentic macOS wallpapers (Sequoia, Sonoma, Monterey, Deep Space)</p>
+              <h3 className="text-sm font-bold text-white mb-1">Desktop Dark Wallpapers</h3>
+              <p className="text-xs text-slate-400">Exclusively formatted for macOS Pro Dark Mode</p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               {WALLPAPERS.map(wp => (
                 <div
                   key={wp.id}
@@ -2081,7 +2185,7 @@ generate_placement_roadmap()
             <div className="text-5xl font-light text-white drop-shadow"></div>
             <div>
               <h2 className="text-base font-extrabold text-white">AppleTree Mac Studio M3 Max</h2>
-              <p className="text-xs text-slate-400">macOS Sequoia 15.2 (Build 24C101)</p>
+              <p className="text-xs text-slate-400">macOS Sequoia 15.2 (Dark Edition)</p>
             </div>
 
             <div className="w-full space-y-1.5 text-xs text-slate-300 pt-2 border-t border-white/10 max-w-xs text-left">
@@ -2090,15 +2194,15 @@ generate_placement_roadmap()
                 <span className="font-semibold text-white">Apple M3 Max (16-Core)</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Memory:</span>
-                <span className="font-semibold text-white">64 GB Unified Memory</span>
+                <span className="text-slate-400">IDE:</span>
+                <span className="font-semibold text-sky-400">Visual Studio Code Pro</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Cloud Storage:</span>
                 <span className="font-semibold text-sky-400">TeraBox 1024 GB (Active Sync)</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Institution:</span>
+                <span className="text-slate-400">Academy:</span>
                 <span className="font-semibold text-amber-300">AppleTree Infotech</span>
               </div>
             </div>
@@ -2113,31 +2217,31 @@ generate_placement_roadmap()
         </div>
       )}
 
-      {/* ════════════════ AUTHENTIC macOS FROSTED DOCK ════════════════ */}
-      <footer className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[9999] px-3 py-2 rounded-2xl backdrop-blur-3xl bg-white/20 dark:bg-black/40 border border-white/20 dark:border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-end gap-2.5 transition-all">
+      {/* ════════════════ AUTHENTIC REAL macOS SQUIRCLE DOCK ════════════════ */}
+      <footer className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[9999] px-3 py-2 rounded-2xl backdrop-blur-3xl bg-black/45 border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.6)] flex items-end gap-2.5 transition-all">
         {[
-          { id: 'finder', title: 'Finder', icon: Folder, color: 'from-blue-500 to-sky-400' },
-          { id: 'terabox', title: 'TeraBox Cloud', icon: Cloud, color: 'from-sky-400 to-blue-600', badge: '1TB' },
-          { id: 'safari', title: 'Safari', icon: Compass, color: 'from-sky-400 to-blue-500' },
-          { id: 'terminal', title: 'Terminal', icon: Terminal, color: 'from-slate-800 to-slate-950' },
-          { id: 'code', title: 'Code Studio', icon: Code2, color: 'from-emerald-500 to-teal-600' },
-          { id: 'kbc', title: 'KBC Quiz', icon: Trophy, color: 'from-amber-400 to-yellow-600', badge: 'LIVE' },
-          { id: 'notes', title: 'Notes', icon: FileText, color: 'from-amber-300 to-yellow-500' },
-          { id: 'calculator', title: 'Calculator', icon: Calculator, color: 'from-orange-400 to-amber-500' },
-          { id: 'settings', title: 'System Settings', icon: Settings, color: 'from-slate-400 to-slate-600' }
+          { id: 'finder', title: 'Finder', icon: MacFinderIcon },
+          { id: 'vscode', title: 'Visual Studio Code', icon: MacVSCodeIcon, badge: 'IDE' },
+          { id: 'terabox', title: 'TeraBox Cloud', icon: MacTeraBoxIcon, badge: '1TB' },
+          { id: 'safari', title: 'Safari', icon: MacSafariIcon },
+          { id: 'terminal', title: 'Terminal', icon: MacTerminalIcon },
+          { id: 'kbc', title: 'KBC Quiz', icon: MacKbcIcon, badge: 'LIVE' },
+          { id: 'notes', title: 'Notes', icon: MacNotesIcon },
+          { id: 'calculator', title: 'Calculator', icon: MacCalculatorIcon },
+          { id: 'settings', title: 'System Settings', icon: MacSettingsIcon }
         ].map(app => {
-          const Icon = app.icon;
+          const IconComponent = app.icon;
           const isOpen = windows[app.id]?.isOpen;
           const isBouncing = bouncingApp === app.id;
 
           return (
             <div key={app.id} className="relative flex flex-col items-center group">
               {/* Tooltip on hover */}
-              <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none px-2.5 py-1 rounded-md backdrop-blur-md bg-black/80 text-white text-[10px] font-semibold whitespace-nowrap shadow-md">
+              <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none px-2.5 py-1 rounded-md backdrop-blur-md bg-black/85 text-white text-[10px] font-semibold whitespace-nowrap shadow-md">
                 {app.title}
               </div>
 
-              {/* App Icon Button */}
+              {/* Real macOS Squircle App Button */}
               <button
                 onClick={() => {
                   if (isOpen && !windows[app.id].isMinimized && activeAppId === app.id) {
@@ -2146,19 +2250,19 @@ generate_placement_roadmap()
                     openApp(app.id);
                   }
                 }}
-                className={`w-12 h-12 rounded-xl bg-gradient-to-tr ${app.color} p-2 flex items-center justify-center text-white shadow-lg transition-transform duration-200 hover:scale-125 hover:-translate-y-2 active:scale-95 cursor-pointer relative ${
+                className={`w-12 h-12 p-0.5 flex items-center justify-center transition-transform duration-200 hover:scale-125 hover:-translate-y-2 active:scale-95 cursor-pointer relative ${
                   isBouncing ? 'animate-bounce' : ''
                 }`}
               >
-                <Icon className="w-6 h-6 drop-shadow-sm" />
+                <IconComponent className="w-full h-full drop-shadow-xl" />
                 {app.badge && (
-                  <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full bg-red-600 text-white text-[8px] font-black animate-pulse">
+                  <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full bg-red-600 text-white text-[8px] font-black animate-pulse shadow-md">
                     {app.badge}
                   </span>
                 )}
               </button>
 
-              {/* Running Indicator Dot under open app */}
+              {/* Running Dot Indicator under open app */}
               <div className={`w-1 h-1 rounded-full mt-1 transition-all ${isOpen ? 'bg-white shadow-[0_0_6px_rgba(255,255,255,0.9)]' : 'opacity-0'}`} />
             </div>
           );
@@ -2169,7 +2273,7 @@ generate_placement_roadmap()
 
         {/* Trash */}
         <div className="relative flex flex-col items-center group">
-          <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none px-2.5 py-1 rounded-md backdrop-blur-md bg-black/80 text-white text-[10px] font-semibold whitespace-nowrap shadow-md">
+          <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none px-2.5 py-1 rounded-md backdrop-blur-md bg-black/85 text-white text-[10px] font-semibold whitespace-nowrap shadow-md">
             Trash
           </div>
           <button
@@ -2177,9 +2281,9 @@ generate_placement_roadmap()
               macSound.playTrash();
               alert('Trash is clean and empty!');
             }}
-            className="w-12 h-12 rounded-xl bg-gradient-to-tr from-slate-600 to-slate-800 p-2 flex items-center justify-center text-white shadow-lg transition-transform duration-200 hover:scale-125 hover:-translate-y-2 cursor-pointer"
+            className="w-12 h-12 p-0.5 flex items-center justify-center transition-transform duration-200 hover:scale-125 hover:-translate-y-2 cursor-pointer"
           >
-            <Trash2 className="w-6 h-6 text-slate-300" />
+            <MacTrashIcon className="w-full h-full drop-shadow-xl" />
           </button>
           <div className="w-1 h-1 rounded-full mt-1 opacity-0" />
         </div>
@@ -2187,7 +2291,7 @@ generate_placement_roadmap()
 
       {/* ════════════════ LOCK SCREEN OVERLAY ════════════════ */}
       {isLocked && (
-        <div className="fixed inset-0 z-[99999] backdrop-blur-3xl bg-black/60 flex flex-col items-center justify-center text-white animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[99999] backdrop-blur-3xl bg-black/75 flex flex-col items-center justify-center text-white animate-in fade-in duration-300">
           <div className="text-center space-y-4">
             <span className="text-5xl font-extralight tracking-tight drop-shadow-md">
               {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -2200,7 +2304,7 @@ generate_placement_roadmap()
               <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[#E53935] to-[#2E7D32] flex items-center justify-center text-2xl font-black shadow-xl ring-4 ring-white/20">
                 AT
               </div>
-              <p className="font-bold text-base">Guest Developer</p>
+              <p className="font-bold text-base">Guest Developer (macOS Dark Pro)</p>
               <button
                 onClick={() => {
                   macSound.playPop();
