@@ -2365,9 +2365,9 @@ export default function AdminKbcManager() {
                                   </span>
                                 )}
                               </div>
-                              {t.college && (
+                              {(t.course || t.college) && (
                                 <div className="text-[10px] text-slate-400 font-normal">
-                                  {t.college} {t.roll_no ? `• ID: ${t.roll_no}` : ''}
+                                  Course: <span className="text-amber-300 font-medium">{t.course || t.college}</span>
                                 </div>
                               )}
                             </div>

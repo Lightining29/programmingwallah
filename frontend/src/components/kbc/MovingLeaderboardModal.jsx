@@ -158,6 +158,12 @@ export default function MovingLeaderboardModal({
                         <div className="text-[9px] flex items-center gap-1.5 text-slate-400">
                           <span className="text-slate-300">{player.correctCount || 0} Correct</span>
                           <span>•</span>
+                          {player.course && (
+                            <>
+                              <span className="text-amber-300/80 truncate max-w-[80px] sm:max-w-[110px]">{player.course}</span>
+                              <span>•</span>
+                            </>
+                          )}
                           {player.status === 'OUT' || player.status === 'ELIMINATED' ? (
                             <span className="text-red-400 font-medium">🔴 Cutoff</span>
                           ) : (

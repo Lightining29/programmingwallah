@@ -26,10 +26,8 @@ import {
 export default function KbcExam() {
   const navigate = useNavigate();
 
-  // ── Participation Mode: 'SOLO' (practice hotseat) vs 'TEAM' (Admin-controlled live laptop) ──
-  const [playMode, setPlayMode] = useState(() => {
-    return localStorage.getItem('kbc_team') ? 'TEAM' : 'SOLO';
-  });
+  // ── Participation Mode: Live Admin-controlled Laptop Arena (Solo mode disabled) ──
+  const [playMode, setPlayMode] = useState('TEAM');
 
   // Team Laptop Session State
   const [team, setTeam] = useState(() => {
@@ -56,14 +54,21 @@ export default function KbcExam() {
     return 'REGISTER';
   });
 
+  const [authMode, setAuthMode] = useState('REGISTER'); // 'REGISTER' | 'LOGIN'
+  const [loginForm, setLoginForm] = useState({
+    email: '',
+    dob: ''
+  });
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
+
   const [regForm, setRegForm] = useState({
     fullName: '',
     email: '',
     dob: '',
     mobile: '',
-    college: '',
-    customCollege: '',
-    rollNo: '',
+    course: '',
+    customCourse: '',
     profilePhoto: null
   });
   const [photoPreview, setPhotoPreview] = useState(null);
@@ -377,7 +382,7 @@ export default function KbcExam() {
             status,
             submittedOption: t.submitted_option,
             profile_photo: photo,
-            college: t.college || (isUser ? (team.college || registeredStudent?.college) : '')
+            course: t.course || (isUser ? (team.course || registeredStudent?.course) : '') || t.college || ''
           };
         });
 
@@ -398,7 +403,7 @@ export default function KbcExam() {
             status: team.status || 'CONNECTED',
             submittedOption: selectedOption,
             profile_photo: team.profile_photo || registeredStudent?.profile_photo || null,
-            college: team.college || registeredStudent?.college || ''
+            course: team.course || registeredStudent?.course || team.college || ''
           });
         }
 
@@ -443,7 +448,7 @@ export default function KbcExam() {
         rank: 1,
         rankDelta: 0,
         profile_photo: team.profile_photo || registeredStudent?.profile_photo || null,
-        college: team.college || registeredStudent?.college || ''
+        course: team.course || registeredStudent?.course || team.college || ''
       }];
     }
 
@@ -805,7 +810,11 @@ export default function KbcExam() {
       return;
     }
 
-    const collegeSelected = regForm.college === 'Other' ? (regForm.customCollege || '').trim() : regForm.college;
+    const courseSelected = regForm.course === 'Other' ? (regForm.customCourse || '').trim() : regForm.course;
+    if (!courseSelected) {
+      setRegError('Please select or specify your Course Name.');
+      return;
+    }
 
     setRegLoading(true);
     try {
@@ -817,8 +826,7 @@ export default function KbcExam() {
           email: regForm.email.trim(),
           dob: regForm.dob.trim(),
           mobile: regForm.mobile.trim(),
-          college: collegeSelected || 'General Institute',
-          roll_no: regForm.rollNo.trim(),
+          course: courseSelected,
           profile_photo: regForm.profilePhoto
         })
       });
@@ -833,12 +841,66 @@ export default function KbcExam() {
         setTeamAccessCodeInput(data.access_code || 'KBC-101');
         setAuthStep('GATE');
         kbcAudio.playSelect();
+      } else if (data.alreadyRegistered) {
+        setRegError(data.message || 'This email is already registered! Please login using your registered Email and Date of Birth.');
+        setLoginForm(prev => ({ ...prev, email: regForm.email.trim() }));
       } else {
         setRegError(data.message || 'Registration failed. Please check your details.');
       }
     } catch (err) {
       setRegLoading(false);
       setRegError('Network error connecting to Hostinger database: ' + err.message);
+    }
+  };
+
+  // ── Candidate Login with Email & Date of Birth (DOB) ──
+  const handleLoginSubmit = async (e) => {
+    if (e) e.preventDefault();
+    setLoginError('');
+
+    if (!loginForm.email.trim()) {
+      setLoginError('Please enter your registered Email Address.');
+      return;
+    }
+    if (!loginForm.dob.trim()) {
+      setLoginError('Please select your registered Date of Birth (DOB).');
+      return;
+    }
+
+    setLoginLoading(true);
+    try {
+      const res = await fetch('/api/kbc/student/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: loginForm.email.trim(),
+          dob: loginForm.dob.trim()
+        })
+      });
+
+      const data = await res.json();
+      setLoginLoading(false);
+
+      if (data.success && data.student) {
+        localStorage.setItem('kbc_registered_student', JSON.stringify(data.student));
+        setRegisteredStudent(data.student);
+        setPlayerName(data.student.full_name);
+        setTeamAccessCodeInput(data.access_code || 'KBC-101');
+        if (data.team) {
+          localStorage.setItem('kbc_team', JSON.stringify(data.team));
+          setTeam(data.team);
+          setPlayMode('TEAM');
+          setAuthStep('WAITING');
+        } else {
+          setAuthStep('GATE');
+        }
+        kbcAudio.playSelect();
+      } else {
+        setLoginError(data.message || 'Login failed. Please verify your Email and Date of Birth.');
+      }
+    } catch (err) {
+      setLoginLoading(false);
+      setLoginError('Network error connecting to Hostinger database: ' + err.message);
     }
   };
 
@@ -1611,14 +1673,8 @@ export default function KbcExam() {
                 Swagat Hai, {team.leader_name || team.team_name}!
               </h2>
               <div className="text-amber-400/90 font-bold text-xs uppercase tracking-widest flex flex-wrap items-center justify-center gap-2">
-                <span>College: <strong className="text-white">{team.college || registeredStudent?.college || 'Registered'}</strong></span>
+                <span>Course: <strong className="text-white">{team.course || registeredStudent?.course || team.college || 'Registered'}</strong></span>
                 <span>•</span>
-                {team.roll_no && (
-                  <>
-                    <span>Roll: <strong className="text-white font-mono">{team.roll_no}</strong></span>
-                    <span>•</span>
-                  </>
-                )}
                 <span className="font-mono text-yellow-300 font-bold bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30">⭐ {team.points || 0} pts</span>
                 <span>•</span>
                 <span>Code: <span className="font-mono text-white bg-slate-900 px-2 py-0.5 rounded border border-slate-700">{team.access_code}</span></span>
@@ -1672,110 +1728,69 @@ export default function KbcExam() {
             </div>
           </div>
         ) : (!team && authStep === 'REGISTER') ? (
-          /* CASE 2A: Candidate Registration (Matching Image 1) */
+          /* CASE 2A: Candidate Registration & Login */
           <div className="my-auto max-w-2xl w-full mx-auto animate-fade-in py-4">
             <div className="bg-white text-slate-900 border border-slate-200/90 rounded-[28px] p-6 sm:p-8 shadow-2xl backdrop-blur-xl space-y-5">
               
               {/* Header */}
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                  Candidate Registration
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-500 font-medium pt-1 leading-relaxed">
-                  Fill in your details and upload your profile photo below. If you score top marks, you will be showcased on the <strong className="text-slate-700 font-bold">Leaderboard Stage!</strong>
-                </p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <div>
+                  <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                    {authMode === 'REGISTER' ? 'Candidate Registration' : 'Candidate Login'}
+                  </h1>
+                  <p className="text-xs sm:text-sm text-slate-500 font-medium pt-0.5 leading-relaxed">
+                    {authMode === 'REGISTER' 
+                      ? 'Fill in your details and course below. Email is permanent & unique.' 
+                      : 'Log in with your registered Email Address and Date of Birth (DOB).'}
+                  </p>
+                </div>
               </div>
 
-              <form onSubmit={handleRegisterSubmit} className="space-y-4">
-                
-                {/* 1. Student Profile Photo Box */}
-                <div className="p-4 sm:p-5 rounded-2xl border border-slate-200/90 bg-slate-50/70 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      <span>📸 STUDENT PROFILE PHOTO</span>
-                      <span className="text-red-500">*</span>
-                    </div>
-                    <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                      shown on leaderboard & certificate
-                    </span>
-                  </div>
+              {/* Mode Toggle: Register vs Login */}
+              <div className="flex rounded-2xl bg-slate-100 p-1.5 border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => { setAuthMode('REGISTER'); setRegError(''); setLoginError(''); }}
+                  className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-black transition cursor-pointer flex items-center justify-center gap-2 ${
+                    authMode === 'REGISTER' 
+                      ? 'bg-white text-teal-900 shadow-sm border border-slate-200/80' 
+                      : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                >
+                  <User className="w-4 h-4 text-teal-600" />
+                  <span>New Candidate Registration</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setAuthMode('LOGIN'); setRegError(''); setLoginError(''); }}
+                  className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-black transition cursor-pointer flex items-center justify-center gap-2 ${
+                    authMode === 'LOGIN' 
+                      ? 'bg-white text-teal-900 shadow-sm border border-slate-200/80' 
+                      : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                >
+                  <Lock className="w-4 h-4 text-amber-600" />
+                  <span>Candidate Login (Email + DOB)</span>
+                </button>
+              </div>
 
-                  <div className="flex flex-col sm:flex-row items-center gap-4">
-                    {/* Avatar Preview Box */}
-                    <div className="relative shrink-0">
-                      {photoPreview ? (
-                        <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-emerald-500 shadow-md">
-                          <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
-                        </div>
-                      ) : (
-                        <div className="w-24 h-24 rounded-2xl border-2 border-emerald-400 bg-emerald-50/50 flex flex-col items-center justify-center p-2 text-center text-emerald-800">
-                          <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-1">
-                            <User className="w-6 h-6" />
-                          </div>
-                          <span className="text-[11px] font-bold text-emerald-700">Required</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-1.5 text-center sm:text-left flex-1">
-                      <button
-                        type="button"
-                        onClick={() => photoInputRef.current?.click()}
-                        className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-md shadow-teal-700/20 transition transform hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer mx-auto sm:mx-0"
-                      >
-                        <Camera className="w-4 h-4" />
-                        <span>Upload Profile Photo *</span>
-                      </button>
-                      <input
-                        ref={photoInputRef}
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        onChange={handlePhotoSelect}
-                        className="hidden"
-                      />
-                      <p className="text-[11px] text-slate-500 leading-relaxed">
-                        Upload a clear face portrait (JPG, PNG). Candidates who pass with top scores will be placed on the <strong className="text-slate-700 font-semibold">Leaderboard 1st, 2nd, and 3rd Podium!</strong>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. Full Name */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    FULL NAME <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      required
-                      value={regForm.fullName}
-                      onChange={e => setRegForm(p => ({ ...p, fullName: e.target.value }))}
-                      placeholder="e.g. Manish Kumar"
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 text-sm font-medium focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 shadow-sm"
-                    />
-                  </div>
-                </div>
-
-                {/* 3. Two Columns: Email Address & Date of Birth */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {authMode === 'LOGIN' ? (
+                /* ── CANDIDATE LOGIN FORM (Email + DOB) ── */
+                <form onSubmit={handleLoginSubmit} className="space-y-4 pt-1">
                   <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                        EMAIL ADDRESS <span className="text-red-500">*</span>
-                      </label>
-                      <span className="text-[10px] font-bold text-emerald-600">primary key</span>
-                    </div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                      REGISTERED EMAIL ADDRESS <span className="text-red-500">*</span>
+                    </label>
                     <div className="relative">
                       <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                       <input
                         type="email"
                         required
-                        value={regForm.email}
-                        onChange={e => setRegForm(p => ({ ...p, email: e.target.value }))}
+                        value={loginForm.email}
+                        onChange={e => setLoginForm(p => ({ ...p, email: e.target.value }))}
                         placeholder="e.g. manish@example.com"
                         className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 text-sm font-medium focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 shadow-sm"
+                        autoFocus
                       />
                     </div>
                   </div>
@@ -1785,124 +1800,281 @@ export default function KbcExam() {
                       <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                         DATE OF BIRTH (DOB) <span className="text-red-500">*</span>
                       </label>
-                      <span className="text-[10px] font-bold text-emerald-600">for exam entry</span>
+                      <span className="text-[10px] font-bold text-emerald-600">login password</span>
                     </div>
                     <div className="relative">
                       <Calendar className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                       <input
                         type="date"
                         required
-                        value={regForm.dob}
-                        onChange={e => setRegForm(p => ({ ...p, dob: e.target.value }))}
+                        value={loginForm.dob}
+                        onChange={e => setLoginForm(p => ({ ...p, dob: e.target.value }))}
                         className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm font-medium focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 shadow-sm"
                       />
                     </div>
                   </div>
-                </div>
 
-                {/* 4. Two Columns: Mobile / WhatsApp & College / Institute */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {loginError && (
+                    <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
+                        <span>{loginError}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={loginLoading}
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-700 hover:from-teal-500 hover:to-emerald-500 text-white font-black text-sm sm:text-base tracking-wider shadow-lg shadow-teal-700/30 transition transform hover:scale-[1.01] active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    {loginLoading ? 'Authenticating with Hostinger DB...' : 'Log In to Exam 🔐'}
+                  </button>
+
+                  <div className="text-center pt-2">
+                    <button
+                      type="button"
+                      onClick={() => { setAuthMode('REGISTER'); setLoginError(''); }}
+                      className="text-xs sm:text-sm font-bold text-slate-500 hover:text-teal-700 transition cursor-pointer"
+                    >
+                      New student? <span className="text-teal-600 underline font-bold">Register Candidate Profile 📝 →</span>
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                /* ── CANDIDATE REGISTRATION FORM ── */
+                <form onSubmit={handleRegisterSubmit} className="space-y-4 pt-1">
+                  
+                  {/* 1. Student Profile Photo Box */}
+                  <div className="p-4 sm:p-5 rounded-2xl border border-slate-200/90 bg-slate-50/70 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        <span>📸 STUDENT PROFILE PHOTO</span>
+                        <span className="text-red-500">*</span>
+                      </div>
+                      <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                        shown on leaderboard & certificate
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                      {/* Avatar Preview Box */}
+                      <div className="relative shrink-0">
+                        {photoPreview ? (
+                          <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-emerald-500 shadow-md">
+                            <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <div className="w-24 h-24 rounded-2xl border-2 border-emerald-400 bg-emerald-50/50 flex flex-col items-center justify-center p-2 text-center text-emerald-800">
+                            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-1">
+                              <User className="w-6 h-6" />
+                            </div>
+                            <span className="text-[11px] font-bold text-emerald-700">Required</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5 text-center sm:text-left flex-1">
+                        <button
+                          type="button"
+                          onClick={() => photoInputRef.current?.click()}
+                          className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-md shadow-teal-700/20 transition transform hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer mx-auto sm:mx-0"
+                        >
+                          <Camera className="w-4 h-4" />
+                          <span>Upload Profile Photo *</span>
+                        </button>
+                        <input
+                          ref={photoInputRef}
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          onChange={handlePhotoSelect}
+                          className="hidden"
+                        />
+                        <p className="text-[11px] text-slate-500 leading-relaxed">
+                          Upload a clear face portrait (JPG, PNG). Candidates who pass with top scores will be placed on the <strong className="text-slate-700 font-semibold">Leaderboard 1st, 2nd, and 3rd Podium!</strong>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. Full Name */}
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                      MOBILE / WHATSAPP
+                      FULL NAME <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
-                      <Smartphone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                      <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                       <input
-                        type="tel"
-                        value={regForm.mobile}
-                        onChange={e => setRegForm(p => ({ ...p, mobile: e.target.value }))}
-                        placeholder="98XXXXXXXX"
+                        type="text"
+                        required
+                        value={regForm.fullName}
+                        onChange={e => setRegForm(p => ({ ...p, fullName: e.target.value }))}
+                        placeholder="e.g. Manish Kumar"
                         className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 text-sm font-medium focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 shadow-sm"
                       />
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                      COLLEGE / INSTITUTE
-                    </label>
-                    <div className="relative">
-                      <Building className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                      <select
-                        value={regForm.college}
-                        onChange={e => setRegForm(p => ({ ...p, college: e.target.value }))}
-                        className="w-full pl-10 pr-8 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm font-medium focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 shadow-sm appearance-none cursor-pointer"
-                      >
-                        <option value="">-- Select College / Institute ▼</option>
-                        <option value="Pranidhan Institute of Technology">Pranidhan Institute of Technology</option>
-                        <option value="Aryabhatta Knowledge University (AKU)">Aryabhatta Knowledge University (AKU)</option>
-                        <option value="Patna Science College">Patna Science College</option>
-                        <option value="NIT Patna">NIT Patna</option>
-                        <option value="IIT Patna">IIT Patna</option>
-                        <option value="Other">Other College / Institute</option>
-                      </select>
-                      <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  {/* 3. Two Columns: Email Address & Date of Birth */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                          EMAIL ADDRESS <span className="text-red-500">*</span>
+                        </label>
+                        <span className="text-[10px] font-bold text-emerald-600">primary key (unique)</span>
+                      </div>
+                      <div className="relative">
+                        <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="email"
+                          required
+                          value={regForm.email}
+                          onChange={e => setRegForm(p => ({ ...p, email: e.target.value }))}
+                          placeholder="e.g. manish@example.com"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 text-sm font-medium focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 shadow-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                          DATE OF BIRTH (DOB) <span className="text-red-500">*</span>
+                        </label>
+                        <span className="text-[10px] font-bold text-emerald-600">for exam entry</span>
+                      </div>
+                      <div className="relative">
+                        <Calendar className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <input
+                          type="date"
+                          required
+                          value={regForm.dob}
+                          onChange={e => setRegForm(p => ({ ...p, dob: e.target.value }))}
+                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm font-medium focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 shadow-sm"
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Sub-input if Other college is chosen */}
-                {regForm.college === 'Other' && (
-                  <div>
-                    <input
-                      type="text"
-                      value={regForm.customCollege}
-                      onChange={e => setRegForm(p => ({ ...p, customCollege: e.target.value }))}
-                      placeholder="Enter your College / Institute Name"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm font-medium focus:outline-none focus:border-teal-600 shadow-sm"
-                    />
+                  {/* 4. Two Columns: Mobile / WhatsApp & Course Name */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        MOBILE / WHATSAPP
+                      </label>
+                      <div className="relative">
+                        <Smartphone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="tel"
+                          value={regForm.mobile}
+                          onChange={e => setRegForm(p => ({ ...p, mobile: e.target.value }))}
+                          placeholder="98XXXXXXXX"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 text-sm font-medium focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 shadow-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                          COURSE NAME <span className="text-red-500">*</span>
+                        </label>
+                        <span className="text-[10px] font-bold text-emerald-600">specialization</span>
+                      </div>
+                      <div className="relative">
+                        <GraduationCap className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <select
+                          required
+                          value={regForm.course}
+                          onChange={e => setRegForm(p => ({ ...p, course: e.target.value }))}
+                          className="w-full pl-10 pr-8 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm font-medium focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 shadow-sm appearance-none cursor-pointer"
+                        >
+                          <option value="">-- Select Course / Specialization ▼</option>
+                          <option value="Full Stack Web Development (MERN)">Full Stack Web Development (MERN)</option>
+                          <option value="Java Full Stack & Data Structures (DSA)">Java Full Stack & Data Structures (DSA)</option>
+                          <option value="Python & AI / Data Science">Python & AI / Data Science</option>
+                          <option value="B.Tech Computer Science (CSE)">B.Tech Computer Science (CSE)</option>
+                          <option value="BCA (Bachelor of Computer Applications)">BCA (Bachelor of Computer Applications)</option>
+                          <option value="MCA (Master of Computer Applications)">MCA (Master of Computer Applications)</option>
+                          <option value="Diploma / Polytechnic in CS/IT">Diploma / Polytechnic in CS/IT</option>
+                          <option value="Other">Other Course / Specialization</option>
+                        </select>
+                        <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      </div>
+                    </div>
                   </div>
-                )}
 
-                {/* 5. Roll Number / Student ID */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    ROLL NUMBER / STUDENT ID (OPTIONAL)
-                  </label>
-                  <div className="relative">
-                    <GraduationCap className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      value={regForm.rollNo}
-                      onChange={e => setRegForm(p => ({ ...p, rollNo: e.target.value }))}
-                      placeholder="e.g. 210027010001"
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 text-sm font-medium focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 shadow-sm"
-                    />
-                  </div>
-                </div>
+                  {/* Sub-input if Other course is chosen */}
+                  {regForm.course === 'Other' && (
+                    <div>
+                      <input
+                        type="text"
+                        required
+                        value={regForm.customCourse}
+                        onChange={e => setRegForm(p => ({ ...p, customCourse: e.target.value }))}
+                        placeholder="Enter your exact Course Name (e.g. B.Sc IT, Data Engineering)"
+                        className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 text-sm font-medium focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 shadow-sm"
+                      />
+                    </div>
+                  )}
 
-                {regError && (
-                  <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
-                    <span>{regError}</span>
-                  </div>
-                )}
+                  {regError && (
+                    <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold space-y-2">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
+                        <span>{regError}</span>
+                      </div>
+                      {regError.includes('already registered') && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLoginForm(prev => ({ ...prev, email: regForm.email.trim() }));
+                            setAuthMode('LOGIN');
+                            setRegError('');
+                          }}
+                          className="w-full py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-black text-xs uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                          <Lock className="w-3.5 h-3.5" />
+                          <span>Click Here to Log In with Date of Birth →</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
 
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={regLoading}
-                  className="w-full py-4 rounded-xl bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-700 hover:from-teal-500 hover:to-emerald-500 text-white font-black text-sm sm:text-base tracking-wider shadow-lg shadow-teal-700/30 transition transform hover:scale-[1.01] active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2"
-                >
-                  {regLoading ? 'Saving to Database...' : 'Submit Registration & Proceed 🚀'}
-                </button>
-
-                {/* Footer Switch to Gate */}
-                <div className="text-center pt-2">
+                  {/* Submit Button */}
                   <button
-                    type="button"
-                    onClick={() => setAuthStep('GATE')}
-                    className="text-xs sm:text-sm font-bold text-slate-500 hover:text-teal-700 transition cursor-pointer"
+                    type="submit"
+                    disabled={regLoading}
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-700 hover:from-teal-500 hover:to-emerald-500 text-white font-black text-sm sm:text-base tracking-wider shadow-lg shadow-teal-700/30 transition transform hover:scale-[1.01] active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2"
                   >
-                    Already registered? <span className="text-teal-600 underline font-bold">Go directly to Exam Gate →</span>
+                    {regLoading ? 'Saving to Hostinger Database...' : 'Submit Registration & Proceed 🚀'}
                   </button>
-                </div>
-              </form>
+
+                  {/* Footer Switch to Login / Gate */}
+                  <div className="text-center pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => { setAuthMode('LOGIN'); setRegError(''); }}
+                      className="text-xs sm:text-sm font-bold text-teal-600 hover:text-teal-800 transition cursor-pointer underline"
+                    >
+                      Already registered? Log in with Email & DOB →
+                    </button>
+                    <span className="hidden sm:inline text-slate-300">•</span>
+                    <button
+                      type="button"
+                      onClick={() => setAuthStep('GATE')}
+                      className="text-xs sm:text-sm font-bold text-slate-500 hover:text-slate-800 transition cursor-pointer"
+                    >
+                      Go to Exam Gate →
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
-        ) : (!team && (authStep === 'GATE' || (!gameStarted && playMode === 'SOLO'))) ? (
-          /* CASE 2B: Exam Gate (Matching Image 2: Join Team via Laptop / Default Password) */
+        ) : (!team && authStep === 'GATE') ? (
+          /* CASE 2B: Exam Gate (Join Team via Laptop / Default Password) */
           <div className="my-auto max-w-xl w-full mx-auto space-y-6 animate-fade-in py-4">
             
             {/* Header / Amitabh Quote */}
@@ -1959,18 +2131,30 @@ export default function KbcExam() {
                   </div>
 
                   {registeredStudent && (
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-50/80 border border-amber-200/90">
-                      <div className="w-10 h-10 rounded-full overflow-hidden border border-amber-400 shrink-0">
-                        <img 
-                          src={registeredStudent.profile_photo || '/kbc-host.jpg'} 
-                          alt="Student Avatar" 
-                          className="w-full h-full object-cover" 
-                        />
+                    <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-amber-50/80 border border-amber-200/90">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-full overflow-hidden border border-amber-400 shrink-0">
+                          <img 
+                            src={registeredStudent.profile_photo || '/kbc-host.jpg'} 
+                            alt="Student Avatar" 
+                            className="w-full h-full object-cover" 
+                          />
+                        </div>
+                        <div className="text-xs min-w-0">
+                          <div className="font-black text-slate-900 truncate">{registeredStudent.full_name}</div>
+                          <div className="text-[11px] text-slate-600 truncate">{registeredStudent.email} • {registeredStudent.course || registeredStudent.college || 'Registered'}</div>
+                        </div>
                       </div>
-                      <div className="text-xs truncate">
-                        <div className="font-black text-slate-900 truncate">{registeredStudent.full_name}</div>
-                        <div className="text-[11px] text-slate-600 truncate">{registeredStudent.email} • {registeredStudent.college || 'Registered'}</div>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthStep('REGISTER');
+                          setAuthMode('LOGIN');
+                        }}
+                        className="text-[11px] font-bold text-amber-800 hover:text-amber-950 underline shrink-0 cursor-pointer"
+                      >
+                        Switch
+                      </button>
                     </div>
                   )}
 
@@ -1989,27 +2173,27 @@ export default function KbcExam() {
                     {teamJoinLoading ? 'Connecting Laptop...' : 'CONNECT TO LIVE HOTSEAT →'}
                   </button>
 
-                  <div className="relative flex py-1 items-center">
-                    <div className="flex-grow border-t border-slate-200"></div>
-                    <span className="flex-shrink mx-3 text-[11px] text-slate-400 font-bold uppercase tracking-wider">OR</span>
-                    <div className="flex-grow border-t border-slate-200"></div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleStartGame}
-                    className="w-full py-3 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-sm"
-                  >
-                    <span>⚡ Solo Hotseat Mode (Direct Practice & Laser Lights)</span>
-                  </button>
-
-                  <div className="text-center pt-1 border-t border-slate-100">
+                  <div className="text-center pt-2 border-t border-slate-100 flex items-center justify-center gap-4">
                     <button
                       type="button"
-                      onClick={() => setAuthStep('REGISTER')}
-                      className="text-xs font-bold text-teal-600 hover:text-teal-700 transition cursor-pointer"
+                      onClick={() => {
+                        setAuthStep('REGISTER');
+                        setAuthMode('LOGIN');
+                      }}
+                      className="text-xs font-bold text-slate-600 hover:text-teal-700 transition cursor-pointer underline"
                     >
-                      Need to update registration or register new candidate? <span className="underline">Register Candidate Profile 📝 →</span>
+                      Login with Email & DOB 🔐
+                    </button>
+                    <span className="text-slate-300">•</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthStep('REGISTER');
+                        setAuthMode('REGISTER');
+                      }}
+                      className="text-xs font-bold text-teal-600 hover:text-teal-700 transition cursor-pointer underline"
+                    >
+                      Register New Candidate 📝
                     </button>
                   </div>
                 </div>

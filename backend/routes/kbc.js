@@ -1973,6 +1973,8 @@ async function ensureKbcSessionsAndTeams() {
     try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN email VARCHAR(255) DEFAULT NULL'); } catch(e) {}
     try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN dob VARCHAR(50) DEFAULT NULL'); } catch(e) {}
     try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN mobile VARCHAR(50) DEFAULT NULL'); } catch(e) {}
+    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN course VARCHAR(255) DEFAULT NULL'); } catch(e) {}
+    try { await pool.query('ALTER TABLE kbc_students ADD COLUMN course VARCHAR(255) DEFAULT NULL'); } catch(e) {}
     try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN college VARCHAR(255) DEFAULT NULL'); } catch(e) {}
     try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN roll_no VARCHAR(100) DEFAULT NULL'); } catch(e) {}
     try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN profile_photo LONGTEXT DEFAULT NULL'); } catch(e) {}
@@ -2093,6 +2095,7 @@ router.get('/session/status', async (req, res) => {
                  t.score_amount, t.correct_count, t.wrong_count, t.submitted_option, t.submitted_at, 
                  t.total_response_time_ms, t.last_submitted_at, 
                  COALESCE(t.profile_photo, st.profile_photo) AS profile_photo, 
+                 COALESCE(t.course, st.course, '') AS course,
                  t.college, t.roll_no, t.email, t.status
           FROM kbc_teams t
           LEFT JOIN kbc_students st ON t.email = st.email
@@ -2807,9 +2810,10 @@ router.get('/teams', async (req, res) => {
   });
 });
 
-// ── 9b. CANDIDATE REGISTRATION: Register student with full profile and photo ──
+// ── 9b. CANDIDATE REGISTRATION: Register student with full profile, course, and photo ──
+// Email is strictly unique / primary key: cannot register multiple times with the same email.
 router.post('/student/register', async (req, res) => {
-  const { full_name, email, dob, mobile, college, roll_no, profile_photo } = req.body;
+  const { full_name, email, dob, mobile, course, profile_photo } = req.body;
 
   if (!full_name || !full_name.trim() || !email || !email.trim() || !dob || !dob.trim()) {
     return res.status(400).json({ 
@@ -2822,63 +2826,56 @@ router.post('/student/register', async (req, res) => {
   const studentId = `student-${Date.now()}`;
   const defaultCode = 'KBC-101';
   const pool = getMySQLPool();
+  const courseClean = (course || '').trim();
 
   try {
     await ensureKbcSessionsAndTeams();
 
     if (pool) {
-      // 1. Insert or update candidate in kbc_students table
-      await pool.query(`
-        INSERT INTO kbc_students (id, full_name, email, dob, mobile, college, roll_no, profile_photo, access_code, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'REGISTERED')
-        ON DUPLICATE KEY UPDATE 
-          full_name = VALUES(full_name),
-          dob = VALUES(dob),
-          mobile = VALUES(mobile),
-          college = VALUES(college),
-          roll_no = VALUES(roll_no),
-          profile_photo = COALESCE(VALUES(profile_photo), profile_photo),
-          status = 'REGISTERED'
-      `, [studentId, full_name.trim(), normEmail, dob.trim(), (mobile || '').trim(), (college || '').trim(), (roll_no || '').trim(), profile_photo || null, defaultCode]);
-
-      // 2. Insert or update in kbc_teams table so candidate can connect as live hotseat player
-      const [existingTeam] = await pool.query('SELECT id, access_code FROM kbc_teams WHERE email = ?', [normEmail]);
-      let assignedTeamId = studentId;
-      let assignedCode = defaultCode;
-
-      if (existingTeam.length > 0) {
-        assignedTeamId = existingTeam[0].id;
-        assignedCode = existingTeam[0].access_code || defaultCode;
-        await pool.query(`
-          UPDATE kbc_teams 
-          SET team_name = ?, leader_name = ?, dob = ?, mobile = ?, college = ?, roll_no = ?, profile_photo = COALESCE(?, profile_photo), status = 'REGISTERED'
-          WHERE id = ?
-        `, [full_name.trim(), full_name.trim(), dob.trim(), (mobile || '').trim(), (college || '').trim(), (roll_no || '').trim(), profile_photo || null, assignedTeamId]);
-      } else {
-        await pool.query(`
-          INSERT INTO kbc_teams (id, team_name, leader_name, email, dob, mobile, college, roll_no, profile_photo, access_code, current_level, score_amount, points, status)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, 0, 'REGISTERED')
-        `, [assignedTeamId, full_name.trim(), full_name.trim(), normEmail, dob.trim(), (mobile || '').trim(), (college || '').trim(), (roll_no || '').trim(), profile_photo || null, assignedCode]);
+      // 1. Strict duplicate check: Cannot create more candidates with this email!
+      const [existingStudent] = await pool.query('SELECT * FROM kbc_students WHERE LOWER(email) = ?', [normEmail]);
+      if (existingStudent.length > 0) {
+        return res.status(409).json({
+          success: false,
+          alreadyRegistered: true,
+          message: 'This email is already registered! Multiple accounts cannot be created with the same email. Please log in using your registered Email and Date of Birth (DOB).'
+        });
       }
 
-      const [updatedRows] = await pool.query('SELECT * FROM kbc_students WHERE email = ?', [normEmail]);
+      // 2. Insert new student into Hostinger database (kbc_students)
+      await pool.query(`
+        INSERT INTO kbc_students (id, full_name, email, dob, mobile, course, college, profile_photo, access_code, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'REGISTERED')
+      `, [studentId, full_name.trim(), normEmail, dob.trim(), (mobile || '').trim(), courseClean, courseClean, profile_photo || null, defaultCode]);
+
+      // 3. Insert candidate into kbc_teams table so candidate can connect to live hotseat session
+      await pool.query(`
+        INSERT INTO kbc_teams (id, team_name, leader_name, email, dob, mobile, course, college, profile_photo, access_code, current_level, score_amount, points, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, 0, 'REGISTERED')
+        ON DUPLICATE KEY UPDATE 
+          team_name = VALUES(team_name),
+          leader_name = VALUES(leader_name),
+          course = VALUES(course),
+          profile_photo = COALESCE(VALUES(profile_photo), profile_photo)
+      `, [studentId, full_name.trim(), full_name.trim(), normEmail, dob.trim(), (mobile || '').trim(), courseClean, courseClean, profile_photo || null, defaultCode]);
+
+      const [updatedRows] = await pool.query('SELECT * FROM kbc_students WHERE LOWER(email) = ?', [normEmail]);
 
       return res.json({
         success: true,
         message: `Welcome, ${full_name}! Registration completed successfully. Proceed to enter Exam Access Code.`,
         student: updatedRows[0] || {
-          id: assignedTeamId,
+          id: studentId,
           full_name: full_name.trim(),
           email: normEmail,
           dob: dob.trim(),
           mobile: mobile || '',
-          college: college || '',
-          roll_no: roll_no || '',
+          course: courseClean,
           profile_photo: profile_photo || null,
-          access_code: assignedCode
+          access_code: defaultCode
         },
-        team_id: assignedTeamId,
-        access_code: assignedCode,
+        team_id: studentId,
+        access_code: defaultCode,
         database: 'Hostinger MySQL'
       });
     }
@@ -2887,36 +2884,39 @@ router.post('/student/register', async (req, res) => {
   }
 
   // Memory fallback
+  const existingMemIdx = memoryTeams.findIndex(t => t.email && t.email.toLowerCase() === normEmail);
+  if (existingMemIdx >= 0) {
+    return res.status(409).json({
+      success: false,
+      alreadyRegistered: true,
+      message: 'This email is already registered! Please log in with your registered Email and Date of Birth.'
+    });
+  }
+
   const fallbackStudent = {
     id: studentId,
     full_name: full_name.trim(),
     email: normEmail,
     dob: dob.trim(),
     mobile: mobile || '',
-    college: college || '',
-    roll_no: roll_no || '',
+    course: courseClean,
     profile_photo: profile_photo || null,
     access_code: defaultCode,
     points: 0,
     status: 'REGISTERED'
   };
 
-  const existingMemIdx = memoryTeams.findIndex(t => t.email === normEmail);
-  if (existingMemIdx >= 0) {
-    memoryTeams[existingMemIdx] = { ...memoryTeams[existingMemIdx], ...fallbackStudent, team_name: full_name.trim(), leader_name: full_name.trim() };
-  } else {
-    memoryTeams.push({
-      ...fallbackStudent,
-      team_name: full_name.trim(),
-      leader_name: full_name.trim(),
-      current_level: 1,
-      score_amount: 0
-    });
-  }
+  memoryTeams.push({
+    ...fallbackStudent,
+    team_name: full_name.trim(),
+    leader_name: full_name.trim(),
+    current_level: 1,
+    score_amount: 0
+  });
 
   return res.json({
     success: true,
-    message: `Welcome, ${full_name}! Registration recorded in fallback mode.`,
+    message: `Welcome, ${full_name}! Registration recorded.`,
     student: fallbackStudent,
     team_id: studentId,
     access_code: defaultCode,
@@ -2924,7 +2924,101 @@ router.post('/student/register', async (req, res) => {
   });
 });
 
-// ── 9c. CANDIDATE LOOKUP: Fetch registered candidate by email ──
+// ── 9c. CANDIDATE LOGIN: Log in using registered Email and Date of Birth (DOB) ──
+router.post('/student/login', async (req, res) => {
+  const { email, dob } = req.body;
+
+  if (!email || !email.trim() || !dob || !dob.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: 'Both Email Address and Date of Birth (DOB) are required to log in.'
+    });
+  }
+
+  const normEmail = email.trim().toLowerCase();
+  const inputDob = dob.trim();
+  const pool = getMySQLPool();
+
+  try {
+    await ensureKbcSessionsAndTeams();
+
+    if (pool) {
+      const [rows] = await pool.query('SELECT * FROM kbc_students WHERE LOWER(email) = ?', [normEmail]);
+      if (rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          notRegistered: true,
+          message: 'No registered student found with this email. Please complete registration first.'
+        });
+      }
+
+      const student = rows[0];
+
+      // Compare DOB flexibly (e.g. string equality or date-parts equality)
+      const cleanInput = inputDob.replace(/[^0-9]/g, '');
+      const cleanDb = String(student.dob || '').replace(/[^0-9]/g, '');
+      const dobMatched = (student.dob.trim() === inputDob) || 
+        (cleanInput && cleanDb && cleanInput === cleanDb) || 
+        (!isNaN(new Date(student.dob).getTime()) && !isNaN(new Date(inputDob).getTime()) && 
+         new Date(student.dob).toISOString().slice(0, 10) === new Date(inputDob).toISOString().slice(0, 10));
+
+      if (!dobMatched) {
+        return res.status(401).json({
+          success: false,
+          message: 'Incorrect Date of Birth (DOB). Please enter the registered DOB.'
+        });
+      }
+
+      // Fetch or ensure corresponding live team entry
+      const [teamRows] = await pool.query('SELECT * FROM kbc_teams WHERE LOWER(email) = ?', [normEmail]);
+      let assignedTeam = teamRows[0] || null;
+
+      if (!assignedTeam) {
+        const teamId = student.id || `student-${Date.now()}`;
+        const code = student.access_code || 'KBC-101';
+        await pool.query(`
+          INSERT INTO kbc_teams (id, team_name, leader_name, email, dob, mobile, course, college, profile_photo, access_code, current_level, score_amount, points, status)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, 0, 'REGISTERED')
+        `, [teamId, student.full_name, student.full_name, normEmail, student.dob, student.mobile || '', student.course || '', student.course || '', student.profile_photo || null, code]);
+        const [freshTeam] = await pool.query('SELECT * FROM kbc_teams WHERE id = ?', [teamId]);
+        if (freshTeam.length > 0) assignedTeam = freshTeam[0];
+      }
+
+      return res.json({
+        success: true,
+        message: `Welcome back, ${student.full_name}! Login successful.`,
+        student,
+        team: assignedTeam,
+        access_code: (assignedTeam?.access_code || student.access_code || 'KBC-101'),
+        database: 'Hostinger MySQL'
+      });
+    }
+  } catch (err) {
+    console.warn('MySQL /student/login error:', err.message);
+  }
+
+  // Memory fallback check
+  const mem = memoryTeams.find(t => t.email && t.email.toLowerCase() === normEmail);
+  if (mem) {
+    const cleanInput = inputDob.replace(/[^0-9]/g, '');
+    const cleanMem = String(mem.dob || '').replace(/[^0-9]/g, '');
+    if (mem.dob === inputDob || (cleanInput && cleanMem && cleanInput === cleanMem)) {
+      return res.json({
+        success: true,
+        message: `Welcome back, ${mem.leader_name || mem.team_name}! Login successful.`,
+        student: mem,
+        team: mem,
+        access_code: mem.access_code || 'KBC-101',
+        database: 'Memory Fallback'
+      });
+    }
+    return res.status(401).json({ success: false, message: 'Incorrect Date of Birth (DOB).' });
+  }
+
+  return res.status(404).json({ success: false, message: 'Student account not found. Please register first.' });
+});
+
+// ── 9d. CANDIDATE LOOKUP: Fetch registered candidate by email ──
 router.get('/student/:email', async (req, res) => {
   const normEmail = String(req.params.email || '').trim().toLowerCase();
   const pool = getMySQLPool();
@@ -3124,6 +3218,7 @@ router.post('/team/join', async (req, res) => {
           team_name: team.team_name,
           leader_name: team.leader_name,
           email: team.email || student?.email || '',
+          course: team.course || student?.course || '',
           college: team.college || student?.college || '',
           roll_no: team.roll_no || student?.roll_no || '',
           profile_photo: team.profile_photo || student?.profile_photo || null,
