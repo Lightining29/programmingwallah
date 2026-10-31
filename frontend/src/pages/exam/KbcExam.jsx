@@ -526,8 +526,19 @@ export default function KbcExam() {
                   wrong_count: Number(found.wrong_count) || 0,
                   score_amount: Number(found.score_amount) || 0,
                   current_level: found.current_level || prev.current_level,
-                  status: found.status || prev.status
+                  status: found.status || prev.status,
+                  submitted_option: found.submitted_option
                 }));
+
+                // If this team has locked / submitted an answer on the server:
+                if (found.submitted_option !== null && found.submitted_option !== undefined) {
+                  setSelectedOption(Number(found.submitted_option));
+                  setIsLocked(true);
+                  setTeamAnswerSubmitted(true);
+                  if (sess.revealed_correct === null) {
+                    setAnswerStatus('locked');
+                  }
+                }
               }
             }
 
@@ -540,7 +551,7 @@ export default function KbcExam() {
             const timerReset = isNowLive && sess.timer_started_at && sess.timer_started_at !== lastQuestionTrackRef.current.timerStartedAt;
 
             // When a new question arrives on contestant laptop (Admin started or advanced round or reset round)
-            if (isNowLive && (levelChanged || qChanged || justWentLive || roundReset || adminUnlocked || timerReset)) {
+            if (isNowLive && (levelChanged || qChanged || justWentLive || roundReset || timerReset)) {
               const newLvl = sess.current_level || 1;
               const maxCountdown = getLevelCountdown(newLvl);
               setCurrentLevel(newLvl);
@@ -589,7 +600,7 @@ export default function KbcExam() {
             lastQuestionTrackRef.current.timerStartedAt = sess.timer_started_at;
 
             if (isNowLive) {
-              // Admin locks the option
+              // Admin locks the session question
               if (sess.is_locked && !isLocked) {
                 setIsLocked(true);
                 if (sess.locked_option !== null && sess.locked_option !== undefined) {
@@ -597,9 +608,6 @@ export default function KbcExam() {
                 }
                 setAnswerStatus('evaluating');
                 kbcAudio.startLockSuspense();
-              } else if (!sess.is_locked && isLocked && !isTimeUp) {
-                setIsLocked(false);
-                setAnswerStatus(null);
               }
 
               // Server-synchronized Tik-Tiki Ji countdown clock for contestant laptop:
@@ -878,9 +886,13 @@ export default function KbcExam() {
 
   // ── Submit Laptop Option to Admin Monitor (Tracks submission time for tie-breaker) ──
   const handleSubmitTeamOption = async (idx) => {
-    if (!team || isLocked || timeLeft <= 0 || isTimeUp) return;
+    if (!team || timeLeft <= 0 || isTimeUp) return;
     setSelectedOption(idx);
-    kbcAudio.playSelect();
+    setIsLocked(true);
+    setTeamAnswerSubmitted(true);
+    setAnswerStatus('locked');
+    kbcAudio.stopClock();
+    kbcAudio.startLockSuspense();
 
     try {
       const res = await fetch('/api/kbc/team/submit-answer', {
@@ -895,7 +907,7 @@ export default function KbcExam() {
       if (data.success) {
         setTeamAnswerSubmitted(true);
         const letter = String.fromCharCode(65 + idx);
-        setHostQuote(`Team ${team.team_name} ne Option ${letter} chuna hai! Admin monitor par aapka uttar darj ho chuka hai.`);
+        setHostQuote(`Team ${team.team_name} ne Option ${letter} lock kar diya hai! Admin monitor par aapka uttar darj ho chuka hai.`);
       }
     } catch (e) {}
   };
@@ -1061,16 +1073,14 @@ export default function KbcExam() {
     const letter = String.fromCharCode(65 + idx);
     const optionText = currentQ?.options?.[idx] || '';
     setHostQuote(AMITABH_QUOTES.optionSelected(letter, optionText));
-    if (team) {
-      handleSubmitTeamOption(idx);
-    }
   };
 
   // Confirm Lock Option ("Computer Ji, option [X] ko lock kiya jaye!")
   const handleLockOption = () => {
-    if (selectedOption === null || isOptionDisabled) return;
+    if (selectedOption === null || isLocked || (revealedCorrect !== null)) return;
     setIsLocked(true);
     setAnswerStatus('locked');
+    setTeamAnswerSubmitted(true);
     kbcAudio.stopClock();
     // Play and loop ONLY the uploaded suspense MP3 until admin reveals answer
     kbcAudio.startLockSuspense();
@@ -1080,8 +1090,6 @@ export default function KbcExam() {
     if (team) {
       handleSubmitTeamOption(selectedOption);
     }
-    // CRITICAL: DO NOT automatically evaluate or reveal answer!
-    // Tension MP3 loops continuously until admin clicks Reveal Answer!
   };
 
   // Evaluate Locked Answer
@@ -2187,15 +2195,21 @@ export default function KbcExam() {
                     borderColor = '#10b981';
                     glowShadow = '0 0 30px rgba(16, 185, 129, 0.7)';
                   } else if (isSelected) {
-                    if (answerStatus === 'evaluating') {
+                    if (isLocked || answerStatus === 'locked' || answerStatus === 'evaluating') {
                       bgGradient = 'linear-gradient(180deg, #b45309 0%, #78350f 100%)';
-                      borderColor = '#f59e0b';
-                      glowShadow = '0 0 25px rgba(245, 158, 11, 0.7)';
+                      borderColor = '#fbbf24';
+                      glowShadow = '0 0 35px rgba(245, 158, 11, 0.9), inset 0 0 15px rgba(251, 191, 36, 0.4)';
                     } else {
                       bgGradient = 'linear-gradient(180deg, #d97706 0%, #92400e 100%)';
                       borderColor = '#fbbf24';
                       glowShadow = '0 0 20px rgba(251, 191, 36, 0.5)';
                     }
+                  } else if (isLocked && revealedCorrect === null) {
+                    // Non-selected options when answer is locked: dim them out
+                    bgGradient = 'linear-gradient(180deg, #090818 0%, #050410 100%)';
+                    borderColor = '#2a2448';
+                    textColor = 'text-slate-500';
+                    glowShadow = 'none';
                   }
 
                   return (
@@ -2205,10 +2219,12 @@ export default function KbcExam() {
                       disabled={isOptionDisabled}
                       className={`group relative text-left py-4 px-7 transition-all ${
                         isOptionDisabled
-                          ? 'cursor-not-allowed opacity-60 pointer-events-none'
+                          ? (isSelected && isLocked) 
+                            ? 'cursor-default ring-2 ring-amber-400/70 shadow-amber-400/30' 
+                            : 'cursor-not-allowed opacity-35 grayscale-[50%] pointer-events-none'
                           : 'cursor-pointer transform hover:scale-[1.01] active:scale-[0.99]'
                       } ${
-                        isSelected && answerStatus === 'evaluating' ? 'animate-pulse' : ''
+                        isSelected && (answerStatus === 'evaluating' || answerStatus === 'locked') ? 'animate-pulse' : ''
                       }`}
                       style={{
                         background: bgGradient,
@@ -2224,6 +2240,12 @@ export default function KbcExam() {
                         <span className={`text-sm md:text-base font-bold flex-1 ${textColor}`}>
                           {opt}
                         </span>
+                        {isSelected && isLocked && revealedCorrect === null && (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shrink-0 animate-pulse">
+                            <Lock className="w-3.5 h-3.5 text-slate-950" />
+                            <span>LOCKED 🔒</span>
+                          </span>
+                        )}
                         {isCorrect && (
                           <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
                         )}
@@ -2251,37 +2273,40 @@ export default function KbcExam() {
                 </div>
               )}
 
-              {/* ── "Lock Kiya Jaaye?" Confirmation Bar ── */}
-              {selectedOption !== null && !isOptionDisabled && (
+              {/* ── "Confirm Team Choice" Bar (Shown only before locking) ── */}
+              {!isLocked && selectedOption !== null && !isOptionDisabled && (
                 <div className="flex flex-wrap items-center justify-center gap-4 pt-3 animate-fade-in">
                   <div className="text-xs text-amber-300 font-bold flex items-center gap-2">
-                    {team && teamAnswerSubmitted && (
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                    )}
-                    Option {String.fromCharCode(65 + selectedOption)} chuna gaya hai {team ? '(Laptop se Admin monitor par live)' : ''}.
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
+                    Option {String.fromCharCode(65 + selectedOption)} chuna gaya hai {team ? '(Confirm karke lock karein)' : ''}.
                   </div>
                   <button
                     onClick={handleLockOption}
                     disabled={isOptionDisabled}
-                    className="px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-sm tracking-wider uppercase shadow-lg shadow-amber-500/30 transition transform hover:scale-105 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-sm tracking-wider uppercase shadow-xl shadow-amber-500/40 transition transform hover:scale-105 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
-                    {team ? 'Confirm Team Choice 🔒' : 'Lock Kiya Jaaye! (Lock Answer) 🔒'}
+                    <Lock className="w-4 h-4 text-slate-950" />
+                    <span>Confirm Team Choice 🔒</span>
                   </button>
                 </div>
               )}
 
               {/* ── Tension / Suspense MP3 Playing Banner (Until Admin Reveals) ── */}
               {isLocked && revealedCorrect === null && (
-                <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-gradient-to-r from-amber-950/90 via-purple-950/90 to-amber-950/90 border-2 border-amber-400/80 shadow-[0_0_30px_rgba(251,191,36,0.4)] text-center animate-pulse space-y-1 mt-3">
-                  <div className="flex items-center justify-center gap-2 text-amber-300 font-black text-sm sm:text-base uppercase tracking-wider">
-                    <Lock className="w-4 h-4 text-amber-400 animate-spin" />
+                <div className="flex flex-col items-center justify-center p-5 rounded-2xl bg-gradient-to-r from-amber-950/95 via-purple-950/95 to-amber-950/95 border-2 border-amber-400/80 shadow-[0_0_35px_rgba(251,191,36,0.45)] text-center animate-pulse space-y-2 mt-4">
+                  <div className="flex items-center justify-center gap-2.5 text-amber-300 font-black text-base sm:text-lg uppercase tracking-wider">
+                    <Lock className="w-5 h-5 text-amber-400 animate-spin" />
                     <span>Option {selectedOption !== null ? String.fromCharCode(65 + selectedOption) : ''} Lock Ho Chuka Hai 🔒</span>
                   </div>
-                  <p className="text-xs text-amber-200/90 font-medium">
+                  <p className="text-xs sm:text-sm text-amber-200 font-medium max-w-lg mx-auto">
                     {playMode === 'TEAM' 
-                      ? 'Aapka uttar safe hai. Admin ke reveal karne tak kripya screen par bane rahein (Suspense MP3 Loop Running)...'
+                      ? 'Aapka uttar locked hai. Admin ke reveal karne tak kripya screen par bane rahein (Suspense Music Live)...'
                       : 'Suspense music running live. Host Amitabh Bachchan ke reveal karne ki pratiksha karein...'}
                   </p>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-950/80 border border-amber-500/40 text-amber-400 text-[11px] font-bold">
+                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                    <span>Waiting for Admin to Reveal Answer</span>
+                  </div>
                   {playMode === 'SOLO' && (
                     <button
                       onClick={evaluateAnswer}
