@@ -22,6 +22,7 @@ export default function SpotlightModal({ isOpen, onClose, onOpenApp, onOpenFile 
     if (!query.trim()) {
       // Default top suggestions
       const defaultApps = [
+        { type: 'app', id: 'mysql-studio', title: 'MySQL Studio', subtitle: 'Developer Tools • Database Suite', icon: '🐬' },
         { type: 'app', id: 'vscode', title: 'Visual Studio Code', subtitle: 'Developer Environment', icon: '💻' },
         { type: 'app', id: 'finder', title: 'Finder', subtitle: 'Macintosh HD', icon: '📂' },
         { type: 'app', id: 'safari', title: 'Safari', subtitle: 'Web Explorer', icon: '🧭' },
@@ -37,7 +38,9 @@ export default function SpotlightModal({ isOpen, onClose, onOpenApp, onOpenFile 
 
     // 1. Search Installed & System Apps
     const allApps = [
+      { id: 'mysql-studio', title: 'MySQL Studio', subtitle: 'Developer Tools • MySQL 8.4 LTS', icon: '🐬', keywords: ['mysql', 'sql', 'database', 'workbench', 'studio', 'table', 'sakila'] },
       { id: 'vscode', title: 'Visual Studio Code', subtitle: 'Applications', icon: '💻' },
+      { id: 'javamanager', title: 'Java Manager', subtitle: 'Developer Tools', icon: '☕' },
       { id: 'finder', title: 'Finder', subtitle: 'Applications', icon: '📂' },
       { id: 'safari', title: 'Safari', subtitle: 'Applications', icon: '🧭' },
       { id: 'terminal', title: 'Terminal', subtitle: 'Applications', icon: '⚡' },
@@ -51,7 +54,7 @@ export default function SpotlightModal({ isOpen, onClose, onOpenApp, onOpenFile 
     ];
 
     allApps.forEach(app => {
-      if (app.title.toLowerCase().includes(q)) {
+      if (app.title.toLowerCase().includes(q) || (app.keywords && app.keywords.some(k => k.includes(q)))) {
         matches.push({ type: 'app', ...app });
       }
     });

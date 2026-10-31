@@ -435,6 +435,70 @@ export const APP_STORE_CATALOG = [
   }
 ];
 
+// Built-in System Applications
+export const BUILTIN_APPLICATIONS = [
+  {
+    id: 'mysql-studio',
+    name: 'MySQL Studio',
+    version: '8.4.0',
+    category: 'Developer Tools',
+    developer: 'Oracle / AppleTree',
+    description: 'Enterprise Relational Database Management Suite (MySQL 8.4 LTS)',
+    iconType: 'mysql',
+    isBuiltin: true
+  },
+  {
+    id: 'vscode',
+    name: 'Visual Studio Code',
+    version: '1.93.0',
+    category: 'Developer Tools',
+    developer: 'Microsoft',
+    description: 'Code editing. Redefined.',
+    iconType: 'code',
+    isBuiltin: true
+  },
+  {
+    id: 'javamanager',
+    name: 'Java Manager',
+    version: '21.0.3',
+    category: 'Developer Tools',
+    developer: 'OpenJDK',
+    description: 'Java Development Kit & Runtime Environment Manager',
+    iconType: 'java',
+    isBuiltin: true
+  },
+  {
+    id: 'terminal',
+    name: 'Terminal',
+    version: '3.2.0',
+    category: 'Utilities',
+    developer: 'Apple',
+    description: 'macOS Zsh Shell Terminal',
+    iconType: 'terminal',
+    isBuiltin: true
+  },
+  {
+    id: 'finder',
+    name: 'Finder',
+    version: '15.2.0',
+    category: 'System',
+    developer: 'Apple',
+    description: 'macOS File Manager',
+    iconType: 'finder',
+    isBuiltin: true
+  },
+  {
+    id: 'safari',
+    name: 'Safari',
+    version: '18.0.0',
+    category: 'Internet',
+    developer: 'Apple',
+    description: 'Web Browser',
+    iconType: 'safari',
+    isBuiltin: true
+  }
+];
+
 class ApplicationRegistry {
   constructor() {
     this.installedApps = new Map();
@@ -532,7 +596,20 @@ class ApplicationRegistry {
     return true;
   }
 
+  getBuiltinApps() {
+    return BUILTIN_APPLICATIONS;
+  }
+
+  getAllApps() {
+    return [...BUILTIN_APPLICATIONS, ...Array.from(this.installedApps.values())];
+  }
+
   getApp(appId) {
+    if (appId === 'mysqlstudio' || appId === 'mysql-studio') {
+      return BUILTIN_APPLICATIONS.find(a => a.id === 'mysql-studio');
+    }
+    const builtin = BUILTIN_APPLICATIONS.find(a => a.id === appId);
+    if (builtin) return builtin;
     if (this.installedApps.has(appId)) {
       return this.installedApps.get(appId);
     }

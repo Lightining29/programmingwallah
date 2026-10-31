@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import appRegistry from '../services/appRegistry.js';
 import macSound from '../services/sound.js';
+import { MacMySQLIcon } from '../MacOSDesktop.jsx';
 
 export default function LaunchpadModal({ isOpen, onClose, onLaunchApp }) {
   const [search, setSearch] = useState('');
@@ -10,8 +11,10 @@ export default function LaunchpadModal({ isOpen, onClose, onLaunchApp }) {
 
   const systemApps = [
     { id: 'finder', name: 'Finder', iconText: '📂', gradient: 'from-blue-500 to-sky-400' },
+    { id: 'mysql-studio', name: 'MySQL Studio', iconText: '🐬', isMySQL: true, gradient: 'from-teal-600 to-amber-600' },
     { id: 'safari', name: 'Safari', iconText: '🧭', gradient: 'from-sky-500 to-blue-600' },
     { id: 'vscode', name: 'VS Code', iconText: '💻', gradient: 'from-blue-600 to-indigo-700' },
+    { id: 'javamanager', name: 'Java Manager', iconText: '☕', gradient: 'from-amber-600 to-orange-700' },
     { id: 'terminal', name: 'Terminal', iconText: '⚡', gradient: 'from-slate-800 to-black' },
     { id: 'appstore', name: 'App Store', iconText: '🛍️', gradient: 'from-sky-400 to-blue-600' },
     { id: 'activitymonitor', name: 'Activity Monitor', iconText: '📈', gradient: 'from-emerald-500 to-teal-700' },
@@ -72,8 +75,8 @@ export default function LaunchpadModal({ isOpen, onClose, onLaunchApp }) {
             onClick={() => handleLaunch(app.id)}
             className="flex flex-col items-center group cursor-pointer transition transform hover:scale-110 active:scale-95"
           >
-            <div className={`w-16 h-16 rounded-2xl bg-gradient-to-tr ${app.gradient} flex items-center justify-center text-3xl shadow-2xl border border-white/20 group-hover:shadow-sky-500/30 group-hover:ring-2 group-hover:ring-white/40 transition`}>
-              {app.iconText}
+            <div className={`w-16 h-16 rounded-2xl bg-gradient-to-tr ${app.gradient} flex items-center justify-center text-3xl shadow-2xl border border-white/20 group-hover:shadow-sky-500/30 group-hover:ring-2 group-hover:ring-white/40 transition overflow-hidden p-1`}>
+              {app.isMySQL ? <MacMySQLIcon className="w-12 h-12" /> : app.iconText}
             </div>
             <span className="mt-2 text-xs font-semibold text-white drop-shadow-md text-center truncate max-w-[85px]">
               {app.name}

@@ -1,0 +1,13 @@
+Welcome to macOS Sequoia Web Pro, mirko!
+==================================================
+Your private, persistent operating environment is ready.
+
+Included Enterprise Features:
+- Complete MySQL Studio (MySQL 8.4 LTS)
+- Isolated Database Workspace: macos_user_usr_mirko_*
+- Personal Virtual File System (/home/usr_mirko)
+- Monaco Code Editor & Terminal
+- Multi-Tab Safari Browser Engine
+- Sonoma Desktop Widgets
+
+Your files and databases are securely isolated and preserved.

@@ -1,4 +1,5 @@
 import { spawn, execSync } from 'child_process';
+import javaRuntimeService from '../services/javaRuntimeService.js';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -15,6 +16,20 @@ const activeProcesses = new Map();
  * Resolves JDK on Windows, Alpine Linux (Docker), Ubuntu/Debian, and macOS
  */
 export function detectJavaRuntime() {
+  const st = javaRuntimeService.getStatus();
+  if (st.isReady && st.activeJdk) {
+    return {
+      isInstalled: true,
+      hasCompiler: true,
+      isCompilationReady: true,
+      javacPath: st.activeJdk.javacPath,
+      javaPath: st.activeJdk.javaPath,
+      javaHome: st.activeJdk.home,
+      javacVersion: st.activeJdk.fullVersion,
+      javaVersion: st.activeJdk.fullVersion,
+      statusMessage: st.statusMessage
+    };
+  }
   const isWin = process.platform === 'win32';
   const exeSuffix = isWin ? '.exe' : '';
 
@@ -338,7 +353,7 @@ export async function executeCode(req, res) {
           isCompilerError: true,
           command: `javac ${javacArgs.join(' ')}`,
           stdout: compileResult.stdout,
-          stderr: compileResult.stderr || compileResult.error || 'Compilation failed.',
+          stderr: javaRuntimeService.filterJvmNotices(compileResult.stderr) || compileResult.error || '',
           exitCode: compileResult.exitCode,
           durationMs: Date.now() - startTime
         });
@@ -361,7 +376,7 @@ export async function executeCode(req, res) {
         success: runResult.exitCode === 0,
         command: `java ${runArgs.join(' ')}`,
         stdout: runResult.stdout,
-        stderr: runResult.stderr || runResult.error || '',
+        stderr: javaRuntimeService.filterJvmNotices(runResult.stderr) || runResult.error || '',
         exitCode: runResult.exitCode,
         durationMs: Date.now() - startTime
       });
@@ -628,6 +643,38 @@ export async function executeTerminalCommand(req, res) {
 async function executeSingleCommand(cmd, cwd, pyRuntime, javaRuntime) {
   let trimmed = cmd.trim();
 
+  // Diagnostics & Environment query commands
+  if (trimmed === 'echo $JAVA_HOME' || trimmed === 'echo %JAVA_HOME%') {
+    const active = javaRuntimeService.getActiveJdk();
+    return { stdout: (active ? active.home : (process.env.JAVA_HOME || 'Not configured')) + '\n', stderr: '', exitCode: 0 };
+  }
+
+  if (trimmed === 'which javac' || trimmed === 'where javac') {
+    const active = javaRuntimeService.getActiveJdk();
+    return { stdout: (active ? active.javacPath : 'javac not found') + '\n', stderr: '', exitCode: active ? 0 : 1 };
+  }
+
+  if (trimmed === 'which java' || trimmed === 'where java') {
+    const active = javaRuntimeService.getActiveJdk();
+    return { stdout: (active ? active.javaPath : 'java not found') + '\n', stderr: '', exitCode: active ? 0 : 1 };
+  }
+
+  if (trimmed === 'javac -version') {
+    const active = javaRuntimeService.getActiveJdk();
+    if (!active) return { stdout: '', stderr: 'javac: command not found\n', exitCode: 127 };
+    return { stdout: (active.fullVersion || 'javac 27') + '\n', stderr: '', exitCode: 0 };
+  }
+
+  if (trimmed === 'java -version') {
+    const active = javaRuntimeService.getActiveJdk();
+    if (!active) return { stdout: '', stderr: 'java: command not found\n', exitCode: 127 };
+    return { 
+      stdout: 'openjdk version "' + active.majorVersion + '.0.2" 2026-09-15\nOpenJDK Runtime Environment Temurin-' + active.majorVersion + ' (build ' + active.majorVersion + ')\nOpenJDK 64-Bit Server VM (build ' + active.majorVersion + ', mixed mode)\n', 
+      stderr: '', 
+      exitCode: 0 
+    };
+  }
+
   // ls / dir emulation
   if (trimmed === 'ls' || trimmed === 'dir' || trimmed === 'dir /b') {
     const items = fs.readdirSync(cwd);
@@ -655,7 +702,7 @@ async function executeSingleCommand(cmd, cwd, pyRuntime, javaRuntime) {
     }
     const javacArgs = trimmed.replace(/^javac\s*/, '').trim().split(/\s+/).filter(Boolean);
     const finalArgs = ['-encoding', 'UTF-8', '-cp', '.', ...(javacArgs.length > 0 ? javacArgs : ['App.java'])];
-    return runManagedProcess(null, javaRuntime.javacPath, finalArgs, cwd, 15000);
+    const jRes = await runManagedProcess(null, javaRuntime.javacPath, finalArgs, cwd, 15000); return { stdout: jRes.stdout, stderr: javaRuntimeService.filterJvmNotices(jRes.stderr), exitCode: jRes.exitCode };
   }
 
   // java command
@@ -669,7 +716,7 @@ async function executeSingleCommand(cmd, cwd, pyRuntime, javaRuntime) {
     }
     const javaArgs = trimmed.replace(/^java\s*/, '').trim().split(/\s+/).filter(Boolean);
     const finalArgs = ['-Dfile.encoding=UTF-8', '-Xmx256m', '-cp', '.', ...(javaArgs.length > 0 ? javaArgs : ['App'])];
-    return runManagedProcess(null, javaRuntime.javaPath, finalArgs, cwd, 15000);
+    const rRes = await runManagedProcess(null, javaRuntime.javaPath, finalArgs, cwd, 15000); return { stdout: rRes.stdout, stderr: javaRuntimeService.filterJvmNotices(rRes.stderr), exitCode: rRes.exitCode };
   }
 
   // python command

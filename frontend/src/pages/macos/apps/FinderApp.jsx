@@ -6,8 +6,9 @@ import {
 } from 'lucide-react';
 import vfs from '../services/vfs.js';
 import macSound from '../services/sound.js';
+import { MacMySQLIcon } from '../MacOSDesktop.jsx';
 
-export default function FinderApp({ onOpenFile, onOpenTerminal }) {
+export default function FinderApp({ onOpenFile, onOpenTerminal, onOpenApp }) {
   const [currentPath, setCurrentPath] = useState('/Users/admin/Desktop');
   const [history, setHistory] = useState(['/Users/admin/Desktop']);
   const [historyIndex, setHistoryIndex] = useState(0);
@@ -133,8 +134,14 @@ export default function FinderApp({ onOpenFile, onOpenTerminal }) {
   };
 
   const getItemIcon = (item) => {
+    if (item.appId === 'mysql-studio' || item.name.toLowerCase().includes('mysql')) {
+      return <div className="w-10 h-10 p-0.5"><MacMySQLIcon /></div>;
+    }
     if (item.type === 'folder') {
       return <Folder className="w-10 h-10 text-sky-400 fill-sky-400/20" />;
+    }
+    if (item.name.endsWith('.app')) {
+      return <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-700 flex items-center justify-center text-xl shadow">🚀</div>;
     }
     const ext = item.name.split('.').pop().toLowerCase();
     if (['jpg', 'jpeg', 'png', 'svg', 'webp'].includes(ext)) {
@@ -147,6 +154,20 @@ export default function FinderApp({ onOpenFile, onOpenTerminal }) {
       return <Video className="w-10 h-10 text-amber-400" />;
     }
     return <FileText className="w-10 h-10 text-slate-300" />;
+  };
+
+  const handleItemDoubleClick = (item) => {
+    if (item.type === 'folder') {
+      navigateTo(item.path);
+    } else if (item.appId || item.name.endsWith('.app')) {
+      if (onOpenApp) {
+        onOpenApp(item.appId || (item.name.toLowerCase().includes('mysql') ? 'mysql-studio' : 'vscode'));
+      } else {
+        onOpenFile(item);
+      }
+    } else {
+      onOpenFile(item);
+    }
   };
 
   const breadcrumbs = currentPath.split('/').filter(Boolean);
@@ -334,13 +355,7 @@ export default function FinderApp({ onOpenFile, onOpenTerminal }) {
                 <div
                   key={item.path}
                   onClick={() => setSelectedItem(item)}
-                  onDoubleClick={() => {
-                    if (item.type === 'folder') {
-                      navigateTo(item.path);
-                    } else {
-                      onOpenFile(item);
-                    }
-                  }}
+                  onDoubleClick={() => handleItemDoubleClick(item)}
                   className={`flex flex-col items-center p-3 rounded-xl cursor-pointer text-center group transition ${
                     selectedItem?.path === item.path ? 'bg-sky-600/40 border border-sky-400/50' : 'hover:bg-white/10'
                   }`}
@@ -374,10 +389,7 @@ export default function FinderApp({ onOpenFile, onOpenTerminal }) {
                     <tr
                       key={item.path}
                       onClick={() => setSelectedItem(item)}
-                      onDoubleClick={() => {
-                        if (item.type === 'folder') navigateTo(item.path);
-                        else onOpenFile(item);
-                      }}
+                      onDoubleClick={() => handleItemDoubleClick(item)}
                       className={`hover:bg-white/10 cursor-pointer ${
                         selectedItem?.path === item.path ? 'bg-sky-600/30' : ''
                       }`}

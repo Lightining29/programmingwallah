@@ -56,6 +56,35 @@ export default function TerminalApp({ onOpenApp, onOpenFile }) {
     const cmd = tokens[0]?.toLowerCase();
     const args = tokens.slice(1).map(a => a.replace(/^"|"$/g, ''));
 
+    if (raw.includes('&&')) {
+      try {
+        let currentFiles = [];
+        try {
+          const vfsItems = await vfs.list(cwd);
+          for (const item of vfsItems) {
+            if (item.type === 'file') {
+              const content = await vfs.readFile(item.path);
+              currentFiles.push({ name: item.name, content });
+            }
+          }
+        } catch {}
+        const response = await fetch('/api/ide/command', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ command: raw, files: currentFiles })
+        });
+        const data = await response.json();
+        if (data.stdout) newHistory.push({ type: 'output', text: data.stdout.trimEnd() });
+        if (data.stderr) newHistory.push({ type: 'error', text: data.stderr.trimEnd() });
+        if (!data.stdout && !data.stderr) newHistory.push({ type: 'output', text: '[Process completed with exit code ' + data.exitCode + ']' });
+      } catch (err) {
+        newHistory.push({ type: 'error', text: 'Execution failed: ' + err.message });
+      }
+      setHistory(newHistory);
+      setInputVal('');
+      return;
+    }
+
     switch (cmd) {
       case 'clear':
         setHistory([]);

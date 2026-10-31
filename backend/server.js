@@ -24,6 +24,11 @@ import arenaRoutes from './routes/arena.js';
 import portfolioRoutes from './routes/portfolio.js';
 import kbcRoutes from './routes/kbc.js';
 import ideRoutes from './routes/ide.js';
+import macAuthRoutes from './routes/macAuth.js';
+import macMySQLRoutes from './routes/macMySQL.js';
+import macDesktopRoutes from './routes/macDesktop.js';
+import javaManagerRoutes from './routes/javaManager.js';
+import userDesktopService from './services/userDesktopService.js';
 import { initExamDatabase } from './models/exam/index.js';
 
 // Load environment variables from multiple possible locations (root .env and backend/.env)
@@ -137,6 +142,13 @@ app.use('/api/arena', arenaRoutes);
 app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/kbc', kbcRoutes);
 app.use('/api/ide', ideRoutes);
+app.use('/api/macos/auth', macAuthRoutes);
+app.use('/api/macos/mysql', macMySQLRoutes);
+app.use('/api/macos/desktop', macDesktopRoutes);
+app.use('/api/java', javaManagerRoutes);
+
+// Initialize macOS default accounts and storage
+userDesktopService.seedDefaultUsers().catch(err => console.warn('[macOS Seed]', err.message));
 
 // Dynamic Sitemap for Search Engines & AI Crawlers
 app.get('/sitemap.xml', (req, res) => {

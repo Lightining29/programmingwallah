@@ -30,11 +30,45 @@ import LaunchpadModal from './components/LaunchpadModal.jsx';
 import MissionControlModal from './components/MissionControlModal.jsx';
 import WebAppRunner from './components/WebAppRunner.jsx';
 import SafariBrowserApp from './apps/SafariBrowserApp.jsx';
+import JavaRuntimeManagerApp from './apps/JavaRuntimeManagerApp.jsx';
+import MySQLStudioApp from './apps/MySQLStudioApp.jsx';
+import MacLockScreen from './components/MacLockScreen.jsx';
 import { 
   DesktopWidgetWrapper, WidgetGalleryModal, NotificationCenterDrawer, INITIAL_DESKTOP_WIDGETS 
 } from './components/WidgetSystem.jsx';
 
 // ── AUTHENTIC REAL macOS SQUIRCLE ICONS (Pixel-Perfect SVG Art) ──
+
+export const MacMySQLIcon = ({ className = "w-full h-full" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <defs>
+      <linearGradient id="mysqlBg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stopColor="#00758F" />
+        <stop offset="100%" stopColor="#F29111" />
+      </linearGradient>
+    </defs>
+    <rect x="5" y="5" width="90" height="90" rx="22" fill="url(#mysqlBg)" />
+    <ellipse cx="50" cy="36" rx="26" ry="9" fill="#ffffff" opacity="0.9" />
+    <path d="M24 36 V64 C24 69 36 73 50 73 C64 73 76 69 76 64 V36" fill="none" stroke="#ffffff" strokeWidth="4" />
+    <path d="M24 50 C24 55 36 59 50 59 C64 59 76 55 76 50" fill="none" stroke="#ffffff" strokeWidth="3" opacity="0.7" />
+  </svg>
+);
+
+export const MacJavaIcon = ({ className = "w-full h-full" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <defs>
+      <linearGradient id="javaBg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stopColor="#ea580c" />
+        <stop offset="100%" stopColor="#b45309" />
+      </linearGradient>
+    </defs>
+    <rect x="5" y="5" width="90" height="90" rx="22" fill="url(#javaBg)" />
+    <path d="M32 46 C32 46 42 42 56 42 C64 42 70 45 70 48 C70 56 50 60 50 60" fill="none" stroke="#ffffff" strokeWidth="4" strokeLinecap="round" />
+    <path d="M38 56 C38 56 46 53 58 53 C64 53 68 55 68 57 C68 64 44 68 34 71" fill="none" stroke="#fef08a" strokeWidth="3.5" strokeLinecap="round" />
+    <path d="M48 24 C44 30 52 34 50 40" fill="none" stroke="#fed7aa" strokeWidth="3" strokeLinecap="round" />
+    <path d="M56 20 C52 28 60 32 58 38" fill="none" stroke="#ffedd5" strokeWidth="2.5" strokeLinecap="round" />
+  </svg>
+);
 
 export const MacFinderIcon = ({ className = "w-full h-full" }) => (
   <svg viewBox="0 0 100 100" className={className}>
@@ -379,7 +413,14 @@ export default function MacOSDesktop() {
   const [renamingItemId, setRenamingItemId] = useState(null);
   const [renameValue, setRenameValue] = useState('');
   const [currentWallpaper, setCurrentWallpaper] = useState(WALLPAPERS[0].url);
-  const [isLocked, setIsLocked] = useState(false);
+  const [isLocked, setIsLocked] = useState(true);
+  const [currentUser, setCurrentUser] = useState({
+    id: 'usr_01net',
+    username: '01net',
+    displayName: '01net',
+    avatarUrl: 'bulb',
+    role: 'admin'
+  });
   const [activeMenu, setActiveMenu] = useState(null);
   const [soundVolume, setSoundVolume] = useState(85);
   const [screenBrightness, setScreenBrightness] = useState(100);
@@ -453,6 +494,42 @@ export default function MacOSDesktop() {
   const [activeAppId, setActiveAppId] = useState('vscode');
 
   const [windows, setWindows] = useState({
+    'mysql-studio': {
+      id: 'mysql-studio',
+      title: 'MySQL Studio — LAN/printberry (MySQL 8.4 LTS)',
+      isOpen: false,
+      isMinimized: false,
+      isMaximized: false,
+      zIndex: 20,
+      x: 90,
+      y: 45,
+      w: 960,
+      h: 620
+    },
+    mysqlstudio: {
+      id: 'mysqlstudio',
+      title: 'MySQL Studio — LAN/printberry (MySQL 8.4 LTS)',
+      isOpen: false,
+      isMinimized: false,
+      isMaximized: false,
+      zIndex: 20,
+      x: 90,
+      y: 45,
+      w: 960,
+      h: 620
+    },
+    javamanager: {
+      id: 'javamanager',
+      title: 'Java Runtime Manager',
+      isOpen: false,
+      isMinimized: false,
+      isMaximized: false,
+      zIndex: 22,
+      x: 120,
+      y: 60,
+      w: 880,
+      h: 560
+    },
     vscode: {
       id: 'vscode',
       title: 'Visual Studio Code — main.py',
@@ -612,13 +689,14 @@ export default function MacOSDesktop() {
     setActiveMenu(null);
   };
 
-  const openApp = (id) => {
+  const openApp = (rawId) => {
+    const id = (rawId === 'mysqlstudio' || rawId === 'mysql_studio') ? 'mysql-studio' : rawId;
     macSound.playPop();
     setBouncingApp(id);
     setTimeout(() => setBouncingApp(null), 1200);
 
     const pkg = appRegistry.getApp(id);
-    const title = pkg ? pkg.name : (windows[id]?.title || id);
+    const title = pkg ? pkg.name : (windows[id]?.title || (id === 'mysql-studio' ? 'MySQL Studio — LAN/printberry (MySQL 8.4 LTS)' : id));
 
     setHighestZ(prev => {
       const nextZ = prev + 1;
@@ -970,27 +1048,10 @@ export class ContextMenuManager {
       folder: 'src',
       lang: 'java',
       content:
-`// ☕ OpenJDK 27 LTS Enterprise Microservice (Spring Boot 3.3)
-import java.time.LocalDateTime;
-import java.util.List;
-
-public class App {
+`public class App {
     public static void main(String[] args) {
-        System.out.println("☕ Compiling with OpenJDK 27 LTS...");
-        System.out.println("Academy: AppleTree Infotech Ghaziabad");
-        System.out.println("Timestamp: " + LocalDateTime.now());
-        
-        List<String> modules = List.of(
-            "Spring Boot 3.3 Web",
-            "Microservices Architecture",
-            "Hibernate ORM & MySQL",
-            "Kafka Event Streaming",
-            "Docker & Kubernetes Cloud"
-        );
-        
-        System.out.println("Active Enterprise Modules:");
-        modules.forEach(m -> System.out.println("  ➜ " + m));
-        System.out.println("Status: Java Enterprise Microservice Running 🚀");
+        System.out.println("Hello from my macOS IDE!");
+        System.out.println("Java is working correctly.");
     }
 }`
     },
@@ -1825,6 +1886,20 @@ p {
     setSiriResponse(reply);
   };
 
+  if (isLocked) {
+    return (
+      <MacLockScreen
+        onUnlock={(user, desktopState) => {
+          if (user) setCurrentUser(user);
+          if (desktopState?.wallpaper) setCurrentWallpaper(desktopState.wallpaper);
+          setIsLocked(false);
+        }}
+        currentUser={currentUser}
+        wallpaperUrl={currentWallpaper}
+      />
+    );
+  }
+
   return (
     <div 
       onClick={handleDesktopCanvasClick}
@@ -1930,7 +2005,20 @@ p {
                   className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
                 >
                   <span>Lock Screen</span>
-                  <Lock className="w-3.5 h-3.5 opacity-60" />
+                  <span className="text-[10px] text-white/40">⌃⌘Q</span>
+                </button>
+                <button 
+                  onClick={async () => {
+                    setActiveMenu(null);
+                    try {
+                      await fetch('/api/macos/auth/logout', { method: 'POST' });
+                    } catch (e) {}
+                    setIsLocked(true);
+                  }}
+                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
+                >
+                  <span>Log Out {currentUser?.username || 'User'}...</span>
+                  <span className="text-[10px] text-white/40">⇧⌘Q</span>
                 </button>
                 <div className="h-px bg-white/10 my-1" />
                 <button 
@@ -2302,7 +2390,10 @@ p {
             <div
               key={itemKey}
               onDoubleClick={() => {
-                if (item.targetApp) openApp(item.targetApp);
+                if (item.appId) openApp(item.appId);
+                else if (item.targetApp) openApp(item.targetApp);
+                else if (item.name?.toLowerCase().includes('mysql')) openApp('mysql-studio');
+                else if (item.name?.toLowerCase().includes('java')) openApp('javamanager');
                 else if (item.type === 'folder') openApp('finder');
                 else if (item.type === 'file') handleOpenFileInEditor(item);
               }}
@@ -2312,6 +2403,8 @@ p {
               <div className="w-12 h-12 flex items-center justify-center drop-shadow-2xl">
                 {item.icon === 'vscode' ? <MacVSCodeIcon /> :
                  item.icon === 'safari' ? <MacSafariIcon /> :
+                 (item.icon === 'mysql' || item.appId === 'mysql-studio' || item.name?.toLowerCase().includes('mysql')) ? <MacMySQLIcon /> :
+                 (item.icon === 'java' || item.appId === 'javamanager' || item.name?.toLowerCase().includes('java')) ? <MacJavaIcon /> :
                  item.icon === 'terabox' ? <MacTeraBoxIcon /> :
                  item.icon === 'terminal' ? <MacTerminalIcon /> :
                  item.icon === 'kbc' ? <MacKbcIcon /> :
@@ -3172,7 +3265,15 @@ p {
                   <span>LF</span>
                   <span className="font-bold flex items-center gap-1">
                     {activeVsCodeFile.lang === 'java' 
-                      ? (detectedRuntimes?.java?.isCompilationReady ? `☕ ${detectedRuntimes.java.javacVersion || 'OpenJDK 27 LTS'}` : '☕ JDK Config Required') 
+                      ? (
+                        <button 
+                          onClick={() => openApp('javamanager')} 
+                          className="hover:text-amber-300 transition cursor-pointer flex items-center gap-1 font-bold"
+                          title="Click to open Java Runtime Manager"
+                        >
+                          ☕ {detectedRuntimes?.java?.isCompilationReady ? (detectedRuntimes.java.javacVersion || 'OpenJDK 27 LTS') : 'JDK Config Required'}
+                        </button>
+                      ) 
                       : activeVsCodeFile.lang === 'python' ? `🐍 ${detectedRuntimes?.python?.version || 'Python 3.12'}` : '🟢 Node.js 20.18'}
                   </span>
                   <span>Prettier ✓</span>
@@ -3239,6 +3340,7 @@ p {
           <FinderApp 
             onOpenFile={(file) => handleOpenFileInEditor(file)}
             onOpenTerminal={() => openApp('terminal')}
+            onOpenApp={(appId) => openApp(appId)}
           />
         </div>
       )}
@@ -3874,6 +3976,76 @@ p {
         </div>
       )}
 
+      {/* ════════════════ MYSQL STUDIO / WORKBENCH WINDOW ════════════════ */}
+      {((windows['mysql-studio']?.isOpen && !windows['mysql-studio'].isMinimized) || (windows.mysqlstudio?.isOpen && !windows.mysqlstudio.isMinimized)) && (() => {
+        const win = windows['mysql-studio']?.isOpen ? windows['mysql-studio'] : windows.mysqlstudio;
+        const winId = windows['mysql-studio']?.isOpen ? 'mysql-studio' : 'mysqlstudio';
+        return (
+          <div
+            onClick={() => focusWindow(winId)}
+            style={{
+              zIndex: win.zIndex,
+              left: win.isMaximized ? 0 : win.x,
+              top: win.isMaximized ? 26 : win.y,
+              width: win.isMaximized ? '100vw' : win.w,
+              height: win.isMaximized ? 'calc(100vh - 26px - 80px)' : win.h
+            }}
+            className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-[#f1f3f6] border border-white/30 shadow-2xl flex flex-col transition-all duration-150 ${activeAppId === winId ? 'ring-1 ring-blue-500/50' : 'opacity-95'}`}
+          >
+            {/* Header Chrome */}
+            <div
+              onMouseDown={(e) => handleMouseDownHeader(e, winId)}
+              className="h-9 px-3.5 bg-[#e2e8f0] border-b border-[#cbd5e1] flex items-center justify-between cursor-move select-none"
+            >
+              <div className="flex items-center gap-2">
+                <button onClick={() => { closeWindow('mysql-studio'); closeWindow('mysqlstudio'); }} className="w-3 h-3 rounded-full bg-[#ff5f56] hover:brightness-90 transition border border-black/20" />
+                <button onClick={() => { minimizeWindow('mysql-studio'); minimizeWindow('mysqlstudio'); }} className="w-3 h-3 rounded-full bg-[#ffbd2e] hover:brightness-90 transition border border-black/20" />
+                <button onClick={() => { toggleMaximize('mysql-studio'); toggleMaximize('mysqlstudio'); }} className="w-3 h-3 rounded-full bg-[#27c93f] hover:brightness-90 transition border border-black/20" />
+              </div>
+              <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                <span>🐬</span>
+                <span>MySQL Studio — LAN/printberry (MySQL 8.4 LTS)</span>
+              </span>
+              <div className="w-14" />
+            </div>
+            <MySQLStudioApp onClose={() => { closeWindow('mysql-studio'); closeWindow('mysqlstudio'); }} />
+          </div>
+        );
+      })()}
+
+      {/* ════════════════ JAVA RUNTIME MANAGER WINDOW ════════════════ */}
+      {windows.javamanager?.isOpen && !windows.javamanager.isMinimized && (
+        <div
+          onClick={() => focusWindow('javamanager')}
+          style={{
+            zIndex: windows.javamanager.zIndex,
+            left: windows.javamanager.isMaximized ? 0 : windows.javamanager.x,
+            top: windows.javamanager.isMaximized ? 26 : windows.javamanager.y,
+            width: windows.javamanager.isMaximized ? '100vw' : windows.javamanager.w,
+            height: windows.javamanager.isMaximized ? 'calc(100vh - 26px - 80px)' : windows.javamanager.h
+          }}
+          className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-[#1e1e1e] border border-white/20 shadow-2xl flex flex-col transition-all duration-150 ${activeAppId === 'javamanager' ? 'ring-1 ring-amber-400/50' : 'opacity-95'}`}
+        >
+          {/* Header Chrome */}
+          <div
+            onMouseDown={(e) => handleMouseDownHeader(e, 'javamanager')}
+            className="h-9 px-3.5 bg-[#252526] border-b border-white/10 flex items-center justify-between cursor-move select-none"
+          >
+            <div className="flex items-center gap-2">
+              <button onClick={() => closeWindow('javamanager')} className="w-3 h-3 rounded-full bg-[#ff5f56] hover:brightness-90 transition border border-black/20" />
+              <button onClick={() => minimizeWindow('javamanager')} className="w-3 h-3 rounded-full bg-[#ffbd2e] hover:brightness-90 transition border border-black/20" />
+              <button onClick={() => toggleMaximize('javamanager')} className="w-3 h-3 rounded-full bg-[#27c93f] hover:brightness-90 transition border border-black/20" />
+            </div>
+            <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+              <span>☕</span>
+              <span>Java Runtime Manager</span>
+            </span>
+            <div className="w-14" />
+          </div>
+          <JavaRuntimeManagerApp onClose={() => closeWindow('javamanager')} />
+        </div>
+      )}
+
       {/* ════════════════ AUTHENTIC REAL macOS SQUIRCLE DOCK ════════════════ */}
       <footer className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[9999] px-3 py-2 rounded-2xl backdrop-blur-3xl bg-black/45 border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.6)] flex items-end gap-2.5 transition-all">
         {[
@@ -3882,6 +4054,8 @@ p {
           { id: 'appstore', title: 'App Store', icon: MacAppStoreIcon, badge: 'STORE' },
           { id: 'safari', title: 'Safari', icon: MacSafariIcon },
           { id: 'vscode', title: 'Visual Studio Code', icon: MacVSCodeIcon, badge: 'IDE' },
+          { id: 'mysql-studio', title: 'MySQL Studio', icon: MacMySQLIcon, badge: '8.4' },
+          { id: 'javamanager', title: 'Java Manager', icon: MacJavaIcon, badge: 'JDK' },
           { id: 'terminal', title: 'Terminal', icon: MacTerminalIcon },
           { id: 'activitymonitor', title: 'Activity Monitor', icon: MacActivityMonitorIcon },
           { id: 'terabox', title: 'TeraBox Cloud', icon: MacTeraBoxIcon, badge: '1TB' },
@@ -3891,7 +4065,7 @@ p {
           { id: 'settings', title: 'System Settings', icon: MacSettingsIcon }
         ].map(app => {
           const IconComponent = app.icon;
-          const isOpen = windows[app.id]?.isOpen;
+          const isOpen = windows[app.id]?.isOpen || (app.id === 'mysql-studio' && (windows['mysql-studio']?.isOpen || windows.mysqlstudio?.isOpen));
           const isBouncing = bouncingApp === app.id;
 
           return (
@@ -3992,35 +4166,6 @@ p {
         onOpenWidgetGallery={() => setIsWidgetGalleryOpen(true)}
       />
 
-      {/* ════════════════ LOCK SCREEN OVERLAY ════════════════ */}
-      {isLocked && (
-        <div className="fixed inset-0 z-[99999] backdrop-blur-3xl bg-black/75 flex flex-col items-center justify-center text-white animate-in fade-in duration-300">
-          <div className="text-center space-y-4">
-            <span className="text-5xl font-extralight tracking-tight drop-shadow-md">
-              {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
-            <p className="text-sm font-medium text-slate-300">
-              {currentTime.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}
-            </p>
-
-            <div className="pt-8 flex flex-col items-center gap-3">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[#E53935] to-[#2E7D32] flex items-center justify-center text-2xl font-black shadow-xl ring-4 ring-white/20">
-                AT
-              </div>
-              <p className="font-bold text-base">Guest Developer (macOS Dark Pro)</p>
-              <button
-                onClick={() => {
-                  macSound.playPop();
-                  setIsLocked(false);
-                }}
-                className="mt-2 px-6 py-2 rounded-full bg-white/20 hover:bg-white/30 border border-white/30 text-xs font-bold transition-all shadow-md hover:scale-105 active:scale-95 cursor-pointer"
-              >
-                Click to Unlock Mac
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      </div>
   );
 }

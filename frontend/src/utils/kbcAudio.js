@@ -10,6 +10,21 @@ class KbcSoundManager {
     this.currentAudio = null;
     this.clockAudio = null;
     this.lockAudio = null;
+    this.isClockRunning = false;
+    this._initAutoplayUnlock();
+  }
+
+  _initAutoplayUnlock() {
+    if (typeof window === 'undefined') return;
+    const unlock = () => {
+      this.init();
+      if (this.isClockRunning && this.clockAudio && this.clockAudio.paused && !this.isMuted) {
+        this.clockAudio.play().catch(() => {});
+      }
+    };
+    window.addEventListener('pointerdown', unlock, { passive: true });
+    window.addEventListener('keydown', unlock, { passive: true });
+    window.addEventListener('click', unlock, { passive: true });
   }
 
   init() {
@@ -30,6 +45,13 @@ class KbcSoundManager {
       this.stopDrone();
       this.stopClock();
       this.stopLockSuspense();
+      if (this.clockAudio) {
+        try { this.clockAudio.pause(); } catch (e) {}
+      }
+    } else {
+      if (this.isClockRunning) {
+        this.startClock();
+      }
     }
   }
 
@@ -41,29 +63,69 @@ class KbcSoundManager {
   // 1. Clock Ticking Countdown Audio (Tik-Tiki Ji) using uploaded authentic KBC clock
   startClock() {
     this.stopLockSuspense();
+    this.isClockRunning = true;
     if (this.isMuted) return;
-    this.stopClock();
+
+    this.init();
+
     try {
-      const audio = new Audio('/kbc-clock.mp3');
-      audio.volume = 0.9;
-      audio.loop = true;
-      this.clockAudio = audio;
-      const p = audio.play();
+      if (!this.clockAudio) {
+        const basePath = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL) ? import.meta.env.BASE_URL : '/';
+        const clockUrl = `${basePath.replace(/\/$/, '')}/kbc-clock.mp3`;
+        const audio = new Audio(clockUrl);
+        audio.volume = 0.95;
+        audio.loop = true;
+        audio.preload = 'auto';
+        this.clockAudio = audio;
+      }
+
+      // Safe readyState check before resetting currentTime
+      if (this.clockAudio.readyState >= 1 && this.clockAudio.currentTime > 0) {
+        try { this.clockAudio.currentTime = 0; } catch (_) {}
+      }
+
+      // If already playing smoothly, do not interrupt
+      if (!this.clockAudio.paused) {
+        return;
+      }
+
+      const p = this.clockAudio.play();
       if (p && typeof p.catch === 'function') {
-        p.catch(() => {});
+        p.catch((err) => {
+          console.warn('Clock audio play deferred/blocked by browser autoplay:', err?.message);
+          // Play synthetic tick fallback immediately
+          this.playTick(false);
+        });
       }
     } catch (e) {
       console.warn('Clock audio play error:', e);
+      this.playTick(false);
     }
   }
 
   stopClock() {
+    this.isClockRunning = false;
     if (this.clockAudio) {
       try {
         this.clockAudio.pause();
-        this.clockAudio.currentTime = 0;
+        if (this.clockAudio.readyState >= 1) {
+          this.clockAudio.currentTime = 0;
+        }
       } catch (e) {}
-      this.clockAudio = null;
+    }
+  }
+
+  // Called on every 1-second countdown tick in KbcExam
+  onTimerTick(timeLeft, isUrgent = false) {
+    if (this.isMuted) return;
+    this.init();
+
+    // If clock mp3 is paused or blocked by browser autoplay, synthesize authentic tick!
+    if (!this.clockAudio || this.clockAudio.paused) {
+      this.playTick(isUrgent);
+      if (this.isClockRunning && this.clockAudio) {
+        this.clockAudio.play().catch(() => {});
+      }
     }
   }
 
@@ -274,7 +336,6 @@ class KbcSoundManager {
   playQuestionArrival() {
     this.stopLockSuspense();
     if (this.isMuted) return;
-    this.stopClock();
     this.init();
     this.stopDrone();
     try {
@@ -289,10 +350,17 @@ class KbcSoundManager {
       if (p && typeof p.catch === 'function') {
         p.catch(() => {});
       }
-      // Resume subtle drone after theme plays
+      // When question arrival finishes or after short intro, resume clock if clock is flagged running
+      audio.onended = () => {
+        if (this.isClockRunning) {
+          this.startClock();
+        }
+      };
       setTimeout(() => {
-        this.startDrone();
-      }, 5500);
+        if (this.isClockRunning && (!this.clockAudio || this.clockAudio.paused)) {
+          this.startClock();
+        }
+      }, 2500);
     } catch (e) {
       console.warn('Question arrival audio notice:', e);
     }

@@ -277,7 +277,8 @@ export default function KbcExam() {
   const [revealedCorrect, setRevealedCorrect] = useState(null);
 
   // Timer State (Tik-Tiki Ji)
-  const [timeLeft, setTimeLeft] = useState(45);
+  const [timeLeft, setTimeLeft] = useState(30);
+  const [isTimeUp, setIsTimeUp] = useState(false);
   const timerRef = useRef(null);
 
   // Host Dialogue
@@ -423,7 +424,8 @@ export default function KbcExam() {
     level: null,
     qId: null,
     isLive: false,
-    lastRevealed: null
+    lastRevealed: null,
+    wasLocked: false
   });
 
   // ── Poll Live Session Status from Hostinger MySQL (Every 1.5s) ──
@@ -481,18 +483,25 @@ export default function KbcExam() {
             const levelChanged = sess.current_level && sess.current_level !== lastQuestionTrackRef.current.level;
             const qChanged = sess.current_question?.id && sess.current_question.id !== lastQuestionTrackRef.current.qId;
             const justWentLive = isNowLive && !lastQuestionTrackRef.current.isLive;
+            const roundReset = isNowLive && (sess.revealed_correct === null && lastQuestionTrackRef.current.lastRevealed !== null);
+            const adminUnlocked = isNowLive && (!sess.is_locked && lastQuestionTrackRef.current.wasLocked);
+            const timerReset = isNowLive && sess.timer_started_at && sess.timer_started_at !== lastQuestionTrackRef.current.timerStartedAt;
 
-            // When a new question arrives on contestant laptop (Admin started or advanced round)
-            if (isNowLive && (levelChanged || qChanged || justWentLive)) {
+            // When a new question arrives on contestant laptop (Admin started or advanced round or reset round)
+            if (isNowLive && (levelChanged || qChanged || justWentLive || roundReset || adminUnlocked || timerReset)) {
               const newLvl = sess.current_level || 1;
+              const maxCountdown = getLevelCountdown(newLvl);
               setCurrentLevel(newLvl);
-              setSelectedOption(null);
-              setIsLocked(false);
-              setAnswerStatus(null);
+              setSelectedOption(sess.locked_option ?? null);
+              setIsLocked(Boolean(sess.is_locked));
+              setAnswerStatus(sess.is_locked ? 'evaluating' : null);
               setRevealedCorrect(null);
-              setTeamAnswerSubmitted(false);
+              setTeamAnswerSubmitted(Boolean(sess.locked_option !== null && sess.locked_option !== undefined));
               setEliminatedOptions([]);
               setIsWrongAnswer(false); // Reset wrong answer red beams back to normal blue
+              setIsTimeUp(false);
+              setTimeLeft(maxCountdown); // Immediately set initial countdown on arrival!
+              activeQuestionKeyRef.current = `${newLvl}_${sess.current_question?.id || 'q'}`;
 
               // Automatically dismiss the middle-screen leaderboard when next question comes
               setShowBroadcastLeaderboard(false);
@@ -503,7 +512,7 @@ export default function KbcExam() {
               kbcAudio.playLaserSweep();
 
               // If restarting whole KBC from beginning (Level 1), reset earned prize
-              if (newLvl === 1) {
+              if (newLvl === 1 && (justWentLive || roundReset)) {
                 setEarnedAmount(0);
                 setEarnedPrizeLabel('₹0');
                 setSafeWonAmount(0);
@@ -519,9 +528,13 @@ export default function KbcExam() {
               lastQuestionTrackRef.current.level = newLvl;
               lastQuestionTrackRef.current.qId = sess.current_question?.id || null;
               lastQuestionTrackRef.current.lastRevealed = null;
+              lastQuestionTrackRef.current.wasLocked = Boolean(sess.is_locked);
+              lastQuestionTrackRef.current.timerStartedAt = sess.timer_started_at;
             }
 
             lastQuestionTrackRef.current.isLive = isNowLive;
+            lastQuestionTrackRef.current.wasLocked = Boolean(sess.is_locked);
+            lastQuestionTrackRef.current.timerStartedAt = sess.timer_started_at;
 
             if (isNowLive) {
               // Admin locks the option
@@ -532,6 +545,25 @@ export default function KbcExam() {
                 }
                 setAnswerStatus('evaluating');
                 kbcAudio.startLockSuspense();
+              } else if (!sess.is_locked && isLocked && !isTimeUp) {
+                setIsLocked(false);
+                setAnswerStatus(null);
+              }
+
+              // Server-synchronized Tik-Tiki Ji countdown clock for contestant laptop:
+              if (!sess.is_locked && sess.revealed_correct === null && !isTimeUp) {
+                if (sess.timer_paused) {
+                  const rem = sess.timer_remaining !== undefined && sess.timer_remaining !== null ? Number(sess.timer_remaining) : 0;
+                  setTimeLeft(rem);
+                } else if (sess.timer_started_at) {
+                  const serverNow = data.server_now || Date.now();
+                  const elapsed = Math.max(0, Math.floor((serverNow - Number(sess.timer_started_at)) / 1000));
+                  const dur = Number(sess.timer_duration) || getLevelCountdown(sess.current_level || currentLevel);
+                  if (elapsed < dur) {
+                    const rem = dur - elapsed;
+                    setTimeLeft(prev => (Math.abs(prev - rem) > 2 ? rem : prev));
+                  }
+                }
               }
 
               // Admin reveals the correct answer
@@ -698,7 +730,7 @@ export default function KbcExam() {
 
   // ── Submit Laptop Option to Admin Monitor ──
   const handleSubmitTeamOption = async (idx) => {
-    if (!team || isLocked) return;
+    if (!team || isLocked || timeLeft <= 0 || isTimeUp) return;
     setSelectedOption(idx);
     kbcAudio.playSelect();
 
@@ -738,51 +770,110 @@ export default function KbcExam() {
     kbcAudio.stopClock();
     kbcAudio.playWrong();
     setIsLocked(true);
+    setIsTimeUp(true);
     setAnswerStatus('wrong');
     setIsWrongAnswer(true);
     setIsCelebratingCorrect(false);
     setHostQuote(AMITABH_QUOTES.timeOut);
     calculateRoundPoints(false, 0);
+
+    if (!team || playMode === 'SOLO') {
+      setTimeout(() => {
+        finishGame(false, true);
+      }, 3200);
+    }
   };
 
-  // Real KBC Countdown Timer Effect (Active on Contestant Laptop & Solo Mode when Round is LIVE)
+  const handleTimeOutRef = useRef(handleTimeOut);
   useEffect(() => {
-    const isRoundActive = team
-      ? (adminSession.status === 'LIVE' && !isLocked && revealedCorrect === null)
-      : (gameStarted && !isLocked && revealedCorrect === null && !gameOver);
+    handleTimeOutRef.current = handleTimeOut;
+  });
 
-    // If not live, or already locked, or answer revealed -> stop timer and clock sound
-    if (!isRoundActive) {
-      if (timerRef.current) clearInterval(timerRef.current);
+  // Determine if a round is actively playing and timer should tick
+  const isClockActive = (playMode === 'TEAM' && team)
+    ? (adminSession?.status === 'LIVE' && !isLocked && revealedCorrect === null && !gameOver && !adminSession?.timer_paused && !isTimeUp)
+    : (gameStarted && !isLocked && revealedCorrect === null && !gameOver && !isTimeUp);
+
+  const isRoundActive = isClockActive;
+
+  const currentQId = (playMode === 'TEAM' && team)
+    ? (adminSession?.current_question?.id || adminSession?.current_level || currentLevel)
+    : currentLevel;
+
+  const activeQuestionKeyRef = useRef(null);
+
+  // 1. Reset and initialize countdown seconds when a new question arrives/starts
+  // Crucial: do NOT guard with `if (!isRoundActive) return;` because if isTimeUp was true,
+  // it would deadlock and never reset for the new question!
+  const activeQuestionKey = (playMode === 'TEAM' && team)
+    ? `${adminSession?.current_level || currentLevel}_${adminSession?.current_question?.id || currentLevel}`
+    : `${currentLevel}_solo`;
+
+  useEffect(() => {
+    if (activeQuestionKeyRef.current !== activeQuestionKey) {
+      activeQuestionKeyRef.current = activeQuestionKey;
+      const initialSeconds = getLevelCountdown(currentLevel);
+      setTimeLeft(initialSeconds);
+      setIsTimeUp(false);
+      if (!isLocked && revealedCorrect === null) {
+        kbcAudio.startClock();
+      }
+    }
+  }, [activeQuestionKey, currentLevel, isLocked, revealedCorrect]);
+
+  // 2. Reliable 1-second countdown interval while round is actively playing
+  useEffect(() => {
+    if (!isClockActive) {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
       kbcAudio.stopClock();
       return;
     }
 
-    const maxTime = getLevelCountdown(currentLevel);
-    // Set initial countdown time for this level
-    setTimeLeft(maxTime);
-
-    // Start authentic KBC clock ticking sound
+    // Round is active: ensure authentic KBC clock ticking audio is playing
     kbcAudio.startClock();
 
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
-          clearInterval(timerRef.current);
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+          }
           kbcAudio.stopClock();
-          handleTimeOut();
+          setIsTimeUp(true);
+          if (handleTimeOutRef.current) {
+            handleTimeOutRef.current();
+          }
           return 0;
         }
-        return prev - 1;
+        const nextVal = prev - 1;
+        kbcAudio.onTimerTick(nextVal, nextVal <= 10);
+        return nextVal;
       });
     }, 1000);
 
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
       kbcAudio.stopClock();
     };
-  }, [adminSession.status, currentLevel, isLocked, revealedCorrect, currentQ?.id, team, gameStarted, gameOver]);
+  }, [isClockActive]);
+
+  // 3. Reactively handle when countdown hits 0 (Player cannot choose answer)
+  useEffect(() => {
+    if (timeLeft <= 0 && !isTimeUp && !isLocked && revealedCorrect === null) {
+      setIsTimeUp(true);
+      if (handleTimeOutRef.current) {
+        handleTimeOutRef.current();
+      }
+    }
+  }, [timeLeft, isTimeUp, isLocked, revealedCorrect]);
 
   // Start the Game
   const handleStartGame = () => {
@@ -793,12 +884,27 @@ export default function KbcExam() {
     kbcAudio.playLaserSweep();
     kbcAudio.playQuestionArrival();
     setGameStarted(true);
-    setHostQuote(AMITABH_QUOTES.questionIntro(currentLevel, currentPrize.prize));
+    setPlayMode('SOLO');
+    setSelectedOption(null);
+    setIsLocked(false);
+    setIsTimeUp(false);
+    setAnswerStatus(null);
+    setRevealedCorrect(null);
+    setEliminatedOptions([]);
+    setCurrentLevel(1);
+    const initialSec = getLevelCountdown(1);
+    setTimeLeft(initialSec);
+    activeQuestionKeyRef.current = `1_lvl1`;
+    kbcAudio.startClock();
+    setHostQuote(AMITABH_QUOTES.questionIntro(1, KBC_PRIZE_LADDER[0]?.prize || '₹1,000'));
   };
+
+  // Option Disabled condition: when locked, time is up (0 sec), or answer revealed
+  const isOptionDisabled = isLocked || isTimeUp || timeLeft <= 0 || (revealedCorrect !== null);
 
   // Option Click
   const handleOptionClick = (idx) => {
-    if (isLocked || eliminatedOptions.includes(idx)) return;
+    if (isOptionDisabled || eliminatedOptions.includes(idx)) return;
     kbcAudio.playSelect();
     setSelectedOption(idx);
     const letter = String.fromCharCode(65 + idx);
@@ -811,7 +917,7 @@ export default function KbcExam() {
 
   // Confirm Lock Option ("Computer Ji, option [X] ko lock kiya jaye!")
   const handleLockOption = () => {
-    if (selectedOption === null || isLocked) return;
+    if (selectedOption === null || isOptionDisabled) return;
     setIsLocked(true);
     setAnswerStatus('evaluating');
     kbcAudio.startLockSuspense();
@@ -904,6 +1010,7 @@ export default function KbcExam() {
     setCurrentLevel(nextLvl);
     setSelectedOption(null);
     setIsLocked(false);
+    setIsTimeUp(false);
     setAnswerStatus(null);
     setRevealedCorrect(null);
     setEliminatedOptions([]);
@@ -916,6 +1023,10 @@ export default function KbcExam() {
     setLaserUpwardTrigger(prev => !prev);
     kbcAudio.playLaserSweep();
     kbcAudio.playQuestionArrival();
+    const nextSec = getLevelCountdown(nextLvl);
+    setTimeLeft(nextSec);
+    activeQuestionKeyRef.current = null;
+    kbcAudio.startClock();
   };
 
   // Jackpot Win (₹7 Crore!)
@@ -948,7 +1059,7 @@ export default function KbcExam() {
 
   // 1. 50:50 Lifeline
   const useFiftyFifty = () => {
-    if (!lifelines.fifty || isLocked || !currentQ) return;
+    if (!lifelines.fifty || isOptionDisabled || !currentQ) return;
     kbcAudio.playLifeline();
     setLifelines(prev => ({ ...prev, fifty: false }));
     setHostQuote(AMITABH_QUOTES.lifelines.fifty);
@@ -967,7 +1078,7 @@ export default function KbcExam() {
 
   // 2. Audience Poll Lifeline
   const useAudiencePoll = () => {
-    if (!lifelines.poll || isLocked || !currentQ) return;
+    if (!lifelines.poll || isOptionDisabled || !currentQ) return;
     kbcAudio.playLifeline();
     setLifelines(prev => ({ ...prev, poll: false }));
     setHostQuote(AMITABH_QUOTES.lifelines.poll);
@@ -995,7 +1106,7 @@ export default function KbcExam() {
 
   // 3. Phone-a-Friend / Video Call Lifeline
   const usePhoneAFriend = () => {
-    if (!lifelines.friend || isLocked || !currentQ) return;
+    if (!lifelines.friend || isOptionDisabled || !currentQ) return;
     kbcAudio.playLifeline();
     setLifelines(prev => ({ ...prev, friend: false }));
     setHostQuote(AMITABH_QUOTES.lifelines.friend);
@@ -1014,7 +1125,7 @@ export default function KbcExam() {
 
   // 4. Flip the Question Lifeline
   const useFlipQuestion = () => {
-    if (!lifelines.flip || isLocked || !currentQ) return;
+    if (!lifelines.flip || isOptionDisabled || !currentQ) return;
     const replacement = flipPool[currentLevel];
     if (!replacement) {
       alert('No alternate question available for this level.');
@@ -1085,6 +1196,7 @@ export default function KbcExam() {
   // Reset / Play Again
   const handlePlayAgain = () => {
     kbcAudio.stopDrone();
+    kbcAudio.stopClock();
     setIsWrongAnswer(false);
     setIsCelebratingCorrect(false);
     setCurrentLevel(1);
@@ -1098,11 +1210,14 @@ export default function KbcExam() {
     setQuitGame(false);
     setSelectedOption(null);
     setIsLocked(false);
+    setIsTimeUp(false);
     setAnswerStatus(null);
     setRevealedCorrect(null);
     setEliminatedOptions([]);
     setActiveModal(null);
     setLifelines({ fifty: true, poll: true, friend: true, flip: true });
+    activeQuestionKeyRef.current = null;
+    setTimeLeft(getLevelCountdown(1));
     resetLivePlayers();
     fetchQuestions();
   };
@@ -1204,10 +1319,10 @@ export default function KbcExam() {
               {/* 50:50 */}
               <button
                 onClick={useFiftyFifty}
-                disabled={!lifelines.fifty || isLocked}
+                disabled={!lifelines.fifty || isOptionDisabled}
                 title="50:50 Lifeline (Eliminate 2 wrong answers)"
                 className={`relative px-3 py-1.5 rounded-full border text-xs font-black tracking-wider transition cursor-pointer flex items-center gap-1.5 ${
-                  lifelines.fifty && !isLocked
+                  lifelines.fifty && !isOptionDisabled
                     ? 'bg-indigo-950/80 border-amber-400/80 text-amber-300 hover:bg-amber-500/20 shadow-md shadow-amber-500/10 hover:scale-105'
                     : 'bg-slate-900/40 border-slate-800 text-slate-600 cursor-not-allowed line-through'
                 }`}
@@ -1218,10 +1333,10 @@ export default function KbcExam() {
               {/* Audience Poll */}
               <button
                 onClick={useAudiencePoll}
-                disabled={!lifelines.poll || isLocked}
+                disabled={!lifelines.poll || isOptionDisabled}
                 title="Audience Poll (Janmat Sangrah)"
                 className={`relative px-3 py-1.5 rounded-full border text-xs font-black tracking-wider transition cursor-pointer flex items-center gap-1.5 ${
-                  lifelines.poll && !isLocked
+                  lifelines.poll && !isOptionDisabled
                     ? 'bg-indigo-950/80 border-amber-400/80 text-amber-300 hover:bg-amber-500/20 shadow-md shadow-amber-500/10 hover:scale-105'
                     : 'bg-slate-900/40 border-slate-800 text-slate-600 cursor-not-allowed'
                 }`}
@@ -1233,10 +1348,10 @@ export default function KbcExam() {
               {/* Phone-A-Friend */}
               <button
                 onClick={usePhoneAFriend}
-                disabled={!lifelines.friend || isLocked}
+                disabled={!lifelines.friend || isOptionDisabled}
                 title="Ask Tech Expert / Phone-a-Friend"
                 className={`relative px-3 py-1.5 rounded-full border text-xs font-black tracking-wider transition cursor-pointer flex items-center gap-1.5 ${
-                  lifelines.friend && !isLocked
+                  lifelines.friend && !isOptionDisabled
                     ? 'bg-indigo-950/80 border-amber-400/80 text-amber-300 hover:bg-amber-500/20 shadow-md shadow-amber-500/10 hover:scale-105'
                     : 'bg-slate-900/40 border-slate-800 text-slate-600 cursor-not-allowed'
                 }`}
@@ -1248,10 +1363,10 @@ export default function KbcExam() {
               {/* Flip the Question */}
               <button
                 onClick={useFlipQuestion}
-                disabled={!lifelines.flip || isLocked}
+                disabled={!lifelines.flip || isOptionDisabled}
                 title="Flip Question (Switch Question)"
                 className={`relative px-3 py-1.5 rounded-full border text-xs font-black tracking-wider transition cursor-pointer flex items-center gap-1.5 ${
-                  lifelines.flip && !isLocked
+                  lifelines.flip && !isOptionDisabled
                     ? 'bg-indigo-950/80 border-amber-400/80 text-amber-300 hover:bg-amber-500/20 shadow-md shadow-amber-500/10 hover:scale-105'
                     : 'bg-slate-900/40 border-slate-800 text-slate-600 cursor-not-allowed'
                 }`}
@@ -1286,7 +1401,7 @@ export default function KbcExam() {
       <main className="relative z-20 flex-1 max-w-7xl w-full mx-auto p-4 flex flex-col justify-between">
         
         {/* CASE 1: Connected Team Waiting for Admin to start Live Broadcast */}
-        {team && adminSession.status !== 'LIVE' ? (
+        {playMode === 'TEAM' && team && adminSession.status !== 'LIVE' ? (
           <div className="my-auto max-w-2xl mx-auto text-center space-y-6 bg-gradient-to-b from-[#0b132e]/95 to-[#060a1d]/95 border-2 border-amber-400/50 rounded-3xl p-8 shadow-2xl backdrop-blur-xl animate-fade-in">
             
             {/* Host Avatar with Live Broadcast Pulse */}
@@ -1360,8 +1475,8 @@ export default function KbcExam() {
               </button>
             </div>
           </div>
-        ) : !team ? (
-          /* CASE 2: Welcome Gate (Join Team via Laptop ONLY - No Solo Hotseat) */
+        ) : (!gameStarted && (!team || playMode === 'SOLO')) ? (
+          /* CASE 2: Welcome Gate (Join Team via Laptop OR Solo Hotseat Mode) */
           <div className="my-auto max-w-xl mx-auto space-y-6">
             
             {/* Header / Amitabh Quote */}
@@ -1495,16 +1610,29 @@ export default function KbcExam() {
                   <div className="relative flex items-center justify-center">
                     {/* Glowing halo behind circle timer */}
                     <div className={`absolute w-24 h-24 rounded-full blur-xl pointer-events-none transition-all ${
-                      timeLeft <= 10 ? 'bg-red-500/60 animate-pulse' : 'bg-amber-400/30'
+                      timeLeft <= 0
+                        ? 'bg-red-600/70 animate-pulse'
+                        : timeLeft <= 10 ? 'bg-red-500/60 animate-pulse' : 'bg-amber-400/30'
                     }`} />
 
                     {/* Circular Timer Body */}
                     <div 
-                      className={`relative w-20 h-20 sm:w-22 sm:h-22 rounded-full border-[3.5px] flex flex-col items-center justify-center shadow-2xl transition-all ${
-                        timeLeft <= 10 
-                          ? 'border-red-500 bg-gradient-to-b from-red-950/95 via-red-900/90 to-black/95 text-white shadow-[0_0_35px_#ef4444] animate-pulse scale-105' 
-                          : 'border-amber-400 bg-gradient-to-b from-[#141d48]/95 via-[#0c1230]/95 to-[#060a1d]/95 text-amber-300 shadow-[0_0_25px_rgba(251,191,36,0.45)]'
+                      className={`relative w-20 h-20 sm:w-22 sm:h-22 rounded-full border-[3.5px] flex flex-col items-center justify-center shadow-2xl transition-all select-none ${
+                        timeLeft <= 0
+                          ? 'border-red-600 bg-gradient-to-b from-red-950 via-black to-red-950 text-red-300 shadow-[0_0_35px_#dc2626] scale-105'
+                          : timeLeft <= 10 
+                            ? 'border-red-500 bg-gradient-to-b from-red-950/95 via-red-900/90 to-black/95 text-white shadow-[0_0_35px_#ef4444] animate-pulse scale-105' 
+                            : 'border-amber-400 bg-gradient-to-b from-[#141d48]/95 via-[#0c1230]/95 to-[#060a1d]/95 text-amber-300 shadow-[0_0_25px_rgba(251,191,36,0.45)] hover:scale-105'
                       }`}
+                      onClick={() => {
+                        kbcAudio.init();
+                        if (isRoundActive && timeLeft > 0) {
+                          kbcAudio.startClock();
+                        } else if (!gameStarted) {
+                          handleStartGame();
+                        }
+                      }}
+                      title={timeLeft <= 0 ? "Samay Samapt (Time Up)" : "Tik-Tiki Ji Countdown Timer (Click to Play Clock Sound)"}
                     >
                       {/* SVG circular radar tick marks */}
                       <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none p-1">
@@ -1512,7 +1640,7 @@ export default function KbcExam() {
                           cx="50%"
                           cy="50%"
                           r="38%"
-                          stroke={timeLeft <= 10 ? 'rgba(239, 68, 68, 0.45)' : 'rgba(245, 158, 11, 0.35)'}
+                          stroke={timeLeft <= 0 ? 'rgba(239, 68, 68, 0.7)' : timeLeft <= 10 ? 'rgba(239, 68, 68, 0.45)' : 'rgba(245, 158, 11, 0.35)'}
                           strokeWidth="2.5"
                           fill="none"
                           strokeDasharray="4 4"
@@ -1520,15 +1648,17 @@ export default function KbcExam() {
                       </svg>
 
                       <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-amber-400 font-sans -mb-0.5 z-10">
-                        TIK-TIKI
+                        {timeLeft <= 0 ? 'SAMAY' : 'TIK-TIKI'}
                       </span>
                       <span className={`text-2xl sm:text-3xl font-black font-mono leading-none tracking-tight z-10 ${
-                        timeLeft <= 10 ? 'text-white' : 'text-amber-300'
+                        timeLeft <= 0 ? 'text-red-400' : timeLeft <= 10 ? 'text-white' : 'text-amber-300'
                       }`}>
-                        {timeLeft}
+                        {timeLeft <= 0 ? '0' : timeLeft}
                       </span>
-                      <span className="text-[7px] sm:text-[8px] font-bold text-slate-400 tracking-wider uppercase z-10">
-                        SEC
+                      <span className={`text-[7px] sm:text-[8px] font-bold tracking-wider uppercase z-10 ${
+                        timeLeft <= 0 ? 'text-red-400' : 'text-slate-400'
+                      }`}>
+                        {timeLeft <= 0 ? 'EXPIRED' : 'SEC'}
                       </span>
                     </div>
                   </div>
@@ -1637,8 +1767,12 @@ export default function KbcExam() {
                     <button
                       key={idx}
                       onClick={() => handleOptionClick(idx)}
-                      disabled={isLocked}
-                      className={`group relative text-left py-4 px-7 transition-all cursor-pointer transform hover:scale-[1.01] active:scale-[0.99] ${
+                      disabled={isOptionDisabled}
+                      className={`group relative text-left py-4 px-7 transition-all ${
+                        isOptionDisabled
+                          ? 'cursor-not-allowed opacity-60 pointer-events-none'
+                          : 'cursor-pointer transform hover:scale-[1.01] active:scale-[0.99]'
+                      } ${
                         isSelected && answerStatus === 'evaluating' ? 'animate-pulse' : ''
                       }`}
                       style={{
@@ -1667,8 +1801,23 @@ export default function KbcExam() {
                 })}
               </div>
 
+              {/* ── Time Out / Samay Samapt Banner ── */}
+              {(isTimeUp || timeLeft <= 0) && revealedCorrect === null && (
+                <div className="flex items-center justify-center gap-3 py-3 px-6 rounded-2xl bg-gradient-to-r from-red-950/90 via-red-900/90 to-red-950/90 border-2 border-red-500/80 shadow-[0_0_25px_rgba(239,68,68,0.45)] text-center animate-pulse">
+                  <Clock className="w-5 h-5 text-red-400 shrink-0" />
+                  <div>
+                    <span className="text-sm md:text-base font-black text-red-200 tracking-wider uppercase block">
+                      ⏰ Samay Samapt (Time Up)!
+                    </span>
+                    <span className="text-xs text-red-300/90 font-medium">
+                      Tik-Tiki Ji ka samay samapt ho gaya hai. Aap ab koi bhi uttar darj nahi kar sakte.
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* ── "Lock Kiya Jaaye?" Confirmation Bar ── */}
-              {selectedOption !== null && !isLocked && (
+              {selectedOption !== null && !isOptionDisabled && (
                 <div className="flex flex-wrap items-center justify-center gap-4 pt-3 animate-fade-in">
                   <div className="text-xs text-amber-300 font-bold flex items-center gap-2">
                     {team && teamAnswerSubmitted && (
@@ -1678,7 +1827,8 @@ export default function KbcExam() {
                   </div>
                   <button
                     onClick={handleLockOption}
-                    className="px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-sm tracking-wider uppercase shadow-lg shadow-amber-500/30 transition transform hover:scale-105 cursor-pointer"
+                    disabled={isOptionDisabled}
+                    className="px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-sm tracking-wider uppercase shadow-lg shadow-amber-500/30 transition transform hover:scale-105 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {team ? 'Confirm Team Choice 🔒' : 'Lock Kiya Jaaye! (Lock Answer) 🔒'}
                   </button>

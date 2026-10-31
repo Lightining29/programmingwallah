@@ -102,6 +102,31 @@ export default function AdminKbcManager() {
     return 60;
   };
 
+  const handleHostTimerToggle = async () => {
+    const nextActive = !hostTimerActive;
+    setHostTimerActive(nextActive);
+    try {
+      await fetch('/api/kbc/admin/session/timer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: nextActive ? 'resume' : 'pause' })
+      });
+    } catch (e) {}
+  };
+
+  const handleHostTimerReset = async () => {
+    const maxT = getHostCountdown(selectedLevel);
+    setHostTimeLeft(maxT);
+    setHostTimerActive(true);
+    try {
+      await fetch('/api/kbc/admin/session/timer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reset', seconds: maxT })
+      });
+    } catch (e) {}
+  };
+
   useEffect(() => {
     const maxT = getHostCountdown(selectedLevel);
     setHostTimeLeft(maxT);
@@ -111,23 +136,30 @@ export default function AdminKbcManager() {
   useEffect(() => {
     if (!hostTimerActive || session?.is_locked || session?.revealed_correct !== null) {
       if (hostTimerRef.current) clearInterval(hostTimerRef.current);
+      kbcAudio.stopClock();
       return;
     }
+
+    kbcAudio.startClock();
 
     if (hostTimerRef.current) clearInterval(hostTimerRef.current);
     hostTimerRef.current = setInterval(() => {
       setHostTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(hostTimerRef.current);
+          kbcAudio.stopClock();
           kbcAudio.playWrong();
           return 0;
         }
-        return prev - 1;
+        const nextVal = prev - 1;
+        kbcAudio.onTimerTick(nextVal, nextVal <= 10);
+        return nextVal;
       });
     }, 1000);
 
     return () => {
       if (hostTimerRef.current) clearInterval(hostTimerRef.current);
+      kbcAudio.stopClock();
     };
   }, [hostTimerActive, session?.is_locked, session?.revealed_correct, selectedLevel]);
 
@@ -1642,19 +1674,16 @@ export default function AdminKbcManager() {
                 </div>
                 <div className="flex items-center gap-1 pl-1.5 border-l border-slate-800">
                   <button
-                    onClick={() => setHostTimerActive(prev => !prev)}
+                    onClick={handleHostTimerToggle}
                     className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition cursor-pointer"
-                    title={hostTimerActive ? 'Pause Clock' : 'Resume Clock'}
+                    title={hostTimerActive ? 'Pause Clock (Sync with all screens)' : 'Resume Clock (Sync with all screens)'}
                   >
                     {hostTimerActive ? <Pause className="w-3.5 h-3.5 text-amber-300" /> : <Play className="w-3.5 h-3.5 text-emerald-400" />}
                   </button>
                   <button
-                    onClick={() => {
-                      setHostTimeLeft(getHostCountdown(selectedLevel));
-                      setHostTimerActive(true);
-                    }}
+                    onClick={handleHostTimerReset}
                     className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition cursor-pointer"
-                    title="Reset Clock for this Question"
+                    title="Reset Clock for this Question (Sync with all screens)"
                   >
                     <RotateCcw className="w-3.5 h-3.5 text-amber-300" />
                   </button>

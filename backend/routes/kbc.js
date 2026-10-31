@@ -44,6 +44,12 @@ try {
 } catch (e) {}
 
 // Accurate Option Shuffler: Randomizes A, B, C, D while guaranteeing 100% correct answer integrity
+export const getKbcLevelCountdown = (lvl) => {
+  if (lvl <= 5) return 30; // Level 1 to 5: 30 seconds
+  if (lvl <= 10) return 45; // Level 6 to 10: 45 seconds
+  return 60; // Level 11+: 60 seconds
+};
+
 export function shuffleOptionsAccurately(options, correct) {
   if (!Array.isArray(options) || options.length < 2) return { options, correct: correct || 0 };
   const origIdx = (correct >= 0 && correct < options.length) ? correct : 0;
@@ -1805,6 +1811,10 @@ let memorySession = {
   winner_prize: null,
   show_winner: false,
   show_leaderboard: false,
+  timer_duration: 30,
+  timer_started_at: Date.now(),
+  timer_paused: false,
+  timer_remaining: 30,
   updated_at: new Date().toISOString()
 };
 
@@ -1883,6 +1893,10 @@ async function ensureKbcSessionsAndTeams() {
     try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN winner_prize VARCHAR(100) DEFAULT NULL'); } catch(e) {}
     try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN show_winner TINYINT(1) DEFAULT 0'); } catch(e) {}
     try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN show_leaderboard TINYINT(1) DEFAULT 0'); } catch(e) {}
+    try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN timer_duration INT DEFAULT 30'); } catch(e) {}
+    try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN timer_started_at BIGINT DEFAULT NULL'); } catch(e) {}
+    try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN timer_paused TINYINT(1) DEFAULT 0'); } catch(e) {}
+    try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN timer_remaining INT DEFAULT 30'); } catch(e) {}
 
     // 2. Ensure kbc_teams table
     await pool.query(`
@@ -2017,8 +2031,14 @@ router.get('/session/status', async (req, res) => {
           LIMIT 25
         `);
 
+        const timerDur = s.timer_duration !== undefined && s.timer_duration !== null ? Number(s.timer_duration) : getKbcLevelCountdown(curLvl);
+        const timerStartedAt = s.timer_started_at ? Number(s.timer_started_at) : null;
+        const timerPaused = Boolean(s.timer_paused);
+        const timerRem = s.timer_remaining !== undefined && s.timer_remaining !== null ? Number(s.timer_remaining) : timerDur;
+
         return res.json({
           success: true,
+          server_now: Date.now(),
           session: {
             id: s.id,
             status: s.status,
@@ -2036,6 +2056,10 @@ router.get('/session/status', async (req, res) => {
             winner_prize: s.winner_prize,
             show_winner: Boolean(s.show_winner),
             show_leaderboard: Boolean(s.show_leaderboard),
+            timer_duration: timerDur,
+            timer_started_at: timerStartedAt,
+            timer_paused: timerPaused,
+            timer_remaining: timerRem,
             winner: winner,
             top_teams: topTeams,
             current_question: currentQuestion
@@ -2060,10 +2084,17 @@ router.get('/session/status', async (req, res) => {
     ? (sortedMemory.find(t => t.id === memorySession.winner_team_id) || sortedMemory[0]) 
     : null;
   const qList = DEFAULT_MERN_SQL_QUESTIONS[memorySession.current_level] || DEFAULT_MERN_SQL_QUESTIONS[1];
+  const memLvl = memorySession.current_level || 1;
+  const memTimerDur = memorySession.timer_duration || getKbcLevelCountdown(memLvl);
   return res.json({
     success: true,
+    server_now: Date.now(),
     session: {
       ...memorySession,
+      timer_duration: memTimerDur,
+      timer_started_at: memorySession.timer_started_at || Date.now(),
+      timer_paused: Boolean(memorySession.timer_paused),
+      timer_remaining: memorySession.timer_remaining ?? memTimerDur,
       winner: fallbackWinner,
       top_teams: sortedMemory.slice(0, 10),
       current_question: qList[0]
@@ -2087,14 +2118,17 @@ router.post('/admin/session/toggle', async (req, res) => {
 
     if (pool) {
       if (shouldRestart) {
+        const dur = getKbcLevelCountdown(1);
+        const now = Date.now();
         // Reset whole KBC from starting (Level 1, all rounds, locks, and revealed states cleared)
         await pool.query(`
           UPDATE kbc_sessions 
           SET status = ?, show_in_navbar = ?, current_level = 1, current_question_id = NULL,
               is_locked = 0, locked_option = NULL, revealed_correct = NULL,
-              winner_team_id = NULL, winner_name = NULL, winner_points = 0, winner_prize = NULL, show_winner = 0, show_leaderboard = 0
+              winner_team_id = NULL, winner_name = NULL, winner_points = 0, winner_prize = NULL, show_winner = 0, show_leaderboard = 0,
+              timer_duration = ?, timer_started_at = ?, timer_paused = 0, timer_remaining = ?
           WHERE id = 'main_session'
-        `, [newStatus, showNav]);
+        `, [newStatus, showNav, dur, now, dur]);
 
         // Reset all teams back to Level 1, 0 prize won, 0 points, ready for round 1
         await pool.query(`
@@ -2145,6 +2179,10 @@ router.post('/admin/session/toggle', async (req, res) => {
     memorySession.winner_prize = null;
     memorySession.show_winner = false;
     memorySession.show_leaderboard = false;
+    memorySession.timer_duration = 30;
+    memorySession.timer_started_at = Date.now();
+    memorySession.timer_paused = false;
+    memorySession.timer_remaining = 30;
     memoryTeams.forEach(t => {
       t.current_level = 1;
       t.score_amount = 0;
@@ -2183,12 +2221,16 @@ router.post('/admin/session/update', async (req, res) => {
 
     if (pool) {
       if (reset_round) {
-        // Reset locked and revealed state for new question
+        const lvl = current_level || 1;
+        const dur = getKbcLevelCountdown(lvl);
+        const now = Date.now();
+        // Reset locked and revealed state for new question & reset question timer
         await pool.query(`
           UPDATE kbc_sessions 
-          SET is_locked = 0, locked_option = NULL, revealed_correct = NULL, current_level = ?, current_question_id = ?, show_leaderboard = 0
+          SET is_locked = 0, locked_option = NULL, revealed_correct = NULL, current_level = ?, current_question_id = ?, show_leaderboard = 0,
+              timer_duration = ?, timer_started_at = ?, timer_paused = 0, timer_remaining = ?
           WHERE id = 'main_session'
-        `, [current_level || 1, current_question_id || null]);
+        `, [lvl, current_question_id || null, dur, now, dur]);
 
         // Also clear teams submitted options for the new round
         await pool.query('UPDATE kbc_teams SET submitted_option = NULL');
@@ -2211,6 +2253,12 @@ router.post('/admin/session/update', async (req, res) => {
         if (current_question_id !== undefined) {
           updates.push('current_question_id = ?');
           params.push(current_question_id);
+        }
+        if (current_level !== undefined || current_question_id !== undefined) {
+          const targetLvl = current_level ? parseInt(current_level, 10) : (preSess[0]?.current_level || 1);
+          const dur = getKbcLevelCountdown(targetLvl);
+          updates.push('timer_duration = ?', 'timer_started_at = ?', 'timer_paused = 0', 'timer_remaining = ?');
+          params.push(dur, Date.now(), dur);
         }
         if (is_locked !== undefined) {
           updates.push('is_locked = ?');
@@ -2305,14 +2353,27 @@ router.post('/admin/session/update', async (req, res) => {
 
   // Fallback
   if (reset_round) {
+    const lvl = current_level || 1;
+    const dur = getKbcLevelCountdown(lvl);
     memorySession.is_locked = false;
     memorySession.locked_option = null;
     memorySession.revealed_correct = null;
     memorySession.show_leaderboard = false;
-    memorySession.current_level = current_level || 1;
+    memorySession.current_level = lvl;
+    memorySession.timer_duration = dur;
+    memorySession.timer_started_at = Date.now();
+    memorySession.timer_paused = false;
+    memorySession.timer_remaining = dur;
     memoryTeams.forEach(t => { t.submitted_option = null; });
   } else {
-    if (current_level !== undefined) memorySession.current_level = current_level;
+    if (current_level !== undefined) {
+      memorySession.current_level = current_level;
+      const dur = getKbcLevelCountdown(current_level);
+      memorySession.timer_duration = dur;
+      memorySession.timer_started_at = Date.now();
+      memorySession.timer_paused = false;
+      memorySession.timer_remaining = dur;
+    }
     if (req.body.total_questions !== undefined) memorySession.total_questions = req.body.total_questions;
     if (is_locked !== undefined) memorySession.is_locked = is_locked;
     if (locked_option !== undefined) memorySession.locked_option = locked_option;
@@ -2356,6 +2417,62 @@ router.post('/admin/session/update', async (req, res) => {
   }
 
   return res.json({ success: true, message: 'Session updated in fallback.', database: 'Memory Fallback' });
+});
+
+// ── 8A. ADMIN: Tik-Tiki Ji Clock Remote Control (Pause, Resume, Reset) ──
+router.post('/admin/session/timer', async (req, res) => {
+  const { action, seconds } = req.body;
+  const pool = getMySQLPool();
+  try {
+    await ensureKbcSessionsAndTeams();
+    if (pool) {
+      const [rows] = await pool.query('SELECT current_level, timer_duration, timer_started_at, timer_paused, timer_remaining FROM kbc_sessions WHERE id = "main_session"');
+      if (rows.length > 0) {
+        const s = rows[0];
+        const lvl = s.current_level || 1;
+        const defaultDur = getKbcLevelCountdown(lvl);
+
+        if (action === 'pause') {
+          const start = s.timer_started_at ? Number(s.timer_started_at) : Date.now();
+          const dur = Number(s.timer_duration) || defaultDur;
+          const elapsed = Math.floor((Date.now() - start) / 1000);
+          const rem = Math.max(0, dur - elapsed);
+          await pool.query('UPDATE kbc_sessions SET timer_paused = 1, timer_remaining = ? WHERE id = "main_session"', [rem]);
+        } else if (action === 'resume') {
+          const rem = s.timer_remaining !== null && s.timer_remaining !== undefined ? Number(s.timer_remaining) : defaultDur;
+          await pool.query('UPDATE kbc_sessions SET timer_paused = 0, timer_duration = ?, timer_started_at = ?, timer_remaining = ? WHERE id = "main_session"', [rem, Date.now(), rem]);
+        } else if (action === 'reset') {
+          const dur = seconds ? parseInt(seconds, 10) : defaultDur;
+          await pool.query('UPDATE kbc_sessions SET timer_paused = 0, timer_duration = ?, timer_started_at = ?, timer_remaining = ? WHERE id = "main_session"', [dur, Date.now(), dur]);
+        }
+        return res.json({ success: true, message: `Timer action ${action} executed.` });
+      }
+    }
+  } catch (e) {
+    console.warn('MySQL /admin/session/timer error:', e.message);
+  }
+
+  // Memory fallback
+  const lvl = memorySession.current_level || 1;
+  const defaultDur = getKbcLevelCountdown(lvl);
+  if (action === 'pause') {
+    const elapsed = Math.floor((Date.now() - (memorySession.timer_started_at || Date.now())) / 1000);
+    const rem = Math.max(0, (memorySession.timer_duration || defaultDur) - elapsed);
+    memorySession.timer_paused = true;
+    memorySession.timer_remaining = rem;
+  } else if (action === 'resume') {
+    const rem = memorySession.timer_remaining ?? defaultDur;
+    memorySession.timer_paused = false;
+    memorySession.timer_duration = rem;
+    memorySession.timer_started_at = Date.now();
+  } else if (action === 'reset') {
+    const dur = seconds ? parseInt(seconds, 10) : defaultDur;
+    memorySession.timer_paused = false;
+    memorySession.timer_duration = dur;
+    memorySession.timer_started_at = Date.now();
+    memorySession.timer_remaining = dur;
+  }
+  return res.json({ success: true, message: `Timer action ${action} executed (memory).` });
 });
 
 // ── 8B. ADMIN: Announce / Broadcast Top Scorer with "Saat Crore" Celebration ──
@@ -2751,6 +2868,22 @@ router.post('/team/submit-answer', async (req, res) => {
 
   try {
     if (pool) {
+      // Validate that question is not locked and timer has not expired
+      const [sessRows] = await pool.query('SELECT status, is_locked, timer_duration, timer_started_at, timer_paused, timer_remaining FROM kbc_sessions WHERE id = "main_session"');
+      if (sessRows.length > 0) {
+        const s = sessRows[0];
+        if (s.status !== 'LIVE' || s.is_locked) {
+          return res.status(400).json({ success: false, message: 'Prashna lock ho chuka hai (Question is locked).' });
+        }
+        if (s.timer_started_at && !s.timer_paused) {
+          const elapsed = Math.floor((Date.now() - Number(s.timer_started_at)) / 1000);
+          const dur = Number(s.timer_duration) || 30;
+          if (elapsed > dur + 2) {
+            return res.status(400).json({ success: false, message: 'Samay samapt (Time has expired)! Aap uttar darj nahi kar sakte.' });
+          }
+        }
+      }
+
       await pool.query(`
         UPDATE kbc_teams 
         SET submitted_option = ?, last_active_at = NOW() 
@@ -2762,6 +2895,9 @@ router.post('/team/submit-answer', async (req, res) => {
   } catch (err) {}
 
   // Fallback
+  if (memorySession.is_locked) {
+    return res.status(400).json({ success: false, message: 'Question is locked.' });
+  }
   const team = memoryTeams.find(t => t.id === team_id);
   if (team) {
     team.submitted_option = opt;

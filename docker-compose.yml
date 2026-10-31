@@ -1,0 +1,57 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: macos_mysql_server
+    command: >
+      --default-authentication-plugin=caching_sha2_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --innodb-buffer-pool-size=256M
+      --max-connections=150
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-macos_root_pass_secure_2026}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-macos_desktop_db}
+      MYSQL_USER: ${MYSQL_USER:-macos_admin}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-macos_admin_pass_2026}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-macos_root_pass_secure_2026}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: macos_desktop_app
+    ports:
+      - "5000:5000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: macos_desktop_db
+      DB_USER: macos_admin
+      DB_PASSWORD: ${MYSQL_PASSWORD:-macos_admin_pass_2026}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-macos_root_pass_secure_2026}
+      JWT_SECRET: ${JWT_SECRET:-macos_jwt_super_secret_key_2026_argon}
+    volumes:
+      - user_storage:/app/storage
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+    name: macos_mysql_data
+  user_storage:
+    name: macos_user_storage
