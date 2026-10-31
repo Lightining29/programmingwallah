@@ -683,12 +683,20 @@ function runManagedProcess(executionId, cmd, args, cwd, timeoutMs = 15000, stdin
     let stderr = '';
     let error = '';
 
+    const activeJdk = javaRuntimeService.getActiveJdk();
+    const javaBin = activeJdk?.home ? path.join(activeJdk.home, 'bin') : '';
+    const augmentedPath = javaBin && !process.env.PATH?.includes(javaBin)
+      ? `${javaBin}${path.delimiter}${process.env.PATH}`
+      : process.env.PATH;
+
     let proc;
     try {
       proc = spawn(cmd, args, {
         cwd,
         env: {
           ...process.env,
+          PATH: augmentedPath,
+          JAVA_HOME: activeJdk?.home || process.env.JAVA_HOME || 'C:\\Program Files\\Java\\jdk-27',
           PYTHONUNBUFFERED: '1',
           JAVA_TOOL_OPTIONS: '-Dfile.encoding=UTF-8'
         },

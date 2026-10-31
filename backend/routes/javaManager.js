@@ -1,4 +1,6 @@
 import express from 'express';
+import os from 'os';
+import path from 'path';
 import javaRuntimeService from '../services/javaRuntimeService.js';
 
 const router = express.Router();
@@ -80,8 +82,6 @@ router.post('/install', async (req, res) => {
 // POST /api/java/clean - Remove compiled .class files
 router.post('/clean', (req, res) => {
   try {
-    const os = require('os');
-    const path = require('path');
     const ws = path.join(os.tmpdir(), 'ide_terminal_workspace');
     const cleaned = javaRuntimeService.cleanClassFiles(ws);
     res.json({ success: true, message: `Cleaned ${cleaned} compiled .class files.` });

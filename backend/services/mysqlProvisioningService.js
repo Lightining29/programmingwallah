@@ -1,54 +1,110 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import mysql from 'mysql2/promise';
 import { getMySQLConfig, getMySQLPool } from '../config/mysql.js';
+import mysqlActivityService from './mysqlActivityService.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const SHADOW_FILE_PATH = path.join(__dirname, '../data/user_mysql_shadow.json');
+/**
+ * Intelligent MySQL SQL statement splitter that respects quotes, backticks, escapes, and comments.
+ * Avoids naive semicolon splitting that breaks strings, stored procedures, or triggers.
+ */
+export function splitSqlStatements(sqlText = '') {
+  const statements = [];
+  let current = '';
+  let inSingleQuote = false;
+  let inDoubleQuote = false;
+  let inBacktick = false;
+  let inLineComment = false;
+  let inBlockComment = false;
+  const len = sqlText.length;
 
-// In-memory shadow storage fallback if remote MySQL is offline during local test
-const memoryDatabases = new Map();
+  for (let i = 0; i < len; i++) {
+    const char = sqlText[i];
+    const nextChar = i + 1 < len ? sqlText[i + 1] : '';
 
-// Load persistent shadow databases from disk
-function loadShadowStorage() {
-  try {
-    if (fs.existsSync(SHADOW_FILE_PATH)) {
-      const raw = fs.readFileSync(SHADOW_FILE_PATH, 'utf-8');
-      const data = JSON.parse(raw);
-      for (const [k, v] of Object.entries(data)) {
-        memoryDatabases.set(k, v);
+    // Handle line comment end
+    if (inLineComment) {
+      current += char;
+      if (char === '\n' || char === '\r') {
+        inLineComment = false;
+      }
+      continue;
+    }
+
+    // Handle block comment end
+    if (inBlockComment) {
+      current += char;
+      if (char === '*' && nextChar === '/') {
+        current += nextChar;
+        i++;
+        inBlockComment = false;
+      }
+      continue;
+    }
+
+    // Check comment starts if not inside string/backticks
+    if (!inSingleQuote && !inDoubleQuote && !inBacktick) {
+      if ((char === '-' && nextChar === '-') || char === '#') {
+        inLineComment = true;
+        current += char;
+        continue;
+      }
+      if (char === '/' && nextChar === '*') {
+        inBlockComment = true;
+        current += char + nextChar;
+        i++;
+        continue;
       }
     }
-  } catch (e) {
-    console.warn('[MySQL Shadow] Load error:', e.message);
-  }
-}
 
-// Persist shadow databases to disk
-function saveShadowStorage() {
-  try {
-    const data = Object.fromEntries(memoryDatabases.entries());
-    fs.mkdirSync(path.dirname(SHADOW_FILE_PATH), { recursive: true });
-    fs.writeFileSync(SHADOW_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (e) {
-    console.warn('[MySQL Shadow] Save error:', e.message);
-  }
-}
+    // Handle string escaping (e.g. \' or \")
+    if (char === '\\' && (inSingleQuote || inDoubleQuote)) {
+      current += char + nextChar;
+      i++;
+      continue;
+    }
 
-loadShadowStorage();
+    // Handle quote boundaries
+    if (char === "'" && !inDoubleQuote && !inBacktick) {
+      inSingleQuote = !inSingleQuote;
+      current += char;
+      continue;
+    }
+    if (char === '"' && !inSingleQuote && !inBacktick) {
+      inDoubleQuote = !inDoubleQuote;
+      current += char;
+      continue;
+    }
+    if (char === '`' && !inSingleQuote && !inDoubleQuote) {
+      inBacktick = !inBacktick;
+      current += char;
+      continue;
+    }
+
+    // Statement delimiter (semicolon outside quotes/comments)
+    if (char === ';' && !inSingleQuote && !inDoubleQuote && !inBacktick) {
+      const trimmed = current.trim();
+      if (trimmed) {
+        statements.push(trimmed);
+      }
+      current = '';
+      continue;
+    }
+
+    current += char;
+  }
+
+  const remainder = current.trim();
+  if (remainder) {
+    statements.push(remainder);
+  }
+
+  return statements;
+}
 
 class MySQLProvisioningService {
   constructor() {
     this.systemPool = null;
   }
 
-  saveShadowStorage() {
-    saveShadowStorage();
-  }
-
-  // Get or initialize active MySQL pool
   getPool() {
     if (!this.systemPool) {
       this.systemPool = getMySQLPool();
@@ -56,616 +112,593 @@ class MySQLProvisioningService {
     return this.systemPool;
   }
 
-  // Sanitize and prefix user database to prevent cross-user leakage
-  getUserDbName(userId, customName = 'main') {
-    const cleanName = String(customName).toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 32);
-    return `macos_user_${userId}_${cleanName || 'main'}`;
-  }
-
-  // Seed sample database for user matching MySQL Workbench demo (Sakila-inspired film & actor tables)
-  async seedSampleData(userId, username) {
-    const dbName = this.getUserDbName(userId, 'sakila');
-    try {
-      const pool = this.getPool();
-      await pool.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
-      
-      // Create actor table
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS \`${dbName}\`.\`actor\` (
-          \`actor_id\` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
-          \`first_name\` VARCHAR(45) NOT NULL,
-          \`last_name\` VARCHAR(45) NOT NULL,
-          \`last_update\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-          PRIMARY KEY (\`actor_id\`),
-          KEY \`idx_actor_last_name\` (\`last_name\`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
-
-      // Create film table matching user's exact uploaded MySQL Workbench screenshot
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS \`${dbName}\`.\`film\` (
-          \`film_id\` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
-          \`title\` VARCHAR(128) NOT NULL,
-          \`description\` TEXT,
-          \`release_year\` YEAR DEFAULT '2006',
-          \`language_id\` TINYINT UNSIGNED NOT NULL DEFAULT 1,
-          \`original_language_id\` TINYINT UNSIGNED DEFAULT NULL,
-          \`rental_duration\` TINYINT UNSIGNED NOT NULL DEFAULT 3,
-          \`rental_rate\` DECIMAL(4,2) NOT NULL DEFAULT 4.99,
-          \`length\` SMALLINT UNSIGNED DEFAULT NULL,
-          \`replacement_cost\` DECIMAL(5,2) NOT NULL DEFAULT 19.99,
-          \`rating\` ENUM('G','PG','PG-13','R','NC-17') DEFAULT 'G',
-          \`special_features\` SET('Trailers','Commentaries','Deleted Scenes','Behind the Scenes') DEFAULT NULL,
-          \`last_update\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-          PRIMARY KEY (\`film_id\`),
-          KEY \`idx_title\` (\`title\`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
-
-      // Check if film has rows, insert if empty
-      const [countCheck] = await pool.query(`SELECT COUNT(*) as cnt FROM \`${dbName}\`.\`film\``);
-      if (countCheck[0]?.cnt === 0) {
-        await pool.query(`
-          INSERT INTO \`${dbName}\`.\`film\` 
-          (\`title\`, \`description\`, \`release_year\`, \`language_id\`, \`original_language_id\`, \`rental_duration\`, \`rental_rate\`, \`length\`)
-          VALUES
-          ('ACADEMY DINOSAUR', 'A Epic Drama of a Feminist And a Mad Scientist who must Battle a Teacher in The Canadian Rockies', 2006, 1, NULL, 6, 0.99, 86),
-          ('ACE GOLDFINGER', 'A Astounding Epistle of a Database Administrator And an Explorer in Ancient Rome', 2006, 1, NULL, 3, 4.99, 48),
-          ('ADAPTATION HOLES', 'A Astounding Reflection of a Lumberjack And a Car who must Sink a Lumberjack', 2006, 1, NULL, 7, 2.99, 50),
-          ('AFFAIR PREJUDICE', 'A Fanciful Documentary of a Frisbee And a Lumberjack who must Chase a Monkey', 2006, 1, NULL, 5, 2.99, 117),
-          ('AFRICAN EGG', 'A Fast-Paced Documentary of a Pastry Chef And a Dentist who must Pursue a Forensic Psychologist', 2006, 1, NULL, 6, 2.99, 130),
-          ('AGENT TRUMAN', 'A Intrepid Panorama of a Robot And a Boy who must Escape a Pastry Chef in An Abandoned Mine Shaft', 2006, 1, NULL, 3, 2.99, 169),
-          ('AIRPLANE SIERRA', 'A Touching Saga of a Hunter And a Butler who must Discover a Butler in A Jet Boat', 2006, 1, NULL, 6, 4.99, 62),
-          ('AIRPORT POLLOCK', 'A Epic Tale of a Moose And a Girl who must Confront a Monkey in Ancient India', 2006, 1, NULL, 6, 4.99, 54),
-          ('ALABAMA DEVIL', 'A Thoughtful Panorama of a Database Administrator And a Mad Scientist who must Outgun a Butler', 2006, 1, NULL, 3, 2.99, 114),
-          ('ALADDIN CALENDAR', 'A Action-Packed Tale of a Man And a Lumberjack who must Reach a Astronaut in A Baloon', 2006, 1, NULL, 6, 4.99, 63)
-        `);
-      }
-
-      const [actorCheck] = await pool.query(`SELECT COUNT(*) as cnt FROM \`${dbName}\`.\`actor\``);
-      if (actorCheck[0]?.cnt === 0) {
-        await pool.query(`
-          INSERT INTO \`${dbName}\`.\`actor\` (\`first_name\`, \`last_name\`) VALUES
-          ('PENELOPE', 'GUINESS'),
-          ('NICK', 'WAHLBERG'),
-          ('ED', 'CHASE'),
-          ('JENNIFER', 'DAVIS'),
-          ('JOHNNY', 'LOLLOBRIGIDA'),
-          ('BETTE', 'NICHOLSON'),
-          ('GRACE', 'MOSTEL'),
-          ('MATTHEW', 'JOHANSSON'),
-          ('JOE', 'SWANK'),
-          ('CHRISTIAN', 'GABLE')
-        `);
-      }
-      return { success: true, dbName };
-    } catch (err) {
-      console.warn('[mysqlProvisioningService] Seed sample data note:', err.message);
-      // Fallback in-memory
-      this.seedMemoryDb(userId);
-      return { success: true, dbName, inMemory: true };
-    }
-  }
-
-  seedMemoryDb(userId) {
-    const dbKey = `macos_user_${userId}_sakila`;
-    if (!memoryDatabases.has(dbKey)) {
-      memoryDatabases.set(dbKey, {
-        name: dbKey,
-        displayName: 'sakila',
-        tables: {
-          film: {
-            columns: [
-              { name: 'film_id', type: 'smallint(5) UN AI PK', nullable: false, key: 'PRI', default: null },
-              { name: 'title', type: 'varchar(128)', nullable: false, key: 'MUL', default: null },
-              { name: 'description', type: 'text', nullable: true, key: '', default: null },
-              { name: 'release_year', type: 'year(4)', nullable: true, key: '', default: '2006' },
-              { name: 'language_id', type: 'tinyint(3) unsigned', nullable: false, key: '', default: '1' },
-              { name: 'original_language_id', type: 'tinyint(3) unsigned', nullable: true, key: '', default: null },
-              { name: 'rental_duration', type: 'tinyint(3) unsigned', nullable: false, key: '', default: '3' },
-              { name: 'rental_rate', type: 'decimal(4,2)', nullable: false, key: '', default: '4.99' },
-              { name: 'length', type: 'smallint(5) unsigned', nullable: true, key: '', default: null }
-            ],
-            rows: [
-              { film_id: 1, title: 'ACADEMY DINOSAUR', description: 'A Epic Drama of a Feminist And a Mad Scientist who must Battle a Teacher', release_year: 2006, language_id: 1, original_language_id: null, rental_duration: 6, rental_rate: '0.99', length: 86 },
-              { film_id: 2, title: 'ACE GOLDFINGER', description: 'A Astounding Epistle of a Database Administrator And an Explorer', release_year: 2006, language_id: 1, original_language_id: null, rental_duration: 3, rental_rate: '4.99', length: 48 },
-              { film_id: 3, title: 'ADAPTATION HOLES', description: 'A Astounding Reflection of a Lumberjack And a Car who must Sink a Lumberjack', release_year: 2006, language_id: 1, original_language_id: null, rental_duration: 7, rental_rate: '2.99', length: 50 },
-              { film_id: 4, title: 'AFFAIR PREJUDICE', description: 'A Fanciful Documentary of a Frisbee And a Lumberjack who must Chase a Monkey', release_year: 2006, language_id: 1, original_language_id: null, rental_duration: 5, rental_rate: '2.99', length: 117 },
-              { film_id: 5, title: 'AFRICAN EGG', description: 'A Fast-Paced Documentary of a Pastry Chef And a Dentist', release_year: 2006, language_id: 1, original_language_id: null, rental_duration: 6, rental_rate: '2.99', length: 130 },
-              { film_id: 6, title: 'AGENT TRUMAN', description: 'A Intrepid Panorama of a Robot And a Boy who must Escape a Pastry Chef', release_year: 2006, language_id: 1, original_language_id: null, rental_duration: 3, rental_rate: '2.99', length: 169 },
-              { film_id: 7, title: 'AIRPLANE SIERRA', description: 'A Touching Saga of a Hunter And a Butler who must Discover a Butler', release_year: 2006, language_id: 1, original_language_id: null, rental_duration: 6, rental_rate: '4.99', length: 62 },
-              { film_id: 8, title: 'AIRPORT POLLOCK', description: 'A Epic Tale of a Moose And a Girl who must Confront a Monkey', release_year: 2006, language_id: 1, original_language_id: null, rental_duration: 6, rental_rate: '4.99', length: 54 },
-              { film_id: 9, title: 'ALABAMA DEVIL', description: 'A Thoughtful Panorama of a Database Administrator And a Mad Scientist', release_year: 2006, language_id: 1, original_language_id: null, rental_duration: 3, rental_rate: '2.99', length: 114 },
-              { film_id: 10, title: 'ALADDIN CALENDAR', description: 'A Action-Packed Tale of a Man And a Lumberjack who must Reach a Astronaut', release_year: 2006, language_id: 1, original_language_id: null, rental_duration: 6, rental_rate: '4.99', length: 63 }
-            ]
-          },
-          actor: {
-            columns: [
-              { name: 'actor_id', type: 'smallint(5) UN AI PK', nullable: false, key: 'PRI', default: null },
-              { name: 'first_name', type: 'varchar(45)', nullable: false, key: '', default: null },
-              { name: 'last_name', type: 'varchar(45)', nullable: false, key: 'MUL', default: null },
-              { name: 'last_update', type: 'timestamp', nullable: false, key: '', default: 'CURRENT_TIMESTAMP' }
-            ],
-            rows: [
-              { actor_id: 1, first_name: 'PENELOPE', last_name: 'GUINESS', last_update: '2026-10-30 10:00:00' },
-              { actor_id: 2, first_name: 'NICK', last_name: 'WAHLBERG', last_update: '2026-10-30 10:00:00' },
-              { actor_id: 3, first_name: 'ED', last_name: 'CHASE', last_update: '2026-10-30 10:00:00' },
-              { actor_id: 4, first_name: 'JENNIFER', last_name: 'DAVIS', last_update: '2026-10-30 10:00:00' },
-              { actor_id: 5, first_name: 'JOHNNY', last_name: 'LOLLOBRIGIDA', last_update: '2026-10-30 10:00:00' }
-            ]
-          }
-        }
-      });
-    }
-  }
-
-  // Get user-accessible databases
-  async getUserDatabases(userId, isAdmin = false) {
-    await this.seedSampleData(userId);
+  /**
+   * Get user-accessible real databases from MySQL
+   */
+  async getUserDatabases(userId, isAdmin = true) {
+    const pool = this.getPool();
+    const [rows] = await pool.query('SHOW DATABASES');
+    const systemSchemas = new Set(['information_schema', 'performance_schema', 'mysql', 'sys']);
     const databases = [];
 
-    try {
-      const pool = this.getPool();
-      const [rows] = await pool.query('SHOW DATABASES');
-      const userPrefix = `macos_user_${userId}_`;
+    // User prefix for scoped databases if non-admin multi-user mode
+    const userPrefix = `macos_user_${userId}_`;
 
-      for (const row of rows) {
-        const schemaName = Object.values(row)[0];
-        // Allow user databases, or if admin allow all non-system databases
-        if (schemaName.startsWith(userPrefix) || (isAdmin && !['information_schema', 'performance_schema', 'mysql', 'sys'].includes(schemaName))) {
-          const cleanDisplayName = schemaName.startsWith(userPrefix) ? schemaName.replace(userPrefix, '') : schemaName;
-          
-          // Count tables
-          let tableCount = 0;
-          try {
-            const [tRows] = await pool.query(`SELECT COUNT(*) as tcnt FROM information_schema.tables WHERE table_schema = ?`, [schemaName]);
-            tableCount = tRows[0]?.tcnt || 0;
-          } catch (_) {}
+    for (const row of rows) {
+      const dbName = Object.values(row)[0];
+      if (systemSchemas.has(dbName.toLowerCase())) continue;
 
-          databases.push({
-            name: schemaName,
-            displayName: cleanDisplayName,
-            tableCount,
-            isUserOwned: schemaName.startsWith(userPrefix)
-          });
-        }
-      }
-    } catch (err) {
-      // Memory fallback
-      this.seedMemoryDb(userId);
-      for (const [key, db] of memoryDatabases.entries()) {
-        if (key.startsWith(`macos_user_${userId}_`)) {
-          databases.push({
-            name: key,
-            displayName: db.displayName,
-            tableCount: Object.keys(db.tables).length,
-            isUserOwned: true
-          });
-        }
+      // Filter: if user has private databases, or in admin/single-tenant developer mode
+      const isUserOwned = dbName.startsWith(userPrefix);
+      const isVisible = isAdmin || isUserOwned || !dbName.startsWith('macos_user_');
+
+      if (isVisible) {
+        let tableCount = 0;
+        try {
+          const [tRows] = await pool.query(
+            'SELECT COUNT(*) as cnt FROM information_schema.TABLES WHERE TABLE_SCHEMA = ?',
+            [dbName]
+          );
+          tableCount = tRows[0]?.cnt || 0;
+        } catch (_) {}
+
+        databases.push({
+          name: dbName,
+          displayName: isUserOwned ? dbName.replace(userPrefix, '') : dbName,
+          tableCount,
+          isUserOwned
+        });
       }
     }
 
-    // Always ensure at least one database is returned
-    if (databases.length === 0) {
-      this.seedMemoryDb(userId);
-      const dbKey = `macos_user_${userId}_sakila`;
-      databases.push({
-        name: dbKey,
-        displayName: 'sakila',
-        tableCount: 2,
-        isUserOwned: true
-      });
-    }
+    // Log connection health event
+    mysqlActivityService.log({
+      type: 'INFO',
+      message: `Database catalog refreshed. Found ${databases.length} active database(s).`,
+      context: { count: databases.length, databases: databases.map(d => d.name) },
+      userId
+    });
 
     return databases;
   }
 
-  // Get detailed schema tree (tables, columns, indexes)
+  /**
+   * Get complete schema tree from information_schema (Tables, Columns, Indexes, Constraints)
+   */
   async getSchemaTree(userId, dbName) {
+    if (!dbName) throw new Error('Database name is required to introspect schema.');
+
+    const pool = this.getPool();
     const result = {
       database: dbName,
       tables: []
     };
 
-    try {
-      const pool = this.getPool();
-      const [tableRows] = await pool.query(`
-        SELECT TABLE_NAME, TABLE_ROWS, DATA_LENGTH, CREATE_TIME 
-        FROM information_schema.TABLES 
-        WHERE TABLE_SCHEMA = ?
-        ORDER BY TABLE_NAME
-      `, [dbName]);
+    const [tableRows] = await pool.query(`
+      SELECT TABLE_NAME, TABLE_ROWS, DATA_LENGTH, CREATE_TIME, ENGINE, TABLE_COLLATION
+      FROM information_schema.TABLES 
+      WHERE TABLE_SCHEMA = ?
+      ORDER BY TABLE_NAME
+    `, [dbName]);
 
-      for (const t of tableRows) {
-        const tableName = t.TABLE_NAME;
-        const [colRows] = await pool.query(`
-          SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_KEY, COLUMN_DEFAULT, EXTRA
-          FROM information_schema.COLUMNS
-          WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
-          ORDER BY ORDINAL_POSITION
-        `, [dbName, tableName]);
+    for (const t of tableRows) {
+      const tableName = t.TABLE_NAME;
 
+      // Columns metadata
+      const [colRows] = await pool.query(`
+        SELECT COLUMN_NAME, COLUMN_TYPE, DATA_TYPE, IS_NULLABLE, COLUMN_KEY, COLUMN_DEFAULT, EXTRA, CHARACTER_MAXIMUM_LENGTH
+        FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+        ORDER BY ORDINAL_POSITION
+      `, [dbName, tableName]);
+
+      // Indexes metadata
+      let indexes = [];
+      try {
         const [idxRows] = await pool.query(`
           SHOW INDEX FROM \`${dbName}\`.\`${tableName}\`
-        `).catch(() => [[]]);
-
-        result.tables.push({
-          name: tableName,
-          rowCount: t.TABLE_ROWS || 0,
-          dataLength: t.DATA_LENGTH || 0,
-          columns: colRows.map(c => ({
-            name: c.COLUMN_NAME,
-            type: c.COLUMN_TYPE,
-            nullable: c.IS_NULLABLE === 'YES',
-            key: c.COLUMN_KEY,
-            default: c.COLUMN_DEFAULT,
-            extra: c.EXTRA
-          })),
-          indexes: Array.isArray(idxRows[0]) ? idxRows[0].map(idx => ({
-            name: idx.Key_name,
-            column: idx.Column_name,
-            unique: idx.Non_unique === 0,
-            type: idx.Index_type
-          })) : []
-        });
-      }
-    } catch (err) {
-      // Memory fallback
-      this.seedMemoryDb(userId);
-      const db = memoryDatabases.get(dbName);
-      if (db) {
-        for (const [tName, tData] of Object.entries(db.tables)) {
-          result.tables.push({
-            name: tName,
-            rowCount: tData.rows.length,
-            columns: tData.columns,
-            indexes: [{ name: 'PRIMARY', column: tData.columns[0]?.name || 'id', unique: true }]
-          });
+        `);
+        const idxMap = new Map();
+        for (const idx of idxRows) {
+          const kName = idx.Key_name;
+          if (!idxMap.has(kName)) {
+            idxMap.set(kName, {
+              name: kName,
+              columns: [],
+              unique: idx.Non_unique === 0,
+              type: idx.Index_type
+            });
+          }
+          idxMap.get(kName).columns.push(idx.Column_name);
         }
-      }
+        indexes = Array.from(idxMap.values()).map(i => ({
+          name: i.name,
+          column: i.columns.join(', '),
+          unique: i.unique,
+          type: i.type
+        }));
+      } catch (_) {}
+
+      // Foreign keys and constraints
+      let constraints = [];
+      try {
+        const [kcuRows] = await pool.query(`
+          SELECT CONSTRAINT_NAME, COLUMN_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME
+          FROM information_schema.KEY_COLUMN_USAGE
+          WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND REFERENCED_TABLE_NAME IS NOT NULL
+        `, [dbName, tableName]);
+        constraints = kcuRows.map(k => ({
+          name: k.CONSTRAINT_NAME,
+          column: k.COLUMN_NAME,
+          referencedTable: k.REFERENCED_TABLE_NAME,
+          referencedColumn: k.REFERENCED_COLUMN_NAME
+        }));
+      } catch (_) {}
+
+      result.tables.push({
+        name: tableName,
+        rowCount: t.TABLE_ROWS || 0,
+        dataLength: t.DATA_LENGTH || 0,
+        engine: t.ENGINE || 'InnoDB',
+        collation: t.TABLE_COLLATION || 'utf8mb4_unicode_ci',
+        columns: colRows.map(c => ({
+          name: c.COLUMN_NAME,
+          type: c.COLUMN_TYPE || c.DATA_TYPE,
+          dataType: c.DATA_TYPE,
+          nullable: c.IS_NULLABLE === 'YES',
+          key: c.COLUMN_KEY,
+          default: c.COLUMN_DEFAULT,
+          extra: c.EXTRA,
+          isPrimary: c.COLUMN_KEY === 'PRI',
+          isAutoIncrement: (c.EXTRA || '').includes('auto_increment')
+        })),
+        indexes,
+        constraints
+      });
     }
 
     return result;
   }
 
-  // Execute real SQL query with precise execution duration & fetch timing
-  async executeQuery(userId, dbName, rawSql, limit = 1000) {
-    const sql = String(rawSql || '').trim();
-    if (!sql) {
-      throw new Error('Query string is empty.');
+  /**
+   * Execute real SQL query or script with exact MySQL error and timing reporting
+   */
+  async executeQuery(userId, activeDbName, rawSql, limit = 1000) {
+    const fullSql = String(rawSql || '').trim();
+    if (!fullSql) {
+      throw new Error('Query string cannot be empty.');
     }
 
-    // Safety checks: prohibit unauthorized system alterations
-    const normalized = sql.toUpperCase();
-    if (normalized.includes('DROP DATABASE') && !normalized.includes(`\`${this.getUserDbName(userId)}`)) {
-      // Check if user is dropping their own database
-      const userPrefix = `macos_user_${userId}_`;
-      if (!sql.toLowerCase().includes(userPrefix.toLowerCase())) {
-        throw new Error('Security Error: You are not authorized to drop system or other users databases.');
-      }
-    }
-
-    const startTime = process.hrtime.bigint();
-    let queryResponse = null;
-    let executionDurationMs = 0;
-    let fetchDurationMs = 0;
+    const pool = this.getPool();
+    const conn = await pool.getConnection();
 
     try {
-      const pool = this.getPool();
-      
-      // Set active database context if provided
-      if (dbName) {
-        await pool.query(`USE \`${dbName}\``).catch(() => {});
-      }
-
-      const execStart = process.hrtime.bigint();
-      const [rows, fields] = await pool.query(sql);
-      const execEnd = process.hrtime.bigint();
-
-      executionDurationMs = Number(execEnd - execStart) / 1_000_000;
-      fetchDurationMs = Number(process.hrtime.bigint() - execEnd) / 1_000_000;
-
-      const isSelect = Array.isArray(rows);
-      const rowCount = isSelect ? rows.length : (rows?.affectedRows || 0);
-
-      const columns = fields ? fields.map(f => ({
-        name: f.name,
-        type: f.type,
-        flags: f.flags,
-        table: f.table
-      })) : (isSelect && rows.length > 0 ? Object.keys(rows[0]).map(k => ({ name: k, type: 'VARCHAR' })) : []);
-
-      queryResponse = {
-        success: true,
-        isSelect,
-        columns,
-        rows: isSelect ? rows.slice(0, limit) : [],
-        rowCount,
-        affectedRows: isSelect ? 0 : rows?.affectedRows || 0,
-        insertId: rows?.insertId || 0,
-        warningCount: rows?.warningStatus || 0,
-        executionTimeSec: (executionDurationMs / 1000).toFixed(3),
-        fetchTimeSec: (fetchDurationMs / 1000).toFixed(3),
-        responseMessage: isSelect 
-          ? `${rowCount} row(s) returned`
-          : `Query OK, ${rows?.affectedRows || 0} row(s) affected`,
-        executedAt: new Date().toLocaleTimeString('it-IT', { hour12: false })
-      };
-    } catch (dbError) {
-      // Robust Fallback with local persistence
-      this.seedMemoryDb(userId);
-      const effectiveDbName = dbName || this.getUserDbName(userId, 'sakila');
-      let memDb = memoryDatabases.get(effectiveDbName);
-      if (!memDb) {
-        memDb = { name: effectiveDbName, displayName: effectiveDbName.replace(`macos_user_${userId}_`, ''), tables: {} };
-        memoryDatabases.set(effectiveDbName, memDb);
-      }
-
-      const execDuration = '0.002';
-      const fetchDuration = '0.015';
-
-      // 1. CREATE TABLE
-      if (normalized.startsWith('CREATE TABLE')) {
-        const tblMatch = sql.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([a-zA-Z0-9_]+)`?/i);
-        const tblName = tblMatch ? tblMatch[1] : 'custom_table';
-        
-        // Parse basic column definitions inside parentheses if present
-        const innerMatch = sql.match(/\(([\s\S]+)\)/);
-        let parsedColumns = [];
-        if (innerMatch) {
-          const lines = innerMatch[1].split(',').map(l => l.trim()).filter(Boolean);
-          for (const line of lines) {
-            if (/^(PRIMARY\s+KEY|KEY|INDEX|CONSTRAINT|FOREIGN\s+KEY)/i.test(line)) continue;
-            const parts = line.split(/\s+/);
-            const colName = parts[0]?.replace(/[`'"]/g, '');
-            const colType = parts[1] || 'VARCHAR(255)';
-            if (colName) {
-              parsedColumns.push({
-                name: colName,
-                type: colType.toUpperCase(),
-                nullable: !/NOT\s+NULL/i.test(line),
-                key: /PRIMARY\s+KEY/i.test(line) ? 'PRI' : '',
-                default: null
-              });
-            }
-          }
+      let currentDb = activeDbName || null;
+      if (currentDb) {
+        try {
+          await conn.query(`USE \`${currentDb}\``);
+        } catch (e) {
+          console.warn(`[MySQL] Note: Could not pre-select database ${currentDb}:`, e.message);
         }
-
-        if (parsedColumns.length === 0) {
-          parsedColumns = [
-            { name: 'id', type: 'INT', nullable: false, key: 'PRI', default: null },
-            { name: 'username', type: 'VARCHAR(100)', nullable: false, key: '', default: null },
-            { name: 'created_at', type: 'TIMESTAMP', nullable: false, key: '', default: 'CURRENT_TIMESTAMP' }
-          ];
-        }
-
-        memDb.tables[tblName] = {
-          columns: parsedColumns,
-          rows: []
-        };
-        this.saveShadowStorage();
-
-        return {
-          success: true,
-          isSelect: false,
-          rowCount: 0,
-          affectedRows: 0,
-          insertId: 0,
-          executionTimeSec: execDuration,
-          fetchTimeSec: fetchDuration,
-          responseMessage: `Query OK, 0 rows affected. Table "${tblName}" created successfully.`,
-          executedAt: new Date().toLocaleTimeString('it-IT', { hour12: false })
-        };
       }
 
-      // 2. INSERT INTO
-      if (normalized.startsWith('INSERT')) {
-        const insMatch = sql.match(/INSERT\s+INTO\s+`?([a-zA-Z0-9_]+)`?/i);
-        const tblName = insMatch ? insMatch[1] : 'film';
-        if (!memDb.tables[tblName]) {
-          memDb.tables[tblName] = {
-            columns: [
-              { name: 'id', type: 'INT', nullable: false, key: 'PRI' },
-              { name: 'username', type: 'VARCHAR(100)' },
-              { name: 'created_at', type: 'TIMESTAMP' }
-            ],
-            rows: []
+      const statements = splitSqlStatements(fullSql);
+      if (statements.length === 0) {
+        throw new Error('No valid SQL statements found in input.');
+      }
+
+      let lastResult = null;
+      const allOutputs = [];
+
+      for (let i = 0; i < statements.length; i++) {
+        const stmt = statements[i];
+        const trimmedUpper = stmt.trim().toUpperCase();
+
+        // Detect explicit USE command
+        const useMatch = stmt.match(/^USE\s+[`"']?([a-zA-Z0-9_$]+)[`"']?/i);
+        if (useMatch) {
+          const targetDb = useMatch[1];
+          const startHr = process.hrtime.bigint();
+          await conn.query(`USE \`${targetDb}\``);
+          const durMs = Number(process.hrtime.bigint() - startHr) / 1_000_000;
+          currentDb = targetDb;
+
+          mysqlActivityService.log({
+            type: 'INFO',
+            message: `Context changed to database: ${targetDb}`,
+            context: { statement: stmt, durationMs: durMs.toFixed(3) },
+            userId,
+            dbName: targetDb
+          });
+
+          lastResult = {
+            success: true,
+            isSelect: false,
+            columns: [],
+            rows: [],
+            rowCount: 0,
+            affectedRows: 0,
+            insertId: 0,
+            executionTimeSec: (durMs / 1000).toFixed(4),
+            fetchTimeSec: '0.0000',
+            responseMessage: `Database changed to \`${targetDb}\``,
+            executedAt: new Date().toLocaleTimeString('en-US', { hour12: false })
           };
+          allOutputs.push(lastResult);
+          continue;
         }
 
-        const table = memDb.tables[tblName];
-        const newId = table.rows.length + 1;
-        
-        // Parse values if standard VALUES(...) format
-        let newRecord = { id: newId };
-        const valuesMatch = sql.match(/VALUES\s*\(([\s\S]+?)\)/i);
-        if (valuesMatch) {
-          const valTokens = valuesMatch[1].split(',').map(v => v.trim().replace(/^['"]|['"]$/g, ''));
-          table.columns.forEach((col, idx) => {
-            if (valTokens[idx] !== undefined) {
-              newRecord[col.name] = isNaN(Number(valTokens[idx])) ? valTokens[idx] : Number(valTokens[idx]);
-            }
+        // Execute statement on dedicated connection
+        const execStart = process.hrtime.bigint();
+        let queryResult;
+        try {
+          queryResult = await conn.query(stmt);
+        } catch (sqlErr) {
+          const durMs = Number(process.hrtime.bigint() - execStart) / 1_000_000;
+          mysqlActivityService.log({
+            type: 'ERROR',
+            message: `Failed to execute query: [Error ${sqlErr.errno || sqlErr.code}] ${sqlErr.message}`,
+            context: {
+              statement: stmt,
+              errorCode: sqlErr.code,
+              errno: sqlErr.errno,
+              sqlState: sqlErr.sqlState,
+              durationMs: durMs.toFixed(3)
+            },
+            userId,
+            dbName: currentDb
+          });
+          throw sqlErr;
+        }
+
+        const execEnd = process.hrtime.bigint();
+        const executionDurationMs = Number(execEnd - execStart) / 1_000_000;
+
+        const [rows, fields] = queryResult;
+        const isSelect = Array.isArray(rows);
+        const rowCount = isSelect ? rows.length : (rows?.affectedRows || 0);
+
+        // Slow query threshold check (500ms)
+        const isSlowQuery = executionDurationMs > 500;
+        if (isSlowQuery) {
+          mysqlActivityService.log({
+            type: 'WARNING',
+            message: `Slow query detected (${executionDurationMs.toFixed(1)}ms): ${stmt.length > 90 ? stmt.substring(0, 90) + '...' : stmt}`,
+            context: { statement: stmt, durationMs: executionDurationMs.toFixed(2), rowCount },
+            userId,
+            dbName: currentDb
+          });
+        }
+
+        // Map column definitions
+        let columns = [];
+        if (fields && fields.length > 0) {
+          columns = fields.map(f => ({
+            name: f.name,
+            type: this.resolveFieldTypeName(f.columnType || f.type),
+            table: f.table || '',
+            flags: f.flags
+          }));
+        } else if (isSelect && rows.length > 0) {
+          columns = Object.keys(rows[0]).map(k => ({ name: k, type: 'VARCHAR' }));
+        }
+
+        const fetchStart = process.hrtime.bigint();
+        const displayRows = isSelect ? rows.slice(0, limit) : [];
+        const fetchDurationMs = Number(process.hrtime.bigint() - fetchStart) / 1_000_000;
+
+        // DDL / DML Activity logging
+        if (trimmedUpper.startsWith('CREATE DATABASE')) {
+          const dbMatch = stmt.match(/CREATE\s+DATABASE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([a-zA-Z0-9_$]+)`?/i);
+          const newDb = dbMatch ? dbMatch[1] : 'database';
+          mysqlActivityService.log({
+            type: 'INFO',
+            message: `Database created successfully: ${newDb}`,
+            context: { statement: stmt, executionTime: `${(executionDurationMs / 1000).toFixed(4)}s` },
+            userId,
+            dbName: newDb
+          });
+        } else if (trimmedUpper.startsWith('CREATE TABLE')) {
+          const tblMatch = stmt.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:`?[a-zA-Z0-9_$]+`?\.)?`?([a-zA-Z0-9_$]+)`?/i);
+          const tbl = tblMatch ? tblMatch[1] : 'table';
+          mysqlActivityService.log({
+            type: 'INFO',
+            message: `Table schema created: ${tbl} in ${currentDb || 'current database'}`,
+            context: { statement: stmt, table: tbl },
+            userId,
+            dbName: currentDb
+          });
+        } else if (trimmedUpper.startsWith('DROP TABLE') || trimmedUpper.startsWith('DROP DATABASE')) {
+          mysqlActivityService.log({
+            type: 'INFO',
+            message: `Object dropped: ${stmt}`,
+            context: { statement: stmt },
+            userId,
+            dbName: currentDb
+          });
+        } else if (trimmedUpper.startsWith('ALTER TABLE')) {
+          mysqlActivityService.log({
+            type: 'INFO',
+            message: `Table schema updated: ${stmt}`,
+            context: { statement: stmt },
+            userId,
+            dbName: currentDb
           });
         } else {
-          newRecord.username = `user_${newId}`;
-          newRecord.created_at = new Date().toISOString().replace('T', ' ').substring(0, 19);
+          mysqlActivityService.log({
+            type: 'INFO',
+            message: isSelect 
+              ? `Query executed: ${stmt.length > 80 ? stmt.substring(0, 80) + '...' : stmt}`
+              : `DML executed (${rows?.affectedRows || 0} rows affected): ${stmt.length > 80 ? stmt.substring(0, 80) + '...' : stmt}`,
+            context: {
+              statement: stmt,
+              rowCount,
+              affectedRows: rows?.affectedRows || 0,
+              insertId: rows?.insertId || 0,
+              durationMs: executionDurationMs.toFixed(3)
+            },
+            userId,
+            dbName: currentDb
+          });
         }
 
-        table.rows.push(newRecord);
-        this.saveShadowStorage();
-
-        return {
+        lastResult = {
           success: true,
-          isSelect: false,
-          rowCount: 1,
-          affectedRows: 1,
-          insertId: newId,
-          executionTimeSec: execDuration,
-          fetchTimeSec: fetchDuration,
-          responseMessage: `Query OK, 1 row affected (insert_id: ${newId})`,
-          executedAt: new Date().toLocaleTimeString('it-IT', { hour12: false })
+          isSelect,
+          columns,
+          rows: displayRows,
+          rowCount,
+          totalRows: rowCount,
+          affectedRows: isSelect ? 0 : (rows?.affectedRows || 0),
+          insertId: rows?.insertId || 0,
+          warningCount: rows?.warningStatus || 0,
+          executionTimeSec: (executionDurationMs / 1000).toFixed(4),
+          fetchTimeSec: (fetchDurationMs / 1000).toFixed(4),
+          activeDatabase: currentDb,
+          responseMessage: isSelect
+            ? `${rowCount} row(s) returned`
+            : `Query OK, ${rows?.affectedRows || 0} row(s) affected`,
+          executedAt: new Date().toLocaleTimeString('en-US', { hour12: false })
         };
+        allOutputs.push(lastResult);
       }
 
-      // 3. DROP TABLE
-      if (normalized.startsWith('DROP TABLE')) {
-        const dropMatch = sql.match(/DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?`?([a-zA-Z0-9_]+)`?/i);
-        if (dropMatch && memDb.tables[dropMatch[1]]) {
-          delete memDb.tables[dropMatch[1]];
-          this.saveShadowStorage();
-        }
-        return {
-          success: true,
-          isSelect: false,
-          affectedRows: 0,
-          responseMessage: `Query OK, 0 rows affected`,
-          executedAt: new Date().toLocaleTimeString('it-IT', { hour12: false })
-        };
-      }
+      return lastResult;
 
-      // 4. SELECT / SHOW
-      if (normalized.startsWith('SELECT') || normalized.startsWith('SHOW') || normalized.startsWith('DESCRIBE')) {
-        let targetTable = 'film';
-        const fromMatch = sql.match(/FROM\s+`?([a-zA-Z0-9_]+)`?/i);
-        if (fromMatch && memDb.tables[fromMatch[1]]) {
-          targetTable = fromMatch[1];
-        } else if (normalized.includes('ACTOR')) {
-          targetTable = 'actor';
-        }
-
-        const tableData = memDb.tables[targetTable] || memDb.tables['film'] || {
-          columns: [{ name: 'result', type: 'VARCHAR' }],
-          rows: [{ result: 'Query executed successfully' }]
-        };
-
-        let matchedRows = [...tableData.rows];
-        const limitMatch = sql.match(/LIMIT\s+(\d+)/i);
-        if (limitMatch) {
-          const lNum = parseInt(limitMatch[1], 10);
-          matchedRows = matchedRows.slice(0, lNum);
-        }
-
-        queryResponse = {
-          success: true,
-          isSelect: true,
-          columns: tableData.columns.map(c => ({ name: c.name, type: c.type || 'VARCHAR' })),
-          rows: matchedRows,
-          rowCount: matchedRows.length,
-          affectedRows: 0,
-          insertId: 0,
-          warningCount: 0,
-          executionTimeSec: execDuration,
-          fetchTimeSec: fetchDuration,
-          responseMessage: `${matchedRows.length} row(s) returned`,
-          executedAt: new Date().toLocaleTimeString('it-IT', { hour12: false })
-        };
-      } else {
-        queryResponse = {
-          success: true,
-          isSelect: false,
-          affectedRows: 1,
-          responseMessage: `Query OK, 1 row affected`,
-          executedAt: new Date().toLocaleTimeString('it-IT', { hour12: false })
-        };
-      }
-    }
-
-    return queryResponse;
-  }
-
-  // Get server status, variables and metrics for MySQL Workbench dashboard
-  async getServerMetrics() {
-    try {
-      const pool = this.getPool();
-      const [verRows] = await pool.query('SELECT VERSION() as version, @@version_comment as comment');
-      const [uptimeRows] = await pool.query("SHOW GLOBAL STATUS LIKE 'Uptime'");
-      const [threadsRows] = await pool.query("SHOW GLOBAL STATUS LIKE 'Threads_connected'");
-      const [queriesRows] = await pool.query("SHOW GLOBAL STATUS LIKE 'Queries'");
-      const [bufferRows] = await pool.query("SHOW GLOBAL STATUS LIKE 'Innodb_buffer_pool_bytes_data'");
-
-      const version = verRows[0]?.version || '8.4.0-MySQL-LTS';
-      const uptimeSec = parseInt(uptimeRows[0]?.Value || '3600', 10);
-      const connections = parseInt(threadsRows[0]?.Value || '3', 10);
-      const queries = parseInt(queriesRows[0]?.Value || '142', 10);
-      const bufferBytes = parseInt(bufferRows[0]?.Value || '134217728', 10);
-
-      const days = Math.floor(uptimeSec / 86400);
-      const hours = Math.floor((uptimeSec % 86400) / 3600);
-      const minutes = Math.floor((uptimeSec % 3600) / 60);
-
-      return {
-        serverName: 'macOS MySQL Server (Docker)',
-        version,
-        engine: 'InnoDB',
-        uptimeFormatted: `${days > 0 ? days + ' days, ' : ''}${hours} hours, ${minutes} minutes`,
-        activeConnections: connections,
-        totalQueries: queries,
-        bufferPoolMb: (bufferBytes / (1024 * 1024)).toFixed(1),
-        status: 'RUNNING',
-        ssl: 'Disabled (Local Docker Bridge)',
-        host: process.env.DB_HOST || 'localhost',
-        port: process.env.DB_PORT || 3306
-      };
-    } catch (err) {
-      return {
-        serverName: 'macOS MySQL Server (Local Engine)',
-        version: '8.4.0 LTS (Sandboxed)',
-        engine: 'InnoDB',
-        uptimeFormatted: '1 day, 4 hours, 12 minutes',
-        activeConnections: 2,
-        totalQueries: 512,
-        bufferPoolMb: '128.0',
-        status: 'RUNNING',
-        ssl: 'Enabled (macOS Keychain SHA-256)',
-        host: 'localhost',
-        port: 3306
-      };
+    } finally {
+      conn.release();
     }
   }
 
-  // Active client connections process list
-  async getClientConnections() {
-    try {
-      const pool = this.getPool();
-      const [rows] = await pool.query('SHOW PROCESSLIST');
-      return rows.map(r => ({
-        id: r.Id,
-        user: r.User,
-        host: r.Host,
-        db: r.db || 'NULL',
-        command: r.Command,
-        time: r.Time,
-        state: r.State || '',
-        info: r.Info || ''
-      }));
-    } catch {
-      return [
-        { id: 1, user: 'root', host: 'localhost:53120', db: 'macos_user_1_sakila', command: 'Query', time: 0, state: 'executing', info: 'SELECT * FROM film' },
-        { id: 2, user: 'system_daemon', host: 'localhost', db: 'NULL', command: 'Sleep', time: 140, state: '', info: 'Event Scheduler' }
-      ];
-    }
-  }
-
-  // Create new user database
-  async createDatabase(userId, rawName) {
-    const cleanName = String(rawName).toLowerCase().replace(/[^a-z0-9_]/g, '');
+  /**
+   * Real database creation with verification in information_schema.SCHEMATA
+   */
+  async createDatabase(userId, rawName, charset = 'utf8mb4', collation = 'utf8mb4_unicode_ci') {
+    const cleanName = String(rawName).trim().replace(/[^a-zA-Z0-9_$]/g, '');
     if (!cleanName) throw new Error('Invalid database name.');
 
-    const dbName = `macos_user_${userId}_${cleanName}`;
+    const pool = this.getPool();
+    const conn = await pool.getConnection();
+
     try {
-      const pool = this.getPool();
-      await pool.query(`CREATE DATABASE \`${dbName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
-    } catch (err) {
-      // Memory fallback
-      memoryDatabases.set(dbName, {
-        name: dbName,
-        displayName: cleanName,
-        tables: {}
+      mysqlActivityService.log({
+        type: 'INFO',
+        message: `Database creation started: CREATE DATABASE \`${cleanName}\``,
+        context: { name: cleanName, charset, collation },
+        userId
       });
-      this.saveShadowStorage();
+
+      await conn.query(
+        `CREATE DATABASE \`${cleanName}\` CHARACTER SET ${charset} COLLATE ${collation}`
+      );
+
+      // Verify in information_schema
+      const [verify] = await conn.query(
+        'SELECT SCHEMA_NAME, DEFAULT_CHARACTER_SET_NAME, DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = ?',
+        [cleanName]
+      );
+
+      if (!verify || verify.length === 0) {
+        throw new Error(`Database "${cleanName}" creation could not be verified in information_schema.`);
+      }
+
+      mysqlActivityService.log({
+        type: 'INFO',
+        message: `Database ${cleanName} created and verified successfully in MySQL.`,
+        context: verify[0],
+        userId,
+        dbName: cleanName
+      });
+
+      return {
+        success: true,
+        dbName: cleanName,
+        displayName: cleanName,
+        charset: verify[0].DEFAULT_CHARACTER_SET_NAME,
+        collation: verify[0].DEFAULT_COLLATION_NAME
+      };
+    } catch (err) {
+      mysqlActivityService.log({
+        type: 'ERROR',
+        message: `Failed to create database "${cleanName}": ${err.message}`,
+        context: { errorCode: err.code, errno: err.errno, sqlState: err.sqlState },
+        userId
+      });
+      throw err;
+    } finally {
+      conn.release();
+    }
+  }
+
+  /**
+   * Visual table creation with verification in information_schema.TABLES
+   */
+  async createTable(userId, dbName, tableDefinition) {
+    const { tableName, columns = [], primaryKey = 'id', engine = 'InnoDB', comment = '' } = tableDefinition;
+    const cleanTbl = String(tableName).trim().replace(/[^a-zA-Z0-9_$]/g, '');
+    if (!cleanTbl) throw new Error('Table name is required.');
+    if (!dbName) throw new Error('Database context is required.');
+    if (!columns || columns.length === 0) throw new Error('At least one column definition is required.');
+
+    const colClauses = [];
+    const pkCols = [];
+
+    for (const c of columns) {
+      const colName = String(c.name).trim().replace(/[^a-zA-Z0-9_$]/g, '');
+      if (!colName) continue;
+
+      let colSql = `\`${colName}\` ${c.type || 'VARCHAR(255)'}`;
+      if (c.nullable === false) colSql += ' NOT NULL';
+      if (c.autoIncrement) colSql += ' AUTO_INCREMENT';
+      if (c.defaultValue !== undefined && c.defaultValue !== null && c.defaultValue !== '') {
+        colSql += ` DEFAULT ${c.defaultValue.toUpperCase() === 'CURRENT_TIMESTAMP' ? 'CURRENT_TIMESTAMP' : `'${c.defaultValue}'`}`;
+      }
+      colClauses.push(colSql);
+
+      if (c.isPrimary || colName === primaryKey) {
+        pkCols.push(`\`${colName}\``);
+      }
     }
 
-    return { success: true, dbName, displayName: cleanName };
+    if (pkCols.length > 0) {
+      colClauses.push(`PRIMARY KEY (${pkCols.join(', ')})`);
+    }
+
+    const ddl = `CREATE TABLE \`${dbName}\`.\`${cleanTbl}\` (\n  ${colClauses.join(',\n  ')}\n) ENGINE=${engine} DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci${comment ? ` COMMENT='${comment.replace(/'/g, "''")}'` : ''};`;
+
+    const pool = this.getPool();
+    const conn = await pool.getConnection();
+
+    try {
+      mysqlActivityService.log({
+        type: 'INFO',
+        message: `Executing visual table creation: ${cleanTbl} in \`${dbName}\``,
+        context: { ddl },
+        userId,
+        dbName
+      });
+
+      await conn.query(ddl);
+
+      // Verify in information_schema
+      const [verify] = await conn.query(
+        'SELECT TABLE_NAME, TABLE_ROWS, CREATE_TIME FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?',
+        [dbName, cleanTbl]
+      );
+
+      if (!verify || verify.length === 0) {
+        throw new Error(`Table "${cleanTbl}" creation could not be verified in information_schema.`);
+      }
+
+      mysqlActivityService.log({
+        type: 'INFO',
+        message: `Table ${cleanTbl} created and verified successfully in MySQL.`,
+        context: verify[0],
+        userId,
+        dbName
+      });
+
+      return {
+        success: true,
+        dbName,
+        tableName: cleanTbl,
+        ddl
+      };
+    } catch (err) {
+      mysqlActivityService.log({
+        type: 'ERROR',
+        message: `Failed to create table "${cleanTbl}": ${err.message}`,
+        context: { ddl, errorCode: err.code, errno: err.errno, sqlState: err.sqlState },
+        userId,
+        dbName
+      });
+      throw err;
+    } finally {
+      conn.release();
+    }
+  }
+
+  /**
+   * Real server metrics from MySQL Server
+   */
+  async getServerMetrics() {
+    const pool = this.getPool();
+    const [verRows] = await pool.query('SELECT VERSION() as version, @@version_comment as comment');
+    const [uptimeRows] = await pool.query("SHOW GLOBAL STATUS LIKE 'Uptime'");
+    const [threadsRows] = await pool.query("SHOW GLOBAL STATUS LIKE 'Threads_connected'");
+    const [queriesRows] = await pool.query("SHOW GLOBAL STATUS LIKE 'Queries'");
+    const [bufferRows] = await pool.query("SHOW GLOBAL STATUS LIKE 'Innodb_buffer_pool_bytes_data'");
+
+    const version = verRows[0]?.version || '8.4.0 LTS';
+    const uptimeSec = parseInt(uptimeRows[0]?.Value || '3600', 10);
+    const connections = parseInt(threadsRows[0]?.Value || '1', 10);
+    const queries = parseInt(queriesRows[0]?.Value || '0', 10);
+    const bufferBytes = parseInt(bufferRows[0]?.Value || '0', 10);
+
+    const days = Math.floor(uptimeSec / 86400);
+    const hours = Math.floor((uptimeSec % 86400) / 3600);
+    const minutes = Math.floor((uptimeSec % 3600) / 60);
+
+    return {
+      serverName: 'MySQL Community Server',
+      version,
+      comment: verRows[0]?.comment || 'MySQL Community',
+      engine: 'InnoDB',
+      uptimeFormatted: `${days > 0 ? days + 'd ' : ''}${hours}h ${minutes}m ${uptimeSec % 60}s`,
+      uptimeSeconds: uptimeSec,
+      activeConnections: connections,
+      totalQueries: queries,
+      bufferPoolMb: (bufferBytes / (1024 * 1024)).toFixed(1),
+      status: 'RUNNING',
+      host: '127.0.0.1',
+      port: 3306
+    };
+  }
+
+  /**
+   * Client connections from SHOW PROCESSLIST
+   */
+  async getClientConnections() {
+    const pool = this.getPool();
+    const [rows] = await pool.query('SHOW PROCESSLIST');
+    return rows.map(r => ({
+      id: r.Id,
+      user: r.User,
+      host: r.Host,
+      db: r.db || 'NULL',
+      command: r.Command,
+      time: r.Time,
+      state: r.State || '',
+      info: r.Info || ''
+    }));
+  }
+
+  /**
+   * Helper to map MySQL numeric column types to human-readable names
+   */
+  resolveFieldTypeName(typeNum) {
+    const typeMap = {
+      0: 'DECIMAL',
+      1: 'TINYINT',
+      2: 'SMALLINT',
+      3: 'INT',
+      4: 'FLOAT',
+      5: 'DOUBLE',
+      7: 'TIMESTAMP',
+      8: 'BIGINT',
+      9: 'MEDIUMINT',
+      10: 'DATE',
+      11: 'TIME',
+      12: 'DATETIME',
+      13: 'YEAR',
+      16: 'BIT',
+      245: 'JSON',
+      246: 'DECIMAL',
+      252: 'BLOB / TEXT',
+      253: 'VARCHAR',
+      254: 'CHAR'
+    };
+    return typeMap[typeNum] || (typeof typeNum === 'string' ? typeNum : 'VARCHAR');
   }
 }
 

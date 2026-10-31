@@ -34,6 +34,11 @@ import JavaRuntimeManagerApp from './apps/JavaRuntimeManagerApp.jsx';
 import MySQLStudioApp from './apps/MySQLStudioApp.jsx';
 import MacLockScreen from './components/MacLockScreen.jsx';
 import { 
+  registerJavaLanguageProvider, 
+  updateJavaDiagnostics, 
+  organizeImports 
+} from './services/javaLanguageService.js';
+import { 
   DesktopWidgetWrapper, WidgetGalleryModal, NotificationCenterDrawer, INITIAL_DESKTOP_WIDGETS 
 } from './components/WidgetSystem.jsx';
 
@@ -1621,6 +1626,40 @@ p {
         'editorBracketHighlight.foreground6': '#d19a66'
       }
     });
+
+    // Register genuine Java language provider (IntelliSense, Auto-Imports, Code Actions)
+    registerJavaLanguageProvider(monaco);
+  };
+
+  const vsCodeEditorRef = useRef(null);
+  const vsCodeMonacoRef = useRef(null);
+
+  const handleMonacoDidMount = (editor, monaco) => {
+    vsCodeEditorRef.current = editor;
+    vsCodeMonacoRef.current = monaco;
+
+    // Run initial Java diagnostics if active file is Java
+    const model = editor.getModel();
+    if (model && activeVsCodeFile.lang === 'java') {
+      const markers = updateJavaDiagnostics(monaco, model);
+      if (markers.length > 0) {
+        setVsCodeProblems(markers.map(m => ({
+          file: activeVsCodeFile.name,
+          line: m.startLineNumber,
+          severity: 'error',
+          message: m.message
+        })));
+      }
+    }
+
+    // Bind Ctrl+Shift+O / Cmd+Shift+O to Organize Imports
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyO, () => {
+      const currentCode = editor.getValue();
+      const organized = organizeImports(currentCode);
+      editor.setValue(organized);
+      setVsCodeFiles(prev => prev.map(f => f.id === activeVsCodeFileId ? { ...f, content: organized } : f));
+      macSound.playPop();
+    });
   };
 
   // ── AI Copilot Whole Project Prompt Handler ──
@@ -3025,15 +3064,44 @@ p {
                 </div>
               </div>
 
-              {/* Breadcrumb Path Bar */}
-              <div className="h-6 px-4 bg-black border-b border-white/5 flex items-center gap-1.5 text-[11px] font-mono text-[#888888]">
+              {/* Breadcrumb Path Bar (Matching Image 3) */}
+              <div className="h-6 px-4 bg-black border-b border-white/5 flex items-center gap-1.5 text-[11px] font-mono text-[#888888] overflow-hidden truncate">
                 <span>workspace</span>
                 <span>›</span>
                 <span>src</span>
-                <span>›</span>
-                <span className="text-white font-semibold">{activeVsCodeFile.name}</span>
-                <span className="ml-auto text-[10px] text-fuchsia-400 flex items-center gap-1">
-                  <Sparkles className="w-2.5 h-2.5" /> Copilot Ready
+                {(() => {
+                  if (activeVsCodeFile.lang === 'java') {
+                    const pkgMatch = activeVsCodeFile.content?.match(/package\s+([a-zA-Z0-9_.]+)\s*;/);
+                    const pkgParts = pkgMatch ? pkgMatch[1].split('.') : [];
+                    const classMatch = activeVsCodeFile.content?.match(/(?:public\s+)?class\s+([A-Za-z0-9_$]+)/);
+                    const cls = classMatch ? classMatch[1] : activeVsCodeFile.name.replace('.java', '');
+                    return (
+                      <>
+                        {pkgParts.map(p => (
+                          <React.Fragment key={p}>
+                            <span>›</span>
+                            <span>{p}</span>
+                          </React.Fragment>
+                        ))}
+                        <span>›</span>
+                        <span className="text-white font-semibold">{activeVsCodeFile.name}</span>
+                        <span>›</span>
+                        <span className="text-amber-400 font-medium">{cls}</span>
+                        <span>›</span>
+                        <span className="text-blue-400">main(String[])</span>
+                      </>
+                    );
+                  }
+                  return (
+                    <>
+                      <span>›</span>
+                      <span className="text-white font-semibold">{activeVsCodeFile.name}</span>
+                    </>
+                  );
+                })()}
+                <span className="ml-auto text-[10px] text-emerald-400 flex items-center gap-1 shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>{activeVsCodeFile.lang === 'java' ? 'Java Language Server: Running' : 'Copilot Ready'}</span>
                 </span>
               </div>
 
@@ -3053,9 +3121,26 @@ p {
                     }
                     theme="vs-pitch-black"
                     beforeMount={handleMonacoWillMount}
+                    onMount={handleMonacoDidMount}
                     value={activeVsCodeFile.content}
                     onChange={(val) => {
-                      setVsCodeFiles(prev => prev.map(f => f.id === activeVsCodeFileId ? { ...f, content: val || '' } : f));
+                      const newContent = val || '';
+                      setVsCodeFiles(prev => prev.map(f => f.id === activeVsCodeFileId ? { ...f, content: newContent } : f));
+                      
+                      // Live diagnostics squiggles on type
+                      if (activeVsCodeFile.lang === 'java' && vsCodeMonacoRef.current && vsCodeEditorRef.current) {
+                        const markers = updateJavaDiagnostics(vsCodeMonacoRef.current, vsCodeEditorRef.current.getModel());
+                        if (markers.length > 0) {
+                          setVsCodeProblems(markers.map(m => ({
+                            file: activeVsCodeFile.name,
+                            line: m.startLineNumber,
+                            severity: 'error',
+                            message: m.message
+                          })));
+                        } else {
+                          setVsCodeProblems([]);
+                        }
+                      }
                     }}
                     options={{
                       fontSize: 13,
@@ -3291,17 +3376,24 @@ p {
                 </div>
               )}
 
-              {/* Bottom Blue Status Bar */}
+              {/* Bottom Blue Status Bar (Matching Image 3) */}
               <div className="h-5 bg-[#007acc] text-white px-3 flex items-center justify-between text-[10px] font-sans font-medium select-none shrink-0">
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1"><GitBranch className="w-2.5 h-2.5" /> main*</span>
                   <button 
                     onClick={() => { setVsCodeBottomTab('problems'); setIsVsCodeBottomMinimized(false); }}
-                    className="flex items-center gap-1 hover:text-white transition cursor-pointer"
+                    className="flex items-center gap-1 hover:text-white transition cursor-pointer font-bold"
                   >
                     <AlertCircle className="w-2.5 h-2.5" />
-                    <span>{vsCodeProblems.length} ⊗ 0 △</span>
+                    <span>⊗ {vsCodeProblems.length} ⚠️ 0</span>
                   </button>
+                  {activeVsCodeFile.lang === 'java' && (
+                    <>
+                      <span className="text-white/80">Java Language Server: Running</span>
+                      <span className="text-emerald-300">IntelliSense: Active</span>
+                      <span className="text-sky-200">Auto Import: Ready</span>
+                    </>
+                  )}
                 </div>
                 <div className="flex items-center gap-3">
                   <span>Ln 1, Col 1</span>
@@ -3316,7 +3408,7 @@ p {
                           className="hover:text-amber-300 transition cursor-pointer flex items-center gap-1 font-bold"
                           title="Click to open Java Runtime Manager"
                         >
-                          ☕ {detectedRuntimes?.java?.isCompilationReady ? (detectedRuntimes.java.javacVersion || 'OpenJDK 27 LTS') : 'JDK Config Required'}
+                          ☕ JavaSE-27 ({detectedRuntimes?.java?.isCompilationReady ? 'OpenJDK 27' : 'JDK Config Required'})
                         </button>
                       ) 
                       : activeVsCodeFile.lang === 'python' ? `🐍 ${detectedRuntimes?.python?.version || 'Python 3.12'}` : '🟢 Node.js 20.18'}

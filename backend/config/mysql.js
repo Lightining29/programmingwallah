@@ -39,7 +39,7 @@ export const getMySQLConfig = (override = {}) => {
   const resolvedUser = override.user || process.env.DB_USER || process.env.MYSQL_USER || process.env.HOSTINGER_DB_USER || process.env.DATABASE_USER || process.env.DB_USERNAME || process.env.MYSQL_USERNAME || dbUrlConfig.user || 'root';
   const resolvedPass = override.password !== undefined
     ? override.password
-    : (process.env.DB_PASSWORD ?? process.env.MYSQL_PASSWORD ?? process.env.HOSTINGER_DB_PASSWORD ?? process.env.DATABASE_PASSWORD ?? process.env.DB_PASS ?? process.env.MYSQL_PASS ?? dbUrlConfig.password ?? '');
+    : (process.env.DB_PASSWORD || process.env.MYSQL_PASSWORD || process.env.HOSTINGER_DB_PASSWORD || process.env.DATABASE_PASSWORD || process.env.DB_PASS || process.env.MYSQL_PASS || dbUrlConfig.password || 'manish@123');
   const resolvedDb = override.database || process.env.DB_NAME || process.env.MYSQL_DATABASE || process.env.HOSTINGER_DB_NAME || process.env.DATABASE_NAME || process.env.DB_DATABASE || dbUrlConfig.database || 'pranidha_school';
   const resolvedPort = Number(override.port || process.env.DB_PORT || process.env.MYSQL_PORT || process.env.HOSTINGER_DB_PORT || process.env.DATABASE_PORT || dbUrlConfig.port || 3306);
 
@@ -54,7 +54,9 @@ export const getMySQLConfig = (override = {}) => {
     queueLimit: 0,
     enableKeepAlive: true,
     keepAliveInitialDelay: 10000,
-    connectTimeout: 4000
+    connectTimeout: 8000,
+    multipleStatements: true,
+    dateStrings: true
   };
 };
 
