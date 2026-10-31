@@ -1903,7 +1903,7 @@ p {
   return (
     <div 
       onClick={handleDesktopCanvasClick}
-      className="fixed inset-0 w-screen h-screen overflow-hidden select-none bg-black text-white font-sans transition-all duration-300"
+      className="macos-dark-root fixed inset-0 w-screen h-screen overflow-hidden select-none bg-black text-white font-sans transition-all duration-300"
       onContextMenu={handleDesktopContextMenu}
       style={{
         filter: `brightness(${screenBrightness}%)`,
@@ -2700,22 +2700,22 @@ p {
 
             {/* Sidebar View (Explorer / Extensions / Git / Search / Copilot) */}
             {vsCodeActiveSidebar && (
-              <div className="w-60 bg-[#14161f] border-r border-white/5 flex flex-col shrink-0 overflow-hidden font-sans">
+              <div className="w-60 bg-[#000000] border-r border-[#262626] flex flex-col shrink-0 overflow-hidden font-sans">
                 {vsCodeActiveSidebar === 'explorer' && (
                   <>
-                    <div className="h-9 px-3 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[#bbbbbb] border-b border-white/5">
+                    <div className="h-9 px-3 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[#999999] border-b border-[#222222] bg-[#000000]">
                       <span>Explorer: WORKSPACE</span>
                       <div className="flex items-center gap-1.5">
                         <button 
                           onClick={() => setIsCreatingNewFile(true)}
-                          className="hover:text-white p-0.5 rounded cursor-pointer"
+                          className="hover:text-white p-0.5 rounded cursor-pointer text-[#888888]"
                           title="New File..."
                         >
                           <Plus className="w-3.5 h-3.5" />
                         </button>
                         <button 
                           onClick={() => macSound.playPop()}
-                          className="hover:text-white p-0.5 rounded cursor-pointer"
+                          className="hover:text-white p-0.5 rounded cursor-pointer text-[#888888]"
                           title="Refresh"
                         >
                           <RefreshCw className="w-3 h-3" />
@@ -2732,36 +2732,81 @@ p {
                           value={newFileInputName}
                           onChange={(e) => setNewFileInputName(e.target.value)}
                           onBlur={() => { if (!newFileInputName) setIsCreatingNewFile(false); }}
-                          className="w-full bg-black/60 border border-[#007acc] rounded px-2 py-1 text-xs text-white outline-none font-mono"
+                          className="w-full bg-black/80 border border-[#007acc] rounded px-2 py-1 text-xs text-white outline-none font-mono"
                         />
                       </form>
                     )}
 
-                    <div className="p-2 space-y-1 overflow-y-auto flex-1 font-mono text-xs">
+                    <div className="p-2 space-y-1 overflow-y-auto flex-1 font-mono text-xs bg-[#000000]">
                       <div className="text-[10px] text-slate-400 font-sans font-bold px-1.5 uppercase flex items-center gap-1">
                         <span>▼</span> <span>src</span>
                       </div>
-                      {vsCodeFiles.map(file => (
-                        <div
-                          key={file.id}
-                          onClick={() => handleOpenVsCodeTab(file.id)}
-                          className={`group px-2.5 py-1.5 rounded flex items-center justify-between cursor-pointer transition select-none ${
-                            activeVsCodeFileId === file.id ? 'bg-[#1f2430] text-white font-bold' : 'text-[#cccccc] hover:bg-white/5'
-                          }`}
-                        >
-                          <span className="flex items-center gap-2 truncate">
-                            <span>{file.name.endsWith('.java') ? '☕' : file.name.endsWith('.py') ? '🐍' : file.name.endsWith('.html') ? '🌐' : file.name.endsWith('.css') ? '🎨' : '📄'}</span>
-                            <span className="truncate">{file.name}</span>
-                          </span>
-                          <button
-                            onClick={(e) => handleDeleteVsCodeFile(e, file.id)}
-                            className="opacity-0 group-hover:opacity-100 hover:text-rose-400 p-0.5 transition"
-                            title="Delete file"
+                      {vsCodeFiles.map(file => {
+                        const isSelected = activeVsCodeFileId === file.id;
+                        const ext = file.name.split('.').pop().toLowerCase();
+                        let icon = '📄';
+                        let fileColor = '#ffffff';
+                        let iconColor = '#94a3b8';
+
+                        if (ext === 'java') {
+                          icon = '☕';
+                          iconColor = '#fbbf24';
+                          fileColor = '#fef3c7';
+                        } else if (ext === 'py') {
+                          icon = '🐍';
+                          iconColor = '#34d399';
+                          fileColor = '#d1fae5';
+                        } else if (ext === 'ts' || ext === 'tsx') {
+                          icon = '🔷';
+                          iconColor = '#38bdf8';
+                          fileColor = '#e0f2fe';
+                        } else if (ext === 'js' || ext === 'jsx') {
+                          icon = '⚡';
+                          iconColor = '#facc15';
+                          fileColor = '#fef9c3';
+                        } else if (ext === 'html') {
+                          icon = '🌐';
+                          iconColor = '#fb923c';
+                          fileColor = '#ffedd5';
+                        } else if (ext === 'css') {
+                          icon = '🎨';
+                          iconColor = '#f472b6';
+                          fileColor = '#fce7f3';
+                        } else if (ext === 'json') {
+                          icon = '📋';
+                          iconColor = '#fde047';
+                          fileColor = '#fef08a';
+                        } else if (ext === 'md') {
+                          icon = '📝';
+                          iconColor = '#c084fc';
+                          fileColor = '#f3e8ff';
+                        }
+
+                        return (
+                          <div
+                            key={file.id}
+                            onClick={() => handleOpenVsCodeTab(file.id)}
+                            style={{
+                              backgroundColor: isSelected ? '#1e2433' : '#000000',
+                              borderLeft: isSelected ? '2px solid #007acc' : '2px solid transparent',
+                              color: isSelected ? '#ffffff' : fileColor
+                            }}
+                            className="group px-2.5 py-1.5 rounded flex items-center justify-between cursor-pointer transition select-none hover:!bg-[#151821]"
                           >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))}
+                            <span className="flex items-center gap-2 truncate">
+                              <span style={{ color: iconColor }} className="text-sm">{icon}</span>
+                              <span className={`truncate ${isSelected ? 'font-bold text-white' : 'font-medium'}`}>{file.name}</span>
+                            </span>
+                            <button
+                              onClick={(e) => handleDeleteVsCodeFile(e, file.id)}
+                              className="opacity-0 group-hover:opacity-100 hover:text-rose-400 p-0.5 transition"
+                              title="Delete file"
+                            >
+                              <Trash2 className="w-3 h-3 text-slate-400 hover:text-rose-400" />
+                            </button>
+                          </div>
+                        );
+                      })}
                     </div>
                   </>
                 )}

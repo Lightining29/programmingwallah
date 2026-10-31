@@ -52,6 +52,47 @@ class JavaRuntimeService {
     const discovered = [];
     const seenPaths = new Set();
 
+    const registerJdkDirect = (javacBin, javaBin, sourceTag, homeDir = null) => {
+      if (!javacBin || !fs.existsSync(javacBin)) return;
+      if (!javaBin || !fs.existsSync(javaBin)) {
+        const candidateJava = path.join(path.dirname(javacBin), `java${exeSuffix}`);
+        if (fs.existsSync(candidateJava)) javaBin = candidateJava;
+        else return;
+      }
+      const homePath = homeDir || path.dirname(javacBin);
+      if (seenPaths.has(homePath) || seenPaths.has(javacBin)) return;
+
+      let javacVer = '';
+      let javaVer = '';
+      try {
+        javacVer = execSync(`"${javacBin}" -version`, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+      } catch (e) {
+        javacVer = (e.stdout || e.stderr || '').toString().trim();
+      }
+      try {
+        javaVer = execSync(`"${javaBin}" -version`, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+      } catch (e) {
+        javaVer = (e.stdout || e.stderr || '').toString().trim();
+      }
+
+      const versionMatch = (javacVer || javaVer).match(/\d+(\.\d+)*/);
+      const majorVer = versionMatch ? versionMatch[0].split('.')[0] : '21';
+
+      seenPaths.add(homePath);
+      seenPaths.add(javacBin);
+      discovered.push({
+        id: `jdk-${majorVer}-${discovered.length + 1}`,
+        name: `OpenJDK ${majorVer}`,
+        majorVersion: parseInt(majorVer, 10),
+        fullVersion: javacVer.replace(/^javac\s*/i, '') || javaVer.split('\n')[0] || `OpenJDK ${majorVer}`,
+        home: homePath,
+        javacPath: javacBin,
+        javaPath: javaBin,
+        source: sourceTag,
+        isDefault: false
+      });
+    };
+
     const addJdkIfValid = (homePath, sourceTag) => {
       if (!homePath || seenPaths.has(homePath)) return;
       try {
@@ -59,6 +100,16 @@ class JavaRuntimeService {
 
         let javacPath = path.join(homePath, 'bin', `javac${exeSuffix}`);
         let javaPath = path.join(homePath, 'bin', `java${exeSuffix}`);
+
+        // Handle flat directory without bin (e.g. Oracle javapath)
+        if (!fs.existsSync(javacPath)) {
+          const directJavac = path.join(homePath, `javac${exeSuffix}`);
+          const directJava = path.join(homePath, `java${exeSuffix}`);
+          if (fs.existsSync(directJavac) && fs.existsSync(directJava)) {
+            javacPath = directJavac;
+            javaPath = directJava;
+          }
+        }
 
         // Handle macOS bundle structure /Contents/Home
         if (isMac && !fs.existsSync(javacPath)) {
@@ -178,7 +229,18 @@ class JavaRuntimeService {
         }
       } catch {}
 
+      if (fs.existsSync('/usr/bin/javac') && fs.existsSync('/usr/bin/java')) {
+        registerJdkDirect('/usr/bin/javac', '/usr/bin/java', 'Linux System /usr/bin');
+      }
     } else if (isWin) {
+      // Direct Oracle Javapath check
+      const oraclePath = 'C:\\Program Files\\Common Files\\Oracle\\Java\\javapath';
+      const ojvac = path.join(oraclePath, 'javac.exe');
+      const ojava = path.join(oraclePath, 'java.exe');
+      if (fs.existsSync(ojvac) && fs.existsSync(ojava)) {
+        registerJdkDirect(ojvac, ojava, 'Oracle Javapath', oraclePath);
+      }
+
       // Windows standard paths
       const winDirs = [
         'C:\\Program Files\\Java\\jdk-27',
@@ -208,9 +270,16 @@ class JavaRuntimeService {
       const checkCmd = isWin ? 'where javac' : 'which javac';
       const javacFound = execSync(checkCmd, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim().split(/\r?\n/)[0];
       if (javacFound && fs.existsSync(javacFound)) {
+        let javaFound = null;
+        try {
+          const javaCmd = isWin ? 'where java' : 'which java';
+          javaFound = execSync(javaCmd, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim().split(/\r?\n/)[0];
+        } catch {}
+        registerJdkDirect(javacFound, javaFound, 'System PATH');
         const binDir = path.dirname(javacFound);
         const homeCandidate = path.dirname(binDir);
         addJdkIfValid(homeCandidate, 'System PATH');
+        addJdkIfValid(binDir, 'System PATH Direct');
       }
     } catch {}
 
