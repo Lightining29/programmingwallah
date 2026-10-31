@@ -1862,6 +1862,7 @@ async function ensureKbcSessionsAndTeams() {
         status ENUM('INACTIVE', 'WAITING', 'LIVE', 'COMPLETED') DEFAULT 'INACTIVE',
         show_in_navbar TINYINT(1) DEFAULT 0,
         current_level INT DEFAULT 1,
+        total_questions INT DEFAULT 16,
         current_question_id VARCHAR(100) DEFAULT NULL,
         is_locked TINYINT(1) DEFAULT 0,
         locked_option INT DEFAULT NULL,
@@ -1872,6 +1873,12 @@ async function ensureKbcSessionsAndTeams() {
         winner_points INT DEFAULT 0,
         winner_prize VARCHAR(100) DEFAULT NULL,
         show_winner TINYINT(1) DEFAULT 0,
+        show_leaderboard TINYINT(1) DEFAULT 0,
+        timer_duration INT DEFAULT 30,
+        timer_started_at BIGINT DEFAULT NULL,
+        timer_paused TINYINT(1) DEFAULT 0,
+        timer_remaining INT DEFAULT 30,
+        default_access_code VARCHAR(50) DEFAULT 'KBC-101',
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
@@ -1880,8 +1887,8 @@ async function ensureKbcSessionsAndTeams() {
     const [sessRows] = await pool.query('SELECT * FROM kbc_sessions WHERE id = ?', ['main_session']);
     if (sessRows.length === 0) {
       await pool.query(`
-        INSERT INTO kbc_sessions (id, status, show_in_navbar, current_level)
-        VALUES ('main_session', 'INACTIVE', 0, 1)
+        INSERT INTO kbc_sessions (id, status, show_in_navbar, current_level, total_questions, default_access_code)
+        VALUES ('main_session', 'INACTIVE', 0, 1, 16, 'KBC-101')
       `);
     }
 
@@ -1897,6 +1904,33 @@ async function ensureKbcSessionsAndTeams() {
     try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN timer_started_at BIGINT DEFAULT NULL'); } catch(e) {}
     try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN timer_paused TINYINT(1) DEFAULT 0'); } catch(e) {}
     try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN timer_remaining INT DEFAULT 30'); } catch(e) {}
+    try { await pool.query("ALTER TABLE kbc_sessions ADD COLUMN default_access_code VARCHAR(50) DEFAULT 'KBC-101'"); } catch(e) {}
+
+    // 1b. Ensure kbc_students table for Candidate Registration with image
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS kbc_students (
+        id VARCHAR(100) PRIMARY KEY,
+        full_name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL UNIQUE,
+        dob VARCHAR(50) NOT NULL,
+        mobile VARCHAR(50) DEFAULT '',
+        college VARCHAR(255) DEFAULT '',
+        roll_no VARCHAR(100) DEFAULT '',
+        profile_photo LONGTEXT,
+        access_code VARCHAR(50) DEFAULT 'KBC-101',
+        points INT DEFAULT 0,
+        current_level INT DEFAULT 1,
+        correct_count INT DEFAULT 0,
+        wrong_count INT DEFAULT 0,
+        total_response_time_ms BIGINT DEFAULT 0,
+        last_submitted_at BIGINT DEFAULT NULL,
+        status VARCHAR(50) DEFAULT 'REGISTERED',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_kbc_email (email),
+        INDEX idx_kbc_access_code (access_code)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
 
     // 2. Ensure kbc_teams table
     await pool.query(`
@@ -1904,7 +1938,7 @@ async function ensureKbcSessionsAndTeams() {
         id VARCHAR(100) PRIMARY KEY,
         team_name VARCHAR(255) NOT NULL,
         leader_name VARCHAR(255) NOT NULL,
-        access_code VARCHAR(50) NOT NULL UNIQUE,
+        access_code VARCHAR(50) NOT NULL,
         current_level INT DEFAULT 1,
         score_amount INT DEFAULT 0,
         points INT DEFAULT 0,
@@ -1913,11 +1947,21 @@ async function ensureKbcSessionsAndTeams() {
         safe_amount INT DEFAULT 0,
         status VARCHAR(50) DEFAULT 'REGISTERED',
         submitted_option INT DEFAULT NULL,
+        submitted_at BIGINT DEFAULT NULL,
         lifelines_used_json TEXT DEFAULT NULL,
         laptop_info VARCHAR(255) DEFAULT '',
+        email VARCHAR(255) DEFAULT NULL,
+        dob VARCHAR(50) DEFAULT NULL,
+        mobile VARCHAR(50) DEFAULT NULL,
+        college VARCHAR(255) DEFAULT NULL,
+        roll_no VARCHAR(100) DEFAULT NULL,
+        profile_photo LONGTEXT DEFAULT NULL,
+        total_response_time_ms BIGINT DEFAULT 0,
+        last_submitted_at BIGINT DEFAULT NULL,
         last_active_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_team_code (access_code)
+        INDEX idx_team_code (access_code),
+        INDEX idx_team_email (email)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
@@ -1926,6 +1970,15 @@ async function ensureKbcSessionsAndTeams() {
     try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN points INT DEFAULT 0'); } catch(e) {}
     try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN correct_count INT DEFAULT 0'); } catch(e) {}
     try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN wrong_count INT DEFAULT 0'); } catch(e) {}
+    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN email VARCHAR(255) DEFAULT NULL'); } catch(e) {}
+    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN dob VARCHAR(50) DEFAULT NULL'); } catch(e) {}
+    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN mobile VARCHAR(50) DEFAULT NULL'); } catch(e) {}
+    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN college VARCHAR(255) DEFAULT NULL'); } catch(e) {}
+    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN roll_no VARCHAR(100) DEFAULT NULL'); } catch(e) {}
+    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN profile_photo LONGTEXT DEFAULT NULL'); } catch(e) {}
+    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN total_response_time_ms BIGINT DEFAULT 0'); } catch(e) {}
+    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN last_submitted_at BIGINT DEFAULT NULL'); } catch(e) {}
+    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN submitted_at BIGINT DEFAULT NULL'); } catch(e) {}
 
     // Ensure starter teams if none exist
     const [teamRows] = await pool.query('SELECT COUNT(*) as cnt FROM kbc_teams');
@@ -2012,23 +2065,23 @@ router.get('/session/status', async (req, res) => {
           s.show_winner = 1;
         }
 
-        // Fetch top scorer / winner if show_winner is true
+        // Fetch top scorer / winner if show_winner is true (Tie breaker: student who answered first)
         let winner = null;
         if (s.show_winner && s.winner_team_id) {
           const [wRows] = await pool.query('SELECT * FROM kbc_teams WHERE id = ?', [s.winner_team_id]);
           if (wRows.length > 0) winner = wRows[0];
         }
         if (!winner && s.show_winner) {
-          const [topRows] = await pool.query('SELECT * FROM kbc_teams ORDER BY points DESC, score_amount DESC, correct_count DESC LIMIT 1');
+          const [topRows] = await pool.query('SELECT * FROM kbc_teams ORDER BY points DESC, total_response_time_ms ASC, last_submitted_at ASC LIMIT 1');
           if (topRows.length > 0) winner = topRows[0];
         }
 
-        // Leaderboard top teams: Sorted purely by points descending so every right/wrong answer immediately organizes rank
+        // Leaderboard top teams: Sorted by points descending, then tie breaker: whoever answered first (lower total_response_time_ms / earlier submission)
         const [topTeams] = await pool.query(`
-          SELECT id, team_name, leader_name, access_code, current_level, points, score_amount, correct_count, wrong_count, submitted_option, status
+          SELECT id, team_name, leader_name, access_code, current_level, points, score_amount, correct_count, wrong_count, submitted_option, submitted_at, total_response_time_ms, last_submitted_at, profile_photo, college, roll_no, email, status
           FROM kbc_teams 
-          ORDER BY points DESC, score_amount DESC, correct_count DESC, created_at ASC 
-          LIMIT 25
+          ORDER BY points DESC, total_response_time_ms ASC, last_submitted_at ASC, id ASC 
+          LIMIT 30
         `);
 
         const timerDur = s.timer_duration !== undefined && s.timer_duration !== null ? Number(s.timer_duration) : getKbcLevelCountdown(curLvl);
@@ -2060,6 +2113,7 @@ router.get('/session/status', async (req, res) => {
             timer_started_at: timerStartedAt,
             timer_paused: timerPaused,
             timer_remaining: timerRem,
+            default_access_code: s.default_access_code || 'KBC-101',
             winner: winner,
             top_teams: topTeams,
             current_question: currentQuestion
@@ -2133,9 +2187,17 @@ router.post('/admin/session/toggle', async (req, res) => {
         // Reset all teams back to Level 1, 0 prize won, 0 points, ready for round 1
         await pool.query(`
           UPDATE kbc_teams 
-          SET current_level = 1, score_amount = 0, points = 0, correct_count = 0, wrong_count = 0, safe_amount = 0, submitted_option = NULL,
+          SET current_level = 1, score_amount = 0, points = 0, correct_count = 0, wrong_count = 0, safe_amount = 0, submitted_option = NULL, submitted_at = NULL, total_response_time_ms = 0,
               status = 'CONNECTED', lifelines_used_json = NULL
         `);
+
+        // Reset all students back to 0 points for fresh KBC run
+        try {
+          await pool.query(`
+            UPDATE kbc_students
+            SET current_level = 1, points = 0, correct_count = 0, wrong_count = 0, total_response_time_ms = 0, last_submitted_at = NULL
+          `);
+        } catch(e) {}
       } else {
         await pool.query(`
           UPDATE kbc_sessions 
@@ -2232,8 +2294,8 @@ router.post('/admin/session/update', async (req, res) => {
           WHERE id = 'main_session'
         `, [lvl, current_question_id || null, dur, now, dur]);
 
-        // Also clear teams submitted options for the new round
-        await pool.query('UPDATE kbc_teams SET submitted_option = NULL');
+        // Also clear teams submitted options for the new round while preserving total response time
+        await pool.query('UPDATE kbc_teams SET submitted_option = NULL, submitted_at = NULL');
       } else {
         // Fetch current session BEFORE updating to check if answer was already revealed
         const [preSess] = await pool.query('SELECT current_level, total_questions, revealed_correct, active_team_id FROM kbc_sessions WHERE id = "main_session"');
@@ -2325,6 +2387,19 @@ router.post('/admin/session/update', async (req, res) => {
               WHERE (submitted_option IS NOT NULL OR id = ?)
             `, [preSess[0]?.active_team_id || '']);
           }
+
+          // Sync points & statistics to kbc_students table
+          try {
+            await pool.query(`
+              UPDATE kbc_students s
+              JOIN kbc_teams t ON (s.email = t.email OR s.id = t.id)
+              SET s.points = t.points,
+                  s.current_level = t.current_level,
+                  s.correct_count = t.correct_count,
+                  s.wrong_count = t.wrong_count,
+                  s.total_response_time_ms = t.total_response_time_ms
+            `);
+          } catch(e) {}
         }
 
         // If advancing past total questions, automatically declare winner and finish KBC!
@@ -2680,7 +2755,7 @@ router.post('/admin/session/choose-30-questions', async (req, res) => {
   });
 });
 
-// ── 9. ADMIN & TEAMS: Get All Registered Teams & Live Laptop Status (Ranked by Points) ──
+// ── 9. ADMIN & TEAMS: Get All Registered Teams & Live Laptop Status (Ranked by Points, Tie-Breaker: Speed) ──
 router.get('/teams', async (req, res) => {
   const pool = getMySQLPool();
   try {
@@ -2688,9 +2763,9 @@ router.get('/teams', async (req, res) => {
 
     if (pool) {
       const [rows] = await pool.query(`
-        SELECT id, team_name, leader_name, access_code, current_level, score_amount, points, correct_count, wrong_count, safe_amount, status, submitted_option, laptop_info, last_active_at, created_at 
+        SELECT id, team_name, leader_name, access_code, current_level, score_amount, points, correct_count, wrong_count, safe_amount, status, submitted_option, submitted_at, total_response_time_ms, last_submitted_at, profile_photo, college, roll_no, email, laptop_info, last_active_at, created_at 
         FROM kbc_teams 
-        ORDER BY points DESC, score_amount DESC, correct_count DESC, created_at ASC
+        ORDER BY points DESC, total_response_time_ms ASC, last_submitted_at ASC, id ASC
       `);
 
       return res.json({
@@ -2703,12 +2778,151 @@ router.get('/teams', async (req, res) => {
     console.warn('MySQL /teams query error:', err.message);
   }
 
-  const sortedMemory = [...memoryTeams].sort((a, b) => (b.points || 0) - (a.points || 0));
+  const sortedMemory = [...memoryTeams].sort((a, b) => {
+    if ((b.points || 0) !== (a.points || 0)) return (b.points || 0) - (a.points || 0);
+    return (a.total_response_time_ms || 0) - (b.total_response_time_ms || 0);
+  });
   return res.json({
     success: true,
     teams: sortedMemory,
     database: 'Memory Fallback'
   });
+});
+
+// ── 9b. CANDIDATE REGISTRATION: Register student with full profile and photo ──
+router.post('/student/register', async (req, res) => {
+  const { full_name, email, dob, mobile, college, roll_no, profile_photo } = req.body;
+
+  if (!full_name || !full_name.trim() || !email || !email.trim() || !dob || !dob.trim()) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Full Name, Email Address, and Date of Birth (DOB) are mandatory for registration.' 
+    });
+  }
+
+  const normEmail = email.trim().toLowerCase();
+  const studentId = `student-${Date.now()}`;
+  const defaultCode = 'KBC-101';
+  const pool = getMySQLPool();
+
+  try {
+    await ensureKbcSessionsAndTeams();
+
+    if (pool) {
+      // 1. Insert or update candidate in kbc_students table
+      await pool.query(`
+        INSERT INTO kbc_students (id, full_name, email, dob, mobile, college, roll_no, profile_photo, access_code, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'REGISTERED')
+        ON DUPLICATE KEY UPDATE 
+          full_name = VALUES(full_name),
+          dob = VALUES(dob),
+          mobile = VALUES(mobile),
+          college = VALUES(college),
+          roll_no = VALUES(roll_no),
+          profile_photo = COALESCE(VALUES(profile_photo), profile_photo),
+          status = 'REGISTERED'
+      `, [studentId, full_name.trim(), normEmail, dob.trim(), (mobile || '').trim(), (college || '').trim(), (roll_no || '').trim(), profile_photo || null, defaultCode]);
+
+      // 2. Insert or update in kbc_teams table so candidate can connect as live hotseat player
+      const [existingTeam] = await pool.query('SELECT id, access_code FROM kbc_teams WHERE email = ?', [normEmail]);
+      let assignedTeamId = studentId;
+      let assignedCode = defaultCode;
+
+      if (existingTeam.length > 0) {
+        assignedTeamId = existingTeam[0].id;
+        assignedCode = existingTeam[0].access_code || defaultCode;
+        await pool.query(`
+          UPDATE kbc_teams 
+          SET team_name = ?, leader_name = ?, dob = ?, mobile = ?, college = ?, roll_no = ?, profile_photo = COALESCE(?, profile_photo), status = 'REGISTERED'
+          WHERE id = ?
+        `, [full_name.trim(), full_name.trim(), dob.trim(), (mobile || '').trim(), (college || '').trim(), (roll_no || '').trim(), profile_photo || null, assignedTeamId]);
+      } else {
+        await pool.query(`
+          INSERT INTO kbc_teams (id, team_name, leader_name, email, dob, mobile, college, roll_no, profile_photo, access_code, current_level, score_amount, points, status)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, 0, 'REGISTERED')
+        `, [assignedTeamId, full_name.trim(), full_name.trim(), normEmail, dob.trim(), (mobile || '').trim(), (college || '').trim(), (roll_no || '').trim(), profile_photo || null, assignedCode]);
+      }
+
+      const [updatedRows] = await pool.query('SELECT * FROM kbc_students WHERE email = ?', [normEmail]);
+
+      return res.json({
+        success: true,
+        message: `Welcome, ${full_name}! Registration completed successfully. Proceed to enter Exam Access Code.`,
+        student: updatedRows[0] || {
+          id: assignedTeamId,
+          full_name: full_name.trim(),
+          email: normEmail,
+          dob: dob.trim(),
+          mobile: mobile || '',
+          college: college || '',
+          roll_no: roll_no || '',
+          profile_photo: profile_photo || null,
+          access_code: assignedCode
+        },
+        team_id: assignedTeamId,
+        access_code: assignedCode,
+        database: 'Hostinger MySQL'
+      });
+    }
+  } catch (err) {
+    console.warn('MySQL /student/register query error:', err.message);
+  }
+
+  // Memory fallback
+  const fallbackStudent = {
+    id: studentId,
+    full_name: full_name.trim(),
+    email: normEmail,
+    dob: dob.trim(),
+    mobile: mobile || '',
+    college: college || '',
+    roll_no: roll_no || '',
+    profile_photo: profile_photo || null,
+    access_code: defaultCode,
+    points: 0,
+    status: 'REGISTERED'
+  };
+
+  const existingMemIdx = memoryTeams.findIndex(t => t.email === normEmail);
+  if (existingMemIdx >= 0) {
+    memoryTeams[existingMemIdx] = { ...memoryTeams[existingMemIdx], ...fallbackStudent, team_name: full_name.trim(), leader_name: full_name.trim() };
+  } else {
+    memoryTeams.push({
+      ...fallbackStudent,
+      team_name: full_name.trim(),
+      leader_name: full_name.trim(),
+      current_level: 1,
+      score_amount: 0
+    });
+  }
+
+  return res.json({
+    success: true,
+    message: `Welcome, ${full_name}! Registration recorded in fallback mode.`,
+    student: fallbackStudent,
+    team_id: studentId,
+    access_code: defaultCode,
+    database: 'Memory Fallback'
+  });
+});
+
+// ── 9c. CANDIDATE LOOKUP: Fetch registered candidate by email ──
+router.get('/student/:email', async (req, res) => {
+  const normEmail = String(req.params.email || '').trim().toLowerCase();
+  const pool = getMySQLPool();
+  try {
+    await ensureKbcSessionsAndTeams();
+    if (pool) {
+      const [rows] = await pool.query('SELECT * FROM kbc_students WHERE email = ?', [normEmail]);
+      if (rows.length > 0) {
+        return res.json({ success: true, student: rows[0] });
+      }
+    }
+  } catch (e) {}
+
+  const mem = memoryTeams.find(t => t.email === normEmail);
+  if (mem) return res.json({ success: true, student: mem });
+  return res.status(404).json({ success: false, message: 'Student registration not found.' });
 });
 
 // ── 10. ADMIN: Register / Add New Participating Team ──
@@ -2790,13 +3004,14 @@ router.post('/admin/teams/delete', async (req, res) => {
   return res.json({ success: true, message: 'Team deleted from fallback.' });
 });
 
-// ── 12. TEAMS: Laptop Join Gate with Access Code ──
+// ── 12. TEAMS: Laptop Join Gate with Access Code / Default Password ──
 router.post('/team/join', async (req, res) => {
   const code = String(req.body.access_code || '').trim().toUpperCase();
+  const email = String(req.body.email || '').trim().toLowerCase();
   const laptopInfo = String(req.body.laptop_info || '').trim() || 'Contestant Laptop';
 
   if (!code) {
-    return res.status(400).json({ success: false, message: 'Please enter your Team Access Code.' });
+    return res.status(400).json({ success: false, message: 'Please enter your Team Access Code or Exam Password.' });
   }
 
   const pool = getMySQLPool();
@@ -2804,20 +3019,84 @@ router.post('/team/join', async (req, res) => {
     await ensureKbcSessionsAndTeams();
 
     if (pool) {
-      const [rows] = await pool.query('SELECT * FROM kbc_teams WHERE access_code = ?', [code]);
-      if (rows.length === 0) {
-        return res.status(404).json({ success: false, message: 'Invalid Access Code. Please ask the Admin for your team code.' });
+      // Fetch session to check default access code or test set code
+      const [sessRows] = await pool.query('SELECT * FROM kbc_sessions WHERE id = ?', ['main_session']);
+      const activeSession = sessRows[0] || memorySession;
+      const defaultPassword = (activeSession.default_access_code || 'KBC-101').toUpperCase();
+
+      // Check if student with this email is registered
+      let student = null;
+      if (email) {
+        const [stRows] = await pool.query('SELECT * FROM kbc_students WHERE email = ?', [email]);
+        if (stRows.length > 0) student = stRows[0];
       }
 
-      const team = rows[0];
+      // Check access code validity:
+      // Can be:
+      // 1. Session default password (e.g. KBC-101)
+      // 2. Team's custom access code
+      // 3. Active test set access code
+      let team = null;
+
+      if (email && student) {
+        // If student is logged in, find or link their team
+        const [emailTeams] = await pool.query('SELECT * FROM kbc_teams WHERE email = ?', [email]);
+        if (emailTeams.length > 0) {
+          team = emailTeams[0];
+        }
+      }
+
+      if (!team) {
+        const [codeTeams] = await pool.query('SELECT * FROM kbc_teams WHERE access_code = ?', [code]);
+        if (codeTeams.length > 0) {
+          team = codeTeams[0];
+        }
+      }
+
+      // If code matches default password or active session, and student is registered:
+      if (!team && (code === defaultPassword || code === 'KBC-101')) {
+        const teamId = student ? student.id : `team-${Date.now()}`;
+        const teamName = student ? student.full_name : 'Classroom Contestant';
+        const photo = student ? student.profile_photo : null;
+        await pool.query(`
+          INSERT INTO kbc_teams (id, team_name, leader_name, email, access_code, profile_photo, current_level, score_amount, points, status, laptop_info)
+          VALUES (?, ?, ?, ?, ?, ?, 1, 0, 0, 'CONNECTED', ?)
+          ON DUPLICATE KEY UPDATE status = 'CONNECTED', laptop_info = ?
+        `, [teamId, teamName, teamName, email || null, code, photo, laptopInfo, laptopInfo]);
+
+        const [createdRows] = await pool.query('SELECT * FROM kbc_teams WHERE id = ?', [teamId]);
+        team = createdRows[0];
+      }
+
+      if (!team) {
+        // Check if code matches any test set access code
+        const [setRows] = await pool.query('SELECT * FROM kbc_test_sets WHERE access_code = ?', [code]);
+        if (setRows.length > 0) {
+          const teamId = student ? student.id : `team-${Date.now()}`;
+          const teamName = student ? student.full_name : 'Hotseat Contestant';
+          await pool.query(`
+            INSERT INTO kbc_teams (id, team_name, leader_name, email, access_code, current_level, score_amount, points, status, laptop_info)
+            VALUES (?, ?, ?, ?, ?, 1, 0, 0, 'CONNECTED', ?)
+            ON DUPLICATE KEY UPDATE status = 'CONNECTED', laptop_info = ?
+          `, [teamId, teamName, teamName, email || null, code, laptopInfo, laptopInfo]);
+
+          const [createdRows] = await pool.query('SELECT * FROM kbc_teams WHERE id = ?', [teamId]);
+          team = createdRows[0];
+        }
+      }
+
+      if (!team) {
+        return res.status(404).json({ 
+          success: false, 
+          message: `Invalid Access Code / Password "${code}". Ask your Exam Admin for the active Exam Password.` 
+        });
+      }
+
       await pool.query(`
         UPDATE kbc_teams 
         SET status = 'CONNECTED', laptop_info = ?, last_active_at = NOW() 
         WHERE id = ?
       `, [laptopInfo, team.id]);
-
-      // Also get session
-      const [sessRows] = await pool.query('SELECT * FROM kbc_sessions WHERE id = ?', ['main_session']);
 
       return res.json({
         success: true,
@@ -2826,14 +3105,19 @@ router.post('/team/join', async (req, res) => {
           id: team.id,
           team_name: team.team_name,
           leader_name: team.leader_name,
+          email: team.email || student?.email || '',
+          college: team.college || student?.college || '',
+          roll_no: team.roll_no || student?.roll_no || '',
+          profile_photo: team.profile_photo || student?.profile_photo || null,
           access_code: team.access_code,
           score_amount: team.score_amount || 0,
           points: team.points || 0,
           correct_count: team.correct_count || 0,
           wrong_count: team.wrong_count || 0,
-          current_level: team.current_level
+          current_level: team.current_level,
+          total_response_time_ms: team.total_response_time_ms || 0
         },
-        session: sessRows[0] || memorySession
+        session: activeSession
       });
     }
   } catch (err) {
@@ -2841,7 +3125,7 @@ router.post('/team/join', async (req, res) => {
   }
 
   // Fallback
-  const team = memoryTeams.find(t => t.access_code === code);
+  const team = memoryTeams.find(t => t.access_code === code || code === 'KBC-101' || (email && t.email === email));
   if (team) {
     team.status = 'CONNECTED';
     team.laptop_info = laptopInfo;
@@ -2856,7 +3140,7 @@ router.post('/team/join', async (req, res) => {
   return res.status(404).json({ success: false, message: 'Invalid Access Code.' });
 });
 
-// ── 13. TEAMS: Submit Laptop Answer for the Active Live Question ──
+// ── 13. TEAMS: Submit Laptop Answer (Once confirmed, cannot be changed; tracks response time for tie-breaker) ──
 router.post('/team/submit-answer', async (req, res) => {
   const { team_id, option_index } = req.body;
   if (!team_id || option_index === undefined) {
@@ -2868,7 +3152,7 @@ router.post('/team/submit-answer', async (req, res) => {
 
   try {
     if (pool) {
-      // Validate that question is not locked and timer has not expired
+      // Validate that session is live, not locked, and timer has not expired
       const [sessRows] = await pool.query('SELECT status, is_locked, timer_duration, timer_started_at, timer_paused, timer_remaining FROM kbc_sessions WHERE id = "main_session"');
       if (sessRows.length > 0) {
         const s = sessRows[0];
@@ -2884,15 +3168,48 @@ router.post('/team/submit-answer', async (req, res) => {
         }
       }
 
+      // Check if team has ALREADY submitted an answer for this question - rule: CANNOT CHANGE ANSWER!
+      const [teamRows] = await pool.query('SELECT submitted_option FROM kbc_teams WHERE id = ?', [team_id]);
+      if (teamRows.length > 0 && teamRows[0].submitted_option !== null && teamRows[0].submitted_option !== undefined) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Aapne pehle hi apna uttar lock kar diya hai! Uttar badla nahi ja sakta.' 
+        });
+      }
+
+      const now = Date.now();
+      const timerStartedAt = Number(sessRows[0]?.timer_started_at) || now;
+      const responseTimeMs = Math.max(0, now - timerStartedAt);
+
       await pool.query(`
         UPDATE kbc_teams 
-        SET submitted_option = ?, last_active_at = NOW() 
+        SET submitted_option = ?, 
+            submitted_at = ?,
+            last_submitted_at = ?,
+            total_response_time_ms = COALESCE(total_response_time_ms, 0) + ?,
+            last_active_at = NOW() 
         WHERE id = ?
-      `, [opt, team_id]);
+      `, [opt, now, now, responseTimeMs, team_id]);
 
-      return res.json({ success: true, message: `Option ${String.fromCharCode(65 + opt)} locked from your laptop!` });
+      // Synchronize in kbc_students
+      await pool.query(`
+        UPDATE kbc_students s
+        JOIN kbc_teams t ON (s.email = t.email OR s.id = t.id)
+        SET s.total_response_time_ms = COALESCE(s.total_response_time_ms, 0) + ?,
+            s.last_submitted_at = ?
+        WHERE t.id = ?
+      `, [responseTimeMs, now, team_id]);
+
+      return res.json({ 
+        success: true, 
+        message: `Option ${String.fromCharCode(65 + opt)} locked! Waiting for Host to reveal answer...`,
+        submitted_option: opt,
+        response_time_ms: responseTimeMs
+      });
     }
-  } catch (err) {}
+  } catch (err) {
+    console.warn('MySQL /team/submit-answer error:', err.message);
+  }
 
   // Fallback
   if (memorySession.is_locked) {
@@ -2900,8 +3217,15 @@ router.post('/team/submit-answer', async (req, res) => {
   }
   const team = memoryTeams.find(t => t.id === team_id);
   if (team) {
+    if (team.submitted_option !== null && team.submitted_option !== undefined) {
+      return res.status(400).json({ success: false, message: 'Uttar pehle se lock hai!' });
+    }
+    const now = Date.now();
     team.submitted_option = opt;
-    return res.json({ success: true, message: `Option ${String.fromCharCode(65 + opt)} locked!` });
+    team.submitted_at = now;
+    team.last_submitted_at = now;
+    team.total_response_time_ms = (team.total_response_time_ms || 0) + 1500;
+    return res.json({ success: true, message: `Option ${String.fromCharCode(65 + opt)} locked!`, submitted_option: opt });
   }
 
   return res.status(404).json({ success: false, message: 'Team not found.' });

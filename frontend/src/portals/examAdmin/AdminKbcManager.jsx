@@ -2148,20 +2148,27 @@ export default function AdminKbcManager() {
                               : 'bg-slate-950 border-slate-800 text-slate-400'
                           }`}
                         >
-                          <div>
-                            <div className="font-bold text-white flex items-center gap-1.5">
-                              {isTop && <span title="Top Scorer">👑</span>}
-                              <span>{t.team_name}</span>
-                              <span className="text-[10px] text-slate-500 font-mono font-normal">({t.access_code})</span>
-                            </div>
-                            <div className="text-[10px] text-slate-400 font-mono flex items-center gap-2">
-                              <span>{t.leader_name}</span>
-                              <span className={`font-bold font-sans ${t.status === 'OUT' || t.status === 'ELIMINATED' ? 'text-red-400 line-through' : 'text-amber-400'}`}>
-                                ⭐ {t.points || 0} pts
-                              </span>
-                              {(t.status === 'OUT' || t.status === 'ELIMINATED') && (
-                                <span className="text-[9px] px-1 rounded bg-red-500/20 text-red-400 border border-red-500/30">OUT</span>
-                              )}
+                          <div className="flex items-center gap-2.5">
+                            {t.profile_photo ? (
+                              <div className="w-7 h-7 rounded-full overflow-hidden border border-amber-400 shrink-0">
+                                <img src={t.profile_photo} alt={t.team_name} className="w-full h-full object-cover" />
+                              </div>
+                            ) : null}
+                            <div>
+                              <div className="font-bold text-white flex items-center gap-1.5">
+                                {isTop && <span title="Top Scorer">👑</span>}
+                                <span>{t.team_name}</span>
+                                <span className="text-[10px] text-slate-500 font-mono font-normal">({t.access_code})</span>
+                              </div>
+                              <div className="text-[10px] text-slate-400 font-mono flex items-center gap-2">
+                                <span>{t.leader_name}</span>
+                                <span className={`font-bold font-sans ${t.status === 'OUT' || t.status === 'ELIMINATED' ? 'text-red-400 line-through' : 'text-amber-400'}`}>
+                                  ⭐ {t.points || 0} pts
+                                </span>
+                                {(t.status === 'OUT' || t.status === 'ELIMINATED') && (
+                                  <span className="text-[9px] px-1 rounded bg-red-500/20 text-red-400 border border-red-500/30">OUT</span>
+                                )}
+                              </div>
                             </div>
                           </div>
 
@@ -2265,6 +2272,44 @@ export default function AdminKbcManager() {
             </div>
           </div>
 
+          {/* Default Exam Password & Gate Access Info */}
+          <div className="bg-gradient-to-r from-amber-950/40 via-slate-900 to-indigo-950/40 border border-amber-400/30 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-400 shrink-0">
+                <Key className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-white font-bold flex items-center gap-2">
+                  <span>Default KBC Exam Password:</span>
+                  <span className="font-mono bg-amber-400 text-slate-950 px-2 py-0.5 rounded font-black text-xs">
+                    {session?.default_access_code || 'KBC-101'}
+                  </span>
+                </div>
+                <div className="text-slate-400 text-[11px] pt-0.5">
+                  Students enter this password at the Exam Gate after candidate registration to join the live waiting room.
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(session?.default_access_code || 'KBC-101');
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Password Copied!',
+                  text: `Password "${session?.default_access_code || 'KBC-101'}" copied to clipboard. Share with students!`,
+                  timer: 1800,
+                  showConfirmButton: false,
+                  background: '#0f172a',
+                  color: '#fff'
+                });
+              }}
+              className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-300 font-bold text-xs flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              <span>Copy Password</span>
+            </button>
+          </div>
+
           {/* Teams Table */}
           <div className="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
             <table className="w-full text-left text-xs">
@@ -2296,21 +2341,41 @@ export default function AdminKbcManager() {
 
                       return (
                         <tr key={t.id} className={`hover:bg-slate-800/40 transition ${isTop ? 'bg-amber-950/20' : ''}`}>
-                          <td className="px-4 py-3.5 font-bold text-white flex items-center gap-2">
-                            <Users className="w-4 h-4 text-amber-400" />
-                            <span>{t.team_name}</span>
-                            {isTop && (
-                              <span className="px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300 text-[10px] font-black border border-yellow-400/40">
-                                👑 TOP SCORER
-                              </span>
+                          <td className="px-4 py-3.5 font-bold text-white flex items-center gap-2.5">
+                            {t.profile_photo ? (
+                              <div className="w-8 h-8 rounded-full overflow-hidden border border-amber-400 shrink-0 shadow">
+                                <img src={t.profile_photo} alt={t.team_name} className="w-full h-full object-cover" />
+                              </div>
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-amber-400 shrink-0">
+                                <Users className="w-4 h-4" />
+                              </div>
                             )}
-                            {isHotseat && (
-                              <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-black border border-amber-500/40">
-                                HOTSEAT
-                              </span>
-                            )}
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span>{t.team_name}</span>
+                                {isTop && (
+                                  <span className="px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300 text-[10px] font-black border border-yellow-400/40">
+                                    👑 TOP SCORER
+                                  </span>
+                                )}
+                                {isHotseat && (
+                                  <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-black border border-amber-500/40">
+                                    HOTSEAT
+                                  </span>
+                                )}
+                              </div>
+                              {t.college && (
+                                <div className="text-[10px] text-slate-400 font-normal">
+                                  {t.college} {t.roll_no ? `• ID: ${t.roll_no}` : ''}
+                                </div>
+                              )}
+                            </div>
                           </td>
-                          <td className="px-4 py-3.5 font-medium">{t.leader_name}</td>
+                          <td className="px-4 py-3.5 font-medium">
+                            <div>{t.leader_name}</div>
+                            {t.email && <div className="text-[10px] text-slate-500 font-mono">{t.email}</div>}
+                          </td>
                           <td className="px-4 py-3.5">
                             <div className="flex items-center gap-1.5 font-bold text-amber-300 font-mono">
                               <span>⭐ {t.points || 0} pts</span>
