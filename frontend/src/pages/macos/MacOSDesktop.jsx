@@ -33,6 +33,11 @@ import SafariBrowserApp from './apps/SafariBrowserApp.jsx';
 import JavaRuntimeManagerApp from './apps/JavaRuntimeManagerApp.jsx';
 import MySQLStudioApp from './apps/MySQLStudioApp.jsx';
 import MacLockScreen from './components/MacLockScreen.jsx';
+import SystemSettingsApp from './apps/SystemSettingsApp.jsx';
+import GameCenterApp from './apps/GameCenterApp.jsx';
+import GamePlayerWindow from './components/GamePlayerWindow.jsx';
+import GlobalMenuBar from './components/GlobalMenuBar.jsx';
+import { GAMES_CATALOG, getGameById } from './services/gameCatalog.js';
 import { 
   registerJavaLanguageProvider, 
   updateJavaDiagnostics, 
@@ -43,6 +48,24 @@ import {
 } from './components/WidgetSystem.jsx';
 
 // ── AUTHENTIC REAL macOS SQUIRCLE ICONS (Pixel-Perfect SVG Art) ──
+
+export const MacGameCenterIcon = ({ className = "w-full h-full" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <defs>
+      <linearGradient id="gcBg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stopColor="#ec4899" />
+        <stop offset="50%" stopColor="#8b5cf6" />
+        <stop offset="100%" stopColor="#3b82f6" />
+      </linearGradient>
+    </defs>
+    <rect x="5" y="5" width="90" height="90" rx="22" fill="url(#gcBg)" />
+    <circle cx="36" cy="38" r="14" fill="#ffffff" opacity="0.85" />
+    <circle cx="64" cy="38" r="14" fill="#ffffff" opacity="0.85" />
+    <circle cx="36" cy="62" r="14" fill="#ffffff" opacity="0.85" />
+    <circle cx="64" cy="62" r="14" fill="#ffffff" opacity="0.85" />
+    <circle cx="50" cy="50" r="12" fill="#ffffff" />
+  </svg>
+);
 
 export const MacMySQLIcon = ({ className = "w-full h-full" }) => (
   <svg viewBox="0 0 100 100" className={className}>
@@ -436,6 +459,107 @@ export default function MacOSDesktop() {
   const [siriPrompt, setSiriPrompt] = useState('');
   const [siriResponse, setSiriResponse] = useState('');
 
+  // ── macOS System Preferences & Settings Store (Live + Database Persisted) ──
+  const [dockPosition, setDockPosition] = useState('bottom');
+  const [dockMagnification, setDockMagnification] = useState(true);
+  const [dockAutoHide, setDockAutoHide] = useState(false);
+  const [accentColor, setAccentColor] = useState('#007aff');
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
+  const [installedDockGames, setInstalledDockGames] = useState(['game-2048', 'game-hextris']);
+  const [systemSettings, setSystemSettings] = useState({});
+
+  // ── macOS System States (Sleep, Restart, Shutdown) ──
+  const [isSleepMode, setIsSleepMode] = useState(false);
+  const [isRestarting, setIsRestarting] = useState(false);
+  const [restartProgress, setRestartProgress] = useState(0);
+  const [isShuttingDown, setIsShuttingDown] = useState(false);
+  const [isPoweredOff, setIsPoweredOff] = useState(false);
+
+  // Load persistent desktop state from database API
+  useEffect(() => {
+    fetch('/api/macos/desktop/state')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.desktop) {
+          const d = data.desktop;
+          if (d.wallpaper_url) setCurrentWallpaper(d.wallpaper_url);
+          if (d.screen_brightness !== undefined && d.screen_brightness !== null) setScreenBrightness(d.screen_brightness);
+          if (d.sound_volume !== undefined && d.sound_volume !== null) setSoundVolume(d.sound_volume);
+          if (d.dock_size) setDockSize(d.dock_size);
+          if (d.dock_position) setDockPosition(d.dock_position);
+          if (d.dock_magnification !== undefined) setDockMagnification(Boolean(d.dock_magnification));
+          if (d.dock_autohide !== undefined) setDockAutoHide(Boolean(d.dock_autohide));
+          if (d.accent_color) setAccentColor(d.accent_color);
+          if (d.dark_mode !== undefined) setIsDarkMode(Boolean(d.dark_mode));
+          if (d.is_muted !== undefined) setIsMuted(Boolean(d.is_muted));
+          if (Array.isArray(d.installed_dock_apps) && d.installed_dock_apps.length > 0) {
+            setInstalledDockGames(d.installed_dock_apps);
+          }
+          setSystemSettings(d.settings || {});
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const updateSystemSetting = async (key, value) => {
+    if (key === 'wallpaper_url' || key === 'wallpaper') setCurrentWallpaper(value);
+    if (key === 'screen_brightness') setScreenBrightness(value);
+    if (key === 'sound_volume') setSoundVolume(value);
+    if (key === 'is_muted') setIsMuted(value);
+    if (key === 'dock_size') setDockSize(value);
+    if (key === 'dock_position') setDockPosition(value);
+    if (key === 'dock_magnification') setDockMagnification(value);
+    if (key === 'dock_autohide') setDockAutoHide(value);
+    if (key === 'accent_color') setAccentColor(value);
+    if (key === 'theme') {
+      setIsDarkMode(value === 'dark' || (value === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches));
+    }
+    if (key === 'dark_mode') setIsDarkMode(Boolean(value));
+
+    setSystemSettings(prev => ({
+      ...prev,
+      [key]: value
+    }));
+
+    try {
+      await fetch('/api/macos/desktop/state', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [key]: value })
+      });
+    } catch {}
+  };
+
+  const triggerSleep = () => {
+    macSound.playClick();
+    setIsSleepMode(true);
+  };
+
+  const triggerRestart = () => {
+    macSound.playClick();
+    setIsRestarting(true);
+    setRestartProgress(0);
+    const interval = setInterval(() => {
+      setRestartProgress(p => {
+        if (p >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            setIsRestarting(false);
+            macSound.playTink();
+          }, 300);
+          return 100;
+        }
+        return p + 20;
+      });
+    }, 400);
+  };
+
+  const triggerShutdown = () => {
+    macSound.playClick();
+    setIsShuttingDown(true);
+  };
+
   // ── Desktop Widgets & Notification Center State ──
   const [isWidgetGalleryOpen, setIsWidgetGalleryOpen] = useState(false);
   const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState(false);
@@ -667,6 +791,18 @@ export default function MacOSDesktop() {
       w: 840,
       h: 560
     },
+    gamecenter: {
+      id: 'gamecenter',
+      title: 'Game Center — Playhop Edition',
+      isOpen: false,
+      isMinimized: false,
+      isMaximized: false,
+      zIndex: 22,
+      x: 100,
+      y: 50,
+      w: 960,
+      h: 620
+    },
     aboutMac: {
       id: 'aboutMac',
       title: 'About This Mac',
@@ -695,6 +831,10 @@ export default function MacOSDesktop() {
   };
 
   const openApp = (rawId) => {
+    if (rawId?.startsWith('game-')) {
+      launchGame(rawId.replace('game-', ''));
+      return;
+    }
     const id = (rawId === 'mysqlstudio' || rawId === 'mysql_studio') ? 'mysql-studio' : rawId;
     macSound.playPop();
     setBouncingApp(id);
@@ -729,6 +869,59 @@ export default function MacOSDesktop() {
     });
     setActiveAppId(id);
     setActiveMenu(null);
+  };
+
+  const launchGame = (gameOrId) => {
+    const game = typeof gameOrId === 'string' ? (getGameById(gameOrId) || getGameById(gameOrId.replace('game-', ''))) : gameOrId;
+    if (!game) return;
+    const windowId = `game-${game.id}`;
+    macSound.playPop();
+    setBouncingApp(windowId);
+    setTimeout(() => setBouncingApp(null), 1000);
+
+    setHighestZ(prev => {
+      const nextZ = prev + 1;
+      setWindows(curr => ({
+        ...curr,
+        [windowId]: {
+          id: windowId,
+          title: game.title,
+          isOpen: true,
+          isMinimized: false,
+          isMaximized: false,
+          zIndex: nextZ,
+          x: Math.max(30, Math.floor((window.innerWidth - (game.window?.w || 500)) / 2)),
+          y: Math.max(35, Math.floor((window.innerHeight - (game.window?.h || 620)) / 2)),
+          w: game.window?.w || 500,
+          h: game.window?.h || 620,
+          isGame: true,
+          gameData: game
+        }
+      }));
+      return nextZ;
+    });
+    setActiveAppId(windowId);
+    setActiveMenu(null);
+  };
+
+  const toggleDockGame = async (gameId) => {
+    macSound.playPop();
+    const cleanId = gameId.startsWith('game-') ? gameId : `game-${gameId}`;
+    const rawId = gameId.replace('game-', '');
+    const isCurrentlyDocked = installedDockGames.includes(rawId) || installedDockGames.includes(cleanId);
+    const updated = isCurrentlyDocked 
+      ? installedDockGames.filter(id => id !== rawId && id !== cleanId)
+      : [...installedDockGames, rawId];
+    
+    setInstalledDockGames(updated);
+
+    try {
+      await fetch(`/api/macos/desktop/games/${rawId}/dock`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ installed: !isCurrentlyDocked })
+      });
+    } catch (err) {}
   };
 
   const closeWindow = (id) => {
@@ -1952,281 +2145,122 @@ p {
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* ════════════════ TOP MENU BAR (AUTHENTIC macOS TRANSLUCENT) ════════════════ */}
-      <header className="h-7 w-full fixed top-0 left-0 z-[99999] px-3.5 backdrop-blur-3xl bg-black/45 border-b border-white/10 flex items-center justify-between text-xs text-white/90 shadow-sm select-none">
-        <div className="flex items-center gap-3.5">
-          {/* Apple Logo Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setActiveMenu(activeMenu === 'apple' ? null : 'apple')}
-              className="font-bold text-sm hover:opacity-75 transition-opacity px-1 flex items-center cursor-pointer"
-            >
-              
-            </button>
+      {/* ════════════════ TOP GLOBAL macOS MENU BAR ════════════════ */}
+      <GlobalMenuBar
+        activeAppId={activeAppId}
+        activeMenu={activeMenu}
+        setActiveMenu={setActiveMenu}
+        activeMenuRef={activeMenuRef}
+        currentUser={currentUser}
+        windows={windows}
+        openApp={openApp}
+        closeWindow={closeWindow}
+        toggleMaximize={toggleMaximize}
+        minimizeWindow={minimizeWindow}
+        focusWindow={focusWindow}
+        toggleFullscreenMode={toggleFullscreenMode}
+        isFullscreen={isFullscreen}
+        setIsLocked={setIsLocked}
+        screenBrightness={screenBrightness}
+        setScreenBrightness={setScreenBrightness}
+        soundVolume={soundVolume}
+        setSoundVolume={setSoundVolume}
+        isMuted={isMuted}
+        setIsMuted={setIsMuted}
+        isDarkMode={isDarkMode}
+        setIsDarkMode={setIsDarkMode}
+        setIsNotificationCenterOpen={setIsNotificationCenterOpen}
+        setIsLaunchpadOpen={setIsLaunchpadOpen}
+        setIsMissionControlOpen={setIsMissionControlOpen}
+        setIsSpotlightOpen={setIsSpotlightOpen}
+        setIsSiriOpen={setIsSiriOpen}
+        launchGame={launchGame}
+        navigate={navigate}
+        currentTime={currentTime}
+        formatMacDate={formatMacDate}
+        onTriggerSleep={triggerSleep}
+        onTriggerRestart={triggerRestart}
+        onTriggerShutdown={triggerShutdown}
+        onVsCodeRunCode={handleRunVsCodeCode}
+        onVsCodeNewFile={() => { setIsCreatingNewFile(true); openApp('vscode'); }}
+        onVsCodeTogglePreview={() => { setIsLivePreviewOpen(prev => !prev); openApp('vscode'); }}
+        onMySQLNewQuery={() => { openApp('mysql-studio'); }}
+        onMySQLRunQuery={() => { openApp('mysql-studio'); }}
+        onSafariNewTab={handleOpenSafariNewTab}
+      />
 
-            {activeMenu === 'apple' && (
-              <div className="absolute top-7 left-0 w-60 rounded-2xl backdrop-blur-3xl bg-slate-950/95 border border-white/15 p-1.5 shadow-2xl z-50 text-slate-200 text-xs animate-in fade-in duration-100">
-                <button 
-                  onClick={() => { openApp('aboutMac'); setActiveMenu(null); }}
-                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
-                >
-                  <span className="font-semibold">About This Mac</span>
-                  <Info className="w-3.5 h-3.5 opacity-60" />
-                </button>
-                <div className="h-px bg-white/10 my-1" />
-                <button 
-                  onClick={() => { openApp('settings'); setActiveMenu(null); }}
-                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
-                >
-                  <span>System Settings...</span>
-                  <span className="text-[10px] text-white/40">⌘,</span>
-                </button>
-                <button 
-                  onClick={() => { openApp('appstore'); setActiveMenu(null); }}
-                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer text-sky-300 font-semibold"
-                >
-                  <span>App Store...</span>
-                  <span className="text-[9px] bg-sky-500/30 px-1 rounded text-sky-200">Store</span>
-                </button>
-                <button 
-                  onClick={() => { setIsLaunchpadOpen(true); setActiveMenu(null); }}
-                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
-                >
-                  <span>Launchpad</span>
-                  <span className="text-[10px] text-white/40">F4</span>
-                </button>
-                <button 
-                  onClick={() => { setIsMissionControlOpen(true); setActiveMenu(null); }}
-                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
-                >
-                  <span>Mission Control</span>
-                  <span className="text-[10px] text-white/40">⌃↑</span>
-                </button>
-                <button 
-                  onClick={() => { openApp('activitymonitor'); setActiveMenu(null); }}
-                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer text-emerald-300"
-                >
-                  <span>Activity Monitor...</span>
-                  <Activity className="w-3.5 h-3.5 opacity-60" />
-                </button>
-                <div className="h-px bg-white/10 my-1" />
-                <button 
-                  onClick={() => { openApp('vscode'); setActiveMenu(null); }}
-                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer text-sky-400"
-                >
-                  <span className="flex items-center gap-1.5 font-semibold">Visual Studio Code</span>
-                  <span className="text-[10px] bg-sky-500/30 px-1 rounded text-sky-200">IDE</span>
-                </button>
-                <button 
-                  onClick={() => { openApp('safari'); setActiveMenu(null); }}
-                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
-                >
-                  <span>Safari Browser</span>
-                  <Compass className="w-3.5 h-3.5" />
-                </button>
-                <button 
-                  onClick={() => { openApp('terabox'); setActiveMenu(null); }}
-                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer text-sky-300"
-                >
-                  <span>TeraBox Cloud (1024 GB)</span>
-                  <Cloud className="w-3.5 h-3.5" />
-                </button>
-                <div className="h-px bg-white/10 my-1" />
-                <button 
-                  onClick={toggleFullscreenMode}
-                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer text-emerald-400 font-semibold"
-                >
-                  <span>{isFullscreen ? 'Exit Full Screen' : 'Enter Full Screen'}</span>
-                  <span className="text-[10px] text-white/40">⌃⌘F</span>
-                </button>
-                <button 
-                  onClick={() => { setIsLocked(true); setActiveMenu(null); }}
-                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
-                >
-                  <span>Lock Screen</span>
-                  <span className="text-[10px] text-white/40">⌃⌘Q</span>
-                </button>
-                <button 
-                  onClick={async () => {
-                    setActiveMenu(null);
-                    try {
-                      await fetch('/api/macos/auth/logout', { method: 'POST' });
-                    } catch (e) {}
-                    setIsLocked(true);
-                  }}
-                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
-                >
-                  <span>Log Out {currentUser?.username || 'User'}...</span>
-                  <span className="text-[10px] text-white/40">⇧⌘Q</span>
-                </button>
-                <div className="h-px bg-white/10 my-1" />
-                <button 
-                  onClick={() => navigate('/')}
-                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-rose-600 hover:text-white flex items-center justify-between font-bold text-amber-300 hover:text-white cursor-pointer"
-                >
-                  <span>Exit to AppleTree Website</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
+      {/* ── SLEEP MODE OVERLAY ── */}
+      {isSleepMode && (
+        <div
+          onClick={() => setIsSleepMode(false)}
+          className="fixed inset-0 z-[9999999] bg-black/95 flex flex-col items-center justify-center cursor-pointer animate-in fade-in duration-700"
+        >
+          <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-4xl animate-pulse">
+            
           </div>
-
-          <span className="font-extrabold tracking-tight capitalize text-white">
-            {activeAppId === 'vscode' ? 'Code' : activeAppId === 'safari' ? 'Safari' : activeAppId === 'finder' ? 'Finder' : activeAppId === 'settings' ? 'Settings' : activeAppId === 'terminal' ? 'Terminal' : 'macOS'}
-          </span>
-
-          {/* Contextual App Menu Items */}
-          {activeAppId === 'vscode' ? (
-            <div className="hidden sm:flex items-center gap-3 text-white/80 text-[11px]">
-              <button onClick={() => { setIsCreatingNewFile(true); openApp('vscode'); }} className="hover:text-white transition cursor-pointer font-medium">New File</button>
-              <button onClick={() => handleRunVsCodeCode()} className="hover:text-emerald-400 text-emerald-300 transition cursor-pointer font-bold flex items-center gap-1">▶ Run Code</button>
-              <button onClick={() => { setIsLivePreviewOpen(prev => !prev); openApp('vscode'); }} className={`hover:text-white transition cursor-pointer flex items-center gap-1 ${isLivePreviewOpen ? 'text-sky-300 font-bold' : ''}`}>
-                <Globe className="w-3 h-3 text-sky-400" /> Live Preview
-              </button>
-              <button onClick={() => { setVsCodeActiveSidebar('copilot'); openApp('vscode'); }} className="hover:text-fuchsia-300 text-fuchsia-400 font-semibold transition cursor-pointer flex items-center gap-1">
-                <Sparkles className="w-3 h-3" /> Copilot AI
-              </button>
-              <button onClick={() => { setIsCommandPaletteOpen(true); openApp('vscode'); }} className="hover:text-white transition cursor-pointer">
-                Palette (⇧⌘P)
-              </button>
-            </div>
-          ) : activeAppId === 'safari' ? (
-            <div className="hidden sm:flex items-center gap-3 text-white/80 text-[11px]">
-              <button onClick={() => handleOpenSafariNewTab()} className="hover:text-white transition cursor-pointer font-medium">+ New Tab</button>
-              <button onClick={() => { setSafariInput('https://google.com'); executeSafariSearch(); }} className="hover:text-white transition cursor-pointer">Google</button>
-              <button onClick={() => { setSafariInput('python list methods'); executeSafariSearch(); }} className="hover:text-white transition cursor-pointer">Python Docs</button>
-              <button onClick={() => openApp('vscode')} className="hover:text-sky-300 transition cursor-pointer">Code in VS Code</button>
-            </div>
-          ) : (
-            <div className="hidden sm:flex items-center gap-3 text-white/80 text-[11px]">
-              <button onClick={() => openApp('vscode')} className="hover:text-white transition cursor-pointer">File</button>
-              <button onClick={() => openApp('vscode')} className="hover:text-white transition cursor-pointer">Edit</button>
-              <button onClick={() => openApp('safari')} className="hover:text-white transition cursor-pointer">Search</button>
-              <button onClick={() => openApp('terminal')} className="hover:text-white transition cursor-pointer">Terminal</button>
-              <button onClick={() => openApp('aboutMac')} className="hover:text-white transition cursor-pointer">Help</button>
-            </div>
-          )}
+          <p className="text-xs text-white/50 mt-4 tracking-widest font-mono uppercase">
+            Click anywhere or press any key to wake Mac
+          </p>
         </div>
+      )}
 
-        <div className="flex items-center gap-3">
-          {/* Fullscreen Quick Button */}
-          <button
-            onClick={toggleFullscreenMode}
-            className="hidden md:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-[10px] font-bold text-emerald-300 hover:text-white transition cursor-pointer"
-            title="Toggle Fullscreen macOS Mode (⌃⌘F)"
-          >
-            <Maximize2 className="w-3 h-3" />
-            <span>{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</span>
-          </button>
-
-          <Link
-            to="/"
-            className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-[10px] font-bold text-amber-300 hover:text-white transition cursor-pointer"
-          >
-            <ArrowLeft className="w-3 h-3" />
-            <span>Web Mode</span>
-          </Link>
-
-          <div className="flex items-center gap-1 opacity-90 text-[11px]">
-            <span>100%</span>
-            <Battery className="w-4 h-4 text-emerald-400 rotate-90" />
+      {/* ── RESTARTING PROGRESS OVERLAY ── */}
+      {isRestarting && (
+        <div className="fixed inset-0 z-[9999999] bg-black flex flex-col items-center justify-center select-none animate-in fade-in duration-300">
+          <div className="text-6xl text-white mb-8"></div>
+          <div className="w-48 h-1.5 bg-zinc-800 rounded-full overflow-hidden border border-zinc-700/50">
+            <div 
+              style={{ width: `${restartProgress}%` }}
+              className="h-full bg-white rounded-full transition-all duration-300"
+            />
           </div>
-
-          <Wifi className="w-3.5 h-3.5 text-white/90" />
-
-          {/* Siri Quick Button */}
-          <button
-            onClick={() => setIsSiriOpen(prev => !prev)}
-            className="p-1 rounded-full hover:bg-white/10 transition cursor-pointer"
-            title="Ask Siri"
-          >
-            <div className="w-3.5 h-3.5 rounded-full bg-gradient-to-tr from-cyan-400 via-fuchsia-500 to-amber-400 animate-pulse" />
-          </button>
-
-          <button
-            onClick={() => setIsSpotlightOpen(true)}
-            className="hover:opacity-75 transition-opacity cursor-pointer p-0.5"
-            title="Spotlight Search (Cmd+Space)"
-          >
-            <Search className="w-3.5 h-3.5 text-white/90" />
-          </button>
-
-          {/* Control Center Toggle */}
-          <div className="relative">
-            <button
-              onClick={() => setActiveMenu(activeMenu === 'controlCenter' ? null : 'controlCenter')}
-              className="hover:opacity-75 transition-opacity cursor-pointer p-0.5"
-              title="Control Center"
-            >
-              <Sliders className="w-3.5 h-3.5 text-white/90" />
-            </button>
-
-            {activeMenu === 'controlCenter' && (
-              <div className="absolute top-7 right-0 w-72 rounded-2xl backdrop-blur-3xl bg-slate-950/95 border border-white/15 p-3.5 shadow-2xl z-50 text-slate-100 text-xs animate-in fade-in duration-150 space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                  <span className="font-bold flex items-center gap-1.5"><Sliders className="w-3.5 h-3.5 text-blue-400" /> Control Center</span>
-                  <span className="text-[10px] text-emerald-400 font-semibold">● macOS Dark Pro</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="p-2.5 rounded-xl bg-white/10 flex items-center gap-2">
-                    <Wifi className="w-4 h-4 text-blue-400" />
-                    <div>
-                      <p className="font-bold text-[11px]">Wi-Fi</p>
-                      <p className="text-[9px] text-white/60">AppleTree-5G</p>
-                    </div>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-indigo-950/60 border border-indigo-400/30 flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-                    <div>
-                      <p className="font-bold text-[11px] text-indigo-200">Dark Mode</p>
-                      <p className="text-[9px] text-indigo-300/80">Always On</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-white/10 space-y-1.5">
-                  <div className="flex items-center justify-between text-[11px] font-semibold">
-                    <span>Display Brightness</span>
-                    <span>{screenBrightness}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="40"
-                    max="100"
-                    value={screenBrightness}
-                    onChange={(e) => setScreenBrightness(e.target.value)}
-                    className="w-full accent-blue-500 h-1.5 bg-white/20 rounded-lg cursor-pointer"
-                  />
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-white/10 space-y-1.5">
-                  <div className="flex items-center justify-between text-[11px] font-semibold">
-                    <span>Sound Volume</span>
-                    <span>{soundVolume}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={soundVolume}
-                    onChange={(e) => setSoundVolume(e.target.value)}
-                    className="w-full accent-blue-500 h-1.5 bg-white/20 rounded-lg cursor-pointer"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          <button
-            onClick={() => setIsNotificationCenterOpen(prev => !prev)}
-            className="font-semibold text-white/95 tracking-wide text-[11px] hover:opacity-80 transition cursor-pointer"
-            title="Notification Center & Widgets"
-          >
-            {formatMacDate(currentTime)}
-          </button>
+          <span className="text-[11px] text-zinc-500 font-mono mt-3">Restarting macOS Sequoia...</span>
         </div>
-      </header>
+      )}
+
+      {/* ── SHUTDOWN CONFIRMATION MODAL ── */}
+      {isShuttingDown && (
+        <div className="fixed inset-0 z-[9999999] bg-black/60 backdrop-blur-md flex items-center justify-center">
+          <div className="w-80 rounded-2xl bg-[#1e1e1e] border border-white/20 p-5 shadow-2xl text-center space-y-4 text-white">
+            <div className="w-12 h-12 rounded-2xl bg-white/10 mx-auto flex items-center justify-center text-2xl"></div>
+            <div>
+              <h3 className="font-bold text-sm text-white">Shut Down Computer?</h3>
+              <p className="text-xs text-slate-400 mt-1">Are you sure you want to shut down your Mac now?</p>
+            </div>
+            <div className="flex gap-2 justify-center pt-2">
+              <button
+                onClick={() => setIsShuttingDown(false)}
+                className="px-4 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setIsShuttingDown(false);
+                  setIsPoweredOff(true);
+                }}
+                className="px-4 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-bold text-white transition cursor-pointer shadow-lg shadow-rose-900/40"
+              >
+                Shut Down
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── POWERED OFF STATE ── */}
+      {isPoweredOff && (
+        <div 
+          onClick={() => setIsPoweredOff(false)}
+          className="fixed inset-0 z-[9999999] bg-black flex flex-col items-center justify-center cursor-pointer select-none text-center p-6"
+        >
+          <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center text-3xl text-zinc-600 mb-4">
+            ⏻
+          </div>
+          <p className="text-xs text-zinc-500 font-mono">Your Mac is powered off.</p>
+          <p className="text-[10px] text-zinc-600 mt-1 font-mono">Click anywhere to power back on.</p>
+        </div>
+      )}
 
       {/* ════════════════ SPOTLIGHT SEARCH (Cmd+Space / Ctrl+K) ════════════════ */}
       {activeMenu === 'spotlight' && (
@@ -3589,7 +3623,7 @@ p {
         </div>
       ))}
 
-      {/* ── 4. SYSTEM SETTINGS (ALL SETTINGS WORKING) ── */}
+      {/* ── 4. SYSTEM SETTINGS (COMPREHENSIVE MAC OS SETTINGS APP) ── */}
       {windows.settings.isOpen && !windows.settings.isMinimized && (
         <div
           onClick={() => focusWindow('settings')}
@@ -3604,173 +3638,116 @@ p {
         >
           <div 
             onMouseDown={(e) => handleMouseDownHeader(e, 'settings')}
-            className="h-11 px-4 bg-slate-800/90 border-b border-white/10 flex items-center justify-between cursor-move shrink-0"
+            className="h-10 px-4 bg-[#252526] border-b border-white/10 flex items-center justify-between cursor-move shrink-0"
           >
             <div className="flex items-center gap-2">
               <button onClick={() => closeWindow('settings')} className="w-3 h-3 rounded-full bg-rose-500 cursor-pointer" />
               <button onClick={() => minimizeWindow('settings')} className="w-3 h-3 rounded-full bg-amber-500 cursor-pointer" />
               <button onClick={() => toggleMaximize('settings')} className="w-3 h-3 rounded-full bg-emerald-500 cursor-pointer" />
             </div>
-            <div className="text-xs font-semibold text-slate-300">System Settings — macOS Sequoia Pro</div>
+            <div className="text-xs font-semibold text-slate-300">System Settings — macOS Sequoia</div>
             <div className="w-10" />
           </div>
 
-          <div className="flex-1 flex overflow-hidden">
-            {/* Settings Left Navigation Sidebar */}
-            <div className="w-56 bg-slate-950/70 border-r border-white/10 p-3 space-y-1 text-xs shrink-0">
-              <button
-                onClick={() => setActiveSettingsTab('displays')}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left font-medium transition cursor-pointer ${
-                  activeSettingsTab === 'displays' ? 'bg-blue-600 text-white font-bold' : 'text-slate-300 hover:bg-white/10'
-                }`}
-              >
-                <Monitor className="w-4 h-4 text-sky-400" />
-                <span>Displays & Wallpaper</span>
-              </button>
-              <button
-                onClick={() => setActiveSettingsTab('sound')}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left font-medium transition cursor-pointer ${
-                  activeSettingsTab === 'sound' ? 'bg-blue-600 text-white font-bold' : 'text-slate-300 hover:bg-white/10'
-                }`}
-              >
-                <Volume2 className="w-4 h-4 text-purple-400" />
-                <span>Sound & Audio</span>
-              </button>
-              <button
-                onClick={() => setActiveSettingsTab('wifi')}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left font-medium transition cursor-pointer ${
-                  activeSettingsTab === 'wifi' ? 'bg-blue-600 text-white font-bold' : 'text-slate-300 hover:bg-white/10'
-                }`}
-              >
-                <Wifi className="w-4 h-4 text-blue-400" />
-                <span>Wi-Fi & Network</span>
-              </button>
-              <button
-                onClick={() => setActiveSettingsTab('general')}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left font-medium transition cursor-pointer ${
-                  activeSettingsTab === 'general' ? 'bg-blue-600 text-white font-bold' : 'text-slate-300 hover:bg-white/10'
-                }`}
-              >
-                <Cpu className="w-4 h-4 text-amber-400" />
-                <span>General & Storage</span>
-              </button>
-            </div>
-
-            {/* Settings Content Area */}
-            <div className="flex-1 p-6 overflow-y-auto space-y-6">
-              {activeSettingsTab === 'displays' && (
-                <div className="space-y-5">
-                  <div>
-                    <h3 className="text-sm font-bold text-white mb-1">Desktop Wallpaper Gallery</h3>
-                    <p className="text-xs text-slate-400">Click to immediately apply any authentic dark macOS backdrop</p>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {WALLPAPERS.map(wp => (
-                      <div
-                        key={wp.id}
-                        onClick={() => {
-                          macSound.playPop();
-                          setCurrentWallpaper(wp.url);
-                        }}
-                        className={`group relative rounded-xl overflow-hidden border-2 transition-all cursor-pointer aspect-video shadow-md ${
-                          currentWallpaper === wp.url ? 'border-blue-500 ring-2 ring-blue-500/50 scale-[1.02]' : 'border-white/10 hover:border-white/30'
-                        }`}
-                      >
-                        <img src={wp.url} alt={wp.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-2">
-                          <span className="text-[10px] font-semibold text-white drop-shadow truncate">{wp.name}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
-                    <span className="text-xs font-bold text-white">Display Brightness ({screenBrightness}%)</span>
-                    <input
-                      type="range"
-                      min="40"
-                      max="100"
-                      value={screenBrightness}
-                      onChange={(e) => setScreenBrightness(e.target.value)}
-                      className="w-full accent-blue-500"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {activeSettingsTab === 'sound' && (
-                <div className="space-y-4">
-                  <h3 className="text-sm font-bold text-white">Audio Settings</h3>
-                  <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
-                    <span className="text-xs font-bold text-white">Output Volume ({soundVolume}%)</span>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={soundVolume}
-                      onChange={(e) => setSoundVolume(e.target.value)}
-                      className="w-full accent-blue-500"
-                    />
-                  </div>
-                  <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
-                    <span className="text-xs font-bold text-white">Sound Effects Testing</span>
-                    <div className="flex gap-2">
-                      <button onClick={() => macSound.playPop()} className="px-3 py-1.5 rounded-lg bg-blue-600 text-xs font-bold cursor-pointer">Pop</button>
-                      <button onClick={() => macSound.playClick()} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs font-bold cursor-pointer">Click</button>
-                      <button onClick={() => macSound.playTink()} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs font-bold cursor-pointer">Tink</button>
-                      <button onClick={() => macSound.playTrash()} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs font-bold cursor-pointer">Trash</button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeSettingsTab === 'wifi' && (
-                <div className="space-y-4">
-                  <h3 className="text-sm font-bold text-white">Wi-Fi & Network Configuration</h3>
-                  <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2 text-xs">
-                    <div className="flex justify-between py-1 border-b border-white/5">
-                      <span className="text-slate-400">Network Name:</span>
-                      <span className="font-bold text-emerald-400">AppleTree-5G Ultra-Fast</span>
-                    </div>
-                    <div className="flex justify-between py-1 border-b border-white/5">
-                      <span className="text-slate-400">IP Address:</span>
-                      <span className="font-mono text-white">192.168.1.108</span>
-                    </div>
-                    <div className="flex justify-between py-1 border-b border-white/5">
-                      <span className="text-slate-400">Link Speed:</span>
-                      <span className="font-bold text-white">950 Mbps (Gigabit Fiber)</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeSettingsTab === 'general' && (
-                <div className="space-y-4 text-xs">
-                  <h3 className="text-sm font-bold text-white">Hardware & Storage Specifications</h3>
-                  <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Processor:</span>
-                      <span className="font-bold text-white">Apple M3 Max (16-Core)</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Memory:</span>
-                      <span className="font-bold text-white">64 GB Unified RAM</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Compilers:</span>
-                      <span className="font-bold text-emerald-400">OpenJDK 21 LTS + Python 3.12 Pre-installed</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">TeraBox Cloud:</span>
-                      <span className="font-bold text-sky-400">1024 GB Free Storage Attached</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+          <div className="flex-1 overflow-hidden">
+            <SystemSettingsApp
+              currentSettings={{
+                ...systemSettings,
+                dark_mode: isDarkMode,
+                theme: isDarkMode ? 'dark' : 'light',
+                wallpaper_url: currentWallpaper,
+                screen_brightness: screenBrightness,
+                sound_volume: soundVolume,
+                is_muted: isMuted,
+                dock_size: dockSize,
+                dock_position: dockPosition,
+                dock_magnification: dockMagnification,
+                dock_autohide: dockAutoHide,
+                accent_color: accentColor
+              }}
+              onUpdateSetting={updateSystemSetting}
+              currentUser={currentUser}
+              onClose={() => closeWindow('settings')}
+            />
           </div>
         </div>
       )}
+
+      {/* ── 4B. GAME CENTER (PLAYHOP IN-DESKTOP DISCOVERY & ARCADE) ── */}
+      {windows.gamecenter?.isOpen && !windows.gamecenter?.isMinimized && (
+        <div
+          onClick={() => focusWindow('gamecenter')}
+          style={{
+            zIndex: windows.gamecenter.zIndex,
+            left: windows.gamecenter.isMaximized ? 0 : windows.gamecenter.x,
+            top: windows.gamecenter.isMaximized ? 26 : windows.gamecenter.y,
+            width: windows.gamecenter.isMaximized ? '100vw' : windows.gamecenter.w,
+            height: windows.gamecenter.isMaximized ? 'calc(100vh - 26px - 80px)' : windows.gamecenter.h
+          }}
+          className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-slate-900/95 border border-white/20 shadow-2xl flex flex-col transition-all duration-150 ${activeAppId === 'gamecenter' ? 'ring-1 ring-purple-400/50' : 'opacity-95'}`}
+        >
+          <div 
+            onMouseDown={(e) => handleMouseDownHeader(e, 'gamecenter')}
+            className="h-10 px-4 bg-slate-800/90 border-b border-white/10 flex items-center justify-between cursor-move shrink-0"
+          >
+            <div className="flex items-center gap-2">
+              <button onClick={() => closeWindow('gamecenter')} className="w-3 h-3 rounded-full bg-rose-500 cursor-pointer" />
+              <button onClick={() => minimizeWindow('gamecenter')} className="w-3 h-3 rounded-full bg-amber-500 cursor-pointer" />
+              <button onClick={() => toggleMaximize('gamecenter')} className="w-3 h-3 rounded-full bg-emerald-500 cursor-pointer" />
+            </div>
+            <div className="text-xs font-semibold text-slate-300">Game Center — Playhop Edition</div>
+            <div className="w-10" />
+          </div>
+
+          <div className="flex-1 overflow-hidden">
+            <GameCenterApp
+              onLaunchGame={launchGame}
+              installedDockGames={installedDockGames}
+              onToggleDockGame={toggleDockGame}
+              currentUser={currentUser}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ── 4C. NATIVE IN-DESKTOP RUNNING GAMES ── */}
+      {Object.values(windows).filter(w => w.isGame && w.isOpen && !w.isMinimized).map(win => (
+        <div
+          key={win.id}
+          onClick={() => focusWindow(win.id)}
+          style={{
+            zIndex: win.zIndex,
+            left: win.isMaximized ? 0 : win.x,
+            top: win.isMaximized ? 26 : win.y,
+            width: win.isMaximized ? '100vw' : win.w,
+            height: win.isMaximized ? 'calc(100vh - 26px)' : win.h
+          }}
+          className={`absolute rounded-2xl overflow-hidden backdrop-blur-3xl bg-slate-950 border border-white/20 shadow-2xl flex flex-col transition-all duration-150 ${activeAppId === win.id ? 'ring-1 ring-sky-400/50' : 'opacity-95'}`}
+        >
+          <div 
+            onMouseDown={(e) => handleMouseDownHeader(e, win.id)}
+            className="h-8 px-3 bg-slate-900 border-b border-white/10 flex items-center justify-between cursor-move shrink-0"
+          >
+            <div className="flex items-center gap-2">
+              <button onClick={() => closeWindow(win.id)} className="w-3 h-3 rounded-full bg-rose-500 cursor-pointer" />
+              <button onClick={() => minimizeWindow(win.id)} className="w-3 h-3 rounded-full bg-amber-500 cursor-pointer" />
+              <button onClick={() => toggleMaximize(win.id)} className="w-3 h-3 rounded-full bg-emerald-500 cursor-pointer" />
+            </div>
+            <div className="text-xs font-semibold text-slate-200 truncate max-w-xs">{win.title}</div>
+            <div className="w-8" />
+          </div>
+
+          <div className="flex-1 overflow-hidden">
+            <GamePlayerWindow
+              game={win.gameData}
+              onClose={() => closeWindow(win.id)}
+              onToggleDock={() => toggleDockGame(win.gameData?.id)}
+              isDocked={installedDockGames.includes(win.gameData?.id)}
+              currentUser={currentUser}
+            />
+          </div>
+        </div>
+      ))}
 
       {/* ── 5. TERABOX WINDOW ── */}
       {windows.terabox.isOpen && !windows.terabox.isMinimized && (
@@ -4184,11 +4161,29 @@ p {
       )}
 
       {/* ════════════════ AUTHENTIC REAL macOS SQUIRCLE DOCK ════════════════ */}
-      <footer className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[9999] px-3 py-2 rounded-2xl backdrop-blur-3xl bg-black/45 border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.6)] flex items-end gap-2.5 transition-all">
+      <footer 
+        style={{
+          transform: dockAutoHide ? (
+            dockPosition === 'left' ? 'translateX(-85%)' :
+            dockPosition === 'right' ? 'translateX(85%)' :
+            'translate(-50%, 85%)'
+          ) : (
+            dockPosition === 'bottom' ? 'translateX(-50%)' : undefined
+          )
+        }}
+        className={`fixed z-[9999] px-2.5 py-1.5 rounded-2xl backdrop-blur-3xl bg-black/45 border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.6)] flex gap-2 transition-all duration-300 hover:translate-x-0 hover:translate-y-0 ${
+          dockPosition === 'left'
+            ? 'left-3 top-1/2 -translate-y-1/2 flex-col items-center'
+            : dockPosition === 'right'
+            ? 'right-3 top-1/2 -translate-y-1/2 flex-col items-center'
+            : 'bottom-2.5 left-1/2 items-end'
+        }`}
+      >
         {[
           { id: 'finder', title: 'Finder', icon: MacFinderIcon },
           { id: 'launchpad', title: 'Launchpad', icon: MacLaunchpadIcon, isAction: true, onClick: () => setIsLaunchpadOpen(true) },
           { id: 'appstore', title: 'App Store', icon: MacAppStoreIcon, badge: 'STORE' },
+          { id: 'gamecenter', title: 'Game Center', icon: MacGameCenterIcon, badge: 'GAMES' },
           { id: 'safari', title: 'Safari', icon: MacSafariIcon },
           { id: 'vscode', title: 'Visual Studio Code', icon: MacVSCodeIcon, badge: 'IDE' },
           { id: 'mysql-studio', title: 'MySQL Studio', icon: MacMySQLIcon, badge: '8.4' },
@@ -4199,35 +4194,61 @@ p {
           { id: 'kbc', title: 'KBC Quiz', icon: MacKbcIcon, badge: 'LIVE' },
           { id: 'notes', title: 'Notes', icon: MacNotesIcon },
           { id: 'calculator', title: 'Calculator', icon: MacCalculatorIcon },
-          { id: 'settings', title: 'System Settings', icon: MacSettingsIcon }
+          { id: 'settings', title: 'System Settings', icon: MacSettingsIcon },
+
+          // DYNAMIC INSTALLED / PINNED GAMES FROM GAME CENTER
+          ...installedDockGames.map(gameId => {
+            const rawId = gameId.replace('game-', '');
+            const g = getGameById(rawId);
+            if (!g) return null;
+            const winId = `game-${g.id}`;
+            const isOpen = windows[winId]?.isOpen;
+            return {
+              id: winId,
+              title: g.title,
+              isCustomGame: true,
+              gameData: g,
+              isOpen,
+              onClick: () => launchGame(g)
+            };
+          }).filter(Boolean)
         ].map(app => {
           const IconComponent = app.icon;
-          const isOpen = windows[app.id]?.isOpen || (app.id === 'mysql-studio' && (windows['mysql-studio']?.isOpen || windows.mysqlstudio?.isOpen));
+          const isOpen = app.isCustomGame 
+            ? app.isOpen 
+            : (windows[app.id]?.isOpen || (app.id === 'mysql-studio' && (windows['mysql-studio']?.isOpen || windows.mysqlstudio?.isOpen)));
           const isBouncing = bouncingApp === app.id;
 
           return (
             <div key={app.id} className="relative flex flex-col items-center group">
-              <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none px-2.5 py-1 rounded-md backdrop-blur-md bg-black/85 text-white text-[10px] font-semibold whitespace-nowrap shadow-md">
+              <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none px-2.5 py-1 rounded-md backdrop-blur-md bg-black/85 text-white text-[10px] font-semibold whitespace-nowrap shadow-md z-50">
                 {app.title}
               </div>
 
               <button
                 onClick={() => {
-                  if (app.isAction && app.onClick) {
+                  if (app.onClick) {
                     macSound.playPop();
                     app.onClick();
-                  } else if (isOpen && !windows[app.id].isMinimized && activeAppId === app.id) {
+                  } else if (isOpen && !windows[app.id]?.isMinimized && activeAppId === app.id) {
                     minimizeWindow(app.id);
                   } else {
                     openApp(app.id);
                   }
                 }}
                 onContextMenu={(e) => openContextMenu(e, 'dock', app.id, app)}
-                className={`w-12 h-12 p-0.5 flex items-center justify-center transition-transform duration-200 hover:scale-125 hover:-translate-y-2 active:scale-95 cursor-pointer relative ${
-                  isBouncing ? 'animate-bounce' : ''
-                }`}
+                style={{ width: `${dockSize}px`, height: `${dockSize}px` }}
+                className={`p-0.5 flex items-center justify-center transition-transform duration-200 cursor-pointer relative ${
+                  dockMagnification ? 'hover:scale-125 hover:-translate-y-2' : 'hover:scale-105'
+                } active:scale-95 ${isBouncing ? 'animate-bounce' : ''}`}
               >
-                <IconComponent className="w-full h-full drop-shadow-xl" />
+                {app.isCustomGame ? (
+                  <div className={`w-full h-full rounded-2xl bg-gradient-to-tr ${app.gameData.iconGradient} flex items-center justify-center text-xl shadow-lg border border-white/20`}>
+                    <span>{app.gameData.iconEmoji}</span>
+                  </div>
+                ) : (
+                  <IconComponent className="w-full h-full drop-shadow-xl" />
+                )}
                 {app.badge && (
                   <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full bg-red-600 text-white text-[8px] font-black animate-pulse shadow-md">
                     {app.badge}
@@ -4252,7 +4273,10 @@ p {
               vfs.emptyTrash();
               alert('Trash has been emptied.');
             }}
-            className="w-12 h-12 p-0.5 flex items-center justify-center transition-transform duration-200 hover:scale-125 hover:-translate-y-2 cursor-pointer"
+            style={{ width: `${dockSize}px`, height: `${dockSize}px` }}
+            className={`p-0.5 flex items-center justify-center transition-transform duration-200 ${
+              dockMagnification ? 'hover:scale-125 hover:-translate-y-2' : 'hover:scale-105'
+            } cursor-pointer`}
           >
             <MacTrashIcon className="w-full h-full drop-shadow-xl" />
           </button>
