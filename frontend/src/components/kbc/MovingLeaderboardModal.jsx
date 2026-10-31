@@ -106,8 +106,8 @@ export default function MovingLeaderboardModal({
                     }}
                     className="flex items-center justify-between p-2 rounded-xl transition-all"
                   >
-                    {/* Left: Rank & Player info */}
-                    <div className="flex items-center gap-2 min-w-0">
+                    {/* Left: Rank, Avatar & Player info */}
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <div 
                         className={`w-6 h-6 rounded-md font-black font-mono text-[11px] flex items-center justify-center shrink-0 ${
                           rank === 1 ? 'bg-amber-400 text-slate-950 font-black shadow-sm' :
@@ -118,10 +118,33 @@ export default function MovingLeaderboardModal({
                       >
                         {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank}
                       </div>
+
+                      {/* Candidate Profile Photo Avatar */}
+                      <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 border border-amber-400/80 shadow-md bg-slate-800 flex items-center justify-center">
+                        {player.profile_photo ? (
+                          <img 
+                            src={player.profile_photo} 
+                            alt={player.name} 
+                            className="w-full h-full object-cover" 
+                            onError={(e) => { 
+                              e.target.onerror = null;
+                              e.target.style.display = 'none';
+                              const fallback = e.target.parentElement.querySelector('.avatar-initials-fallback');
+                              if (fallback) fallback.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div 
+                          className={`avatar-initials-fallback w-full h-full bg-gradient-to-tr from-amber-600 via-amber-500 to-yellow-400 items-center justify-center text-slate-950 font-black text-xs uppercase ${player.profile_photo ? 'hidden' : 'flex'}`}
+                        >
+                          {player.name ? player.name.charAt(0).toUpperCase() : '👤'}
+                        </div>
+                      </div>
+
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
                           <span 
-                            className="font-bold text-xs truncate max-w-[130px] sm:max-w-[160px]"
+                            className="font-bold text-xs truncate max-w-[120px] sm:max-w-[150px]"
                             style={{ color: isUser ? '#38bdf8' : '#ffffff' }}
                           >
                             {player.name}

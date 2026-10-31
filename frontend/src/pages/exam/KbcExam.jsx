@@ -359,6 +359,9 @@ export default function KbcExam() {
           const pts = isUser ? (team.points !== undefined ? Number(team.points) : Number(t.points) || 0) : Number(t.points) || 0;
           const correctCount = isUser ? (team.correct_count !== undefined ? Number(team.correct_count) : Number(t.correct_count) || 0) : Number(t.correct_count) || 0;
           const status = isUser ? (team.status || t.status || 'CONNECTED') : (t.status || 'CONNECTED');
+          const photo = isUser 
+            ? (team.profile_photo || registeredStudent?.profile_photo || t.profile_photo || null)
+            : (t.profile_photo || null);
 
           return {
             id: `team-${t.id || t.access_code}`,
@@ -372,7 +375,9 @@ export default function KbcExam() {
             lastStatus: isUser ? answerStatus : (status === 'HOTSEAT' ? 'correct' : null),
             avatar: '🏆',
             status,
-            submittedOption: t.submitted_option
+            submittedOption: t.submitted_option,
+            profile_photo: photo,
+            college: t.college || (isUser ? (team.college || registeredStudent?.college) : '')
           };
         });
 
@@ -391,7 +396,9 @@ export default function KbcExam() {
             lastStatus: answerStatus,
             avatar: '👤',
             status: team.status || 'CONNECTED',
-            submittedOption: selectedOption
+            submittedOption: selectedOption,
+            profile_photo: team.profile_photo || registeredStudent?.profile_photo || null,
+            college: team.college || registeredStudent?.college || ''
           });
         }
 
@@ -434,7 +441,9 @@ export default function KbcExam() {
         avatar: '👤',
         status: team.status || 'CONNECTED',
         rank: 1,
-        rankDelta: 0
+        rankDelta: 0,
+        profile_photo: team.profile_photo || registeredStudent?.profile_photo || null,
+        college: team.college || registeredStudent?.college || ''
       }];
     }
 

@@ -2068,19 +2068,35 @@ router.get('/session/status', async (req, res) => {
         // Fetch top scorer / winner if show_winner is true (Tie breaker: student who answered first)
         let winner = null;
         if (s.show_winner && s.winner_team_id) {
-          const [wRows] = await pool.query('SELECT * FROM kbc_teams WHERE id = ?', [s.winner_team_id]);
+          const [wRows] = await pool.query(`
+            SELECT t.*, COALESCE(t.profile_photo, st.profile_photo) AS profile_photo
+            FROM kbc_teams t
+            LEFT JOIN kbc_students st ON t.email = st.email
+            WHERE t.id = ?
+          `, [s.winner_team_id]);
           if (wRows.length > 0) winner = wRows[0];
         }
         if (!winner && s.show_winner) {
-          const [topRows] = await pool.query('SELECT * FROM kbc_teams ORDER BY points DESC, total_response_time_ms ASC, last_submitted_at ASC LIMIT 1');
+          const [topRows] = await pool.query(`
+            SELECT t.*, COALESCE(t.profile_photo, st.profile_photo) AS profile_photo
+            FROM kbc_teams t
+            LEFT JOIN kbc_students st ON t.email = st.email
+            ORDER BY t.points DESC, t.total_response_time_ms ASC, t.last_submitted_at ASC 
+            LIMIT 1
+          `);
           if (topRows.length > 0) winner = topRows[0];
         }
 
         // Leaderboard top teams: Sorted by points descending, then tie breaker: whoever answered first (lower total_response_time_ms / earlier submission)
         const [topTeams] = await pool.query(`
-          SELECT id, team_name, leader_name, access_code, current_level, points, score_amount, correct_count, wrong_count, submitted_option, submitted_at, total_response_time_ms, last_submitted_at, profile_photo, college, roll_no, email, status
-          FROM kbc_teams 
-          ORDER BY points DESC, total_response_time_ms ASC, last_submitted_at ASC, id ASC 
+          SELECT t.id, t.team_name, t.leader_name, t.access_code, t.current_level, t.points, 
+                 t.score_amount, t.correct_count, t.wrong_count, t.submitted_option, t.submitted_at, 
+                 t.total_response_time_ms, t.last_submitted_at, 
+                 COALESCE(t.profile_photo, st.profile_photo) AS profile_photo, 
+                 t.college, t.roll_no, t.email, t.status
+          FROM kbc_teams t
+          LEFT JOIN kbc_students st ON t.email = st.email
+          ORDER BY t.points DESC, t.total_response_time_ms ASC, t.last_submitted_at ASC, t.id ASC 
           LIMIT 30
         `);
 
@@ -2557,8 +2573,10 @@ router.post('/admin/session/announce-winner', async (req, res) => {
     await ensureKbcSessionsAndTeams();
     if (pool) {
       const [rows] = await pool.query(`
-        SELECT * FROM kbc_teams 
-        ORDER BY points DESC, score_amount DESC, correct_count DESC, created_at ASC 
+        SELECT t.*, COALESCE(t.profile_photo, st.profile_photo) AS profile_photo
+        FROM kbc_teams t
+        LEFT JOIN kbc_students st ON t.email = st.email
+        ORDER BY t.points DESC, t.total_response_time_ms ASC, t.last_submitted_at ASC, t.created_at ASC 
         LIMIT 1
       `);
 

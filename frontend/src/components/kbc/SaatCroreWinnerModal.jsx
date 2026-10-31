@@ -36,6 +36,19 @@ export default function SaatCroreWinnerModal({ winner, onClose, isCurrentPlayer 
   const correctCount = winner.correct_count !== undefined ? winner.correct_count : 0;
   const prize = winner.prizeLabel || winner.winner_prize || (winner.score_amount ? `₹${winner.score_amount.toLocaleString('en-IN')}` : '₹7 Crore');
 
+  const candidatePhoto = winner.profile_photo || (isCurrentPlayer ? (() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('kbc_registered_student') || localStorage.getItem('kbc_team');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          return parsed.profile_photo || null;
+        }
+      }
+    } catch (e) {}
+    return null;
+  })() : null);
+
   const handleReplayAudio = () => {
     kbcAudio.playHighPoints();
   };
@@ -63,25 +76,38 @@ export default function SaatCroreWinnerModal({ winner, onClose, isCurrentPlayer 
           <span>{isCurrentPlayer ? '🎉 YOU ARE THE TOP SCORER! 🎉' : '🏆 KBC TOURNAMENT TOP SCORER 🏆'}</span>
         </div>
 
-        {/* Amitabh Bachchan "SAAT CRORE!!" Meme Visual */}
+        {/* Winner Visual: Candidate Profile Photo in Center */}
         <div className="relative mx-auto my-2 w-44 h-44 sm:w-48 sm:h-48">
           {/* Animated Gold Ring */}
-          <div className="absolute inset-0 rounded-full border-4 border-dashed border-amber-400/60 animate-spin [animation-duration:15s]" />
+          <div className="absolute inset-0 rounded-full border-4 border-dashed border-amber-400/70 animate-spin [animation-duration:15s]" />
           
-          {/* Picture of Amitabh Bachchan Host */}
-          <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-amber-400 shadow-2xl shadow-amber-500/50 bg-slate-900">
-            <img
-              src="/kbc-host.jpg"
-              alt="Amitabh Bachchan - Saat Crore Meme"
-              className="w-full h-full object-cover object-top scale-105 hover:scale-110 transition duration-500"
-              onError={(e) => {
-                e.target.style.display = 'none';
-              }}
-            />
+          {/* Picture of Candidate Winner */}
+          <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-amber-400 shadow-2xl shadow-amber-500/50 bg-slate-900 flex items-center justify-center">
+            {candidatePhoto ? (
+              <img
+                src={candidatePhoto}
+                alt={playerName}
+                className="w-full h-full object-cover object-top scale-105 hover:scale-110 transition duration-500"
+                onError={(e) => {
+                  e.target.src = '/kbc-host.jpg';
+                }}
+              />
+            ) : (
+              <img
+                src="/kbc-host.jpg"
+                alt="Amitabh Bachchan - Saat Crore Meme"
+                className="w-full h-full object-cover object-top scale-105 hover:scale-110 transition duration-500"
+              />
+            )}
+          </div>
+
+          {/* Host Amitabh Small Badge */}
+          <div className="absolute top-1 right-1 w-11 h-11 rounded-full p-0.5 bg-gradient-to-tr from-amber-500 to-yellow-300 border-2 border-slate-950 shadow-lg overflow-hidden z-10" title="Host Amitabh Bachchan">
+            <img src="/kbc-host.jpg" alt="Host" className="w-full h-full object-cover rounded-full" />
           </div>
 
           {/* Comic Meme Shoutout Badge: "SAAT CRORE!!" */}
-          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-max px-4 py-1 bg-gradient-to-r from-red-600 via-amber-500 to-red-600 border-2 border-yellow-200 rounded-xl shadow-xl shadow-red-600/50 transform -rotate-2 hover:rotate-0 transition">
+          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-max px-4 py-1 bg-gradient-to-r from-red-600 via-amber-500 to-red-600 border-2 border-yellow-200 rounded-xl shadow-xl shadow-red-600/50 transform -rotate-2 hover:rotate-0 transition z-10">
             <span className="text-sm sm:text-base font-black text-yellow-100 tracking-wider uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] flex items-center gap-1">
               💥 SAAT CRORE!! 💥
             </span>
