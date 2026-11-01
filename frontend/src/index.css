@@ -774,6 +774,13 @@ html.dark .admin-dashboard-shell .border-slate-200\/50 {
   color-scheme: dark !important;
 }
 
+.kbc-dark-root [class*='bg-transparent'],
+.kbc-dark-root.bg-transparent,
+[data-kbc='true'] {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
 .kbc-dark-root [class*='bg-slate-900'],
 .kbc-dark-root [class*='bg-slate-950'],
 .kbc-dark-root [class*='bg-slate-800'] {

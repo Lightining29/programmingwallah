@@ -35,80 +35,46 @@ export default function KbcStageLasers({
     }
   }, [triggerUpwardSweep]);
 
-  // ── 1. Overhead Criss-Cross Moving Beams (Sweeping Yellow/Amber, Cyan/Blue, and Violet) ──
+  // ── 1. Overhead Criss-Cross Moving Beams (Sweeping Yellow/Amber & Cyan/Blue) ──
   const overheadCrissCrossBeams = useMemo(() => [
     // Left Golden/Amber Cluster (Angling down towards center & right)
-    { id: 'top-gold-1', originLeft: '20%', originTop: '3.5%', baseAngle: 28, sweepRange: [20, 36], duration: 8.5, color: 'gold', delay: 0 },
-    { id: 'top-violet-1', originLeft: '28%', originTop: '4.5%', baseAngle: 22, sweepRange: [14, 30], duration: 10.0, color: 'violet', delay: 0.25 },
-    { id: 'top-gold-2', originLeft: '36%', originTop: '5.5%', baseAngle: 14, sweepRange: [6, 22], duration: 11.2, color: 'gold', delay: 0.15 },
-    { id: 'top-gold-3', originLeft: '44%', originTop: '6.2%', baseAngle: 6,  sweepRange: [0, 14],  duration: 9.7, color: 'gold', delay: 0.35 },
+    { id: 'top-gold-1', originLeft: '22%', originTop: '3.5%', baseAngle: 28, sweepRange: [20, 36], duration: 8.5, color: 'gold', delay: 0 },
+    { id: 'top-cyan-1', originLeft: '30%', originTop: '4.8%', baseAngle: 22, sweepRange: [14, 30], duration: 10.0, color: 'cyan', delay: 0.25 },
+    { id: 'top-gold-2', originLeft: '38%', originTop: '5.8%', baseAngle: 14, sweepRange: [6, 22], duration: 11.2, color: 'gold', delay: 0.15 },
+    { id: 'top-gold-3', originLeft: '45%', originTop: '6.5%', baseAngle: 6,  sweepRange: [0, 14],  duration: 9.7, color: 'gold', delay: 0.35 },
 
-    // Right Cyan/Blue & Violet Cluster (Angling down towards center & left)
-    { id: 'top-cyan-1', originLeft: '56%', originTop: '6.2%', baseAngle: -6,  sweepRange: [-14, 0],  duration: 9.7,  color: 'cyan', delay: 0.1 },
-    { id: 'top-cyan-2', originLeft: '64%', originTop: '5.5%', baseAngle: -14, sweepRange: [-22, -6], duration: 10.8, color: 'cyan', delay: 0.3 },
-    { id: 'top-violet-2', originLeft: '72%', originTop: '4.5%', baseAngle: -22, sweepRange: [-30, -14], duration: 8.4, color: 'violet', delay: 0.2 },
-    { id: 'top-cyan-3', originLeft: '80%', originTop: '3.5%', baseAngle: -28, sweepRange: [-36, -20], duration: 12.0, color: 'cyan', delay: 0.4 }
+    // Right Cyan/Blue & Golden Cluster (Angling down towards center & left)
+    { id: 'top-cyan-2', originLeft: '55%', originTop: '6.5%', baseAngle: -6,  sweepRange: [-14, 0],  duration: 9.7,  color: 'cyan', delay: 0.1 },
+    { id: 'top-cyan-3', originLeft: '62%', originTop: '5.8%', baseAngle: -14, sweepRange: [-22, -6], duration: 10.8, color: 'cyan', delay: 0.3 },
+    { id: 'top-gold-4', originLeft: '70%', originTop: '4.8%', baseAngle: -22, sweepRange: [-30, -14], duration: 8.4, color: 'gold', delay: 0.2 },
+    { id: 'top-cyan-4', originLeft: '78%', originTop: '3.5%', baseAngle: -28, sweepRange: [-36, -20], duration: 12.0, color: 'cyan', delay: 0.4 }
   ], []);
 
   // ── 2. Six Floor Laser Projector Beams ──
+  // Beams at 50% originate right under the question and sweep up in a dramatic X behind the question
   const floorBeams = useMemo(() => [
-    { id: 'f-1', baseLeft: '16%', baseAngle: -36, sweepUpAngle: -14, downAngle: -55, ambientRange: [-42, -28], color: 'cyan', delay: 0 },
-    { id: 'f-2', baseLeft: '26%', baseAngle: 22,  sweepUpAngle: 10,  downAngle: 36,  ambientRange: [16, 28],   color: 'gold', delay: 0.15 },
-    { id: 'f-3', baseLeft: '42%', baseAngle: -16, sweepUpAngle: -6,  downAngle: -28, ambientRange: [-22, -10], color: 'cyan', delay: 0.3 },
-    { id: 'f-4', baseLeft: '58%', baseAngle: 16,  sweepUpAngle: 6,   downAngle: 28,  ambientRange: [10, 22],   color: 'gold', delay: 0.1 },
-    { id: 'f-5', baseLeft: '74%', baseAngle: -22, sweepUpAngle: -10, downAngle: -36, ambientRange: [-28, -16], color: 'violet', delay: 0.2 },
-    { id: 'f-6', baseLeft: '84%', baseAngle: 36,  sweepUpAngle: 14,  downAngle: 55,  ambientRange: [28, 42],   color: 'cyan', delay: 0.35 }
+    { id: 'f-1', baseLeft: '18%', baseAngle: -34, sweepUpAngle: -14, downAngle: -55, ambientRange: [-40, -26], color: 'cyan', delay: 0 },
+    { id: 'f-2', baseLeft: '24%', baseAngle: 22,  sweepUpAngle: 10,  downAngle: 36,  ambientRange: [16, 28],   color: 'gold', delay: 0.15 },
+    { id: 'f-3', baseLeft: '50%', baseAngle: -18, sweepUpAngle: -6,  downAngle: -28, ambientRange: [-24, -12], color: 'cyan', delay: 0.3 },
+    { id: 'f-4', baseLeft: '50%', baseAngle: 18,  sweepUpAngle: 6,   downAngle: 28,  ambientRange: [12, 24],   color: 'gold', delay: 0.1 },
+    { id: 'f-5', baseLeft: '76%', baseAngle: -22, sweepUpAngle: -10, downAngle: -36, ambientRange: [-28, -16], color: 'cyan', delay: 0.2 },
+    { id: 'f-6', baseLeft: '82%', baseAngle: 34,  sweepUpAngle: 14,  downAngle: 55,  ambientRange: [26, 40],   color: 'gold', delay: 0.35 }
   ], []);
 
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden select-none z-10">
 
-      {/* ── ATMOSPHERIC STUDIO BACKDROP: Deep Midnight Studio Arena (Zero Muddy Opaque Red Wash) ── */}
+      {/* ── ATMOSPHERIC STUDIO BACKDROP: Pure Translucent Studio Arena Glow (Zero Opaque Black Mask) ── */}
       <div 
         className="absolute inset-0 pointer-events-none transition-all duration-700"
         style={{
           background: isWrongAnswer
-            ? 'radial-gradient(ellipse at 50% 25%, #140822 0%, #090312 42%, #02020a 80%, #010105 100%)'
+            ? 'radial-gradient(ellipse at 50% 35%, rgba(153, 27, 27, 0.45) 0%, rgba(69, 10, 10, 0.75) 55%, rgba(2, 6, 23, 0.95) 100%)'
             : isCelebratingCorrect
-              ? 'radial-gradient(ellipse at 50% 25%, #05261e 0%, #031510 42%, #010807 80%, #01020a 100%)'
-              : 'radial-gradient(ellipse at 50% 25%, #101c4e 0%, #080f2d 42%, #030617 80%, #01020a 100%)'
+              ? 'radial-gradient(ellipse at 50% 35%, rgba(5, 150, 105, 0.45) 0%, rgba(4, 120, 87, 0.7) 55%, rgba(2, 6, 23, 0.95) 100%)'
+              : 'radial-gradient(ellipse at 50% 35%, rgba(14, 116, 144, 0.35) 0%, rgba(30, 27, 75, 0.65) 55%, rgba(2, 6, 23, 0.95) 100%)'
         }}
       />
-
-      {/* ── PROCEDURAL STUDIO AMPHITHEATER SEATING & TIER LIGHTING SILHOUETTE ── */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-50" preserveAspectRatio="none" viewBox="0 0 1440 900">
-        <defs>
-          <linearGradient id="tierSilhouette" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#0a1236" stopOpacity="0.85" />
-            <stop offset="100%" stopColor="#02040d" stopOpacity="0.98" />
-          </linearGradient>
-          <linearGradient id="balconyCyanGlow" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="transparent" />
-            <stop offset="50%" stopColor="#00f2fe" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="transparent" />
-          </linearGradient>
-          <linearGradient id="balconyVioletGlow" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="transparent" />
-            <stop offset="50%" stopColor="#c084fc" stopOpacity="0.7" />
-            <stop offset="100%" stopColor="transparent" />
-          </linearGradient>
-        </defs>
-
-        {/* Studio Amphitheater Outer Balcony Tier Left */}
-        <path d="M -50,420 Q 280,320 620,380 L 620,550 L -50,600 Z" fill="url(#tierSilhouette)" />
-        <path d="M -50,420 Q 280,320 620,380" stroke="#38bdf8" strokeWidth="2.5" strokeOpacity="0.5" fill="none" />
-
-        {/* Studio Amphitheater Outer Balcony Tier Right */}
-        <path d="M 1490,420 Q 1160,320 820,380 L 820,550 L 1490,600 Z" fill="url(#tierSilhouette)" />
-        <path d="M 1490,420 Q 1160,320 820,380" stroke="#38bdf8" strokeWidth="2.5" strokeOpacity="0.5" fill="none" />
-
-        {/* Mid-Tier Lower Audience Horizon */}
-        <path d="M -50,510 Q 720,440 1490,510 L 1490,660 L -50,660 Z" fill="#040714" fillOpacity="0.75" />
-        <path d="M -50,510 Q 720,440 1490,510" stroke="#00f2fe" strokeWidth="1.8" strokeOpacity="0.4" fill="none" />
-
-        {/* Decorative Violet Mid-Balcony Arc */}
-        <path d="M 100,470 Q 720,410 1340,470" stroke="url(#balconyVioletGlow)" strokeWidth="1.5" fill="none" />
-      </svg>
 
       {/* ── OVERHEAD METALLIC STRUCTURAL LIGHTING TRUSS ARCH (Industrial Stage Rig) ── */}
       <svg className="absolute top-0 left-0 right-0 w-full h-36 sm:h-44 pointer-events-none z-20" preserveAspectRatio="none" viewBox="0 0 1440 180">
@@ -247,26 +213,22 @@ export default function KbcStageLasers({
           transition = { duration: 0.6, ease: 'easeOut' };
         }
 
-        // Vibrant multi-color palettes
+        // Vibrant multi-color palettes - rich opacity throughout the entire vertical drop
         const beamCore = isWrongAnswer
-          ? 'linear-gradient(180deg, rgba(239,68,68,0.95) 0%, rgba(220,38,38,0.55) 40%, rgba(220,38,38,0.12) 80%, transparent 100%)'
+          ? 'linear-gradient(180deg, rgba(239,68,68,0.95) 0%, rgba(239,68,68,0.8) 35%, rgba(220,38,38,0.6) 70%, rgba(220,38,38,0.25) 100%)'
           : isCelebratingCorrect
-            ? 'linear-gradient(180deg, rgba(16,185,129,0.95) 0%, rgba(52,211,153,0.6) 40%, rgba(16,185,129,0.12) 80%, transparent 100%)'
-            : isViolet
-              ? 'linear-gradient(180deg, rgba(192,132,252,0.9) 0%, rgba(168,85,247,0.55) 40%, rgba(126,34,206,0.14) 80%, transparent 100%)'
-              : isGold
-                ? 'linear-gradient(180deg, rgba(251,191,36,0.9) 0%, rgba(245,158,11,0.55) 40%, rgba(217,119,6,0.14) 80%, transparent 100%)'
-                : 'linear-gradient(180deg, rgba(56,189,248,0.9) 0%, rgba(14,165,233,0.55) 40%, rgba(3,105,161,0.14) 80%, transparent 100%)';
+            ? 'linear-gradient(180deg, rgba(16,185,129,0.95) 0%, rgba(52,211,153,0.8) 35%, rgba(16,185,129,0.6) 70%, rgba(16,185,129,0.25) 100%)'
+            : isGold
+              ? 'linear-gradient(180deg, rgba(251,191,36,0.95) 0%, rgba(245,158,11,0.8) 35%, rgba(251,191,36,0.6) 70%, rgba(217,119,6,0.25) 100%)'
+              : 'linear-gradient(180deg, rgba(56,189,248,0.95) 0%, rgba(14,165,233,0.8) 35%, rgba(56,189,248,0.6) 70%, rgba(3,105,161,0.25) 100%)';
 
         const glowColor = isWrongAnswer
-          ? 'rgba(239, 68, 68, 0.75)'
+          ? 'rgba(239, 68, 68, 0.85)'
           : isCelebratingCorrect
-            ? 'rgba(16, 185, 129, 0.75)'
-            : isViolet
-              ? 'rgba(168, 85, 247, 0.7)'
-              : isGold
-                ? 'rgba(245, 158, 11, 0.7)'
-                : 'rgba(56, 189, 248, 0.7)';
+            ? 'rgba(16, 185, 129, 0.85)'
+            : isGold
+              ? 'rgba(245, 158, 11, 0.85)'
+              : 'rgba(56, 189, 248, 0.85)';
 
         return (
           <motion.div
@@ -279,7 +241,7 @@ export default function KbcStageLasers({
             }}
             animate={{
               rotate: targetAngle,
-              opacity: isWrongAnswer ? [0.85, 1, 0.85] : isLocked ? 0.98 : 0.88
+              opacity: isWrongAnswer ? [0.85, 1, 0.85] : isLocked ? 0.98 : 0.92
             }}
             transition={transition}
             className="absolute pointer-events-none flex flex-col items-center -translate-x-1/2 z-10"
@@ -292,19 +254,19 @@ export default function KbcStageLasers({
 
             {/* Volumetric Fanning Light Cone */}
             <div 
-              className="relative w-32 sm:w-44 h-[115vh] pointer-events-none -mt-1"
+              className="relative w-36 sm:w-52 h-[125vh] pointer-events-none -mt-1"
               style={{
                 background: beamCore,
                 clipPath: 'polygon(46% 0%, 54% 0%, 100% 100%, 0% 100%)',
-                filter: `drop-shadow(0 0 18px ${glowColor})`
+                filter: `drop-shadow(0 0 22px ${glowColor})`
               }}
             >
               {/* Ultra-bright Center Filament */}
               <div 
-                className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-1 sm:w-1.5 pointer-events-none"
+                className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-1.5 sm:w-2 pointer-events-none"
                 style={{
-                  background: 'linear-gradient(180deg, #ffffff 0%, rgba(255,255,255,0.75) 50%, transparent 100%)',
-                  boxShadow: '0 0 10px #ffffff'
+                  background: 'linear-gradient(180deg, #ffffff 0%, rgba(255,255,255,0.85) 60%, transparent 100%)',
+                  boxShadow: '0 0 12px #ffffff'
                 }}
               />
             </div>
@@ -334,20 +296,17 @@ export default function KbcStageLasers({
         }
 
         const isWrong = isWrongAnswer;
-        const isViolet = beam.color === 'violet';
         const isGold = beam.color === 'gold';
 
         const beamGradient = isWrong
-          ? 'linear-gradient(90deg, #ff0033 0%, rgba(255,50,80,0.85) 20%, #ffffff 50%, rgba(255,50,80,0.85) 80%, #ff0033 100%)'
+          ? 'linear-gradient(90deg, #ff0033 0%, rgba(255,50,80,0.9) 20%, #ffffff 50%, rgba(255,50,80,0.9) 80%, #ff0033 100%)'
           : isCelebratingCorrect
             ? 'linear-gradient(90deg, #059669 0%, #34d399 20%, #ffffff 50%, #34d399 80%, #059669 100%)'
             : isLocked
               ? 'linear-gradient(90deg, #d97706 0%, #fbbf24 20%, #ffffff 50%, #fbbf24 80%, #d97706 100%)'
-              : isViolet
-                ? 'linear-gradient(90deg, #7e22ce 0%, #c084fc 20%, #ffffff 50%, #c084fc 80%, #7e22ce 100%)'
-                : isGold
-                  ? 'linear-gradient(90deg, #d97706 0%, #fbbf24 20%, #ffffff 50%, #fbbf24 80%, #d97706 100%)'
-                  : 'linear-gradient(90deg, #0284c7 0%, #38bdf8 20%, #ffffff 50%, #38bdf8 80%, #0284c7 100%)';
+              : isGold
+                ? 'linear-gradient(90deg, #d97706 0%, #fbbf24 20%, #ffffff 50%, #fbbf24 80%, #d97706 100%)'
+                : 'linear-gradient(90deg, #0284c7 0%, #38bdf8 20%, #ffffff 50%, #38bdf8 80%, #0284c7 100%)';
 
         return (
           <motion.div
@@ -360,34 +319,33 @@ export default function KbcStageLasers({
             }}
             animate={{
               rotate: targetAngle,
-              opacity: isWrong ? [0.85, 1, 0.85] : isLocked ? 0.98 : 0.88
+              opacity: isWrong ? [0.85, 1, 0.85] : isLocked ? 0.98 : 0.92
             }}
             transition={transition}
-            className="absolute h-[135vh] pointer-events-none flex items-center justify-center -translate-x-1/2 z-10"
+            className="absolute h-[140vh] pointer-events-none flex items-center justify-center -translate-x-1/2 z-10"
           >
             {/* Outer Glow */}
             <div 
-              className={`absolute w-8 sm:w-12 h-full blur-[4px] pointer-events-none transition-colors duration-500 ${
+              className={`absolute w-10 sm:w-14 h-full blur-[5px] pointer-events-none transition-colors duration-500 ${
                 isWrong ? 'bg-red-500/80 shadow-[0_0_35px_#ef4444]' :
                 isCelebratingCorrect ? 'bg-emerald-500/80 shadow-[0_0_35px_#10b981]' :
                 isLocked ? 'bg-amber-500/80 shadow-[0_0_35px_#f59e0b]' :
-                isViolet ? 'bg-purple-500/80 shadow-[0_0_35px_#a855f7]' :
-                isGold ? 'bg-amber-500/80 shadow-[0_0_35px_#f59e0b]' :
+                isGold ? 'bg-amber-400/80 shadow-[0_0_35px_#f59e0b]' :
                 'bg-cyan-400/80 shadow-[0_0_35px_#00e5ff]'
               }`}
             />
 
             {/* Solid Laser Shaft */}
             <div 
-              className="relative w-3.5 sm:w-4.5 h-full pointer-events-none"
+              className="relative w-4 sm:w-5 h-full pointer-events-none"
               style={{ background: beamGradient }}
             />
 
             {/* White Core Filament */}
-            <div className="absolute w-1 sm:w-1.5 h-full bg-white shadow-[0_0_10px_#ffffff] pointer-events-none" />
+            <div className="absolute w-1.5 sm:w-2 h-full bg-white shadow-[0_0_12px_#ffffff] pointer-events-none" />
 
             {/* Base Emitter Spark */}
-            <div className="absolute bottom-0 w-4.5 h-4.5 rounded-full bg-white shadow-[0_0_22px_#ffffff] -translate-y-1" />
+            <div className="absolute bottom-0 w-5 h-5 rounded-full bg-white shadow-[0_0_24px_#ffffff] -translate-y-1" />
           </motion.div>
         );
       })}

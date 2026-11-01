@@ -1484,7 +1484,7 @@ export default function KbcExam() {
     : (safeWonPrizeLabel !== '₹0' ? safeWonPrizeLabel : '₹0');
 
   return (
-    <div className="kbc-dark-root arena-dark-root min-h-screen lg:h-screen lg:max-h-screen text-white flex flex-col justify-between relative overflow-hidden select-none font-sans bg-[#020617]">
+    <div className="kbc-dark-root min-h-screen lg:h-screen lg:max-h-screen text-white flex flex-col justify-between relative overflow-hidden select-none font-sans bg-[#020617]">
       
       {/* ── Atmospheric Stage Lasers & Correct Answer Celebration Lights ── */}
       <KbcStageLasers
@@ -2183,7 +2183,8 @@ export default function KbcExam() {
           /* CASE 3: Live KBC Arena (Broadcast Studio Experience - 100% Transparent, Multi-Color Lighting) */
           <div 
             data-kbc="true"
-            className="kbc-dark-root arena-dark-root relative w-full max-w-7xl mx-auto flex flex-col justify-between h-full min-h-0 px-1 sm:px-2 overflow-hidden select-none bg-transparent"
+            className="kbc-dark-root relative w-full max-w-7xl mx-auto flex flex-col justify-between h-full min-h-0 px-1 sm:px-2 overflow-hidden select-none !bg-transparent"
+            style={{ backgroundColor: 'transparent' }}
           >
             {/* Mobile Header Quick Points Pill & Point Ladder Drawer Toggle */}
             <div className="lg:hidden flex items-center justify-between p-2 rounded-xl bg-[#0c102a]/90 border border-amber-400/40 backdrop-blur-md shadow-lg shrink-0 mb-1">
