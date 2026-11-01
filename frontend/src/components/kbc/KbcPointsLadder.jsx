@@ -5,10 +5,10 @@ import { KBC_PRIZE_LADDER } from '../../data/kbcQuestions.js';
 
 /**
  * Authentic KBC Point Leaderboard / Ladder
- * Enhanced 185px Width Specification (Fits entirely on single screen without scrolling):
+ * Enhanced 200px Width Specification (Fits entirely on single screen without scrolling):
  * - Top Double-Hexagon Header (₹7 CRORE or ₹3,20,000 JACKPOT PRIZE)
  * - Vertical Cyan Laser Spine Line down the center
- * - Elongated Hexagonal Chevrons (Q15 down to Q1) with rich glowing neon borders
+ * - Elongated Hexagonal Chevrons (Q15 down to Q1) with rich glowing neon borders & increased rung height
  * - Active Level with golden bloom & horizontal cyan laser beam
  */
 export default function KbcPointsLadder({
@@ -82,13 +82,13 @@ export default function KbcPointsLadder({
 
   return (
     <div 
-      className="w-[185px] rounded-2xl p-1.5 border border-amber-400/60 shadow-[0_0_35px_rgba(0,0,0,0.95),inset_0_0_15px_rgba(251,191,36,0.15)] flex flex-col justify-between relative overflow-hidden backdrop-blur-xl select-none shrink-0"
+      className="w-[200px] rounded-2xl p-2 border border-amber-400/60 shadow-[0_0_35px_rgba(0,0,0,0.95),inset_0_0_15px_rgba(251,191,36,0.15)] flex flex-col justify-between relative overflow-hidden backdrop-blur-xl select-none shrink-0"
       style={{
         background: 'linear-gradient(180deg, rgba(8, 14, 38, 0.98) 0%, rgba(4, 8, 22, 0.99) 100%)'
       }}
     >
       {/* ── HIGH-TECH CONTESTANT HUD (Top Banner) ── */}
-      <div className="pb-1 mb-1 border-b border-indigo-900/70 relative z-10 flex items-center justify-between text-[10px] font-mono leading-none">
+      <div className="pb-1.5 mb-1 border-b border-indigo-900/70 relative z-10 flex items-center justify-between text-[10px] font-mono leading-none">
         <span className={`font-black flex items-center gap-1 ${
           isWrongAnswer ? 'text-red-300 animate-pulse' : isOut ? 'text-red-400 line-through' : 'text-amber-300'
         }`}>
@@ -98,37 +98,37 @@ export default function KbcPointsLadder({
           <ShieldCheck className="w-2.5 h-2.5 text-emerald-400" />
           {safePoints} pts
         </span>
-        <span className="text-cyan-300 font-black text-[9px] px-1 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40">
+        <span className="text-cyan-300 font-black text-[9px] px-1.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40">
           Q{activeLevel}/{totalQuestions}
         </span>
       </div>
 
-      {/* ── TOP BEVELED DOUBLE-HEXAGON POD (Jackpot Milestone) ── */}
+      {/* ── TOP BEVELED DOUBLE-HEXAGON POD (Jackpot Milestone - Increased Height & 200px Fit) ── */}
       <div 
         ref={isTopActive ? currentStepRef : null}
         className="relative flex flex-col items-center justify-center my-0.5 z-10"
       >
         <div 
-          className={`relative w-[172px] h-[50px] flex flex-col items-center justify-center text-center transition-all duration-500 ${
+          className={`relative w-[188px] h-[58px] flex flex-col items-center justify-center text-center transition-all duration-500 ${
             isTopActive
-              ? 'scale-105 filter drop-shadow-[0_0_22px_rgba(251,191,36,0.95)] animate-pulse'
+              ? 'scale-105 filter drop-shadow-[0_0_24px_rgba(251,191,36,0.95)] animate-pulse'
               : 'hover:scale-[1.02]'
           }`}
         >
           {/* SVG Double Beveled Hexagonal Frame */}
           <svg 
             className="absolute inset-0 w-full h-full pointer-events-none" 
-            viewBox="0 0 180 64" 
+            viewBox="0 0 196 64" 
             preserveAspectRatio="none"
           >
             <defs>
-              <linearGradient id="goldHexGrad185" x1="0%" y1="0%" x2="100%" y2="100%">
+              <linearGradient id="goldHexGrad200" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#fef08a"/>
                 <stop offset="35%" stopColor="#f59e0b"/>
                 <stop offset="70%" stopColor="#fbbf24"/>
                 <stop offset="100%" stopColor="#b45309"/>
               </linearGradient>
-              <linearGradient id="goldFillGrad185" x1="0%" y1="0%" x2="0%" y2="100%">
+              <linearGradient id="goldFillGrad200" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor={isTopActive ? 'rgba(245, 158, 11, 0.55)' : 'rgba(24, 18, 56, 0.95)'}/>
                 <stop offset="100%" stopColor={isTopActive ? 'rgba(120, 53, 15, 0.75)' : 'rgba(8, 12, 32, 0.98)'}/>
               </linearGradient>
@@ -136,14 +136,14 @@ export default function KbcPointsLadder({
 
             {/* Outer Hexagon */}
             <polygon 
-              points="18,2 162,2 178,24 178,40 162,62 18,62 2,40 2,24" 
-              fill="url(#goldFillGrad185)" 
-              stroke="url(#goldHexGrad185)" 
-              strokeWidth="2.2"
+              points="20,2 176,2 194,24 194,40 176,62 20,62 2,40 2,24" 
+              fill="url(#goldFillGrad200)" 
+              stroke="url(#goldHexGrad200)" 
+              strokeWidth="2.4"
             />
             {/* Inner Hexagon Border */}
             <polygon 
-              points="22,6 158,6 172,26 172,38 158,58 22,58 8,38 8,26" 
+              points="24,6 172,6 188,26 188,38 172,58 24,58 8,38 8,26" 
               fill="none" 
               stroke={isTopActive ? '#fef08a' : '#d97706'} 
               strokeWidth="1.2"
@@ -155,14 +155,14 @@ export default function KbcPointsLadder({
           {/* Crisp Top Typography */}
           <div className="relative z-10 flex flex-col items-center justify-center leading-tight px-2">
             <span className={`font-serif font-black text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-yellow-300 to-amber-500 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] tracking-tight ${
-              topPrizeInfo.isLargeUnit ? 'text-lg sm:text-xl leading-none' : 'text-sm sm:text-base font-sans font-black'
+              topPrizeInfo.isLargeUnit ? 'text-xl leading-none' : 'text-sm sm:text-base font-sans font-black'
             }`}>
               {topPrizeInfo.main}
             </span>
-            <span className="font-sans font-black text-[9px] text-amber-300 uppercase tracking-[0.2em] drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]">
+            <span className="font-sans font-black text-[9.5px] text-amber-300 uppercase tracking-[0.2em] drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]">
               {topPrizeInfo.sub}
             </span>
-            <span className="text-[7.5px] font-mono font-bold text-amber-400/90 -mt-0.5">
+            <span className="text-[8px] font-mono font-bold text-amber-400/90 -mt-0.5">
               {(topStep.level * 100).toLocaleString()} pts
             </span>
           </div>
@@ -170,7 +170,7 @@ export default function KbcPointsLadder({
           {/* Horizontal laser beam if top step is active */}
           {isTopActive && (
             <div 
-              className="absolute right-0 top-1/2 -translate-y-1/2 w-12 h-[2.5px] pointer-events-none"
+              className="absolute right-0 top-1/2 -translate-y-1/2 w-14 h-[2.5px] pointer-events-none"
               style={{
                 background: 'linear-gradient(90deg, rgba(254,240,138,1) 0%, rgba(56,189,248,0.9) 60%, transparent 100%)',
                 boxShadow: '0 0 10px #38bdf8'
@@ -180,7 +180,7 @@ export default function KbcPointsLadder({
         </div>
       </div>
 
-      {/* ── THE VERTICAL LADDER (CYAN LASER SPINE & COMPACT RUNGS) ── */}
+      {/* ── THE VERTICAL LADDER (CYAN LASER SPINE & RUNGS WITH INCREASED HEIGHT) ── */}
       <div className="relative w-full my-0.5">
         
         {/* Cyan Vertical Laser Spine Line */}
@@ -192,8 +192,8 @@ export default function KbcPointsLadder({
           }}
         />
 
-        {/* Stacked Rungs: Fits completely without scrolling */}
-        <div className="space-y-[2px] relative z-10">
+        {/* Stacked Rungs: Fits completely without scrolling with comfortable height */}
+        <div className="space-y-[3px] relative z-10">
           {ladderSteps.map(step => {
             const isCurrent = step.level === activeLevel;
             const isPassed = step.level < activeLevel;
@@ -201,31 +201,31 @@ export default function KbcPointsLadder({
 
             let strokeColor = '#38bdf8';
             let strokeWidth = '1.2';
-            let fillColor = 'rgba(6, 11, 30, 0.92)';
+            let fillColor = 'rgba(6, 11, 30, 0.94)';
             let textColor = 'text-cyan-100';
             let filterStyle = 'none';
 
             if (isDroppedStep) {
               strokeColor = '#ef4444';
               strokeWidth = '1.8';
-              fillColor = 'rgba(127, 29, 29, 0.9)';
+              fillColor = 'rgba(127, 29, 29, 0.92)';
               textColor = 'text-white';
               filterStyle = 'drop-shadow(0 0 10px rgba(239, 68, 68, 0.85))';
             } else if (isCurrent) {
               strokeColor = '#fef08a';
               strokeWidth = '2';
-              fillColor = 'rgba(180, 83, 9, 0.92)';
+              fillColor = 'rgba(180, 83, 9, 0.94)';
               textColor = 'text-white';
               filterStyle = 'drop-shadow(0 0 12px rgba(245, 158, 11, 0.95))';
             } else if (isPassed) {
               strokeColor = '#10b981';
               strokeWidth = '1.2';
-              fillColor = 'rgba(6, 40, 28, 0.88)';
+              fillColor = 'rgba(6, 40, 28, 0.9)';
               textColor = 'text-emerald-200';
             } else if (step.isSafe) {
               strokeColor = '#f59e0b';
               strokeWidth = '1.6';
-              fillColor = 'rgba(24, 18, 52, 0.92)';
+              fillColor = 'rgba(24, 18, 52, 0.94)';
               textColor = 'text-amber-300';
               filterStyle = 'drop-shadow(0 0 6px rgba(245, 158, 11, 0.45))';
             }
@@ -236,7 +236,7 @@ export default function KbcPointsLadder({
                 ref={isCurrent ? currentStepRef : null}
                 layout
                 transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-                className={`relative w-full h-[20px] flex items-center justify-between px-2.5 text-[10px] font-bold transition-all duration-200 cursor-default ${
+                className={`relative w-full h-[25px] sm:h-[27px] flex items-center justify-between px-3 text-[11px] font-bold transition-all duration-200 cursor-default ${
                   isCurrent ? 'scale-[1.03] z-20' : 'hover:scale-[1.015]'
                 }`}
                 style={{ filter: filterStyle }}
@@ -244,19 +244,21 @@ export default function KbcPointsLadder({
                 {/* SVG Elongated Hexagonal Background */}
                 <svg 
                   className="absolute inset-0 w-full h-full pointer-events-none" 
-                  viewBox="0 0 180 24" 
+                  viewBox="0 0 196 28" 
                   preserveAspectRatio="none"
                 >
                   <polygon 
-                    points="11,1 169,1 179,12 169,23 11,23 1,12" 
+                    points="14,1 182,1 194,14 182,27 14,27 2,14" 
                     fill={fillColor} 
                     stroke={strokeColor} 
                     strokeWidth={strokeWidth}
                   />
+                  {/* Subtle inner horizontal gloss line on top */}
+                  <line x1="18" y1="3" x2="178" y2="3" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
                 </svg>
 
                 {/* Left: Level Number with Diamond/Check indicator */}
-                <span className={`relative z-10 font-mono text-[9px] font-black w-4 text-left flex items-center gap-0.5 ${
+                <span className={`relative z-10 font-mono text-[10px] font-black w-5 text-left flex items-center gap-0.5 ${
                   isDroppedStep 
                     ? 'text-white' 
                     : isCurrent 
@@ -271,16 +273,18 @@ export default function KbcPointsLadder({
                 </span>
 
                 {/* Center: Prize Amount */}
-                <span className={`relative z-10 text-[9.5px] font-black tracking-tight text-center flex-1 truncate px-0.5 ${textColor} ${
+                <span className={`relative z-10 text-[11px] sm:text-[12px] font-black tracking-tight text-center flex-1 truncate px-1 ${textColor} ${
                   isCurrent ? 'drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]' : ''
                 }`}>
                   {step.prize}
                 </span>
 
                 {/* Right: Milestone Dot or Points */}
-                <span className="relative z-10 text-[8px] font-mono text-slate-400 w-6 text-right truncate">
+                <span className="relative z-10 text-[9px] font-mono text-slate-400 w-8 text-right truncate">
                   {step.isSafe ? (
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_#f59e0b] inline-block" />
+                    <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[8px] font-bold border border-amber-400/40">
+                      PADAV
+                    </span>
                   ) : (
                     <span>{step.points}</span>
                   )}
@@ -289,7 +293,7 @@ export default function KbcPointsLadder({
                 {/* Horizontal Laser Beam on Active Level */}
                 {isCurrent && (
                   <div 
-                    className="absolute right-0 top-1/2 -translate-y-1/2 w-10 h-[2px] pointer-events-none z-30"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 w-12 h-[2.5px] pointer-events-none z-30"
                     style={{
                       background: 'linear-gradient(90deg, rgba(254,240,138,1) 0%, rgba(56,189,248,0.9) 60%, transparent 100%)',
                       boxShadow: '0 0 10px rgba(56, 189, 248, 0.9)'

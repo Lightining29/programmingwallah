@@ -2158,7 +2158,7 @@ export default function KbcExam() {
               </button>
             </div>
 
-            {/* 2-Column Responsive Layout: Left Area (Lifelines, Timer, Question, Options, Status) + Right (185px KBC Point Leaderboard / Ladder) */}
+            {/* 2-Column Responsive Layout: Left Area (Lifelines, Timer, Question, Options, Status) + Right (200px KBC Point Leaderboard / Ladder) */}
             <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 items-center lg:items-start justify-center w-full max-w-7xl mx-auto flex-1 min-h-0 overflow-hidden py-0.5 relative">
               
               {/* Left Column: Lifelines Truss, Radar Timer, Hex Question, 4 Options, Compact Status Bar */}
@@ -2341,50 +2341,94 @@ export default function KbcExam() {
                 )}
               </div>
 
-              {/* ── THE ICONIC DOUBLE-CHEVRON HEXAGONAL QUESTION BAR ── */}
+              {/* ── THE ICONIC 3D SCULPTED BROADCAST QUESTION CONSOLE ── */}
               <div className="relative w-full py-0.5 shrink-0">
-                {/* Horizontal illuminated silver/cyan rail extending across behind question */}
-                <div className={`absolute top-1/2 left-0 right-0 h-[2.5px] -translate-y-1/2 pointer-events-none transition-all duration-700 ${
+                {/* Horizontal high-intensity cyan/gold cyber-rail extending across arena */}
+                <div className={`absolute top-1/2 left-0 right-0 h-[3px] -translate-y-1/2 pointer-events-none transition-all duration-700 ${
                   isWrongAnswer
-                    ? 'bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_18px_#ef4444]'
-                    : 'bg-gradient-to-r from-transparent via-slate-200/50 via-cyan-300/80 to-transparent shadow-[0_0_18px_#06b6d4]'
+                    ? 'bg-gradient-to-r from-transparent via-red-500 via-rose-300 to-transparent shadow-[0_0_20px_#ef4444]'
+                    : 'bg-gradient-to-r from-transparent via-amber-300/40 via-cyan-400 to-transparent shadow-[0_0_20px_#00f2fe]'
                 }`} />
 
-                <div 
-                  className="relative mx-auto w-full max-w-4xl px-8 sm:px-14 py-3 sm:py-4 text-center transition-all duration-700 overflow-hidden"
-                  style={{
-                    background: 'linear-gradient(180deg, #151b47 0%, #0d102b 100%)',
-                    border: isWrongAnswer ? '2.5px solid #ef4444' : '2.5px solid #d4af37',
-                    boxShadow: isWrongAnswer
-                      ? '0 0 35px rgba(239, 68, 68, 0.75), inset 0 0 15px rgba(239, 68, 68, 0.35)'
-                      : '0 0 30px rgba(212, 175, 55, 0.5), inset 0 0 20px rgba(99, 102, 241, 0.4)',
-                    clipPath: 'polygon(3% 0%, 97% 0%, 100% 50%, 97% 100%, 3% 100%, 0% 50%)'
-                  }}
-                >
-                  {/* Glass top gloss highlight */}
-                  <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/18 to-transparent pointer-events-none" />
+                {/* Left & Right Neon Pointer Flashes */}
+                <div className="absolute top-1/2 -left-2 -translate-y-1/2 w-4 h-4 rounded-full bg-cyan-400 blur-sm pointer-events-none" />
+                <div className="absolute top-1/2 -right-2 -translate-y-1/2 w-4 h-4 rounded-full bg-cyan-400 blur-sm pointer-events-none" />
 
-                  {/* Animated light sheen across question surface */}
-                  <div className="absolute inset-y-0 -left-1/3 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-[-25deg] pointer-events-none animate-[pulse_4s_ease-in-out_infinite]" />
+                <div className="relative mx-auto w-full max-w-4xl min-h-[76px] sm:min-h-[86px] flex flex-col items-center justify-center text-center px-10 sm:px-16 py-3 sm:py-4 transition-all duration-700 select-none">
+                  {/* SVG 3D Beveled Broadcast Chassis */}
+                  <svg 
+                    className="absolute inset-0 w-full h-full pointer-events-none drop-shadow-[0_12px_30px_rgba(0,0,0,0.9)]" 
+                    viewBox="0 0 900 110" 
+                    preserveAspectRatio="none"
+                  >
+                    <defs>
+                      <linearGradient id="qGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#fef08a"/>
+                        <stop offset="25%" stopColor="#d4af37"/>
+                        <stop offset="50%" stopColor="#f59e0b"/>
+                        <stop offset="75%" stopColor="#fbbf24"/>
+                        <stop offset="100%" stopColor="#92400e"/>
+                      </linearGradient>
+                      <linearGradient id="qRedGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#fca5a5"/>
+                        <stop offset="50%" stopColor="#ef4444"/>
+                        <stop offset="100%" stopColor="#7f1d1d"/>
+                      </linearGradient>
+                      <linearGradient id="qBodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#1a2254"/>
+                        <stop offset="50%" stopColor="#0f1435"/>
+                        <stop offset="100%" stopColor="#080a1c"/>
+                      </linearGradient>
+                    </defs>
 
-                  <div className="flex items-center justify-center gap-2 mb-0.5 relative z-10">
-                    <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-amber-300 flex items-center gap-1.5">
+                    {/* Outer Hexagon with 3D Beveled Contour */}
+                    <polygon 
+                      points="32,3 868,3 897,55 868,107 32,107 3,55" 
+                      fill="url(#qBodyGrad)" 
+                      stroke={isWrongAnswer ? 'url(#qRedGrad)' : 'url(#qGoldGrad)'} 
+                      strokeWidth="3.2"
+                    />
+
+                    {/* Inner Glowing Cyan/Gold Neon Trace Line */}
+                    <polygon 
+                      points="38,8 862,8 889,55 862,102 38,102 11,55" 
+                      fill="none" 
+                      stroke={isWrongAnswer ? '#f87171' : '#00f2fe'} 
+                      strokeWidth="1.4"
+                      strokeDasharray={isWrongAnswer ? 'none' : '6 3'}
+                      opacity="0.85"
+                    />
+
+                    {/* Top Edge Specular Reflection */}
+                    <line x1="45" y1="5" x2="855" y2="5" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" />
+                  </svg>
+
+                  {/* Top Glass Gloss Sheen */}
+                  <div className="absolute inset-x-8 sm:inset-x-12 top-1 h-[45%] bg-gradient-to-b from-white/18 via-white/5 to-transparent pointer-events-none rounded-t-xl" />
+
+                  {/* Floating 3D Pill Badge: QUESTION [X] • [PRIZE] */}
+                  <div className="relative z-10 flex items-center justify-center gap-2 mb-1">
+                    <div className="inline-flex items-center gap-1.5 px-3.5 py-0.5 rounded-full bg-gradient-to-r from-amber-950/90 via-slate-950/90 to-amber-950/90 border border-amber-400/80 shadow-[0_0_12px_rgba(245,158,11,0.5)]">
                       <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
-                      QUESTION {currentLevel} • {currentPrize.prize}
-                    </span>
+                      <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-amber-300">
+                        QUESTION {currentLevel} • {currentPrize.prize}
+                      </span>
+                    </div>
                     {currentQ?.topic && (
-                      <span className="text-[9px] px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 font-mono font-bold">
+                      <span className="text-[9px] px-2.5 py-0.5 rounded-full bg-cyan-950/80 text-cyan-300 border border-cyan-400/50 font-mono font-bold shadow-sm">
                         {currentQ?.topic}
                       </span>
                     )}
                   </div>
-                  <h2 className="text-xs sm:text-sm md:text-base lg:text-lg font-black text-white leading-snug px-3 relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] line-clamp-3 uppercase tracking-wide">
+
+                  {/* Question Text */}
+                  <h2 className="text-xs sm:text-sm md:text-base lg:text-lg font-black text-white leading-snug px-4 relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] line-clamp-3 uppercase tracking-wide">
                     {currentQ?.question}
                   </h2>
                 </div>
               </div>
 
-              {/* ── 4 DOUBLE-CHEVRON HEXAGONAL OPTIONS (Dual Horizontal Rails Matching TV Broadcast) ── */}
+              {/* ── 4 SCULPTED 3D HEXAGONAL OPTION PODS (With Metallic Letter Emblem & Continuous Cyber-Rails) ── */}
               <div className="relative max-w-4xl mx-auto w-full space-y-2 shrink-0 pt-0.5">
                 {(() => {
                   const renderOptionItem = (idx) => {
@@ -2401,55 +2445,69 @@ export default function KbcExam() {
                       return (
                         <div 
                           key={idx} 
-                          className="relative opacity-20 pointer-events-none py-2 px-5 min-h-[40px] sm:min-h-[44px] flex items-center justify-between overflow-hidden"
+                          className="relative opacity-25 pointer-events-none py-2 px-6 min-h-[46px] sm:min-h-[50px] flex items-center justify-between overflow-hidden rounded-xl"
                           style={{
                             background: '#090817',
-                            border: '1.5px dashed #ef4444',
-                            clipPath: 'polygon(4% 0%, 96% 0%, 100% 50%, 96% 100%, 4% 100%, 0% 50%)'
+                            border: '1.5px dashed #ef4444'
                           }}
                         >
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-xs font-black text-red-500">{letter}:</span>
-                            <span className="text-slate-600 line-through text-xs font-bold">———</span>
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded border border-red-500/40 bg-red-950/50 flex items-center justify-center font-mono text-xs font-black text-red-500">
+                              {letter}
+                            </div>
+                            <span className="text-slate-600 line-through text-xs font-bold tracking-wider">————————</span>
                           </div>
-                          <span className="text-[9px] text-red-400 font-black tracking-wider uppercase bg-red-950 px-1.5 py-0.5 rounded border border-red-800">50:50</span>
+                          <span className="text-[9px] text-red-400 font-black tracking-wider uppercase bg-red-950 px-2 py-0.5 rounded border border-red-800">50:50</span>
                         </div>
                       );
                     }
 
-                    // Dynamic interactive styling
-                    let bgGradient = 'linear-gradient(180deg, #101438 0%, #070a20 100%)';
-                    let borderColor = '#38bdf8';
+                    // Dynamic interactive colors & gradients
+                    let strokeColor = '#38bdf8';
+                    let innerStrokeColor = '#00f2fe';
+                    let strokeWidth = '2.2';
+                    let filterDrop = 'drop-shadow(0 4px 12px rgba(0,0,0,0.8))';
                     let textColor = 'text-white';
-                    let letterColor = 'text-amber-400';
-                    let glowShadow = '0 0 12px rgba(56, 189, 248, 0.35), inset 0 0 8px rgba(56, 189, 248, 0.15)';
 
-                    if (isHovered && !isSelected && !isLocked) {
-                      bgGradient = 'linear-gradient(180deg, #152563 0%, #0c153b 100%)';
-                      borderColor = '#67e8f9';
-                      glowShadow = '0 0 24px rgba(103, 232, 249, 0.75), inset 0 0 10px rgba(103, 232, 249, 0.35)';
-                    }
+                    // Determine fill gradient & borders
+                    let fillId = `optFillDef_${idx}`;
+                    let isSpecialState = false;
 
                     if (isWrongSelected) {
-                      bgGradient = 'linear-gradient(180deg, #dc2626 0%, #b91c1c 50%, #7f1d1d 100%)';
-                      borderColor = '#f87171';
-                      glowShadow = '0 0 25px rgba(239, 68, 68, 0.9), inset 0 0 10px rgba(239, 68, 68, 0.5)';
+                      isSpecialState = true;
+                      fillId = `optFillWrong_${idx}`;
+                      strokeColor = '#f87171';
+                      innerStrokeColor = '#fca5a5';
+                      strokeWidth = '2.8';
+                      filterDrop = 'drop-shadow(0 0 24px rgba(239, 68, 68, 0.95))';
+                      textColor = 'text-white';
                     } else if (isCorrect) {
-                      bgGradient = 'linear-gradient(180deg, #059669 0%, #047857 50%, #064e3b 100%)';
-                      borderColor = '#34d399';
-                      glowShadow = '0 0 25px rgba(16, 185, 129, 0.95), inset 0 0 15px rgba(16, 185, 129, 0.6)';
+                      isSpecialState = true;
+                      fillId = `optFillCorrect_${idx}`;
+                      strokeColor = '#34d399';
+                      innerStrokeColor = '#6ee7b7';
+                      strokeWidth = '2.8';
+                      filterDrop = 'drop-shadow(0 0 24px rgba(16, 185, 129, 0.95))';
+                      textColor = 'text-white';
                     } else if (isSelected) {
                       // Exact locked golden/amber gradient matching TV broadcast
-                      bgGradient = 'linear-gradient(180deg, #d97706 0%, #b45309 50%, #78350f 100%)';
-                      borderColor = '#fef08a';
-                      letterColor = 'text-amber-200';
-                      glowShadow = '0 0 32px rgba(245, 158, 11, 0.95), inset 0 0 15px rgba(254, 240, 138, 0.6)';
+                      isSpecialState = true;
+                      fillId = `optFillLocked_${idx}`;
+                      strokeColor = '#fef08a';
+                      innerStrokeColor = '#fef9c3';
+                      strokeWidth = '2.8';
+                      filterDrop = 'drop-shadow(0 0 28px rgba(245, 158, 11, 0.95))';
+                      textColor = 'text-slate-950';
+                    } else if (isHovered && !isLocked) {
+                      fillId = `optFillHover_${idx}`;
+                      strokeColor = '#67e8f9';
+                      innerStrokeColor = '#a5f3fc';
+                      strokeWidth = '2.5';
+                      filterDrop = 'drop-shadow(0 0 20px rgba(103, 232, 249, 0.75))';
                     } else if (isLocked && revealedCorrect === null) {
-                      bgGradient = 'linear-gradient(180deg, #090818 0%, #050410 100%)';
-                      borderColor = '#2a2448';
+                      strokeColor = '#241e3d';
+                      innerStrokeColor = '#1e1933';
                       textColor = 'text-slate-500';
-                      letterColor = 'text-slate-600';
-                      glowShadow = 'none';
                     }
 
                     return (
@@ -2459,51 +2517,121 @@ export default function KbcExam() {
                         onMouseEnter={() => setHoveredOption(idx)}
                         onMouseLeave={() => setHoveredOption(null)}
                         disabled={isOptionDisabled}
-                        className={`group relative text-left py-2 px-5 min-h-[40px] sm:min-h-[44px] max-h-[48px] transition-all overflow-hidden flex items-center justify-between ${
+                        className={`group relative text-left py-2 px-4 sm:px-6 min-h-[46px] sm:min-h-[50px] transition-all overflow-hidden flex items-center justify-between select-none ${
                           isOptionDisabled
                             ? (isSelected && isLocked) 
                               ? 'cursor-default ring-1 ring-amber-300 shadow-amber-400/40' 
                               : 'cursor-not-allowed opacity-40 grayscale-[40%] pointer-events-none'
-                            : 'cursor-pointer transform hover:scale-[1.015] active:scale-[0.99] hover:border-cyan-300'
+                            : 'cursor-pointer transform hover:scale-[1.02] active:scale-[0.98]'
                         } ${
                           isSelected && (answerStatus === 'evaluating' || answerStatus === 'locked') ? 'animate-pulse' : ''
                         }`}
-                        style={{
-                          background: bgGradient,
-                          border: `2px solid ${borderColor}`,
-                          boxShadow: glowShadow,
-                          clipPath: 'polygon(4% 0%, 96% 0%, 100% 50%, 96% 100%, 4% 100%, 0% 50%)'
-                        }}
+                        style={{ filter: filterDrop }}
                       >
-                        {/* Glass top gloss highlight */}
-                        <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/18 to-transparent pointer-events-none" />
+                        {/* SVG 3D Sculpted Beveled Hexagon Chassis */}
+                        <svg 
+                          className="absolute inset-0 w-full h-full pointer-events-none" 
+                          viewBox="0 0 440 56" 
+                          preserveAspectRatio="none"
+                        >
+                          <defs>
+                            <linearGradient id={`optFillDef_${idx}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" stopColor="#141c48"/>
+                              <stop offset="60%" stopColor="#0c1230"/>
+                              <stop offset="100%" stopColor="#06091b"/>
+                            </linearGradient>
+                            <linearGradient id={`optFillHover_${idx}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" stopColor="#1d2b6b"/>
+                              <stop offset="60%" stopColor="#121b44"/>
+                              <stop offset="100%" stopColor="#090e25"/>
+                            </linearGradient>
+                            <linearGradient id={`optFillLocked_${idx}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" stopColor="#fef08a"/>
+                              <stop offset="28%" stopColor="#f59e0b"/>
+                              <stop offset="72%" stopColor="#d97706"/>
+                              <stop offset="100%" stopColor="#78350f"/>
+                            </linearGradient>
+                            <linearGradient id={`optFillCorrect_${idx}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" stopColor="#6ee7b7"/>
+                              <stop offset="30%" stopColor="#10b981"/>
+                              <stop offset="70%" stopColor="#047857"/>
+                              <stop offset="100%" stopColor="#064e3b"/>
+                            </linearGradient>
+                            <linearGradient id={`optFillWrong_${idx}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" stopColor="#fca5a5"/>
+                              <stop offset="30%" stopColor="#ef4444"/>
+                              <stop offset="70%" stopColor="#b91c1c"/>
+                              <stop offset="100%" stopColor="#7f1d1d"/>
+                            </linearGradient>
+                          </defs>
 
-                        <div className="flex items-center gap-2 sm:gap-2.5 relative z-10 w-full min-w-0">
-                          {/* Letter Prefix (A:, B:, C:, D:) */}
-                          <span className={`font-mono font-black text-sm shrink-0 drop-shadow-[0_0_8px_rgba(251,191,36,0.65)] ${letterColor}`}>
-                            {letter}:
-                          </span>
+                          {/* Outer Hexagon with 3D Bevel */}
+                          <polygon 
+                            points="18,2 422,2 438,28 422,54 18,54 2,28" 
+                            fill={`url(#${fillId})`} 
+                            stroke={strokeColor} 
+                            strokeWidth={strokeWidth}
+                          />
 
-                          <span className={`text-xs sm:text-sm font-black flex-1 uppercase tracking-wider truncate ${textColor}`}>
+                          {/* Inner Accent Groove */}
+                          <polygon 
+                            points="22,6 418,6 431,28 418,50 22,50 9,28" 
+                            fill="none" 
+                            stroke={innerStrokeColor} 
+                            strokeWidth="1"
+                            opacity={isSpecialState ? "0.9" : "0.55"}
+                          />
+
+                          {/* Top Specular Gloss Highlight */}
+                          <line x1="24" y1="4" x2="416" y2="4" stroke="rgba(255,255,255,0.35)" strokeWidth="1" />
+                        </svg>
+
+                        {/* Top Curved Glass Reflection */}
+                        <div className="absolute inset-x-6 top-0.5 h-[40%] bg-gradient-to-b from-white/20 via-white/5 to-transparent pointer-events-none rounded-t-lg" />
+
+                        {/* Content Container */}
+                        <div className="flex items-center gap-2.5 sm:gap-3.5 relative z-10 w-full min-w-0 px-2 sm:px-3">
+                          
+                          {/* 3D Metallic Letter Emblem Plate (A, B, C, D) */}
+                          <div className={`w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-lg flex items-center justify-center shrink-0 shadow-md transition-all ${
+                            isSelected 
+                              ? 'bg-gradient-to-b from-amber-300 via-amber-500 to-amber-700 border-2 border-yellow-200 text-slate-950 font-black shadow-[0_0_12px_rgba(251,191,36,0.9)]'
+                              : isCorrect
+                                ? 'bg-gradient-to-b from-emerald-400 to-emerald-800 border-2 border-emerald-300 text-white font-black shadow-[0_0_12px_rgba(16,185,129,0.9)]'
+                                : isWrongSelected
+                                  ? 'bg-gradient-to-b from-red-500 to-red-900 border-2 border-red-300 text-white font-black shadow-[0_0_12px_rgba(239,68,68,0.9)]'
+                                  : 'bg-gradient-to-b from-slate-900 via-[#111936] to-slate-950 border border-amber-400/80 text-amber-300 font-black shadow-[0_0_8px_rgba(251,191,36,0.5)] group-hover:border-cyan-300 group-hover:text-cyan-200'
+                          }`}>
+                            <span className="font-mono text-xs sm:text-sm tracking-tight">{letter}</span>
+                          </div>
+
+                          {/* Option Text */}
+                          <span className={`text-xs sm:text-sm md:text-[14px] font-black flex-1 uppercase tracking-wider truncate ${textColor} ${
+                            isSelected
+                              ? 'drop-shadow-[0_1px_1px_rgba(254,240,138,0.8)]'
+                              : isCorrect || isWrongSelected
+                                ? 'drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]'
+                                : 'group-hover:text-cyan-100 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]'
+                          }`}>
                             {opt}
                           </span>
 
                           {/* Option Status Badges */}
                           {isSelected && isLocked && revealedCorrect === null && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-amber-500/25 text-amber-200 border border-amber-300 font-mono font-black text-[9px] uppercase tracking-wider shadow-[0_0_12px_rgba(245,158,11,0.8)] shrink-0 animate-pulse">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-slate-950/80 text-amber-300 border border-amber-400 font-mono font-black text-[9px] uppercase tracking-wider shadow-[0_0_14px_rgba(245,158,11,0.9)] shrink-0 animate-pulse">
                               <Lock className="w-3 h-3 text-amber-300" />
                               <span>LOCKED</span>
                             </span>
                           )}
                           {isCorrect && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-emerald-500/30 text-emerald-200 border border-emerald-400 font-mono font-black text-[9px] uppercase tracking-wider shadow-[0_0_12px_rgba(16,185,129,0.8)] shrink-0 animate-bounce">
-                              <CheckCircle2 className="w-3 h-3 text-emerald-300" />
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-emerald-950/90 text-emerald-200 border border-emerald-400 font-mono font-black text-[9px] uppercase tracking-wider shadow-[0_0_14px_rgba(16,185,129,0.9)] shrink-0 animate-bounce">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
                               <span>SAHI</span>
                             </span>
                           )}
                           {isWrongSelected && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-red-600/30 text-red-200 border border-red-500 font-mono font-black text-[9px] uppercase tracking-wider shadow-[0_0_12px_rgba(239,68,68,0.8)] shrink-0">
-                              <XCircle className="w-3 h-3 text-red-300" />
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-red-950/90 text-red-200 border border-red-400 font-mono font-black text-[9px] uppercase tracking-wider shadow-[0_0_14px_rgba(239,68,68,0.9)] shrink-0">
+                              <XCircle className="w-3.5 h-3.5 text-red-300" />
                               <span>GALAT</span>
                             </span>
                           )}
@@ -2514,23 +2642,23 @@ export default function KbcExam() {
 
                   return (
                     <>
-                      {/* ROW 1: Options A & B with Horizontal Rail 1 */}
+                      {/* ROW 1: Options A & B with Continuous Cyber-Rail 1 */}
                       <div className="relative w-full">
-                        {/* Horizontal illuminated silver/cyan rail behind Row 1 */}
-                        <div className="absolute top-1/2 left-0 right-0 h-[2.5px] -translate-y-1/2 bg-gradient-to-r from-transparent via-slate-200/50 via-cyan-400/80 to-transparent pointer-events-none shadow-[0_0_12px_#00f2fe]" />
+                        {/* Horizontal illuminated laser rail behind Row 1 extending to edges */}
+                        <div className="absolute top-1/2 left-0 right-0 h-[2.5px] -translate-y-1/2 bg-gradient-to-r from-transparent via-cyan-400 via-white to-transparent pointer-events-none shadow-[0_0_16px_#00f2fe]" />
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 relative z-10">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3.5 relative z-10">
                           {renderOptionItem(0)}
                           {renderOptionItem(1)}
                         </div>
                       </div>
 
-                      {/* ROW 2: Options C & D with Horizontal Rail 2 */}
+                      {/* ROW 2: Options C & D with Continuous Cyber-Rail 2 */}
                       <div className="relative w-full">
-                        {/* Horizontal illuminated silver/cyan rail behind Row 2 */}
-                        <div className="absolute top-1/2 left-0 right-0 h-[2.5px] -translate-y-1/2 bg-gradient-to-r from-transparent via-slate-200/50 via-cyan-400/80 to-transparent pointer-events-none shadow-[0_0_12px_#00f2fe]" />
+                        {/* Horizontal illuminated laser rail behind Row 2 extending to edges */}
+                        <div className="absolute top-1/2 left-0 right-0 h-[2.5px] -translate-y-1/2 bg-gradient-to-r from-transparent via-cyan-400 via-white to-transparent pointer-events-none shadow-[0_0_16px_#00f2fe]" />
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 relative z-10">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3.5 relative z-10">
                           {renderOptionItem(2)}
                           {renderOptionItem(3)}
                         </div>
@@ -2620,8 +2748,8 @@ export default function KbcExam() {
 
               </div>
 
-              {/* Right Column: Authentic KBC Point Leaderboard / Ladder strictly 185px */}
-              <div className="hidden lg:flex w-[185px] shrink-0 flex-col items-center justify-start sticky top-14">
+              {/* Right Column: Authentic KBC Point Leaderboard / Ladder strictly 200px */}
+              <div className="hidden lg:flex w-[200px] shrink-0 flex-col items-center justify-start sticky top-14">
                 <KbcPointsLadder
                   currentLevel={currentLevel}
                   totalQuestions={totalQuestions}
