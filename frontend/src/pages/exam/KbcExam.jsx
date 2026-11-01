@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Trophy, Volume2, VolumeX, Clock, Users, PhoneCall, HelpCircle, 
+  Trophy, Volume2, VolumeX, Clock, Users, PhoneCall, Video, HelpCircle, 
   RotateCcw, Award, LogOut, CheckCircle2, XCircle, Sparkles, 
   AlertTriangle, ArrowRight, Settings, Download, Printer, ShieldCheck,
   Laptop, Radio, Wifi, UserCheck, Flame, Maximize, Minimize,
@@ -26,8 +26,10 @@ import {
 export default function KbcExam() {
   const navigate = useNavigate();
 
-  // ── Participation Mode: Live Admin-controlled Laptop Arena (Solo mode disabled) ──
-  const [playMode, setPlayMode] = useState('TEAM');
+  // ── Participation Mode: Live Arena (Solo Hotseat by default, Team if connected) ──
+  const [playMode, setPlayMode] = useState(() => {
+    return localStorage.getItem('kbc_team') ? 'TEAM' : 'SOLO';
+  });
 
   // Team Laptop Session State
   const [team, setTeam] = useState(() => {
@@ -161,11 +163,34 @@ export default function KbcExam() {
     current_question: null
   });
 
-  // Questions State
-  const [questions, setQuestions] = useState([]);
+  // Questions State: initialized immediately with fallback so arena always renders instantly
+  const [questions, setQuestions] = useState(() => {
+    const list = [];
+    for (let lvl = 1; lvl <= 16; lvl++) {
+      const levelQuestions = DEFAULT_MERN_SQL_QUESTIONS[lvl] || [];
+      const selected = levelQuestions[0] || {
+        id: `q${lvl}`,
+        topic: 'Programming & Logic',
+        question: `Question for Level ${lvl}`,
+        options: ['Option A', 'Option B', 'Option C', 'Option D'],
+        correct: 0,
+        explanation: 'KBC Hotseat Question'
+      };
+      list.push({
+        level: lvl,
+        id: selected.id,
+        topic: selected.topic,
+        question: selected.question,
+        options: selected.options,
+        correct: selected.correct,
+        explanation: selected.explanation
+      });
+    }
+    return list;
+  });
   const [flipPool, setFlipPool] = useState({});
   const [currentLevel, setCurrentLevel] = useState(1); // 1 to 16
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Player / Game State (Solo Mode)
   const [playerName, setPlayerName] = useState(() => {
@@ -1527,8 +1552,23 @@ export default function KbcExam() {
             )}
           </div>
 
-          {/* Right Controls: Fullscreen & Audio Mute */}
+          {/* Right Controls: Mode Toggle, Fullscreen & Audio Mute */}
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                if (playMode === 'TEAM') {
+                  setPlayMode('SOLO');
+                } else {
+                  setPlayMode('TEAM');
+                  if (!team) setAuthStep('GATE');
+                }
+              }}
+              className="px-2.5 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-amber-300 hover:text-white border border-slate-800 text-[10px] font-mono font-bold transition flex items-center gap-1 cursor-pointer"
+              title={playMode === 'TEAM' ? "Switch to Solo Hotseat" : "Connect Team Laptop"}
+            >
+              <Laptop className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden md:inline">{playMode === 'TEAM' ? 'Team Mode' : 'Solo Hotseat'}</span>
+            </button>
             <button
               onClick={toggleFullScreen}
               className="p-1.5 sm:p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition cursor-pointer"
@@ -1649,37 +1689,44 @@ export default function KbcExam() {
               </button>
             </div>
           </div>
-        ) : (!team && authStep === 'REGISTER') ? (
-          /* CASE 2A: Candidate Registration & Login */
+        ) : (playMode === 'TEAM' && !team && authStep === 'REGISTER') ? (
+          /* CASE 2A: Candidate Registration & Login (Cyber Neon Glass Theme) */
           <div className="my-auto max-w-2xl w-full mx-auto animate-fade-in py-4">
-            <div className="bg-white text-slate-900 border border-slate-200/90 rounded-[28px] p-6 sm:p-8 shadow-2xl backdrop-blur-xl space-y-5">
+            <div className="bg-slate-950/95 text-white border-2 border-cyan-400/80 rounded-[28px] p-6 sm:p-8 shadow-[0_0_50px_rgba(6,182,212,0.35)] backdrop-blur-xl space-y-5">
               
               {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-indigo-900/60 pb-3">
                 <div>
-                  <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                  <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                     {authMode === 'REGISTER' ? 'Candidate Registration' : 'Candidate Login'}
                   </h1>
-                  <p className="text-xs sm:text-sm text-slate-500 font-medium pt-0.5 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-cyan-200/80 font-medium pt-0.5 leading-relaxed">
                     {authMode === 'REGISTER' 
                       ? 'Fill in your details and course below. Email is permanent & unique.' 
                       : 'Log in with your registered Email Address and Date of Birth (DOB).'}
                   </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setPlayMode('SOLO')}
+                  className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-400/50 text-xs font-bold transition flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                >
+                  <span>Play Solo Hotseat →</span>
+                </button>
               </div>
 
               {/* Mode Toggle: Register vs Login */}
-              <div className="flex rounded-2xl bg-slate-100 p-1.5 border border-slate-200">
+              <div className="flex rounded-2xl bg-slate-900/90 p-1.5 border border-indigo-900/60">
                 <button
                   type="button"
                   onClick={() => { setAuthMode('REGISTER'); setRegError(''); setLoginError(''); }}
                   className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-black transition cursor-pointer flex items-center justify-center gap-2 ${
                     authMode === 'REGISTER' 
-                      ? 'bg-white text-teal-900 shadow-sm border border-slate-200/80' 
-                      : 'text-slate-500 hover:text-slate-900'
+                      ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-sm border border-cyan-400/60' 
+                      : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  <User className="w-4 h-4 text-teal-600" />
+                  <User className="w-4 h-4 text-cyan-300" />
                   <span>New Candidate Registration</span>
                 </button>
                 <button
@@ -1687,11 +1734,11 @@ export default function KbcExam() {
                   onClick={() => { setAuthMode('LOGIN'); setRegError(''); setLoginError(''); }}
                   className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-black transition cursor-pointer flex items-center justify-center gap-2 ${
                     authMode === 'LOGIN' 
-                      ? 'bg-white text-teal-900 shadow-sm border border-slate-200/80' 
-                      : 'text-slate-500 hover:text-slate-900'
+                      ? 'bg-gradient-to-r from-amber-600 to-yellow-600 text-white shadow-sm border border-amber-400/60' 
+                      : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  <Lock className="w-4 h-4 text-amber-600" />
+                  <Lock className="w-4 h-4 text-amber-300" />
                   <span>Candidate Login (Email + DOB)</span>
                 </button>
               </div>
@@ -1995,7 +2042,7 @@ export default function KbcExam() {
               )}
             </div>
           </div>
-        ) : (!team && authStep === 'GATE') ? (
+        ) : (playMode === 'TEAM' && !team && authStep === 'GATE') ? (
           /* CASE 2B: Exam Gate (Join Team via Laptop / Default Password) */
           <div className="my-auto max-w-xl w-full mx-auto space-y-6 animate-fade-in py-4">
             
@@ -2025,18 +2072,27 @@ export default function KbcExam() {
                 <p className="text-slate-300 text-xs sm:text-sm max-w-md mx-auto pt-1 leading-relaxed">
                   Participate live with your laptop in the Admin-controlled classroom competition! Face the 16-level championship questions in real-time.
                 </p>
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setPlayMode('SOLO')}
+                    className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-black text-xs uppercase tracking-wider shadow-md transition cursor-pointer"
+                  >
+                    Enter Hotseat Arena Directly ➔
+                  </button>
+                </div>
               </div>
 
               {/* FORM: Team Access Code / Default Password Entry */}
               <form onSubmit={handleJoinTeam} className="pt-2 max-w-md mx-auto space-y-4 text-left">
-                <div className="bg-white text-slate-900 rounded-2xl p-6 space-y-4 shadow-xl border border-slate-200">
-                  <div className="flex items-center gap-2 pb-2 border-b border-slate-200 text-amber-500 text-xs font-black uppercase tracking-wider">
-                    <Laptop className="w-4 h-4 text-amber-500" />
+                <div className="bg-slate-950/90 text-white rounded-2xl p-6 space-y-4 shadow-2xl border-2 border-cyan-400/80">
+                  <div className="flex items-center gap-2 pb-2 border-b border-indigo-900/60 text-amber-400 text-xs font-black uppercase tracking-wider">
+                    <Laptop className="w-4 h-4 text-amber-400" />
                     <span>JOIN TEAM VIA LAPTOP</span>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-black text-slate-600 mb-1.5 uppercase tracking-wider">
+                    <label className="block text-xs font-black text-slate-300 mb-1.5 uppercase tracking-wider">
                       ENTER TEAM ACCESS CODE
                     </label>
                     <input
@@ -2044,10 +2100,10 @@ export default function KbcExam() {
                       value={teamAccessCodeInput}
                       onChange={e => setTeamAccessCodeInput(e.target.value)}
                       placeholder="E.G.  KBC-101"
-                      className="w-full bg-slate-50 border-2 border-slate-200 focus:border-amber-500 rounded-xl px-4 py-3.5 text-slate-900 font-mono font-black text-center text-xl sm:text-2xl tracking-widest uppercase focus:outline-none shadow-inner"
+                      className="w-full bg-slate-900 border-2 border-cyan-400/60 focus:border-amber-400 rounded-xl px-4 py-3.5 text-yellow-300 font-mono font-black text-center text-xl sm:text-2xl tracking-widest uppercase focus:outline-none shadow-inner"
                       autoFocus
                     />
-                    <span className="text-[11px] text-slate-500 block mt-2 text-center font-medium">
+                    <span className="text-[11px] text-slate-400 block mt-2 text-center font-medium">
                       Ask your Exam Admin / Host for your Team Access Code.
                     </span>
                   </div>
