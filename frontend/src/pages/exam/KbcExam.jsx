@@ -1541,7 +1541,7 @@ export default function KbcExam() {
             )}
           </div>
 
-          {/* 4 Lifelines (Real KBC Icons - Active in Solo or Live Game) */}
+          {/* 4 Lifelines (3D Holographic Spheres - Matching Concept 3) */}
           {(gameStarted || (team && adminSession.status === 'LIVE')) && !gameOver && (
             <div className="flex items-center gap-2 md:gap-3">
               {/* 50:50 */}
@@ -1549,28 +1549,30 @@ export default function KbcExam() {
                 onClick={useFiftyFifty}
                 disabled={!lifelines.fifty || isOptionDisabled}
                 title="50:50 Lifeline (Eliminate 2 wrong answers)"
-                className={`relative px-3 py-1.5 rounded-full border text-xs font-black tracking-wider transition cursor-pointer flex items-center gap-1.5 ${
+                className={`group relative px-3 py-1.5 rounded-full border-2 text-xs font-black tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-lg overflow-hidden ${
                   lifelines.fifty && !isOptionDisabled
-                    ? 'bg-indigo-950/80 border-amber-400/80 text-amber-300 hover:bg-amber-500/20 shadow-md shadow-amber-500/10 hover:scale-105'
-                    : 'bg-slate-900/40 border-slate-800 text-slate-600 cursor-not-allowed line-through'
+                    ? 'bg-gradient-to-b from-[#1e1b4b] via-[#0f172a] to-[#020617] border-amber-400 text-amber-300 hover:border-yellow-200 shadow-amber-500/25 hover:scale-105 hover:shadow-amber-500/40'
+                    : 'bg-slate-900/60 border-slate-800 text-slate-600 cursor-not-allowed line-through opacity-40'
                 }`}
               >
-                <span>50:50</span>
+                <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none rounded-t-full" />
+                <span className="relative z-10">50:50</span>
               </button>
 
               {/* Audience Poll */}
               <button
                 onClick={useAudiencePoll}
                 disabled={!lifelines.poll || isOptionDisabled}
-                title="Audience Poll (Janmat Sangrah)"
-                className={`relative px-3 py-1.5 rounded-full border text-xs font-black tracking-wider transition cursor-pointer flex items-center gap-1.5 ${
+                title="Audience Poll (Janmat Sangrah 3D Hologram)"
+                className={`group relative px-3 py-1.5 rounded-full border-2 text-xs font-black tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-lg overflow-hidden ${
                   lifelines.poll && !isOptionDisabled
-                    ? 'bg-indigo-950/80 border-amber-400/80 text-amber-300 hover:bg-amber-500/20 shadow-md shadow-amber-500/10 hover:scale-105'
-                    : 'bg-slate-900/40 border-slate-800 text-slate-600 cursor-not-allowed'
+                    ? 'bg-gradient-to-b from-[#1e1b4b] via-[#0f172a] to-[#020617] border-amber-400 text-amber-300 hover:border-yellow-200 shadow-amber-500/25 hover:scale-105 hover:shadow-amber-500/40'
+                    : 'bg-slate-900/60 border-slate-800 text-slate-600 cursor-not-allowed line-through opacity-40'
                 }`}
               >
-                <Users className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Poll</span>
+                <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none rounded-t-full" />
+                <Users className="w-3.5 h-3.5 relative z-10 text-amber-400" />
+                <span className="hidden sm:inline relative z-10">Poll</span>
               </button>
 
               {/* Phone-A-Friend */}
@@ -1578,14 +1580,15 @@ export default function KbcExam() {
                 onClick={usePhoneAFriend}
                 disabled={!lifelines.friend || isOptionDisabled}
                 title="Ask Tech Expert / Phone-a-Friend"
-                className={`relative px-3 py-1.5 rounded-full border text-xs font-black tracking-wider transition cursor-pointer flex items-center gap-1.5 ${
+                className={`group relative px-3 py-1.5 rounded-full border-2 text-xs font-black tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-lg overflow-hidden ${
                   lifelines.friend && !isOptionDisabled
-                    ? 'bg-indigo-950/80 border-amber-400/80 text-amber-300 hover:bg-amber-500/20 shadow-md shadow-amber-500/10 hover:scale-105'
-                    : 'bg-slate-900/40 border-slate-800 text-slate-600 cursor-not-allowed'
+                    ? 'bg-gradient-to-b from-[#1e1b4b] via-[#0f172a] to-[#020617] border-amber-400 text-amber-300 hover:border-yellow-200 shadow-amber-500/25 hover:scale-105 hover:shadow-amber-500/40'
+                    : 'bg-slate-900/60 border-slate-800 text-slate-600 cursor-not-allowed line-through opacity-40'
                 }`}
               >
-                <PhoneCall className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Expert</span>
+                <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none rounded-t-full" />
+                <PhoneCall className="w-3.5 h-3.5 relative z-10 text-amber-400" />
+                <span className="hidden sm:inline relative z-10">Expert</span>
               </button>
 
               {/* Flip the Question */}
@@ -1593,14 +1596,15 @@ export default function KbcExam() {
                 onClick={useFlipQuestion}
                 disabled={!lifelines.flip || isOptionDisabled}
                 title="Flip Question (Switch Question)"
-                className={`relative px-3 py-1.5 rounded-full border text-xs font-black tracking-wider transition cursor-pointer flex items-center gap-1.5 ${
+                className={`group relative px-3 py-1.5 rounded-full border-2 text-xs font-black tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-lg overflow-hidden ${
                   lifelines.flip && !isOptionDisabled
-                    ? 'bg-indigo-950/80 border-amber-400/80 text-amber-300 hover:bg-amber-500/20 shadow-md shadow-amber-500/10 hover:scale-105'
-                    : 'bg-slate-900/40 border-slate-800 text-slate-600 cursor-not-allowed'
+                    ? 'bg-gradient-to-b from-[#1e1b4b] via-[#0f172a] to-[#020617] border-amber-400 text-amber-300 hover:border-yellow-200 shadow-amber-500/25 hover:scale-105 hover:shadow-amber-500/40'
+                    : 'bg-slate-900/60 border-slate-800 text-slate-600 cursor-not-allowed line-through opacity-40'
                 }`}
               >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Flip</span>
+                <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none rounded-t-full" />
+                <RotateCcw className="w-3.5 h-3.5 relative z-10 text-amber-400" />
+                <span className="hidden sm:inline relative z-10">Flip</span>
               </button>
             </div>
           )}
@@ -2202,9 +2206,25 @@ export default function KbcExam() {
             </div>
           </div>
         ) : (
-          /* CASE 3: Live KBC Arena (Active in Solo OR when Team is LIVE) */
-          <div className="w-full max-w-7xl mx-auto my-auto px-2 sm:px-4 space-y-4">
+          /* CASE 3: Live KBC Arena (Broadcast Studio Experience - Matching Concept 1) */
+          <div className="relative w-full max-w-7xl mx-auto my-auto px-2 sm:px-4 space-y-4">
             
+            {/* Dynamic Volumetric Studio Spotlights (Reacting to Question State) */}
+            <div className="pointer-events-none absolute inset-0 overflow-hidden -z-10">
+              <div className={`absolute -top-40 left-1/4 w-[500px] h-[500px] rounded-full blur-[120px] transition-all duration-1000 ${
+                isWrongAnswer || answerStatus === 'wrong' ? 'bg-red-600/35' :
+                answerStatus === 'correct' ? 'bg-emerald-500/30' :
+                (isLocked || answerStatus === 'locked') ? 'bg-amber-500/35' :
+                'bg-blue-600/25'
+              }`} />
+              <div className={`absolute -top-32 right-1/4 w-[450px] h-[450px] rounded-full blur-[120px] transition-all duration-1000 ${
+                isWrongAnswer || answerStatus === 'wrong' ? 'bg-rose-700/30' :
+                answerStatus === 'correct' ? 'bg-teal-500/25' :
+                (isLocked || answerStatus === 'locked') ? 'bg-yellow-500/25' :
+                'bg-indigo-600/25'
+              }`} />
+            </div>
+
             {/* Mobile Header Quick Points Pill & Point Ladder Drawer Toggle */}
             <div className="lg:hidden flex items-center justify-between p-2.5 sm:p-3 rounded-2xl bg-[#0c102a]/90 border border-amber-400/40 backdrop-blur-md shadow-lg">
               <div className="flex items-center gap-2">
@@ -2240,25 +2260,36 @@ export default function KbcExam() {
               {/* Left Column: Timer, Hex Question, 4 Hex Options, Lock bar */}
               <div className="lg:col-span-8 space-y-4">
               
-              {/* ── Circular Timer (Tik-Tiki Ji) at Top Center (Circle Shape) ── */}
+              {/* ── Circular Holographic Radar Timer (Tik-Tiki Ji) Matching Concept 1 ── */}
               <div className="flex items-center justify-center pt-1 pb-1 relative z-20">
                 {currentLevel <= (adminSession?.total_questions || 30) ? (
                   <div className="relative flex items-center justify-center">
-                    {/* Glowing halo behind circle timer */}
-                    <div className={`absolute w-24 h-24 rounded-full blur-xl pointer-events-none transition-all ${
+                    {/* Glowing outer halo */}
+                    <div className={`absolute w-32 h-32 rounded-full blur-2xl pointer-events-none transition-all duration-500 ${
                       timeLeft <= 0
-                        ? 'bg-red-600/70 animate-pulse'
-                        : timeLeft <= 10 ? 'bg-red-500/60 animate-pulse' : 'bg-amber-400/30'
+                        ? 'bg-red-600/80 animate-pulse'
+                        : timeLeft <= 10 
+                          ? 'bg-red-500/70 animate-pulse scale-110' 
+                          : timeLeft <= 15
+                            ? 'bg-amber-500/50'
+                            : 'bg-cyan-500/30'
+                    }`} />
+
+                    {/* Outer Rotating Decorative Dashed Ring */}
+                    <div className={`absolute w-26 h-26 sm:w-28 sm:h-28 rounded-full border-2 border-dashed pointer-events-none transition-colors duration-500 ${
+                      timeLeft <= 10 ? 'border-red-500/60 animate-spin [animation-duration:8s]' : 'border-amber-400/40 animate-spin [animation-duration:25s]'
                     }`} />
 
                     {/* Circular Timer Body */}
                     <div 
-                      className={`relative w-20 h-20 sm:w-22 sm:h-22 rounded-full border-[3.5px] flex flex-col items-center justify-center shadow-2xl transition-all select-none ${
+                      className={`relative w-22 h-22 sm:w-24 sm:h-24 rounded-full border-[3px] flex flex-col items-center justify-center shadow-2xl transition-all duration-300 select-none overflow-hidden cursor-pointer ${
                         timeLeft <= 0
                           ? 'border-red-600 bg-gradient-to-b from-red-950 via-black to-red-950 text-red-300 shadow-[0_0_35px_#dc2626] scale-105'
                           : timeLeft <= 10 
-                            ? 'border-red-500 bg-gradient-to-b from-red-950/95 via-red-900/90 to-black/95 text-white shadow-[0_0_35px_#ef4444] animate-pulse scale-105' 
-                            : 'border-amber-400 bg-gradient-to-b from-[#141d48]/95 via-[#0c1230]/95 to-[#060a1d]/95 text-amber-300 shadow-[0_0_25px_rgba(251,191,36,0.45)] hover:scale-105'
+                            ? 'border-red-500 bg-gradient-to-b from-red-950/95 via-red-900/90 to-black/95 text-white shadow-[0_0_40px_#ef4444] animate-pulse scale-105' 
+                            : timeLeft <= 15
+                              ? 'border-amber-400 bg-gradient-to-b from-[#2a1705]/95 via-[#180e03]/95 to-black/95 text-amber-300 shadow-[0_0_30px_rgba(251,191,36,0.5)]'
+                              : 'border-cyan-400/90 bg-gradient-to-b from-[#0c1c38]/95 via-[#060e22]/95 to-[#020612]/95 text-cyan-300 shadow-[0_0_30px_rgba(6,182,212,0.4)] hover:scale-105'
                       }`}
                       onClick={() => {
                         kbcAudio.init();
@@ -2270,26 +2301,42 @@ export default function KbcExam() {
                       }}
                       title={timeLeft <= 0 ? "Samay Samapt (Time Up)" : "Tik-Tiki Ji Countdown Timer (Click to Play Clock Sound)"}
                     >
-                      {/* SVG circular radar tick marks */}
+                      {/* Glass top reflection */}
+                      <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none rounded-t-full" />
+
+                      {/* SVG Circular Countdown Progress Arc */}
                       <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none p-1">
                         <circle
                           cx="50%"
                           cy="50%"
-                          r="38%"
-                          stroke={timeLeft <= 0 ? 'rgba(239, 68, 68, 0.7)' : timeLeft <= 10 ? 'rgba(239, 68, 68, 0.45)' : 'rgba(245, 158, 11, 0.35)'}
-                          strokeWidth="2.5"
+                          r="42%"
+                          stroke="rgba(255, 255, 255, 0.1)"
+                          strokeWidth="3.5"
                           fill="none"
-                          strokeDasharray="4 4"
+                        />
+                        <circle
+                          cx="50%"
+                          cy="50%"
+                          r="42%"
+                          stroke={timeLeft <= 0 ? '#ef4444' : timeLeft <= 10 ? '#ef4444' : timeLeft <= 15 ? '#f59e0b' : '#06b6d4'}
+                          strokeWidth="3.5"
+                          strokeLinecap="round"
+                          fill="none"
+                          strokeDasharray={260}
+                          strokeDashoffset={260 - (Math.max(0, Math.min(100, (timeLeft / (getLevelCountdown(currentLevel) || 30)) * 100)) / 100) * 260}
+                          className="transition-all duration-1000 ease-linear"
                         />
                       </svg>
 
-                      <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-amber-400 font-sans -mb-0.5 z-10">
+                      <span className={`text-[8px] sm:text-[9px] font-black uppercase tracking-widest font-sans -mb-0.5 z-10 ${
+                        timeLeft <= 10 ? 'text-red-400' : timeLeft <= 15 ? 'text-amber-400' : 'text-cyan-400'
+                      }`}>
                         {timeLeft <= 0 ? 'SAMAY' : 'TIK-TIKI'}
                       </span>
-                      <span className={`text-2xl sm:text-3xl font-black font-mono leading-none tracking-tight z-10 ${
-                        timeLeft <= 0 ? 'text-red-400' : timeLeft <= 10 ? 'text-white' : 'text-amber-300'
+                      <span className={`text-2xl sm:text-3xl font-black font-mono leading-none tracking-tight z-10 drop-shadow-md ${
+                        timeLeft <= 0 ? 'text-red-400' : timeLeft <= 10 ? 'text-white' : timeLeft <= 15 ? 'text-amber-300' : 'text-cyan-200'
                       }`}>
-                        {timeLeft <= 0 ? '0' : timeLeft}
+                        {timeLeft <= 0 ? '0' : timeLeft < 10 ? `0:0${timeLeft}` : `0:${timeLeft}`}
                       </span>
                       <span className={`text-[7px] sm:text-[8px] font-bold tracking-wider uppercase z-10 ${
                         timeLeft <= 0 ? 'text-red-400' : 'text-slate-400'
@@ -2311,43 +2358,47 @@ export default function KbcExam() {
                 )}
               </div>
 
-              {/* ── THE ICONIC HEXAGONAL QUESTION BAR (Matching reference image) ── */}
+              {/* ── THE ICONIC DOUBLE-CHEVRON HEXAGONAL QUESTION BAR ── */}
               <div className="relative w-full py-2">
                 {/* Horizontal golden/red connector lines */}
-                <div className={`absolute top-1/2 left-0 right-0 h-[2px] -translate-y-1/2 pointer-events-none transition-all duration-700 ${
+                <div className={`absolute top-1/2 left-0 right-0 h-[2.5px] -translate-y-1/2 pointer-events-none transition-all duration-700 ${
                   isWrongAnswer
                     ? 'bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_20px_#ef4444]'
-                    : 'bg-gradient-to-r from-transparent via-amber-400/80 to-transparent'
+                    : 'bg-gradient-to-r from-transparent via-amber-400 to-transparent shadow-[0_0_15px_#fbbf24]'
                 }`} />
 
                 <div 
-                  className="relative mx-auto w-full max-w-4xl px-8 py-5 text-center transition-all duration-700"
+                  className="relative mx-auto w-full max-w-4xl px-8 py-5 sm:py-6 text-center transition-all duration-700 overflow-hidden"
                   style={{
                     background: isWrongAnswer
                       ? 'linear-gradient(180deg, #450a0a 0%, #1a0404 100%)'
-                      : 'linear-gradient(180deg, #1d1847 0%, #0d0b27 100%)',
-                    border: isWrongAnswer ? '2px solid #ef4444' : '2px solid #d4af37',
+                      : 'linear-gradient(180deg, #18143d 0%, #0d0b27 100%)',
+                    border: isWrongAnswer ? '2.5px solid #ef4444' : '2.5px solid #d4af37',
                     boxShadow: isWrongAnswer
-                      ? '0 0 35px rgba(239, 68, 68, 0.5), inset 0 0 20px rgba(185, 28, 28, 0.6)'
-                      : '0 0 25px rgba(212, 175, 55, 0.25), inset 0 0 15px rgba(100, 60, 200, 0.3)',
+                      ? '0 0 35px rgba(239, 68, 68, 0.6), inset 0 0 20px rgba(185, 28, 28, 0.7)'
+                      : '0 0 30px rgba(212, 175, 55, 0.35), inset 0 0 20px rgba(100, 60, 200, 0.4)',
                     clipPath: 'polygon(3% 0%, 97% 0%, 100% 50%, 97% 100%, 3% 100%, 0% 50%)'
                   }}
                 >
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <span className="text-[11px] font-black uppercase tracking-widest text-amber-400">
-                      Question {currentLevel} for {currentPrize.prize}
+                  {/* Glass top gloss highlight */}
+                  <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/15 to-transparent pointer-events-none" />
+
+                  <div className="flex items-center justify-center gap-2 mb-1.5 relative z-10">
+                    <span className="text-[11px] sm:text-xs font-black uppercase tracking-widest text-amber-300 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                      QUESTION {currentLevel} • {currentPrize.prize}
                     </span>
-                    <span className="text-[10px] px-2 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 font-mono">
+                    <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 font-mono font-bold">
                       {currentQ?.topic}
                     </span>
                   </div>
-                  <h2 className="text-base sm:text-lg md:text-xl font-bold text-white leading-relaxed px-4">
+                  <h2 className="text-base sm:text-lg md:text-xl font-extrabold text-white leading-relaxed px-4 relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                     {currentQ?.question}
                   </h2>
                 </div>
               </div>
 
-              {/* ── 4 HEXAGONAL OPTIONS (2x2 Grid with exact shape & gold borders) ── */}
+              {/* ── 4 DOUBLE-CHEVRON HEXAGONAL OPTIONS (With Metallic Diamond Badges) ── */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto pt-2">
                 {currentQ?.options.map((opt, idx) => {
                   const letter = String.fromCharCode(65 + idx);
@@ -2366,36 +2417,41 @@ export default function KbcExam() {
                     return (
                       <div 
                         key={idx} 
-                        className="opacity-15 pointer-events-none py-3.5 px-6"
+                        className="relative opacity-20 pointer-events-none py-4 px-7 flex items-center justify-between overflow-hidden"
                         style={{
                           background: '#090817',
-                          border: '1px solid #332d56',
-                          clipPath: 'polygon(5% 0%, 95% 0%, 100% 50%, 95% 100%, 5% 100%, 0% 50%)'
+                          border: '1px dashed #ef4444',
+                          clipPath: 'polygon(4% 0%, 96% 0%, 100% 50%, 96% 100%, 4% 100%, 0% 50%)'
                         }}
                       >
-                        <span className="text-amber-500/40 font-black mr-2">{letter}:</span>
-                        <span className="text-slate-600">———</span>
+                        <div className="flex items-center gap-3">
+                          <div className="w-7 h-7 rounded rotate-45 border border-red-500/40 bg-red-950/40 flex items-center justify-center text-red-400 font-mono text-xs font-black shrink-0">
+                            <span className="-rotate-45">{letter}</span>
+                          </div>
+                          <span className="text-slate-600 line-through text-sm">———</span>
+                        </div>
+                        <span className="text-[10px] text-red-400 font-black tracking-wider uppercase bg-red-950 px-2 py-0.5 rounded border border-red-800">50:50 VAPORIZED</span>
                       </div>
                     );
                   }
 
                   if (isWrongSelected) {
-                    bgGradient = 'linear-gradient(180deg, #7f1d1d 0%, #450a0a 100%)';
+                    bgGradient = 'linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%)';
                     borderColor = '#ef4444';
-                    glowShadow = '0 0 25px rgba(239, 68, 68, 0.6)';
+                    glowShadow = '0 0 35px rgba(239, 68, 68, 0.8), inset 0 0 15px rgba(239, 68, 68, 0.5)';
                   } else if (isCorrect) {
-                    bgGradient = 'linear-gradient(180deg, #065f46 0%, #022c22 100%)';
+                    bgGradient = 'linear-gradient(135deg, #065f46 0%, #022c22 100%)';
                     borderColor = '#10b981';
-                    glowShadow = '0 0 30px rgba(16, 185, 129, 0.7)';
+                    glowShadow = '0 0 35px rgba(16, 185, 129, 0.9), inset 0 0 20px rgba(16, 185, 129, 0.6)';
                   } else if (isSelected) {
                     if (isLocked || answerStatus === 'locked' || answerStatus === 'evaluating') {
-                      bgGradient = 'linear-gradient(180deg, #b45309 0%, #78350f 100%)';
-                      borderColor = '#fbbf24';
-                      glowShadow = '0 0 35px rgba(245, 158, 11, 0.9), inset 0 0 15px rgba(251, 191, 36, 0.4)';
+                      bgGradient = 'linear-gradient(135deg, #78350f 0%, #b45309 50%, #d97706 100%)';
+                      borderColor = '#fef08a';
+                      glowShadow = '0 0 40px rgba(245, 158, 11, 0.95), inset 0 0 20px rgba(254, 240, 138, 0.6)';
                     } else {
-                      bgGradient = 'linear-gradient(180deg, #d97706 0%, #92400e 100%)';
+                      bgGradient = 'linear-gradient(135deg, #d97706 0%, #92400e 100%)';
                       borderColor = '#fbbf24';
-                      glowShadow = '0 0 20px rgba(251, 191, 36, 0.5)';
+                      glowShadow = '0 0 25px rgba(251, 191, 36, 0.6)';
                     }
                   } else if (isLocked && revealedCorrect === null) {
                     // Non-selected options when answer is locked: dim them out
@@ -2410,10 +2466,10 @@ export default function KbcExam() {
                       key={idx}
                       onClick={() => handleOptionClick(idx)}
                       disabled={isOptionDisabled}
-                      className={`group relative text-left py-4 px-7 transition-all ${
+                      className={`group relative text-left py-4 px-6 sm:px-7 transition-all overflow-hidden ${
                         isOptionDisabled
                           ? (isSelected && isLocked) 
-                            ? 'cursor-default ring-2 ring-amber-400/70 shadow-amber-400/30' 
+                            ? 'cursor-default ring-2 ring-amber-300 shadow-amber-400/40' 
                             : 'cursor-not-allowed opacity-35 grayscale-[50%] pointer-events-none'
                           : 'cursor-pointer transform hover:scale-[1.01] active:scale-[0.99]'
                       } ${
@@ -2421,29 +2477,47 @@ export default function KbcExam() {
                       }`}
                       style={{
                         background: bgGradient,
-                        border: `2px solid ${borderColor}`,
+                        border: `2.5px solid ${borderColor}`,
                         boxShadow: glowShadow,
-                        clipPath: 'polygon(5% 0%, 95% 0%, 100% 50%, 95% 100%, 5% 100%, 0% 50%)'
+                        clipPath: 'polygon(4% 0%, 96% 0%, 100% 50%, 96% 100%, 4% 100%, 0% 50%)'
                       }}
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="text-amber-400 font-black text-sm md:text-base tracking-wider shrink-0">
-                          {letter}:
-                        </span>
+                      {/* Glass top gloss highlight */}
+                      <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/15 to-transparent pointer-events-none" />
+
+                      <div className="flex items-center gap-3 relative z-10">
+                        {/* Metallic Diamond Letter Tag */}
+                        <div className={`w-8 h-8 rounded-lg rotate-45 border-2 flex items-center justify-center shrink-0 shadow-lg transition-transform group-hover:scale-110 ${
+                          isCorrect ? 'border-emerald-300 bg-gradient-to-br from-emerald-500 to-green-700 text-white' :
+                          isWrongSelected ? 'border-red-300 bg-gradient-to-br from-red-600 to-rose-900 text-white' :
+                          (isSelected && isLocked) ? 'border-yellow-200 bg-gradient-to-br from-yellow-300 via-amber-500 to-amber-700 text-slate-950 shadow-[0_0_15px_#f59e0b]' :
+                          isSelected ? 'border-yellow-300 bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950' :
+                          'border-amber-400/80 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-amber-300 group-hover:border-amber-300'
+                        }`}>
+                          <span className="-rotate-45 font-black text-xs sm:text-sm font-mono tracking-tight">{letter}</span>
+                        </div>
+
                         <span className={`text-sm md:text-base font-bold flex-1 ${textColor}`}>
                           {opt}
                         </span>
+
                         {isSelected && isLocked && revealedCorrect === null && (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shrink-0 animate-pulse">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/50 border border-yellow-200 shrink-0 animate-pulse">
                             <Lock className="w-3.5 h-3.5 text-slate-950" />
                             <span>LOCKED 🔒</span>
                           </span>
                         )}
                         {isCorrect && (
-                          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/60 border border-emerald-300 shrink-0 animate-bounce">
+                            <CheckCircle2 className="w-4 h-4 text-white" />
+                            <span>SAHI UTTAR!</span>
+                          </span>
                         )}
                         {isWrongSelected && (
-                          <XCircle className="w-5 h-5 text-red-400 shrink-0" />
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-red-600/60 border border-red-300 shrink-0">
+                            <XCircle className="w-4 h-4 text-white" />
+                            <span>GALAT</span>
+                          </span>
                         )}
                       </div>
                     </button>
@@ -2572,44 +2646,113 @@ export default function KbcExam() {
 
       {/* ── MODALS: Audience Poll, Expert Video Call, Quit Confirmation, Winner Cheque ── */}
 
-      {/* 1. Audience Poll Modal */}
-      {activeModal === 'poll' && pollData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="bg-[#0b132e] border-2 border-amber-400/60 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-5 text-center">
-            <div className="flex items-center justify-center gap-2 text-amber-400">
-              <Users className="w-6 h-6" />
-              <h3 className="text-lg font-black uppercase tracking-wider">Janmat Sangrah (Audience Poll)</h3>
-            </div>
-            <p className="text-xs text-slate-300">
-              Studio audience has cast their votes for Question {currentLevel}:
-            </p>
+      {/* 1. Audience Poll Modal (Broadcast Studio 3D Holographic Pillars) */}
+      {activeModal === 'poll' && pollData && (() => {
+        const maxPercent = Math.max(...pollData);
+        const topOptIdx = pollData.indexOf(maxPercent);
+        const topLetter = String.fromCharCode(65 + topOptIdx);
 
-            <div className="grid grid-cols-4 gap-3 items-end h-48 pt-6 pb-2 px-4 bg-slate-950/60 border border-indigo-900/50 rounded-2xl">
-              {[0, 1, 2, 3].map(optIdx => {
-                const letter = String.fromCharCode(65 + optIdx);
-                const percent = pollData[optIdx] || 0;
-                return (
-                  <div key={optIdx} className="flex flex-col items-center gap-1.5 h-full justify-end">
-                    <span className="text-xs font-bold text-amber-300">{percent}%</span>
-                    <div 
-                      className="w-full rounded-t-lg bg-gradient-to-t from-indigo-600 via-amber-500 to-yellow-300 transition-all duration-1000"
-                      style={{ height: `${Math.max(percent * 1.5, 8)}px` }}
-                    />
-                    <span className="text-xs font-black text-white">{letter}</span>
-                  </div>
-                );
-              })}
-            </div>
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="relative bg-gradient-to-b from-[#0a1128] via-[#060a1c] to-[#030611] border-2 border-amber-400/80 rounded-3xl w-full max-w-lg p-6 sm:p-7 shadow-[0_0_60px_rgba(6,182,212,0.35)] space-y-5 text-center overflow-hidden">
+              
+              {/* Studio Ambient Neon Glows */}
+              <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-80 h-36 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-80 h-36 bg-amber-500/20 rounded-full blur-3xl pointer-events-none" />
 
-            <button
-              onClick={() => setActiveModal(null)}
-              className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm cursor-pointer"
-            >
-              Shukriya Audience! Wapas Khel Par Chalein
-            </button>
+              {/* Modal Header */}
+              <div className="relative z-10 space-y-1">
+                <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-cyan-950/80 border border-cyan-400/50 text-cyan-300 text-[11px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+                  <Users className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Janmat Sangrah • Live Studio Audience Poll</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+                </div>
+                <h3 className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-100 uppercase tracking-wider">
+                  Audience Consensus Vote
+                </h3>
+                <p className="text-xs text-slate-300 font-medium">
+                  Hotseat Studio audience has cast their live votes for Question {currentLevel}:
+                </p>
+              </div>
+
+              {/* 3D Holographic Chart Floor & Neon Vertical Pillars */}
+              <div className="relative z-10 p-5 rounded-2xl bg-slate-950/80 border border-cyan-500/30 shadow-inner">
+                {/* Consensus Top Recommendation Banner */}
+                <div className="mb-4 py-1.5 px-3 rounded-xl bg-gradient-to-r from-amber-500/20 via-cyan-500/20 to-amber-500/20 border border-amber-400/40 text-[11px] sm:text-xs font-bold text-amber-300 flex items-center justify-center gap-2 shadow-sm">
+                  <Sparkles className="w-3.5 h-3.5 text-yellow-400 animate-spin [animation-duration:6s]" />
+                  <span>Audience Recommendation: <strong>Option [{topLetter}]</strong> leads with <strong>{maxPercent}%</strong> votes</span>
+                </div>
+
+                {/* 4 Vertical Neon Pillars with 3D Depth */}
+                <div className="grid grid-cols-4 gap-3 sm:gap-4 items-end h-56 pt-6 pb-2 px-2 bg-gradient-to-b from-slate-900/40 to-slate-950/90 rounded-xl border border-indigo-950">
+                  {[0, 1, 2, 3].map(optIdx => {
+                    const letter = String.fromCharCode(65 + optIdx);
+                    const percent = pollData[optIdx] || 0;
+                    const isTop = optIdx === topOptIdx && percent > 0;
+
+                    return (
+                      <div key={optIdx} className="flex flex-col items-center gap-2 h-full justify-end group">
+                        {/* Floating Percentage Badge */}
+                        <div className={`px-2 py-0.5 rounded-md font-mono font-black text-xs transition-transform duration-300 ${
+                          isTop 
+                            ? 'bg-amber-400 text-slate-950 shadow-[0_0_15px_rgba(251,191,36,0.8)] scale-110' 
+                            : 'bg-slate-800 text-cyan-300 border border-cyan-500/30'
+                        }`}>
+                          {percent}%
+                        </div>
+
+                        {/* 3D Cylindrical Neon Pillar */}
+                        <div className="w-full max-w-[54px] relative flex flex-col justify-end items-center">
+                          {/* Top Cap Glow */}
+                          <div 
+                            className={`w-full h-2 rounded-full transition-all duration-700 ${
+                              isTop 
+                                ? 'bg-amber-300 shadow-[0_0_16px_rgba(251,191,36,1)]' 
+                                : 'bg-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.9)]'
+                            }`}
+                          />
+                          {/* Main Glowing Column */}
+                          <div 
+                            className={`w-full rounded-t-lg transition-all duration-1000 relative overflow-hidden ${
+                              isTop
+                                ? 'bg-gradient-to-t from-amber-700 via-amber-500 to-yellow-300 shadow-[0_0_25px_rgba(245,158,11,0.6)]'
+                                : 'bg-gradient-to-t from-indigo-900 via-blue-600 to-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
+                            }`}
+                            style={{ height: `${Math.max(percent * 1.6, 12)}px` }}
+                          >
+                            {/* Glass Reflection Highlight */}
+                            <div className="absolute inset-y-0 left-1 w-1 bg-white/40 blur-[0.5px] rounded-full pointer-events-none" />
+                          </div>
+                        </div>
+
+                        {/* Rotated Diamond Option Badge */}
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs sm:text-sm shadow-md transition-transform duration-300 ${
+                          isTop
+                            ? 'bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 border border-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.6)]'
+                            : 'bg-slate-900 text-white border border-indigo-500/50'
+                        }`}>
+                          {letter}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <div className="relative z-10 pt-1">
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-amber-500/30 hover:scale-[1.02] transition cursor-pointer"
+                >
+                  Shukriya Audience! Wapas Khel Par Chalein
+                </button>
+              </div>
+
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* 2. Phone-a-Friend / Expert Video Call Modal */}
       {activeModal === 'friend' && expertAdvice && (
