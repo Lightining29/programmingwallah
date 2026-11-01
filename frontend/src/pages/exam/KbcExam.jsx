@@ -1458,7 +1458,7 @@ export default function KbcExam() {
     : (safeWonPrizeLabel !== '₹0' ? safeWonPrizeLabel : '₹0');
 
   return (
-    <div className={`kbc-dark-root arena-dark-root min-h-screen text-white flex flex-col justify-between relative overflow-hidden select-none font-sans transition-colors duration-700 ${
+    <div className={`kbc-dark-root arena-dark-root min-h-screen lg:h-screen lg:max-h-screen text-white flex flex-col justify-between relative overflow-hidden select-none font-sans transition-colors duration-700 ${
       isWrongAnswer ? 'bg-[#0f0202]' : 'bg-[#020617]'
     }`}>
       
@@ -1492,8 +1492,8 @@ export default function KbcExam() {
         <KbcLaserLogoReveal onComplete={() => setShowLaserIntro(false)} />
       )}
 
-      {/* ── Top Header Bar: Logo, Lifelines, Timer, Controls ── */}
-      <header className={`relative z-20 border-b transition-colors duration-700 bg-black/50 backdrop-blur-md px-4 py-2.5 ${
+      {/* ── Top Header Bar: Logo, Team Pill, Controls (Compact & Clean) ── */}
+      <header className={`relative z-20 border-b transition-colors duration-700 bg-black/60 backdrop-blur-md px-3 py-1.5 sm:px-4 sm:py-2 shrink-0 ${
         isWrongAnswer ? 'border-red-600/70 shadow-[0_4px_30px_rgba(239,68,68,0.25)]' : 'border-indigo-900/50'
       }`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
@@ -1501,14 +1501,14 @@ export default function KbcExam() {
           {/* Logo & Hotseat Title */}
           <div className="flex items-center gap-3">
             <Link to="/" className="flex items-center gap-2 group">
-              <span className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 font-black flex items-center justify-center text-lg shadow-lg shadow-amber-500/20 group-hover:scale-105 transition">
+              <span className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 font-black flex items-center justify-center text-base sm:text-lg shadow-lg shadow-amber-500/20 group-hover:scale-105 transition">
                 ₹
               </span>
               <div>
                 <span className="text-xs font-black tracking-widest text-amber-400 block uppercase">
                   Kaun Banega Crorepati
                 </span>
-                <span className="text-[11px] font-bold text-slate-400 tracking-tight block">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 tracking-tight block">
                   MERN & SQL Grand Exam Hotseat
                 </span>
               </div>
@@ -1516,7 +1516,7 @@ export default function KbcExam() {
 
             {/* Team Laptop Connected Pill */}
             {team && (
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-950/90 border border-amber-400/60 text-xs shadow-md">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-0.5 rounded-full bg-indigo-950/90 border border-amber-400/60 text-xs shadow-md">
                 <Laptop className="w-3.5 h-3.5 text-amber-400" />
                 <span className="text-slate-300">Team: <strong className="text-amber-300">{team.team_name}</strong></span>
                 <span className="text-[10px] bg-slate-900 px-2 py-0.5 rounded text-slate-400 font-mono font-bold">{team.access_code}</span>
@@ -1542,86 +1542,18 @@ export default function KbcExam() {
             )}
           </div>
 
-          {/* 4 Lifelines (3D Holographic Spheres - Matching Concept 3) */}
-          {(gameStarted || (team && adminSession.status === 'LIVE')) && !gameOver && (
-            <div className="flex items-center gap-2 md:gap-3">
-              {/* 50:50 */}
-              <button
-                onClick={useFiftyFifty}
-                disabled={!lifelines.fifty || isOptionDisabled}
-                title="50:50 Lifeline (Eliminate 2 wrong answers)"
-                className={`group relative px-3 py-1.5 rounded-full border-2 text-xs font-black tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-lg overflow-hidden ${
-                  lifelines.fifty && !isOptionDisabled
-                    ? 'bg-gradient-to-b from-[#1e1b4b] via-[#0f172a] to-[#020617] border-amber-400 text-amber-300 hover:border-yellow-200 shadow-amber-500/25 hover:scale-105 hover:shadow-amber-500/40'
-                    : 'bg-slate-900/60 border-slate-800 text-slate-600 cursor-not-allowed line-through opacity-40'
-                }`}
-              >
-                <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none rounded-t-full" />
-                <span className="relative z-10">50:50</span>
-              </button>
-
-              {/* Audience Poll */}
-              <button
-                onClick={useAudiencePoll}
-                disabled={!lifelines.poll || isOptionDisabled}
-                title="Audience Poll (Janmat Sangrah 3D Hologram)"
-                className={`group relative px-3 py-1.5 rounded-full border-2 text-xs font-black tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-lg overflow-hidden ${
-                  lifelines.poll && !isOptionDisabled
-                    ? 'bg-gradient-to-b from-[#1e1b4b] via-[#0f172a] to-[#020617] border-amber-400 text-amber-300 hover:border-yellow-200 shadow-amber-500/25 hover:scale-105 hover:shadow-amber-500/40'
-                    : 'bg-slate-900/60 border-slate-800 text-slate-600 cursor-not-allowed line-through opacity-40'
-                }`}
-              >
-                <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none rounded-t-full" />
-                <Users className="w-3.5 h-3.5 relative z-10 text-amber-400" />
-                <span className="hidden sm:inline relative z-10">Poll</span>
-              </button>
-
-              {/* Phone-A-Friend */}
-              <button
-                onClick={usePhoneAFriend}
-                disabled={!lifelines.friend || isOptionDisabled}
-                title="Ask Tech Expert / Phone-a-Friend"
-                className={`group relative px-3 py-1.5 rounded-full border-2 text-xs font-black tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-lg overflow-hidden ${
-                  lifelines.friend && !isOptionDisabled
-                    ? 'bg-gradient-to-b from-[#1e1b4b] via-[#0f172a] to-[#020617] border-amber-400 text-amber-300 hover:border-yellow-200 shadow-amber-500/25 hover:scale-105 hover:shadow-amber-500/40'
-                    : 'bg-slate-900/60 border-slate-800 text-slate-600 cursor-not-allowed line-through opacity-40'
-                }`}
-              >
-                <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none rounded-t-full" />
-                <PhoneCall className="w-3.5 h-3.5 relative z-10 text-amber-400" />
-                <span className="hidden sm:inline relative z-10">Expert</span>
-              </button>
-
-              {/* Flip the Question */}
-              <button
-                onClick={useFlipQuestion}
-                disabled={!lifelines.flip || isOptionDisabled}
-                title="Flip Question (Switch Question)"
-                className={`group relative px-3 py-1.5 rounded-full border-2 text-xs font-black tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-lg overflow-hidden ${
-                  lifelines.flip && !isOptionDisabled
-                    ? 'bg-gradient-to-b from-[#1e1b4b] via-[#0f172a] to-[#020617] border-amber-400 text-amber-300 hover:border-yellow-200 shadow-amber-500/25 hover:scale-105 hover:shadow-amber-500/40'
-                    : 'bg-slate-900/60 border-slate-800 text-slate-600 cursor-not-allowed line-through opacity-40'
-                }`}
-              >
-                <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none rounded-t-full" />
-                <RotateCcw className="w-3.5 h-3.5 relative z-10 text-amber-400" />
-                <span className="hidden sm:inline relative z-10">Flip</span>
-              </button>
-            </div>
-          )}
-
           {/* Right Controls: Fullscreen & Audio Mute */}
           <div className="flex items-center gap-2">
             <button
               onClick={toggleFullScreen}
-              className="p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition cursor-pointer"
+              className="p-1.5 sm:p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition cursor-pointer"
               title={isFullScreen ? "Exit Fullscreen (Esc)" : "Enter Fullscreen"}
             >
               {isFullScreen ? <Minimize className="w-4 h-4 text-amber-400" /> : <Maximize className="w-4 h-4 text-amber-400" />}
             </button>
             <button
               onClick={toggleSound}
-              className="p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition cursor-pointer"
+              className="p-1.5 sm:p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition cursor-pointer"
               title={isMuted ? "Unmute Audio" : "Mute Audio"}
             >
               {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-amber-400" />}
@@ -1631,7 +1563,7 @@ export default function KbcExam() {
       </header>
 
       {/* ── Main Arena: Host, Question, Options, and Money Ladder ── */}
-      <main className="relative z-20 flex-1 max-w-7xl w-full mx-auto p-4 flex flex-col justify-between">
+      <main className="relative z-20 flex-1 max-w-7xl w-full mx-auto p-1 sm:p-2 flex flex-col justify-between min-h-0 overflow-hidden">
         
         {/* CASE 1: Connected Team Waiting for Admin to start Live Broadcast */}
         {playMode === 'TEAM' && team && adminSession.status !== 'LIVE' ? (
@@ -2208,7 +2140,7 @@ export default function KbcExam() {
           </div>
         ) : (
           /* CASE 3: Live KBC Arena (Broadcast Studio Experience - Matching Concept 1) */
-          <div className="relative w-full max-w-7xl mx-auto my-auto px-2 sm:px-4 space-y-4">
+          <div className="relative w-full max-w-7xl mx-auto flex flex-col justify-between h-full min-h-0 px-1 sm:px-2 overflow-hidden">
             
             {/* Dynamic Volumetric Studio Spotlights (Reacting to Question State) */}
             <div className="pointer-events-none absolute inset-0 overflow-hidden -z-10">
@@ -2227,9 +2159,9 @@ export default function KbcExam() {
             </div>
 
             {/* Mobile Header Quick Points Pill & Point Ladder Drawer Toggle */}
-            <div className="lg:hidden flex items-center justify-between p-2.5 sm:p-3 rounded-2xl bg-[#0c102a]/90 border border-amber-400/40 backdrop-blur-md shadow-lg">
+            <div className="lg:hidden flex items-center justify-between p-2 rounded-xl bg-[#0c102a]/90 border border-amber-400/40 backdrop-blur-md shadow-lg shrink-0 mb-1">
               <div className="flex items-center gap-2">
-                <span className="text-xs sm:text-sm font-black text-amber-300">
+                <span className="text-xs font-black text-amber-300">
                   ⭐ {(userPoints || 0).toLocaleString()} pts
                 </span>
                 <span className="text-xs text-slate-300">
@@ -2248,21 +2180,21 @@ export default function KbcExam() {
               <button
                 type="button"
                 onClick={() => setShowMobileLeaderboard(prev => !prev)}
-                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-amber-500/20 cursor-pointer"
+                className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-[11px] uppercase tracking-wider flex items-center gap-1 shadow-md shadow-amber-500/20 cursor-pointer"
               >
                 <Trophy className="w-3.5 h-3.5" />
                 {showMobileLeaderboard ? 'Hide' : 'Point Ladder'}
               </button>
             </div>
 
-            {/* 2-Column Responsive Layout: Left 8 Cols (Questions & Options) + Right 4 Cols (KBC Point Leaderboard / Ladder) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            {/* 2-Column Responsive Layout: Left Area (Lifelines, Timer, Question, Options, Status) + Right (150px KBC Point Leaderboard / Ladder) */}
+            <div className="flex flex-col lg:flex-row gap-2.5 sm:gap-3.5 items-center lg:items-start justify-center w-full max-w-7xl mx-auto flex-1 min-h-0 overflow-hidden py-0.5">
               
-              {/* Left Column: Timer, Hex Question, 4 Hex Options, Lock bar */}
-              <div className="lg:col-span-8 space-y-4">
+              {/* Left Column: Lifelines, Timer, Hex Question, 4 Hex Options, Compact Status Bar */}
+              <div className="flex-1 w-full max-w-4xl flex flex-col justify-between h-full min-h-0 space-y-1 sm:space-y-1.5 overflow-hidden">
               
-              {/* ── Circular Overhead Lifeline Rig (Matching Image 1) ── */}
-              <div className="flex items-center justify-center gap-3 sm:gap-6 pt-1 pb-1 relative z-20">
+              {/* ── Circular Overhead Lifeline Rig (Matching Reference Photo) ── */}
+              <div className="flex items-center justify-center gap-3 sm:gap-5 pt-0.5 pb-0.5 relative z-20 shrink-0">
                 {/* 50:50 Pod */}
                 <button
                   type="button"
@@ -2273,11 +2205,11 @@ export default function KbcExam() {
                     !lifelines.fifty ? 'opacity-30 line-through cursor-not-allowed scale-95' : 'hover:scale-105'
                   }`}
                 >
-                  <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-full border-2 border-cyan-400/80 bg-gradient-to-b from-[#1e293b]/90 via-[#0f172a]/95 to-[#020617] flex items-center justify-center shadow-[0_0_18px_rgba(56,189,248,0.4)] relative overflow-hidden group-hover:border-yellow-300 group-hover:shadow-[0_0_22px_rgba(251,191,36,0.6)]">
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 border-cyan-400/80 bg-gradient-to-b from-[#1e293b]/90 via-[#0f172a]/95 to-[#020617] flex items-center justify-center shadow-[0_0_14px_rgba(56,189,248,0.4)] relative overflow-hidden group-hover:border-yellow-300 group-hover:shadow-[0_0_18px_rgba(251,191,36,0.6)]">
                     <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent pointer-events-none rounded-t-full" />
-                    <span className="font-mono font-black text-xs sm:text-sm text-white drop-shadow-[0_0_6px_#38bdf8]">50:50</span>
+                    <span className="font-mono font-black text-[11px] sm:text-xs text-white drop-shadow-[0_0_5px_#38bdf8]">50:50</span>
                   </div>
-                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-cyan-300 mt-1 drop-shadow-sm">50:50</span>
+                  <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-cyan-300 mt-0.5 drop-shadow-sm">50:50</span>
                 </button>
 
                 {/* Audience Poll Pod */}
@@ -2290,11 +2222,11 @@ export default function KbcExam() {
                     !lifelines.poll ? 'opacity-30 line-through cursor-not-allowed scale-95' : 'hover:scale-105'
                   }`}
                 >
-                  <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-full border-2 border-cyan-400/80 bg-gradient-to-b from-[#1e293b]/90 via-[#0f172a]/95 to-[#020617] flex items-center justify-center shadow-[0_0_18px_rgba(56,189,248,0.4)] relative overflow-hidden group-hover:border-yellow-300 group-hover:shadow-[0_0_22px_rgba(251,191,36,0.6)]">
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 border-cyan-400/80 bg-gradient-to-b from-[#1e293b]/90 via-[#0f172a]/95 to-[#020617] flex items-center justify-center shadow-[0_0_14px_rgba(56,189,248,0.4)] relative overflow-hidden group-hover:border-yellow-300 group-hover:shadow-[0_0_18px_rgba(251,191,36,0.6)]">
                     <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent pointer-events-none rounded-t-full" />
-                    <Users className="w-5 h-5 text-cyan-300 group-hover:text-yellow-300 drop-shadow-[0_0_6px_#38bdf8]" />
+                    <Users className="w-4 h-4 text-cyan-300 group-hover:text-yellow-300 drop-shadow-[0_0_5px_#38bdf8]" />
                   </div>
-                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-cyan-300 mt-1 drop-shadow-sm">AUDIENCE POLL</span>
+                  <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-cyan-300 mt-0.5 drop-shadow-sm">AUDIENCE POLL</span>
                 </button>
 
                 {/* Video Call Pod */}
@@ -2307,11 +2239,11 @@ export default function KbcExam() {
                     !lifelines.friend ? 'opacity-30 line-through cursor-not-allowed scale-95' : 'hover:scale-105'
                   }`}
                 >
-                  <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-full border-2 border-cyan-400/80 bg-gradient-to-b from-[#1e293b]/90 via-[#0f172a]/95 to-[#020617] flex items-center justify-center shadow-[0_0_18px_rgba(56,189,248,0.4)] relative overflow-hidden group-hover:border-yellow-300 group-hover:shadow-[0_0_22px_rgba(251,191,36,0.6)]">
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 border-cyan-400/80 bg-gradient-to-b from-[#1e293b]/90 via-[#0f172a]/95 to-[#020617] flex items-center justify-center shadow-[0_0_14px_rgba(56,189,248,0.4)] relative overflow-hidden group-hover:border-yellow-300 group-hover:shadow-[0_0_18px_rgba(251,191,36,0.6)]">
                     <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent pointer-events-none rounded-t-full" />
-                    <PhoneCall className="w-5 h-5 text-cyan-300 group-hover:text-yellow-300 drop-shadow-[0_0_6px_#38bdf8]" />
+                    <PhoneCall className="w-4 h-4 text-cyan-300 group-hover:text-yellow-300 drop-shadow-[0_0_5px_#38bdf8]" />
                   </div>
-                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-cyan-300 mt-1 drop-shadow-sm">VIDEO CALL</span>
+                  <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-cyan-300 mt-0.5 drop-shadow-sm">VIDEO CALL</span>
                 </button>
 
                 {/* Flip Question Pod */}
@@ -2324,44 +2256,44 @@ export default function KbcExam() {
                     !lifelines.flip ? 'opacity-30 line-through cursor-not-allowed scale-95' : 'hover:scale-105'
                   }`}
                 >
-                  <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-full border-2 border-cyan-400/80 bg-gradient-to-b from-[#1e293b]/90 via-[#0f172a]/95 to-[#020617] flex items-center justify-center shadow-[0_0_18px_rgba(56,189,248,0.4)] relative overflow-hidden group-hover:border-yellow-300 group-hover:shadow-[0_0_22px_rgba(251,191,36,0.6)]">
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 border-cyan-400/80 bg-gradient-to-b from-[#1e293b]/90 via-[#0f172a]/95 to-[#020617] flex items-center justify-center shadow-[0_0_14px_rgba(56,189,248,0.4)] relative overflow-hidden group-hover:border-yellow-300 group-hover:shadow-[0_0_18px_rgba(251,191,36,0.6)]">
                     <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent pointer-events-none rounded-t-full" />
-                    <RotateCcw className="w-5 h-5 text-cyan-300 group-hover:text-yellow-300 drop-shadow-[0_0_6px_#38bdf8]" />
+                    <RotateCcw className="w-4 h-4 text-cyan-300 group-hover:text-yellow-300 drop-shadow-[0_0_5px_#38bdf8]" />
                   </div>
-                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-cyan-300 mt-1 drop-shadow-sm">FLIP / DIP</span>
+                  <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-cyan-300 mt-0.5 drop-shadow-sm">DOUBLE DIP</span>
                 </button>
               </div>
 
               {/* ── Circular Holographic Radar Timer (Tik-Tiki Ji) Matching Concept 1 ── */}
-              <div className="flex items-center justify-center pt-1 pb-1 relative z-20">
+              <div className="flex items-center justify-center pt-0.5 pb-0.5 relative z-20 shrink-0">
                 {currentLevel <= (adminSession?.total_questions || 30) ? (
                   <div className="relative flex items-center justify-center">
                     {/* Glowing outer halo */}
-                    <div className={`absolute w-32 h-32 rounded-full blur-2xl pointer-events-none transition-all duration-500 ${
+                    <div className={`absolute w-20 h-20 sm:w-24 sm:h-24 rounded-full blur-xl pointer-events-none transition-all duration-500 ${
                       timeLeft <= 0
-                        ? 'bg-red-600/80 animate-pulse'
+                        ? 'bg-red-600/70 animate-pulse'
                         : timeLeft <= 10 
-                          ? 'bg-red-500/70 animate-pulse scale-110' 
+                          ? 'bg-red-500/60 animate-pulse scale-105' 
                           : timeLeft <= 15
-                            ? 'bg-amber-500/50'
-                            : 'bg-cyan-500/30'
+                            ? 'bg-amber-500/40'
+                            : 'bg-cyan-500/25'
                     }`} />
 
                     {/* Outer Rotating Decorative Dashed Ring */}
-                    <div className={`absolute w-26 h-26 sm:w-28 sm:h-28 rounded-full border-2 border-dashed pointer-events-none transition-colors duration-500 ${
+                    <div className={`absolute w-18 h-18 sm:w-20 sm:h-20 rounded-full border-2 border-dashed pointer-events-none transition-colors duration-500 ${
                       timeLeft <= 10 ? 'border-red-500/60 animate-spin [animation-duration:8s]' : 'border-amber-400/40 animate-spin [animation-duration:25s]'
                     }`} />
 
                     {/* Circular Timer Body */}
                     <div 
-                      className={`relative w-22 h-22 sm:w-24 sm:h-24 rounded-full border-[3px] flex flex-col items-center justify-center shadow-2xl transition-all duration-300 select-none overflow-hidden cursor-pointer ${
+                      className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-full border-[2.5px] flex flex-col items-center justify-center shadow-lg transition-all duration-300 select-none overflow-hidden cursor-pointer ${
                         timeLeft <= 0
-                          ? 'border-red-600 bg-gradient-to-b from-red-950 via-black to-red-950 text-red-300 shadow-[0_0_35px_#dc2626] scale-105'
+                          ? 'border-red-600 bg-gradient-to-b from-red-950 via-black to-red-950 text-red-300 shadow-[0_0_20px_#dc2626]'
                           : timeLeft <= 10 
-                            ? 'border-red-500 bg-gradient-to-b from-red-950/95 via-red-900/90 to-black/95 text-white shadow-[0_0_40px_#ef4444] animate-pulse scale-105' 
+                            ? 'border-red-500 bg-gradient-to-b from-red-950/95 via-red-900/90 to-black/95 text-white shadow-[0_0_25px_#ef4444] animate-pulse' 
                             : timeLeft <= 15
-                              ? 'border-amber-400 bg-gradient-to-b from-[#2a1705]/95 via-[#180e03]/95 to-black/95 text-amber-300 shadow-[0_0_30px_rgba(251,191,36,0.5)]'
-                              : 'border-cyan-400/90 bg-gradient-to-b from-[#0c1c38]/95 via-[#060e22]/95 to-[#020612]/95 text-cyan-300 shadow-[0_0_30px_rgba(6,182,212,0.4)] hover:scale-105'
+                              ? 'border-amber-400 bg-gradient-to-b from-[#2a1705]/95 via-[#180e03]/95 to-black/95 text-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.5)]'
+                              : 'border-cyan-400/90 bg-gradient-to-b from-[#0c1c38]/95 via-[#060e22]/95 to-[#020612]/95 text-cyan-300 shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:scale-105'
                       }`}
                       onClick={() => {
                         kbcAudio.init();
@@ -2377,40 +2309,40 @@ export default function KbcExam() {
                       <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none rounded-t-full" />
 
                       {/* SVG Circular Countdown Progress Arc */}
-                      <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none p-1">
+                      <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none p-0.5">
                         <circle
                           cx="50%"
                           cy="50%"
-                          r="42%"
+                          r="40%"
                           stroke="rgba(255, 255, 255, 0.1)"
-                          strokeWidth="3.5"
+                          strokeWidth="3"
                           fill="none"
                         />
                         <circle
                           cx="50%"
                           cy="50%"
-                          r="42%"
+                          r="40%"
                           stroke={timeLeft <= 0 ? '#ef4444' : timeLeft <= 10 ? '#ef4444' : timeLeft <= 15 ? '#f59e0b' : '#06b6d4'}
-                          strokeWidth="3.5"
+                          strokeWidth="3"
                           strokeLinecap="round"
                           fill="none"
-                          strokeDasharray={260}
-                          strokeDashoffset={260 - (Math.max(0, Math.min(100, (timeLeft / (getLevelCountdown(currentLevel) || 30)) * 100)) / 100) * 260}
+                          strokeDasharray={220}
+                          strokeDashoffset={220 - (Math.max(0, Math.min(100, (timeLeft / (getLevelCountdown(currentLevel) || 30)) * 100)) / 100) * 220}
                           className="transition-all duration-1000 ease-linear"
                         />
                       </svg>
 
-                      <span className={`text-[8px] sm:text-[9px] font-black uppercase tracking-widest font-sans -mb-0.5 z-10 ${
+                      <span className={`text-[7px] font-black uppercase tracking-widest font-sans -mb-0.5 z-10 ${
                         timeLeft <= 10 ? 'text-red-400' : timeLeft <= 15 ? 'text-amber-400' : 'text-cyan-400'
                       }`}>
                         {timeLeft <= 0 ? 'SAMAY' : 'TIK-TIKI'}
                       </span>
-                      <span className={`text-2xl sm:text-3xl font-black font-mono leading-none tracking-tight z-10 drop-shadow-md ${
+                      <span className={`text-lg sm:text-xl font-black font-mono leading-none tracking-tight z-10 drop-shadow-md ${
                         timeLeft <= 0 ? 'text-red-400' : timeLeft <= 10 ? 'text-white' : timeLeft <= 15 ? 'text-amber-300' : 'text-cyan-200'
                       }`}>
                         {timeLeft <= 0 ? '0' : timeLeft < 10 ? `0:0${timeLeft}` : `0:${timeLeft}`}
                       </span>
-                      <span className={`text-[7px] sm:text-[8px] font-bold tracking-wider uppercase z-10 ${
+                      <span className={`text-[6px] font-bold tracking-wider uppercase z-10 ${
                         timeLeft <= 0 ? 'text-red-400' : 'text-slate-400'
                       }`}>
                         {timeLeft <= 0 ? 'EXPIRED' : 'SEC'}
@@ -2420,9 +2352,9 @@ export default function KbcExam() {
                 ) : (
                   /* Level 11 to 16: No Timer Circular Badge */
                   <div className="relative flex items-center justify-center">
-                    <div className="w-18 h-18 rounded-full border-2 border-emerald-400/60 bg-gradient-to-b from-emerald-950/90 to-[#060a1d]/95 flex flex-col items-center justify-center shadow-lg shadow-emerald-500/20 text-emerald-300">
-                      <span className="text-xl font-black">∞</span>
-                      <span className="text-[8px] font-black uppercase tracking-wider text-emerald-400 -mt-0.5">
+                    <div className="w-14 h-14 rounded-full border-2 border-emerald-400/60 bg-gradient-to-b from-emerald-950/90 to-[#060a1d]/95 flex flex-col items-center justify-center shadow-md shadow-emerald-500/20 text-emerald-300">
+                      <span className="text-lg font-black">∞</span>
+                      <span className="text-[7px] font-black uppercase tracking-wider text-emerald-400 -mt-0.5">
                         NO LIMIT
                       </span>
                     </div>
@@ -2431,47 +2363,47 @@ export default function KbcExam() {
               </div>
 
               {/* ── THE ICONIC DOUBLE-CHEVRON HEXAGONAL QUESTION BAR ── */}
-              <div className="relative w-full py-2">
+              <div className="relative w-full py-0.5 shrink-0">
                 {/* Horizontal golden/red connector lines */}
-                <div className={`absolute top-1/2 left-0 right-0 h-[2.5px] -translate-y-1/2 pointer-events-none transition-all duration-700 ${
+                <div className={`absolute top-1/2 left-0 right-0 h-[2px] -translate-y-1/2 pointer-events-none transition-all duration-700 ${
                   isWrongAnswer
-                    ? 'bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_20px_#ef4444]'
-                    : 'bg-gradient-to-r from-transparent via-amber-400 to-transparent shadow-[0_0_15px_#fbbf24]'
+                    ? 'bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_15px_#ef4444]'
+                    : 'bg-gradient-to-r from-transparent via-amber-400 to-transparent shadow-[0_0_12px_#fbbf24]'
                 }`} />
 
                 <div 
-                  className="relative mx-auto w-full max-w-4xl px-8 py-5 sm:py-6 text-center transition-all duration-700 overflow-hidden"
+                  className="relative mx-auto w-full max-w-4xl px-6 py-2.5 sm:py-3.5 text-center transition-all duration-700 overflow-hidden"
                   style={{
                     background: isWrongAnswer
                       ? 'linear-gradient(180deg, #450a0a 0%, #1a0404 100%)'
                       : 'linear-gradient(180deg, #18143d 0%, #0d0b27 100%)',
-                    border: isWrongAnswer ? '2.5px solid #ef4444' : '2.5px solid #d4af37',
+                    border: isWrongAnswer ? '2px solid #ef4444' : '2px solid #d4af37',
                     boxShadow: isWrongAnswer
-                      ? '0 0 35px rgba(239, 68, 68, 0.6), inset 0 0 20px rgba(185, 28, 28, 0.7)'
-                      : '0 0 30px rgba(212, 175, 55, 0.35), inset 0 0 20px rgba(100, 60, 200, 0.4)',
+                      ? '0 0 25px rgba(239, 68, 68, 0.6), inset 0 0 15px rgba(185, 28, 28, 0.7)'
+                      : '0 0 20px rgba(212, 175, 55, 0.35), inset 0 0 15px rgba(100, 60, 200, 0.4)',
                     clipPath: 'polygon(3% 0%, 97% 0%, 100% 50%, 97% 100%, 3% 100%, 0% 50%)'
                   }}
                 >
                   {/* Glass top gloss highlight */}
                   <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/15 to-transparent pointer-events-none" />
 
-                  <div className="flex items-center justify-center gap-2 mb-1.5 relative z-10">
-                    <span className="text-[11px] sm:text-xs font-black uppercase tracking-widest text-amber-300 flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                  <div className="flex items-center justify-center gap-2 mb-1 relative z-10">
+                    <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-amber-300 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
                       QUESTION {currentLevel} • {currentPrize.prize}
                     </span>
-                    <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 font-mono font-bold">
+                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 font-mono font-bold">
                       {currentQ?.topic}
                     </span>
                   </div>
-                  <h2 className="text-base sm:text-lg md:text-xl font-extrabold text-white leading-relaxed px-4 relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                  <h2 className="text-xs sm:text-sm md:text-base font-extrabold text-white leading-snug px-3 relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] line-clamp-3">
                     {currentQ?.question}
                   </h2>
                 </div>
               </div>
 
               {/* ── 4 DOUBLE-CHEVRON HEXAGONAL OPTIONS (With Metallic Diamond Badges) ── */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto pt-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-w-4xl mx-auto pt-0.5 shrink-0">
                 {currentQ?.options.map((opt, idx) => {
                   const letter = String.fromCharCode(65 + idx);
                   const isSelected = selectedOption === idx;
@@ -2483,26 +2415,24 @@ export default function KbcExam() {
                   let bgGradient = 'linear-gradient(180deg, #17133b 0%, #0c0a22 100%)';
                   let borderColor = '#9370db';
                   let textColor = 'text-white';
-                  let glowShadow = '0 0 10px rgba(147, 112, 219, 0.2)';
+                  let glowShadow = '0 0 8px rgba(147, 112, 219, 0.2)';
 
                   if (isEliminated) {
                     return (
                       <div 
                         key={idx} 
-                        className="relative opacity-20 pointer-events-none py-4 px-7 flex items-center justify-between overflow-hidden"
+                        className="relative opacity-20 pointer-events-none py-1.5 sm:py-2 px-5 min-h-[38px] sm:min-h-[42px] max-h-[46px] flex items-center justify-between overflow-hidden"
                         style={{
                           background: '#090817',
                           border: '1px dashed #ef4444',
                           clipPath: 'polygon(4% 0%, 96% 0%, 100% 50%, 96% 100%, 4% 100%, 0% 50%)'
                         }}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="w-7 h-7 rounded rotate-45 border border-red-500/40 bg-red-950/40 flex items-center justify-center text-red-400 font-mono text-xs font-black shrink-0">
-                            <span className="-rotate-45">{letter}</span>
-                          </div>
-                          <span className="text-slate-600 line-through text-sm">———</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-black text-red-500">{letter}:</span>
+                          <span className="text-slate-600 line-through text-xs">———</span>
                         </div>
-                        <span className="text-[10px] text-red-400 font-black tracking-wider uppercase bg-red-950 px-2 py-0.5 rounded border border-red-800">50:50 VAPORIZED</span>
+                        <span className="text-[9px] text-red-400 font-black tracking-wider uppercase bg-red-950 px-1.5 py-0.5 rounded border border-red-800">50:50</span>
                       </div>
                     );
                   }
@@ -2510,23 +2440,22 @@ export default function KbcExam() {
                   if (isWrongSelected) {
                     bgGradient = 'linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%)';
                     borderColor = '#ef4444';
-                    glowShadow = '0 0 35px rgba(239, 68, 68, 0.8), inset 0 0 15px rgba(239, 68, 68, 0.5)';
+                    glowShadow = '0 0 25px rgba(239, 68, 68, 0.8), inset 0 0 10px rgba(239, 68, 68, 0.5)';
                   } else if (isCorrect) {
                     bgGradient = 'linear-gradient(135deg, #065f46 0%, #022c22 100%)';
                     borderColor = '#10b981';
-                    glowShadow = '0 0 35px rgba(16, 185, 129, 0.9), inset 0 0 20px rgba(16, 185, 129, 0.6)';
+                    glowShadow = '0 0 25px rgba(16, 185, 129, 0.9), inset 0 0 15px rgba(16, 185, 129, 0.6)';
                   } else if (isSelected) {
                     if (isLocked || answerStatus === 'locked' || answerStatus === 'evaluating') {
                       bgGradient = 'linear-gradient(135deg, #78350f 0%, #b45309 50%, #d97706 100%)';
                       borderColor = '#fef08a';
-                      glowShadow = '0 0 40px rgba(245, 158, 11, 0.95), inset 0 0 20px rgba(254, 240, 138, 0.6)';
+                      glowShadow = '0 0 30px rgba(245, 158, 11, 0.95), inset 0 0 15px rgba(254, 240, 138, 0.6)';
                     } else {
                       bgGradient = 'linear-gradient(135deg, #d97706 0%, #92400e 100%)';
                       borderColor = '#fbbf24';
-                      glowShadow = '0 0 25px rgba(251, 191, 36, 0.6)';
+                      glowShadow = '0 0 20px rgba(251, 191, 36, 0.6)';
                     }
                   } else if (isLocked && revealedCorrect === null) {
-                    // Non-selected options when answer is locked: dim them out
                     bgGradient = 'linear-gradient(180deg, #090818 0%, #050410 100%)';
                     borderColor = '#2a2448';
                     textColor = 'text-slate-500';
@@ -2538,10 +2467,10 @@ export default function KbcExam() {
                       key={idx}
                       onClick={() => handleOptionClick(idx)}
                       disabled={isOptionDisabled}
-                      className={`group relative text-left py-4 px-6 sm:px-7 transition-all overflow-hidden ${
+                      className={`group relative text-left py-1.5 sm:py-2 px-4 sm:px-5 min-h-[38px] sm:min-h-[42px] max-h-[46px] transition-all overflow-hidden flex items-center justify-between ${
                         isOptionDisabled
                           ? (isSelected && isLocked) 
-                            ? 'cursor-default ring-2 ring-amber-300 shadow-amber-400/40' 
+                            ? 'cursor-default ring-1 ring-amber-300 shadow-amber-400/40' 
                             : 'cursor-not-allowed opacity-35 grayscale-[50%] pointer-events-none'
                           : 'cursor-pointer transform hover:scale-[1.01] active:scale-[0.99]'
                       } ${
@@ -2549,7 +2478,7 @@ export default function KbcExam() {
                       }`}
                       style={{
                         background: bgGradient,
-                        border: `2.5px solid ${borderColor}`,
+                        border: `2px solid ${borderColor}`,
                         boxShadow: glowShadow,
                         clipPath: 'polygon(4% 0%, 96% 0%, 100% 50%, 96% 100%, 4% 100%, 0% 50%)'
                       }}
@@ -2557,31 +2486,31 @@ export default function KbcExam() {
                       {/* Glass top gloss highlight */}
                       <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/15 to-transparent pointer-events-none" />
 
-                      <div className="flex items-center gap-2.5 relative z-10 w-full px-2">
+                      <div className="flex items-center gap-2 relative z-10 w-full min-w-0">
                         {/* Gold Letter & Colon (Matching Image 1: A:, B:, C:, D:) */}
-                        <span className="font-mono font-black text-sm sm:text-base text-amber-400 shrink-0 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]">
+                        <span className="font-mono font-black text-sm text-amber-400 shrink-0 drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]">
                           {letter}:
                         </span>
 
-                        <span className={`text-xs sm:text-sm md:text-base font-extrabold flex-1 uppercase tracking-wider ${textColor}`}>
+                        <span className={`text-xs sm:text-sm font-extrabold flex-1 uppercase tracking-wider truncate ${textColor}`}>
                           {opt}
                         </span>
 
                         {isSelected && isLocked && revealedCorrect === null && (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-500/25 text-amber-300 border border-amber-400 font-mono font-black text-[10px] sm:text-xs uppercase tracking-wider shadow-[0_0_14px_rgba(245,158,11,0.7)] shrink-0 animate-pulse">
-                            <Lock className="w-3.5 h-3.5 text-amber-400" />
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/25 text-amber-300 border border-amber-400 font-mono font-black text-[9px] uppercase tracking-wider shadow-[0_0_10px_rgba(245,158,11,0.7)] shrink-0 animate-pulse">
+                            <Lock className="w-3 h-3 text-amber-400" />
                             <span>LOCKED</span>
                           </span>
                         )}
                         {isCorrect && (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-500/30 text-emerald-300 border border-emerald-400 font-mono font-black text-[10px] sm:text-xs uppercase tracking-wider shadow-[0_0_14px_rgba(16,185,129,0.7)] shrink-0 animate-bounce">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/30 text-emerald-300 border border-emerald-400 font-mono font-black text-[9px] uppercase tracking-wider shadow-[0_0_10px_rgba(16,185,129,0.7)] shrink-0 animate-bounce">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                             <span>SAHI</span>
                           </span>
                         )}
                         {isWrongSelected && (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-red-600/30 text-red-300 border border-red-500 font-mono font-black text-[10px] sm:text-xs uppercase tracking-wider shadow-[0_0_14px_rgba(239,68,68,0.7)] shrink-0">
-                            <XCircle className="w-4 h-4 text-red-400" />
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-600/30 text-red-300 border border-red-500 font-mono font-black text-[9px] uppercase tracking-wider shadow-[0_0_10px_rgba(239,68,68,0.7)] shrink-0">
+                            <XCircle className="w-3 h-3 text-red-400" />
                             <span>GALAT</span>
                           </span>
                         )}
@@ -2591,70 +2520,67 @@ export default function KbcExam() {
                 })}
               </div>
 
-              {/* ── Time Out / Samay Samapt Banner ── */}
-              {(isTimeUp || timeLeft <= 0) && revealedCorrect === null && (
-                <div className="flex items-center justify-center gap-3 py-3 px-6 rounded-2xl bg-gradient-to-r from-red-950/90 via-red-900/90 to-red-950/90 border-2 border-red-500/80 shadow-[0_0_25px_rgba(239,68,68,0.45)] text-center animate-pulse">
-                  <Clock className="w-5 h-5 text-red-400 shrink-0" />
-                  <div>
-                    <span className="text-sm md:text-base font-black text-red-200 tracking-wider uppercase block">
-                      ⏰ Samay Samapt (Time Up)!
-                    </span>
-                    <span className="text-xs text-red-300/90 font-medium">
-                      Tik-Tiki Ji ka samay samapt ho gaya hai. Aap ab koi bhi uttar darj nahi kar sakte.
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* ── "Confirm Team Choice" Bar (Shown only before locking) ── */}
+              {/* ── COMPACT SINGLE-SCREEN STATUS RIBBONS (No vertical scrolling needed!) ── */}
+              
+              {/* 1. "Confirm Team Choice" Bar (Shown only before locking) */}
               {!isLocked && selectedOption !== null && !isOptionDisabled && (
-                <div className="flex flex-wrap items-center justify-center gap-4 pt-3 animate-fade-in">
-                  <div className="text-xs text-amber-300 font-bold flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
-                    Option {String.fromCharCode(65 + selectedOption)} chuna gaya hai {team ? '(Confirm karke lock karein)' : ''}.
+                <div className="flex items-center justify-between px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-slate-950/90 border border-amber-400/80 shadow-[0_0_15px_rgba(251,191,36,0.3)] max-w-4xl mx-auto shrink-0 animate-fade-in w-full">
+                  <div className="text-[11px] sm:text-xs text-amber-300 font-bold flex items-center gap-2 truncate">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
+                    <span className="truncate">Option {String.fromCharCode(65 + selectedOption)} chuna gaya hai {team ? '(Laptop se Admin monitor par live).' : ''}</span>
                   </div>
                   <button
                     onClick={handleLockOption}
                     disabled={isOptionDisabled}
-                    className="px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-sm tracking-wider uppercase shadow-xl shadow-amber-500/40 transition transform hover:scale-105 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs tracking-wider uppercase shadow-md transition transform hover:scale-105 cursor-pointer shrink-0 flex items-center gap-1.5"
                   >
-                    <Lock className="w-4 h-4 text-slate-950" />
-                    <span>Confirm Team Choice 🔒</span>
+                    <Lock className="w-3 h-3 text-slate-950" />
+                    <span>CONFIRM TEAM CHOICE 🔒</span>
                   </button>
                 </div>
               )}
 
-              {/* ── Tension / Suspense MP3 Playing Banner (Until Admin Reveals) ── */}
+              {/* 2. Tension / Suspense MP3 Playing Banner (Until Admin Reveals) */}
               {isLocked && revealedCorrect === null && (
-                <div className="flex flex-col items-center justify-center p-5 rounded-2xl bg-gradient-to-r from-amber-950/95 via-purple-950/95 to-amber-950/95 border-2 border-amber-400/80 shadow-[0_0_35px_rgba(251,191,36,0.45)] text-center animate-pulse space-y-2 mt-4">
-                  <div className="flex items-center justify-center gap-2.5 text-amber-300 font-black text-base sm:text-lg uppercase tracking-wider">
-                    <Lock className="w-5 h-5 text-amber-400 animate-spin" />
+                <div className="flex items-center justify-between px-3 sm:px-4 py-1 sm:py-1.5 rounded-xl bg-gradient-to-r from-amber-950/90 via-purple-950/90 to-amber-950/90 border border-amber-400/80 shadow-[0_0_20px_rgba(251,191,36,0.35)] max-w-4xl mx-auto shrink-0 animate-pulse w-full">
+                  <div className="flex items-center gap-2 text-amber-300 font-black text-xs sm:text-sm uppercase tracking-wider truncate">
+                    <Lock className="w-3.5 h-3.5 text-amber-400 animate-spin shrink-0" />
                     <span>Option {selectedOption !== null ? String.fromCharCode(65 + selectedOption) : ''} Lock Ho Chuka Hai 🔒</span>
+                    <span className="hidden sm:inline text-[11px] text-amber-200/80 font-normal font-sans lowercase">
+                      ({playMode === 'TEAM' ? 'suspense music live...' : 'pratiksha karein...'})
+                    </span>
                   </div>
-                  <p className="text-xs sm:text-sm text-amber-200 font-medium max-w-lg mx-auto">
-                    {playMode === 'TEAM' 
-                      ? 'Aapka uttar locked hai. Admin ke reveal karne tak kripya screen par bane rahein (Suspense Music Live)...'
-                      : 'Suspense music running live. Host Amitabh Bachchan ke reveal karne ki pratiksha karein...'}
-                  </p>
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-950/80 border border-amber-500/40 text-amber-400 text-[11px] font-bold">
-                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-                    <span>Waiting for Admin to Reveal Answer</span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-950/80 border border-amber-500/40 text-amber-400 text-[10px] font-bold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                      <span>Waiting for Admin</span>
+                    </div>
+                    {playMode === 'SOLO' && (
+                      <button
+                        onClick={evaluateAnswer}
+                        className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-[10px] uppercase tracking-wider shadow cursor-pointer hover:scale-105 transition"
+                      >
+                        Sahi Uttar Batayein! 🎬
+                      </button>
+                    )}
                   </div>
-                  {playMode === 'SOLO' && (
-                    <button
-                      onClick={evaluateAnswer}
-                      className="mt-2 px-5 py-2 rounded-full bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/30 hover:scale-105 transition cursor-pointer"
-                    >
-                      Computer Ji, Sahi Uttar Batayein! 🎬
-                    </button>
-                  )}
+                </div>
+              )}
+
+              {/* 3. Time Out / Samay Samapt Banner (If not yet locked) */}
+              {(isTimeUp || timeLeft <= 0) && !isLocked && revealedCorrect === null && (
+                <div className="flex items-center justify-center gap-2 py-1 px-4 rounded-xl bg-red-950/90 border border-red-500/80 shadow-[0_0_15px_rgba(239,68,68,0.4)] text-center animate-pulse max-w-4xl mx-auto shrink-0 w-full">
+                  <Clock className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                  <span className="text-[11px] sm:text-xs font-black text-red-200 tracking-wider uppercase">
+                    ⏰ Samay Samapt (Time Up) — Answers Closed for this Round
+                  </span>
                 </div>
               )}
 
               </div>
 
-              {/* Right Column: Authentic KBC Point Leaderboard / Ladder */}
-              <div className="hidden lg:block lg:col-span-4 sticky top-20">
+              {/* Right Column: Authentic KBC Point Leaderboard / Ladder strictly 150px */}
+              <div className="hidden lg:flex w-[150px] shrink-0 flex-col items-center justify-start sticky top-14">
                 <KbcPointsLadder
                   currentLevel={currentLevel}
                   totalQuestions={totalQuestions}
@@ -2714,9 +2640,10 @@ export default function KbcExam() {
 
       {/* 1. Audience Poll Modal (Authentic 3D Holographic Stage - Matching Image 2) */}
       {activeModal === 'poll' && pollData && (() => {
-        const maxPercent = Math.max(...pollData);
-        const topOptIdx = pollData.indexOf(maxPercent);
-        const topLetter = String.fromCharCode(65 + topOptIdx);
+        const pollArray = [0, 1, 2, 3].map(i => Number(pollData?.[i] ?? 0));
+        const maxPercent = Math.max(...pollArray);
+        const topOptIdx = pollArray.indexOf(maxPercent);
+        const topLetter = String.fromCharCode(65 + (topOptIdx >= 0 ? topOptIdx : 0));
 
         return (
           <div 
@@ -2778,7 +2705,7 @@ export default function KbcExam() {
 
                   {[0, 1, 2, 3].map(optIdx => {
                     const letter = String.fromCharCode(65 + optIdx);
-                    const percent = pollData[optIdx] || 0;
+                    const percent = pollArray[optIdx] ?? 0;
                     const isTop = optIdx === topOptIdx && percent > 0;
 
                     return (
@@ -2838,7 +2765,7 @@ export default function KbcExam() {
                       key={idx} 
                       className={idx === topOptIdx ? "text-amber-300 drop-shadow-[0_0_10px_#f59e0b] scale-105" : "text-cyan-300"}
                     >
-                      {String.fromCharCode(65 + idx)}: ({pollData[idx]}%)
+                      {String.fromCharCode(65 + idx)}: ({pollArray[idx]}%)
                     </span>
                   ))}
                 </div>
