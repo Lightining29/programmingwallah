@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="100%" height="100%">
+  <defs>
+    <radialGradient id="ringBg" cx="50%" cy="50%" r="65%">
+      <stop offset="0%" stop-color="#0e1738"/>
+      <stop offset="60%" stop-color="#070b1c"/>
+      <stop offset="100%" stop-color="#01030a"/>
+    </radialGradient>
+    <radialGradient id="centerLaserRing" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00f2fe" stop-opacity="0.3"/>
+      <stop offset="50%" stop-color="#3b82f6" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <filter id="cyanGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Deep Amphitheater Studio Background -->
+  <rect width="1280" height="720" fill="url(#ringBg)"/>
+
+  <!-- Center Arena Holographic Floor Rings -->
+  <ellipse cx="640" cy="420" rx="520" ry="220" fill="url(#centerLaserRing)"/>
+  <ellipse cx="640" cy="420" rx="460" ry="190" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="12 8" opacity="0.6"/>
+  <ellipse cx="640" cy="420" rx="360" ry="150" fill="none" stroke="#f59e0b" stroke-width="3" opacity="0.7" filter="url(#cyanGlow)"/>
+  <ellipse cx="640" cy="420" rx="220" ry="90" fill="none" stroke="#6366f1" stroke-width="2" stroke-dasharray="6 6"/>
+
+  <!-- 10 Curved Contestant Podiums in Ring Array -->
+  <!-- Center Hotseat (Front View) -->
+  <g transform="translate(640, 480)">
+    <polygon points="-110,60 -80,-50 80,-50 110,60" fill="#0f172a" stroke="#f59e0b" stroke-width="3" filter="url(#cyanGlow)"/>
+    <rect x="-60" y="-40" width="120" height="70" rx="8" fill="#0284c7" stroke="#38bdf8" stroke-width="2"/>
+    <text x="0" y="-12" font-family="'Courier New', monospace" font-size="20" font-weight="900" fill="#ffffff" text-anchor="middle">
+      03.42s
+    </text>
+    <text x="0" y="16" font-family="'Montserrat', sans-serif" font-size="11" font-weight="900" fill="#fef08a" text-anchor="middle" letter-spacing="1">
+      PODIUM #1 (LEADER)
+    </text>
+  </g>
+
+  <!-- Left Podiums -->
+  <g transform="translate(420, 450) rotate(-10)">
+    <polygon points="-90,50 -65,-40 65,-40 90,50" fill="#0b132e" stroke="#38bdf8" stroke-width="2"/>
+    <rect x="-45" y="-30" width="90" height="50" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+    <text x="0" y="-6" font-family="'Courier New', monospace" font-size="14" font-weight="bold" fill="#38bdf8" text-anchor="middle">
+      04.18s
+    </text>
+  </g>
+  <g transform="translate(230, 400) rotate(-22)">
+    <polygon points="-80,45 -55,-35 55,-35 80,45" fill="#0b132e" stroke="#38bdf8" stroke-width="1.5"/>
+    <rect x="-40" y="-25" width="80" height="42" rx="6" fill="#1e293b" stroke="#64748b" stroke-width="1"/>
+    <text x="0" y="-4" font-family="'Courier New', monospace" font-size="13" fill="#cbd5e1" text-anchor="middle">
+      04.89s
+    </text>
+  </g>
+
+  <!-- Right Podiums -->
+  <g transform="translate(860, 450) rotate(10)">
+    <polygon points="-90,50 -65,-40 65,-40 90,50" fill="#0b132e" stroke="#38bdf8" stroke-width="2"/>
+    <rect x="-45" y="-30" width="90" height="50" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+    <text x="0" y="-6" font-family="'Courier New', monospace" font-size="14" font-weight="bold" fill="#38bdf8" text-anchor="middle">
+      03.88s
+    </text>
+  </g>
+  <g transform="translate(1050, 400) rotate(22)">
+    <polygon points="-80,45 -55,-35 55,-35 80,45" fill="#0b132e" stroke="#38bdf8" stroke-width="1.5"/>
+    <rect x="-40" y="-25" width="80" height="42" rx="6" fill="#1e293b" stroke="#64748b" stroke-width="1"/>
+    <text x="0" y="-4" font-family="'Courier New', monospace" font-size="13" fill="#cbd5e1" text-anchor="middle">
+      05.12s
+    </text>
+  </g>
+
+  <!-- Overhead Giant KBC Arena Chandelier Mandala -->
+  <g transform="translate(640, 100)" opacity="0.85">
+    <ellipse rx="280" ry="45" fill="none" stroke="#f59e0b" stroke-width="4" filter="url(#cyanGlow)"/>
+    <ellipse rx="220" ry="35" fill="none" stroke="#38bdf8" stroke-width="2"/>
+    <ellipse rx="150" ry="22" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="10 6"/>
+    <!-- Laser Spokes to Podiums -->
+    <line x1="-200" y1="20" x2="-410" y2="350" stroke="#f59e0b" stroke-width="1.5" opacity="0.4"/>
+    <line x1="0" y1="35" x2="0" y2="380" stroke="#38bdf8" stroke-width="2" opacity="0.6"/>
+    <line x1="200" y1="20" x2="410" y2="350" stroke="#f59e0b" stroke-width="1.5" opacity="0.4"/>
+  </g>
+
+  <!-- Top Title HUD Header -->
+  <rect x="360" y="25" width="560" height="48" rx="24" fill="#060c24" stroke="#f59e0b" stroke-width="2"/>
+  <text x="640" y="55" font-family="'Montserrat', sans-serif" font-size="14" font-weight="900" fill="#fef08a" text-anchor="middle" letter-spacing="3">
+    ⚡ FASTEST FINGER FIRST • 10-PODIUM ARENA ⚡
+  </text>
+  
+  <!-- Status Text Below -->
+  <text x="640" y="680" font-family="'Montserrat', sans-serif" font-size="15" font-weight="700" fill="#38bdf8" text-anchor="middle" letter-spacing="2">
+    Sabse Tez Sahi Kram Me Lagane Wala Khiladi Sidhe Hotseat Par!
+  </text>
+</svg>

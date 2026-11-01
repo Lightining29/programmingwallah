@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="100%" height="100%">
+  <defs>
+    <radialGradient id="vortexBg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0b1b42"/>
+      <stop offset="50%" stop-color="#050a1c"/>
+      <stop offset="100%" stop-color="#020409"/>
+    </radialGradient>
+    <radialGradient id="portalGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.9"/>
+      <stop offset="35%" stop-color="#818cf8" stop-opacity="0.6"/>
+      <stop offset="70%" stop-color="#f59e0b" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <linearGradient id="goldChevron" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+    <filter id="neonBlur" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Deep Stage Arena Background -->
+  <rect width="1280" height="720" fill="url(#vortexBg)"/>
+
+  <!-- Arena Overhead Lasers -->
+  <line x1="100" y1="0" x2="640" y2="360" stroke="#00f2fe" stroke-width="2.5" opacity="0.6" filter="url(#neonBlur)"/>
+  <line x1="1180" y1="0" x2="640" y2="360" stroke="#f59e0b" stroke-width="2.5" opacity="0.6" filter="url(#neonBlur)"/>
+  <line x1="300" y1="0" x2="640" y2="360" stroke="#a855f7" stroke-width="1.8" opacity="0.5"/>
+  <line x1="980" y1="0" x2="640" y2="360" stroke="#38bdf8" stroke-width="1.8" opacity="0.5"/>
+
+  <!-- Swirling Center Cosmic Vortex Core -->
+  <circle cx="640" cy="360" r="280" fill="url(#portalGlow)"/>
+
+  <!-- Rotating Star Vortex Rings -->
+  <g transform="translate(640, 360)">
+    <!-- Ring 1 -->
+    <ellipse rx="260" ry="90" fill="none" stroke="#38bdf8" stroke-width="3" stroke-dasharray="20 15 40 10" transform="rotate(-25)" opacity="0.8" filter="url(#neonBlur)"/>
+    <!-- Ring 2 -->
+    <ellipse rx="220" ry="70" fill="none" stroke="#f59e0b" stroke-width="3.5" stroke-dasharray="30 20 10 15" transform="rotate(35)" opacity="0.85" filter="url(#neonBlur)"/>
+    <!-- Ring 3 -->
+    <ellipse rx="160" ry="50" fill="none" stroke="#ec4899" stroke-width="2" stroke-dasharray="15 10" transform="rotate(-60)" opacity="0.7"/>
+    <!-- Ring 4 -->
+    <circle r="90" fill="none" stroke="#ffffff" stroke-width="4" stroke-dasharray="8 12" opacity="0.9" filter="url(#neonBlur)"/>
+    <!-- Center Flare -->
+    <circle r="35" fill="#ffffff" filter="url(#neonBlur)"/>
+  </g>
+
+  <!-- Glowing Stardust Particles -->
+  <circle cx="450" cy="280" r="3.5" fill="#fef08a" opacity="0.9"/>
+  <circle cx="510" cy="420" r="4.5" fill="#38bdf8" opacity="0.8"/>
+  <circle cx="780" cy="270" r="5" fill="#f59e0b" opacity="0.9"/>
+  <circle cx="820" cy="450" r="3" fill="#ec4899" opacity="0.85"/>
+  <circle cx="600" cy="180" r="4" fill="#67e8f9" opacity="0.75"/>
+  <circle cx="710" cy="530" r="4.5" fill="#fbbf24" opacity="0.8"/>
+
+  <!-- Flipping Hexagonal Question Bar in Transformation -->
+  <g transform="translate(640, 360) scale(1, 0.42)">
+    <polygon points="-460,0 -420,-60 420,-60 460,0 420,60 -420,60" fill="#13103c" stroke="url(#goldChevron)" stroke-width="6" filter="url(#neonBlur)"/>
+    <text x="0" y="10" font-family="'Cinzel', 'Segoe UI', serif" font-size="28" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="4">
+      FLIP THE QUESTION • NEW CHALLENGE INCOMING
+    </text>
+  </g>
+
+  <!-- Top Lifeline HUD Header -->
+  <rect x="420" y="40" width="440" height="48" rx="24" fill="#090d24" stroke="#f59e0b" stroke-width="2"/>
+  <text x="640" y="70" font-family="'Montserrat', sans-serif" font-size="14" font-weight="900" fill="#fef08a" text-anchor="middle" letter-spacing="3">
+    ⚡ LIFELINE ACTIVATED: FLIP THE QUESTION ⚡
+  </text>
+  
+  <!-- Subtitle Bar -->
+  <text x="640" y="660" font-family="'Montserrat', sans-serif" font-size="16" font-weight="700" fill="#94a3b8" text-anchor="middle" letter-spacing="2">
+    Computer Ji, Naya Prashna Screen Par Prakat Karein!
+  </text>
+</svg>
