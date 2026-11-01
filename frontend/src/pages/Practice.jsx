@@ -342,12 +342,12 @@ export default function Practice() {
           </div>
         </section>
 
-        {/* Kaun Banega Crorepati Hotseat Banner */}
+        {/* Kaun Banega Coder Hotseat Banner */}
         <section className="rounded-[32px] bg-gradient-to-r from-indigo-950 via-slate-900 to-amber-950 p-6 sm:p-7 border-2 border-amber-400/50 shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-2xl p-1 bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 shadow-lg shadow-amber-500/20 shrink-0">
               <img
-                src="/kbc-host.jpg"
+                src="/appletree_logo.png"
                 alt="KBC Hotseat"
                 className="w-full h-full object-cover rounded-xl"
               />
@@ -357,7 +357,7 @@ export default function Practice() {
                 <Trophy className="w-3 h-3 text-amber-400" /> LIVE HOTSEAT ARENA
               </div>
               <h2 className="text-xl sm:text-2xl font-black text-white">
-                Kaun Banega Crorepati — MERN & SQL Edition
+                Kaun Banega Coder — MERN & SQL Edition
               </h2>
               <p className="text-xs sm:text-sm text-slate-300">
                 16 levels ladder to ₹7 Crore, 4 lifelines (50:50, Audience Poll, Expert Advice, Flip Question), and Tik-Tiki Ji timer!

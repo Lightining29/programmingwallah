@@ -1510,16 +1510,21 @@ export default function KbcExam() {
           
           {/* Logo & Hotseat Title */}
           <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-2 group">
-              <span className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 font-black flex items-center justify-center text-base sm:text-lg shadow-lg shadow-amber-500/20 group-hover:scale-105 transition">
-                ₹
-              </span>
+            <Link to="/" className="flex items-center gap-2.5 group">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl p-1 bg-slate-900 border border-amber-400/60 shadow-lg shadow-amber-500/20 group-hover:scale-105 transition flex items-center justify-center overflow-hidden">
+                <img
+                  src="/appletree_logo.png"
+                  alt="AppleTree Infotech Logo"
+                  className="w-full h-full object-contain"
+                  onError={(e) => { e.target.src = '/logo.png'; }}
+                />
+              </div>
               <div>
-                <span className="text-xs font-black tracking-widest text-amber-400 block uppercase">
-                  Kaun Banega Crorepati
+                <span className="text-xs sm:text-sm font-black tracking-widest text-amber-400 block uppercase">
+                  Kaun Banega Coder
                 </span>
-                <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 tracking-tight block">
-                  MERN & SQL Grand Exam Hotseat
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-300 tracking-tight block">
+                  AppleTree Infotech • MERN & SQL Grand Exam
                 </span>
               </div>
             </Link>
@@ -1596,18 +1601,18 @@ export default function KbcExam() {
             
             {/* Host & Student Profile Avatars */}
             <div className="flex items-center justify-center gap-6 sm:gap-10">
-              {/* Host Amitabh Avatar */}
+              {/* Host AppleTree Logo */}
               <div className="relative inline-block text-center">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full p-1 bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 shadow-xl shadow-amber-500/30 overflow-hidden mx-auto">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl p-2 bg-slate-900 border-2 border-amber-400/80 shadow-xl shadow-amber-500/30 overflow-hidden mx-auto flex items-center justify-center">
                   <img
-                    src="/kbc-host.jpg"
-                    alt="Amitabh Bachchan KBC Host"
-                    className="w-full h-full object-cover rounded-full"
-                    onError={(e) => { e.target.style.display = 'none'; }}
+                    src="/appletree_logo.png"
+                    alt="AppleTree Infotech Logo"
+                    className="w-full h-full object-contain"
+                    onError={(e) => { e.target.src = '/logo.png'; }}
                   />
                 </div>
                 <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow">
-                  Host
+                  AppleTree
                 </span>
               </div>
 
@@ -1615,7 +1620,7 @@ export default function KbcExam() {
               <div className="relative inline-block text-center">
                 <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full p-1 bg-gradient-to-tr from-emerald-500 via-teal-400 to-emerald-600 shadow-xl shadow-emerald-500/30 overflow-hidden mx-auto">
                   <img
-                    src={team.profile_photo || registeredStudent?.profile_photo || '/kbc-host.jpg'}
+                    src={team.profile_photo || registeredStudent?.profile_photo || '/girl_avatar.jpg'}
                     alt="Student Contestant"
                     className="w-full h-full object-cover rounded-full"
                   />
@@ -2046,15 +2051,15 @@ export default function KbcExam() {
           /* CASE 2B: Exam Gate (Join Team via Laptop / Default Password) */
           <div className="my-auto max-w-xl w-full mx-auto space-y-6 animate-fade-in py-4">
             
-            {/* Header / Amitabh Quote */}
+            {/* Header / AppleTree Infotech Logo */}
             <div className="text-center space-y-3 bg-gradient-to-b from-[#0b132e]/95 to-[#060a1d]/95 border-2 border-amber-400/40 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
               <div className="relative inline-block mx-auto">
-                <div className="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 shadow-xl shadow-amber-500/30">
+                <div className="w-20 h-20 rounded-2xl p-2 bg-slate-900 border-2 border-amber-400/80 shadow-xl shadow-amber-500/30 flex items-center justify-center overflow-hidden">
                   <img
-                    src="/kbc-host.jpg"
-                    alt="Amitabh Bachchan KBC Host"
-                    className="w-full h-full object-cover rounded-full"
-                    onError={(e) => { e.target.style.display = 'none'; }}
+                    src="/appletree_logo.png"
+                    alt="AppleTree Infotech Logo"
+                    className="w-full h-full object-contain"
+                    onError={(e) => { e.target.src = '/logo.png'; }}
                   />
                 </div>
                 <span className="absolute -bottom-1 -right-1 px-2.5 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black uppercase tracking-wider">
@@ -2064,7 +2069,7 @@ export default function KbcExam() {
 
               <div className="space-y-1.5">
                 <h1 className="text-2xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-100">
-                  KAUN BANEGA CROREPATI
+                  KAUN BANEGA CODER
                 </h1>
                 <p className="text-amber-400/90 font-bold text-xs tracking-widest uppercase">
                   MERN Stack & SQL Grand Examination Hotseat
@@ -2564,7 +2569,7 @@ export default function KbcExam() {
                     } else if (isLocked && revealedCorrect === null) {
                       strokeColor = '#241e3d';
                       innerStrokeColor = '#1e1933';
-                      textColor = 'text-slate-500';
+                      textColor = 'text-white';
                     }
 
                     return (
@@ -2657,18 +2662,14 @@ export default function KbcExam() {
                                 ? 'bg-gradient-to-b from-emerald-400 to-emerald-800 border-2 border-emerald-300 text-white font-black shadow-[0_0_12px_rgba(16,185,129,0.9)]'
                                 : isWrongSelected
                                   ? 'bg-gradient-to-b from-red-500 to-red-900 border-2 border-red-300 text-white font-black shadow-[0_0_12px_rgba(239,68,68,0.9)]'
-                                  : 'bg-gradient-to-b from-slate-900 via-[#111936] to-slate-950 border border-amber-400/80 text-amber-300 font-black shadow-[0_0_8px_rgba(251,191,36,0.5)] group-hover:border-cyan-300 group-hover:text-cyan-200'
+                                  : 'bg-gradient-to-b from-slate-900 via-[#111936] to-slate-950 border border-cyan-400/80 text-white font-black shadow-[0_0_10px_rgba(56,189,248,0.5)] group-hover:border-yellow-300'
                           }`}>
-                            <span className="font-mono text-xs sm:text-sm tracking-tight">{letter}</span>
+                            <span className="font-mono text-xs sm:text-sm tracking-tight text-white font-black drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">{letter}</span>
                           </div>
 
-                          {/* Option Text */}
-                          <span className={`text-xs sm:text-sm md:text-[14px] font-black flex-1 uppercase tracking-wider truncate ${textColor} ${
-                            isSelected
-                              ? 'drop-shadow-[0_1px_1px_rgba(254,240,138,0.8)]'
-                              : isCorrect || isWrongSelected
-                                ? 'drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]'
-                                : 'group-hover:text-cyan-100 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]'
+                          {/* Option Text: Pure Crisp White */}
+                          <span className={`text-xs sm:text-sm md:text-[14px] font-black flex-1 uppercase tracking-wider truncate text-white drop-shadow-[0_2px_5px_rgba(0,0,0,1)] ${
+                            isSelected ? '!text-slate-950 !drop-shadow-none' : ''
                           }`}>
                             {opt}
                           </span>
@@ -3092,10 +3093,10 @@ export default function KbcExam() {
             
             <div className="space-y-1">
               <span className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400 text-amber-300 text-xs font-black uppercase tracking-widest inline-flex items-center gap-1.5">
-                <Trophy className="w-3.5 h-3.5" /> Official KBC Cheque Presentation
+                <Trophy className="w-3.5 h-3.5" /> Official Kaun Banega Coder Cheque
               </span>
               <h2 className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-100">
-                {gameWon ? '7 CRORE MAHA CROREPATI!' : 'SHANDAR PRADARSHAN!'}
+                {gameWon ? '7 CRORE MAHA CODER!' : 'SHANDAR PRADARSHAN!'}
               </h2>
             </div>
 
@@ -3103,17 +3104,17 @@ export default function KbcExam() {
             <div className="relative bg-gradient-to-r from-[#faf5ea] via-[#fffbf0] to-[#f5eedb] text-slate-900 border-4 border-[#b8860b] rounded-2xl p-6 sm:p-8 shadow-2xl text-left font-serif overflow-hidden">
               {/* Cheque Watermark */}
               <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none select-none text-6xl font-black">
-                KAUN BANEGA CROREPATI
+                KAUN BANEGA CODER
               </div>
 
               {/* Top Row: Bank Name & Cheque Date */}
               <div className="flex items-start justify-between border-b-2 border-amber-900/30 pb-3 mb-4">
                 <div>
                   <h4 className="text-lg font-black tracking-wider text-amber-950 uppercase font-sans">
-                    Bank of Kaun Banega Crorepati
+                    Bank of Kaun Banega Coder
                   </h4>
                   <p className="text-[10px] text-amber-800 font-sans tracking-wide">
-                    MERN & SQL Grand Assessment Hotseat Branch
+                    AppleTree Infotech • MERN & SQL Grand Assessment Hotseat Branch
                   </p>
                 </div>
                 <div className="text-right">
@@ -3152,10 +3153,10 @@ export default function KbcExam() {
 
                 <div className="text-right">
                   <div className="font-serif italic text-base sm:text-lg text-slate-800 font-bold border-b border-slate-700 pb-0.5">
-                    Amitabh Bachchan
+                    AppleTree Infotech
                   </div>
                   <span className="text-[10px] text-slate-600 font-sans uppercase tracking-wider block pt-0.5">
-                    Authorized Signatory (Host)
+                    Authorized Signatory (AppleTree)
                   </span>
                 </div>
               </div>
@@ -3210,8 +3211,8 @@ export default function KbcExam() {
       )}
 
       {/* ── Footer ── */}
-      <footer className="relative z-10 py-2 text-center text-[11px] text-slate-500 border-t border-slate-900 bg-black/30">
-        AppleTree Infotech & Pranidha • Kaun Banega Crorepati MERN & SQL Grand Exam Simulator
+      <footer className="relative z-10 py-2 text-center text-[11px] text-slate-400 border-t border-slate-900 bg-black/40">
+        AppleTree Infotech • Kaun Banega Coder (KBC) Programming Arena
       </footer>
 
     </div>

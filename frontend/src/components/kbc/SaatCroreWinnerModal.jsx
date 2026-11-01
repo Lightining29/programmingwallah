@@ -89,21 +89,21 @@ export default function SaatCroreWinnerModal({ winner, onClose, isCurrentPlayer 
                 alt={playerName}
                 className="w-full h-full object-cover object-top scale-105 hover:scale-110 transition duration-500"
                 onError={(e) => {
-                  e.target.src = '/kbc-host.jpg';
+                  e.target.src = '/appletree_logo.png';
                 }}
               />
             ) : (
               <img
-                src="/kbc-host.jpg"
-                alt="Amitabh Bachchan - Saat Crore Meme"
+                src="/appletree_logo.png"
+                alt="AppleTree Infotech Winner"
                 className="w-full h-full object-cover object-top scale-105 hover:scale-110 transition duration-500"
               />
             )}
           </div>
 
           {/* Host Amitabh Small Badge */}
-          <div className="absolute top-1 right-1 w-11 h-11 rounded-full p-0.5 bg-gradient-to-tr from-amber-500 to-yellow-300 border-2 border-slate-950 shadow-lg overflow-hidden z-10" title="Host Amitabh Bachchan">
-            <img src="/kbc-host.jpg" alt="Host" className="w-full h-full object-cover rounded-full" />
+          <div className="absolute top-1 right-1 w-11 h-11 rounded-full p-0.5 bg-gradient-to-tr from-amber-500 to-yellow-300 border-2 border-slate-950 shadow-lg overflow-hidden z-10" title="AppleTree Infotech">
+            <img src="/appletree_logo.png" alt="Host" className="w-full h-full object-cover rounded-full" />
           </div>
 
           {/* Comic Meme Shoutout Badge: "SAAT CRORE!!" */}

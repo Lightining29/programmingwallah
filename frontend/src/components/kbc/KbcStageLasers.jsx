@@ -35,30 +35,26 @@ export default function KbcStageLasers({
     }
   }, [triggerUpwardSweep]);
 
-  // ── 1. Overhead Criss-Cross Moving Beams (Sweeping Yellow/Amber & Cyan/Blue) ──
+  // ── 1. Overhead Criss-Cross Moving Beams (Curated Elegant 4-Searchlight Rig) ──
   const overheadCrissCrossBeams = useMemo(() => [
-    // Left Golden/Amber Cluster (Angling down towards center & right)
-    { id: 'top-gold-1', originLeft: '22%', originTop: '3.5%', baseAngle: 28, sweepRange: [20, 36], duration: 8.5, color: 'gold', delay: 0 },
-    { id: 'top-cyan-1', originLeft: '30%', originTop: '4.8%', baseAngle: 22, sweepRange: [14, 30], duration: 10.0, color: 'cyan', delay: 0.25 },
-    { id: 'top-gold-2', originLeft: '38%', originTop: '5.8%', baseAngle: 14, sweepRange: [6, 22], duration: 11.2, color: 'gold', delay: 0.15 },
-    { id: 'top-gold-3', originLeft: '45%', originTop: '6.5%', baseAngle: 6,  sweepRange: [0, 14],  duration: 9.7, color: 'gold', delay: 0.35 },
+    // Left Golden/Amber Searchlight (Sweeping down towards center & right)
+    { id: 'top-gold-1', originLeft: '28%', originTop: '4.5%', baseAngle: 24, sweepRange: [16, 32], duration: 9.2, color: 'gold', delay: 0 },
+    // Left Electric Cyan Searchlight (Sweeping down towards center)
+    { id: 'top-cyan-1', originLeft: '40%', originTop: '6.0%', baseAngle: 12, sweepRange: [4, 20], duration: 11.5, color: 'cyan', delay: 0.2 },
 
-    // Right Cyan/Blue & Golden Cluster (Angling down towards center & left)
-    { id: 'top-cyan-2', originLeft: '55%', originTop: '6.5%', baseAngle: -6,  sweepRange: [-14, 0],  duration: 9.7,  color: 'cyan', delay: 0.1 },
-    { id: 'top-cyan-3', originLeft: '62%', originTop: '5.8%', baseAngle: -14, sweepRange: [-22, -6], duration: 10.8, color: 'cyan', delay: 0.3 },
-    { id: 'top-gold-4', originLeft: '70%', originTop: '4.8%', baseAngle: -22, sweepRange: [-30, -14], duration: 8.4, color: 'gold', delay: 0.2 },
-    { id: 'top-cyan-4', originLeft: '78%', originTop: '3.5%', baseAngle: -28, sweepRange: [-36, -20], duration: 12.0, color: 'cyan', delay: 0.4 }
+    // Right Electric Cyan Searchlight (Sweeping down towards center)
+    { id: 'top-cyan-2', originLeft: '60%', originTop: '6.0%', baseAngle: -12, sweepRange: [-20, -4], duration: 11.0, color: 'cyan', delay: 0.1 },
+    // Right Golden/Amber Searchlight (Sweeping down towards center & left)
+    { id: 'top-gold-2', originLeft: '72%', originTop: '4.5%', baseAngle: -24, sweepRange: [-32, -16], duration: 9.8, color: 'gold', delay: 0.3 }
   ], []);
 
-  // ── 2. Six Floor Laser Projector Beams ──
-  // Beams at 50% originate right under the question and sweep up in a dramatic X behind the question
+  // ── 2. Four Floor Laser Projector Beams ──
+  // Balanced stage floor beams: outer framing + iconic center criss-cross behind question
   const floorBeams = useMemo(() => [
-    { id: 'f-1', baseLeft: '18%', baseAngle: -34, sweepUpAngle: -14, downAngle: -55, ambientRange: [-40, -26], color: 'cyan', delay: 0 },
-    { id: 'f-2', baseLeft: '24%', baseAngle: 22,  sweepUpAngle: 10,  downAngle: 36,  ambientRange: [16, 28],   color: 'gold', delay: 0.15 },
-    { id: 'f-3', baseLeft: '50%', baseAngle: -18, sweepUpAngle: -6,  downAngle: -28, ambientRange: [-24, -12], color: 'cyan', delay: 0.3 },
-    { id: 'f-4', baseLeft: '50%', baseAngle: 18,  sweepUpAngle: 6,   downAngle: 28,  ambientRange: [12, 24],   color: 'gold', delay: 0.1 },
-    { id: 'f-5', baseLeft: '76%', baseAngle: -22, sweepUpAngle: -10, downAngle: -36, ambientRange: [-28, -16], color: 'cyan', delay: 0.2 },
-    { id: 'f-6', baseLeft: '82%', baseAngle: 34,  sweepUpAngle: 14,  downAngle: 55,  ambientRange: [26, 40],   color: 'gold', delay: 0.35 }
+    { id: 'f-1', baseLeft: '22%', baseAngle: -28, sweepUpAngle: -12, downAngle: -48, ambientRange: [-34, -22], color: 'cyan', delay: 0 },
+    { id: 'f-2', baseLeft: '48%', baseAngle: -15, sweepUpAngle: -6,  downAngle: -24, ambientRange: [-20, -10], color: 'gold', delay: 0.2 },
+    { id: 'f-3', baseLeft: '52%', baseAngle: 15,  sweepUpAngle: 6,   downAngle: 24,  ambientRange: [10, 20],   color: 'cyan', delay: 0.1 },
+    { id: 'f-4', baseLeft: '78%', baseAngle: 28,  sweepUpAngle: 12,  downAngle: 48,  ambientRange: [22, 34],   color: 'gold', delay: 0.3 }
   ], []);
 
   return (

@@ -171,7 +171,7 @@ export default function ExamDashboard() {
           </div>
         )}
 
-        {/* Kaun Banega Crorepati (KBC) Hotseat Challenge Section */}
+        {/* Kaun Banega Coder (KBC) Hotseat Challenge Section */}
         <div className="mb-8 rounded-3xl bg-gradient-to-r from-amber-950/40 via-purple-950/40 to-slate-900 border-2 border-amber-400/50 p-6 sm:p-7 shadow-2xl relative overflow-hidden">
           <div className="absolute -right-10 -bottom-10 w-60 h-60 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
@@ -189,7 +189,7 @@ export default function ExamDashboard() {
                   <Sparkles className="w-3 h-3 text-amber-400" /> NEW EXAM ARENA
                 </div>
                 <h4 className="text-xl sm:text-2xl font-black text-white tracking-wide">
-                  Kaun Banega Crorepati — MERN & SQL Hotseat
+                  Kaun Banega Coder — MERN & SQL Hotseat
                 </h4>
                 <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
                   Experience real TV-style KBC with 16 money ladder levels (up to ₹7 Crore), 4 lifelines (50:50, Audience Poll, Expert Advice, Flip Question), and Tik-Tiki Ji timer!

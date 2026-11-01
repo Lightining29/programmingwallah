@@ -1,4 +1,4 @@
-// Kaun Banega Crorepati (KBC) Authentic 16-Level Question Bank - Pure SQL Master Edition (1,000+ Questions)
+// Kaun Banega Coder (KBC) Authentic 16-Level Question Bank - Pure SQL Master Edition (1,000+ Questions)
 // Level 1 (₹1,000) to Level 16 (₹7 Crore Jackpot)
 import sqlQuestionBank from './sqlQuestionBank1000.json';
 import webQuestionBank from './webQuestionBank1000.json';
@@ -67,7 +67,7 @@ export const DEFAULT_MERN_SQL_QUESTIONS = DEFAULT_SQL_QUESTIONS;
 // Amitabh Bachchan authentic dialogues & voiceover prompts for KBC MERN & SQL Edition
 export const AMITABH_QUOTES = {
   welcome: [
-    "Deviyo aur sajjano! Swagat hai aapka Kaun Banega Crorepati — MERN Stack & SQL Grand Edition mein!",
+    "Deviyo aur sajjano! Swagat hai aapka Kaun Banega Coder — MERN Stack & SQL Grand Edition mein!",
     "Namaskar! Full Stack aur Database ke is mahamukable mein aapka hardik swagat hai!",
     "Hot seat par swagat hai! Yahan MongoDB, Express, React, Node.js aur SQL ke prashn aapko 7 Crore ki unchayion par le jayenge!"
   ],
@@ -84,7 +84,7 @@ export const AMITABH_QUOTES = {
   timeOut: "Samay samapt! Tik-tiki ji ne ghanti baja di hai. Khel yahin par rukta hai.",
   quitConfirm: "Kya aap sach mein khel chhodkar apni jeeti hui dhanrashi lekar jana chahte hain?",
   quitSuccess: (prize) => `Bohot hi samajhdari bhara nirnay! Aap jeet chuke hain ${prize}! Badhai ho!`,
-  crorepati: "7 CRORE!! Deviyo aur sajjano, itihaas rach diya hai! Aap ban chuke hain MAHA CROREPATI!!",
+  crorepati: "7 CRORE!! Deviyo aur sajjano, itihaas rach diya hai! Aap ban chuke hain MAHA CODER CHAMPION!!",
   lifelines: {
     fifty: "Computer Ji, 2 galat uttar mita diye jayein!",
     poll: "Deviyo aur sajjano, audience poll ka samay aa gaya hai. Kripya apna mat dein!",
@@ -101,7 +101,7 @@ export const EXPERT_FRIENDS = [
     avatar: "👨‍🏫",
     advice: (correctLetter, isConfident) => 
       isConfident 
-        ? `Namaskar Amitabh Ji! Main 95% confident hoon ki iska sahi uttar Option ${correctLetter} hi hai. Concepts clear hain, lock kar sakte hain!`
+        ? `Namaskar Host Sir! Main 95% confident hoon ki iska sahi uttar Option ${correctLetter} hi hai. Concepts clear hain, lock kar sakte hain!`
         : `Namaskar Bachchan Sahab! Prashn thoda tricky hai, par MERN aur SQL architecture ke hisab se Option ${correctLetter} hi sahi answer hai (~85%).`
   },
   {
@@ -111,6 +111,6 @@ export const EXPERT_FRIENDS = [
     advice: (correctLetter, isConfident) =>
       isConfident
         ? `Hello Sir! Production mein hum is pattern ko frequently use karte hain. Option ${correctLetter} is 100% correct!`
-        : `Hello Amitabh Ji! Internal execution logic dekhein toh Option ${correctLetter} is the most solid answer.`
+        : `Hello Host Sir! Internal execution logic dekhein toh Option ${correctLetter} is the most solid answer.`
   }
 ];
