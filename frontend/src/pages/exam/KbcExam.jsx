@@ -1484,6 +1484,7 @@ export default function KbcExam() {
         triggerUpwardSweep={laserUpwardTrigger}
         isCelebratingCorrect={isCelebratingCorrect}
         isWrongAnswer={isWrongAnswer}
+        isLocked={isLocked}
       />
 
       {/* ── Fullscreen Cinematic Laser Logo Reveal Intro ── */}
@@ -2260,6 +2261,77 @@ export default function KbcExam() {
               {/* Left Column: Timer, Hex Question, 4 Hex Options, Lock bar */}
               <div className="lg:col-span-8 space-y-4">
               
+              {/* ── Circular Overhead Lifeline Rig (Matching Image 1) ── */}
+              <div className="flex items-center justify-center gap-3 sm:gap-6 pt-1 pb-1 relative z-20">
+                {/* 50:50 Pod */}
+                <button
+                  type="button"
+                  onClick={useFiftyFifty}
+                  disabled={!lifelines.fifty || isOptionDisabled}
+                  title="50:50 Lifeline (Eliminate 2 wrong answers)"
+                  className={`group flex flex-col items-center justify-center transition-all cursor-pointer ${
+                    !lifelines.fifty ? 'opacity-30 line-through cursor-not-allowed scale-95' : 'hover:scale-105'
+                  }`}
+                >
+                  <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-full border-2 border-cyan-400/80 bg-gradient-to-b from-[#1e293b]/90 via-[#0f172a]/95 to-[#020617] flex items-center justify-center shadow-[0_0_18px_rgba(56,189,248,0.4)] relative overflow-hidden group-hover:border-yellow-300 group-hover:shadow-[0_0_22px_rgba(251,191,36,0.6)]">
+                    <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent pointer-events-none rounded-t-full" />
+                    <span className="font-mono font-black text-xs sm:text-sm text-white drop-shadow-[0_0_6px_#38bdf8]">50:50</span>
+                  </div>
+                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-cyan-300 mt-1 drop-shadow-sm">50:50</span>
+                </button>
+
+                {/* Audience Poll Pod */}
+                <button
+                  type="button"
+                  onClick={useAudiencePoll}
+                  disabled={!lifelines.poll || isOptionDisabled}
+                  title="Audience Poll (Janmat Sangrah 3D Hologram)"
+                  className={`group flex flex-col items-center justify-center transition-all cursor-pointer ${
+                    !lifelines.poll ? 'opacity-30 line-through cursor-not-allowed scale-95' : 'hover:scale-105'
+                  }`}
+                >
+                  <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-full border-2 border-cyan-400/80 bg-gradient-to-b from-[#1e293b]/90 via-[#0f172a]/95 to-[#020617] flex items-center justify-center shadow-[0_0_18px_rgba(56,189,248,0.4)] relative overflow-hidden group-hover:border-yellow-300 group-hover:shadow-[0_0_22px_rgba(251,191,36,0.6)]">
+                    <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent pointer-events-none rounded-t-full" />
+                    <Users className="w-5 h-5 text-cyan-300 group-hover:text-yellow-300 drop-shadow-[0_0_6px_#38bdf8]" />
+                  </div>
+                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-cyan-300 mt-1 drop-shadow-sm">AUDIENCE POLL</span>
+                </button>
+
+                {/* Video Call Pod */}
+                <button
+                  type="button"
+                  onClick={usePhoneAFriend}
+                  disabled={!lifelines.friend || isOptionDisabled}
+                  title="Video Call / Ask Tech Expert"
+                  className={`group flex flex-col items-center justify-center transition-all cursor-pointer ${
+                    !lifelines.friend ? 'opacity-30 line-through cursor-not-allowed scale-95' : 'hover:scale-105'
+                  }`}
+                >
+                  <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-full border-2 border-cyan-400/80 bg-gradient-to-b from-[#1e293b]/90 via-[#0f172a]/95 to-[#020617] flex items-center justify-center shadow-[0_0_18px_rgba(56,189,248,0.4)] relative overflow-hidden group-hover:border-yellow-300 group-hover:shadow-[0_0_22px_rgba(251,191,36,0.6)]">
+                    <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent pointer-events-none rounded-t-full" />
+                    <PhoneCall className="w-5 h-5 text-cyan-300 group-hover:text-yellow-300 drop-shadow-[0_0_6px_#38bdf8]" />
+                  </div>
+                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-cyan-300 mt-1 drop-shadow-sm">VIDEO CALL</span>
+                </button>
+
+                {/* Flip Question Pod */}
+                <button
+                  type="button"
+                  onClick={useFlipQuestion}
+                  disabled={!lifelines.flip || isOptionDisabled}
+                  title="Flip Question / Double Dip"
+                  className={`group flex flex-col items-center justify-center transition-all cursor-pointer ${
+                    !lifelines.flip ? 'opacity-30 line-through cursor-not-allowed scale-95' : 'hover:scale-105'
+                  }`}
+                >
+                  <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-full border-2 border-cyan-400/80 bg-gradient-to-b from-[#1e293b]/90 via-[#0f172a]/95 to-[#020617] flex items-center justify-center shadow-[0_0_18px_rgba(56,189,248,0.4)] relative overflow-hidden group-hover:border-yellow-300 group-hover:shadow-[0_0_22px_rgba(251,191,36,0.6)]">
+                    <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent pointer-events-none rounded-t-full" />
+                    <RotateCcw className="w-5 h-5 text-cyan-300 group-hover:text-yellow-300 drop-shadow-[0_0_6px_#38bdf8]" />
+                  </div>
+                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-cyan-300 mt-1 drop-shadow-sm">FLIP / DIP</span>
+                </button>
+              </div>
+
               {/* ── Circular Holographic Radar Timer (Tik-Tiki Ji) Matching Concept 1 ── */}
               <div className="flex items-center justify-center pt-1 pb-1 relative z-20">
                 {currentLevel <= (adminSession?.total_questions || 30) ? (
@@ -2485,37 +2557,31 @@ export default function KbcExam() {
                       {/* Glass top gloss highlight */}
                       <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/15 to-transparent pointer-events-none" />
 
-                      <div className="flex items-center gap-3 relative z-10">
-                        {/* Metallic Diamond Letter Tag */}
-                        <div className={`w-8 h-8 rounded-lg rotate-45 border-2 flex items-center justify-center shrink-0 shadow-lg transition-transform group-hover:scale-110 ${
-                          isCorrect ? 'border-emerald-300 bg-gradient-to-br from-emerald-500 to-green-700 text-white' :
-                          isWrongSelected ? 'border-red-300 bg-gradient-to-br from-red-600 to-rose-900 text-white' :
-                          (isSelected && isLocked) ? 'border-yellow-200 bg-gradient-to-br from-yellow-300 via-amber-500 to-amber-700 text-slate-950 shadow-[0_0_15px_#f59e0b]' :
-                          isSelected ? 'border-yellow-300 bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950' :
-                          'border-amber-400/80 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-amber-300 group-hover:border-amber-300'
-                        }`}>
-                          <span className="-rotate-45 font-black text-xs sm:text-sm font-mono tracking-tight">{letter}</span>
-                        </div>
+                      <div className="flex items-center gap-2.5 relative z-10 w-full px-2">
+                        {/* Gold Letter & Colon (Matching Image 1: A:, B:, C:, D:) */}
+                        <span className="font-mono font-black text-sm sm:text-base text-amber-400 shrink-0 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]">
+                          {letter}:
+                        </span>
 
-                        <span className={`text-sm md:text-base font-bold flex-1 ${textColor}`}>
+                        <span className={`text-xs sm:text-sm md:text-base font-extrabold flex-1 uppercase tracking-wider ${textColor}`}>
                           {opt}
                         </span>
 
                         {isSelected && isLocked && revealedCorrect === null && (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/50 border border-yellow-200 shrink-0 animate-pulse">
-                            <Lock className="w-3.5 h-3.5 text-slate-950" />
-                            <span>LOCKED 🔒</span>
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-500/25 text-amber-300 border border-amber-400 font-mono font-black text-[10px] sm:text-xs uppercase tracking-wider shadow-[0_0_14px_rgba(245,158,11,0.7)] shrink-0 animate-pulse">
+                            <Lock className="w-3.5 h-3.5 text-amber-400" />
+                            <span>LOCKED</span>
                           </span>
                         )}
                         {isCorrect && (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/60 border border-emerald-300 shrink-0 animate-bounce">
-                            <CheckCircle2 className="w-4 h-4 text-white" />
-                            <span>SAHI UTTAR!</span>
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-500/30 text-emerald-300 border border-emerald-400 font-mono font-black text-[10px] sm:text-xs uppercase tracking-wider shadow-[0_0_14px_rgba(16,185,129,0.7)] shrink-0 animate-bounce">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                            <span>SAHI</span>
                           </span>
                         )}
                         {isWrongSelected && (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-red-600/60 border border-red-300 shrink-0">
-                            <XCircle className="w-4 h-4 text-white" />
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-red-600/30 text-red-300 border border-red-500 font-mono font-black text-[10px] sm:text-xs uppercase tracking-wider shadow-[0_0_14px_rgba(239,68,68,0.7)] shrink-0">
+                            <XCircle className="w-4 h-4 text-red-400" />
                             <span>GALAT</span>
                           </span>
                         )}
@@ -2646,110 +2712,153 @@ export default function KbcExam() {
 
       {/* ── MODALS: Audience Poll, Expert Video Call, Quit Confirmation, Winner Cheque ── */}
 
-      {/* 1. Audience Poll Modal (Broadcast Studio 3D Holographic Pillars) */}
+      {/* 1. Audience Poll Modal (Authentic 3D Holographic Stage - Matching Image 2) */}
       {activeModal === 'poll' && pollData && (() => {
         const maxPercent = Math.max(...pollData);
         const topOptIdx = pollData.indexOf(maxPercent);
         const topLetter = String.fromCharCode(65 + topOptIdx);
 
         return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="relative bg-gradient-to-b from-[#0a1128] via-[#060a1c] to-[#030611] border-2 border-amber-400/80 rounded-3xl w-full max-w-lg p-6 sm:p-7 shadow-[0_0_60px_rgba(6,182,212,0.35)] space-y-5 text-center overflow-hidden">
-              
-              {/* Studio Ambient Neon Glows */}
-              <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-80 h-36 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-80 h-36 bg-amber-500/20 rounded-full blur-3xl pointer-events-none" />
-
-              {/* Modal Header */}
-              <div className="relative z-10 space-y-1">
-                <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-cyan-950/80 border border-cyan-400/50 text-cyan-300 text-[11px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(6,182,212,0.4)]">
-                  <Users className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Janmat Sangrah • Live Studio Audience Poll</span>
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
-                </div>
-                <h3 className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-100 uppercase tracking-wider">
-                  Audience Consensus Vote
-                </h3>
-                <p className="text-xs text-slate-300 font-medium">
-                  Hotseat Studio audience has cast their live votes for Question {currentLevel}:
-                </p>
+          <div 
+            className="fixed inset-0 z-50 flex flex-col justify-between p-3 sm:p-6 bg-slate-950/95 overflow-hidden backdrop-blur-xl animate-in fade-in duration-300 select-none"
+            style={{
+              backgroundImage: "linear-gradient(to bottom, rgba(2, 6, 23, 0.72) 0%, rgba(2, 6, 23, 0.88) 100%), url('/kbc-concepts/kbc_audience_poll_stage_bg.jpg')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}
+          >
+            {/* Top Bar: QUIZ CHAMPIONSHIP (Left) & AUDIENCE POLL (Right) */}
+            <div className="flex items-center justify-between w-full max-w-6xl mx-auto z-10 pt-1">
+              <div className="px-4 sm:px-6 py-1.5 sm:py-2 rounded-xl bg-slate-950/80 border-2 border-cyan-400 text-cyan-300 font-black text-xs sm:text-sm uppercase tracking-widest shadow-[0_0_15px_rgba(6,182,212,0.6)]">
+                QUIZ CHAMPIONSHIP
               </div>
+              <div className="flex items-center gap-3">
+                <div className="px-4 sm:px-6 py-1.5 sm:py-2 rounded-xl bg-slate-950/80 border-2 border-cyan-400 text-cyan-300 font-black text-xs sm:text-sm uppercase tracking-widest shadow-[0_0_15px_rgba(6,182,212,0.6)]">
+                  AUDIENCE POLL
+                </div>
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className="p-1.5 sm:p-2 rounded-xl bg-slate-900/90 border-2 border-cyan-400 text-cyan-300 hover:text-white transition cursor-pointer shadow-md"
+                  title="Close Audience Poll"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
 
-              {/* 3D Holographic Chart Floor & Neon Vertical Pillars */}
-              <div className="relative z-10 p-5 rounded-2xl bg-slate-950/80 border border-cyan-500/30 shadow-inner">
-                {/* Consensus Top Recommendation Banner */}
-                <div className="mb-4 py-1.5 px-3 rounded-xl bg-gradient-to-r from-amber-500/20 via-cyan-500/20 to-amber-500/20 border border-amber-400/40 text-[11px] sm:text-xs font-bold text-amber-300 flex items-center justify-center gap-2 shadow-sm">
+            {/* Right Side HUD Pill: AUDIENCE POLL - LIFELINE ACTIVE */}
+            <div className="w-full max-w-6xl mx-auto flex justify-end z-10 -my-1">
+              <div className="hidden sm:inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-950/90 border-2 border-cyan-400 text-cyan-300 font-mono font-black text-xs uppercase tracking-wider shadow-[0_0_15px_rgba(6,182,212,0.5)]">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                AUDIENCE POLL - LIFELINE ACTIVE
+              </div>
+            </div>
+
+            {/* ── CENTER STAGE: 3D HOLOGRAPHIC CUBE DISPLAY ── */}
+            <div className="relative w-full max-w-xl mx-auto my-auto z-10">
+              
+              {/* Floor Neon Emitter Ring Projection */}
+              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-80 h-16 rounded-full border-2 border-cyan-400/60 shadow-[0_0_30px_#00f2fe] pointer-events-none" />
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-64 h-12 rounded-full border border-purple-400/40 pointer-events-none" />
+
+              {/* The 3D Transparent Hologram Kiosk Box */}
+              <div className="relative rounded-3xl p-5 sm:p-7 border-2 border-cyan-400/80 shadow-[0_0_60px_rgba(6,182,212,0.45)] backdrop-blur-md bg-slate-950/75 overflow-hidden text-center space-y-4">
+                
+                {/* Holographic Header Recommendation */}
+                <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-amber-500/20 border border-amber-400/60 text-amber-300 text-xs font-bold shadow-sm">
                   <Sparkles className="w-3.5 h-3.5 text-yellow-400 animate-spin [animation-duration:6s]" />
-                  <span>Audience Recommendation: <strong>Option [{topLetter}]</strong> leads with <strong>{maxPercent}%</strong> votes</span>
+                  <span>Audience Consensus: <strong>Option [{topLetter}]</strong> leads with <strong>{maxPercent}%</strong> votes</span>
                 </div>
 
-                {/* 4 Vertical Neon Pillars with 3D Depth */}
-                <div className="grid grid-cols-4 gap-3 sm:gap-4 items-end h-56 pt-6 pb-2 px-2 bg-gradient-to-b from-slate-900/40 to-slate-950/90 rounded-xl border border-indigo-950">
+                {/* 4 Vertical 3D Pillars Inside Hologram */}
+                <div className="grid grid-cols-4 gap-3 sm:gap-4 items-end h-56 sm:h-64 pt-6 pb-2 px-3 bg-slate-950/80 rounded-2xl border border-indigo-950/80 relative">
+                  
+                  {/* Grid floor glow */}
+                  <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-cyan-500/10 to-transparent pointer-events-none rounded-b-2xl" />
+
                   {[0, 1, 2, 3].map(optIdx => {
                     const letter = String.fromCharCode(65 + optIdx);
                     const percent = pollData[optIdx] || 0;
                     const isTop = optIdx === topOptIdx && percent > 0;
 
                     return (
-                      <div key={optIdx} className="flex flex-col items-center gap-2 h-full justify-end group">
-                        {/* Floating Percentage Badge */}
-                        <div className={`px-2 py-0.5 rounded-md font-mono font-black text-xs transition-transform duration-300 ${
+                      <div key={optIdx} className="flex flex-col items-center gap-1.5 h-full justify-end relative z-10 group">
+                        
+                        {/* Large Letter on Top (Matching Image 2: e.g. B in large gold) */}
+                        <span className={`font-sans font-black text-2xl sm:text-3xl leading-none transition-transform duration-300 group-hover:scale-110 ${
                           isTop 
-                            ? 'bg-amber-400 text-slate-950 shadow-[0_0_15px_rgba(251,191,36,0.8)] scale-110' 
-                            : 'bg-slate-800 text-cyan-300 border border-cyan-500/30'
+                            ? 'text-amber-300 drop-shadow-[0_0_15px_#f59e0b]' 
+                            : 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]'
+                        }`}>
+                          {letter}
+                        </span>
+
+                        {/* Percentage Below Letter (Matching Image 2: e.g. 74% in gold) */}
+                        <span className={`font-mono font-black text-sm sm:text-lg mb-1 leading-none ${
+                          isTop 
+                            ? 'text-yellow-300 drop-shadow-[0_0_12px_#fbbf24]' 
+                            : 'text-cyan-300 drop-shadow-[0_0_6px_#38bdf8]'
                         }`}>
                           {percent}%
-                        </div>
+                        </span>
 
-                        {/* 3D Cylindrical Neon Pillar */}
-                        <div className="w-full max-w-[54px] relative flex flex-col justify-end items-center">
-                          {/* Top Cap Glow */}
+                        {/* 3D Vertical Neon Column */}
+                        <div className="w-full max-w-[58px] relative flex flex-col justify-end items-center">
+                          {/* 3D Top Cap */}
                           <div 
-                            className={`w-full h-2 rounded-full transition-all duration-700 ${
+                            className={`w-full h-2.5 rounded-full transition-all duration-700 ${
                               isTop 
-                                ? 'bg-amber-300 shadow-[0_0_16px_rgba(251,191,36,1)]' 
+                                ? 'bg-amber-300 shadow-[0_0_18px_rgba(251,191,36,1)]' 
                                 : 'bg-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.9)]'
                             }`}
                           />
-                          {/* Main Glowing Column */}
+                          {/* Main Glowing 3D Column Body */}
                           <div 
                             className={`w-full rounded-t-lg transition-all duration-1000 relative overflow-hidden ${
                               isTop
-                                ? 'bg-gradient-to-t from-amber-700 via-amber-500 to-yellow-300 shadow-[0_0_25px_rgba(245,158,11,0.6)]'
-                                : 'bg-gradient-to-t from-indigo-900 via-blue-600 to-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
+                                ? 'bg-gradient-to-t from-amber-700 via-amber-500 to-yellow-300 shadow-[0_0_35px_rgba(245,158,11,0.9)] border-x border-t border-yellow-200'
+                                : 'bg-gradient-to-t from-indigo-900 via-blue-600 to-cyan-400 shadow-[0_0_18px_rgba(6,182,212,0.5)] border-x border-t border-cyan-400/60'
                             }`}
-                            style={{ height: `${Math.max(percent * 1.6, 12)}px` }}
+                            style={{ height: `${Math.max(percent * 1.8, 16)}px` }}
                           >
                             {/* Glass Reflection Highlight */}
                             <div className="absolute inset-y-0 left-1 w-1 bg-white/40 blur-[0.5px] rounded-full pointer-events-none" />
                           </div>
                         </div>
 
-                        {/* Rotated Diamond Option Badge */}
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs sm:text-sm shadow-md transition-transform duration-300 ${
-                          isTop
-                            ? 'bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 border border-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.6)]'
-                            : 'bg-slate-900 text-white border border-indigo-500/50'
-                        }`}>
-                          {letter}
-                        </div>
                       </div>
                     );
                   })}
                 </div>
-              </div>
 
-              {/* Action Button */}
-              <div className="relative z-10 pt-1">
-                <button
-                  onClick={() => setActiveModal(null)}
-                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-amber-500/30 hover:scale-[1.02] transition cursor-pointer"
-                >
-                  Shukriya Audience! Wapas Khel Par Chalein
-                </button>
-              </div>
+                {/* Bottom Platform Podium Tray (Matching Image 2: A: (12%) B: (74%) C: (8%) D: (6%)) */}
+                <div className="py-2.5 px-3 sm:px-4 rounded-xl bg-slate-950/95 border-2 border-cyan-400/80 flex items-center justify-around text-xs sm:text-sm font-mono font-black shadow-inner">
+                  {[0, 1, 2, 3].map(idx => (
+                    <span 
+                      key={idx} 
+                      className={idx === topOptIdx ? "text-amber-300 drop-shadow-[0_0_10px_#f59e0b] scale-105" : "text-cyan-300"}
+                    >
+                      {String.fromCharCode(65 + idx)}: ({pollData[idx]}%)
+                    </span>
+                  ))}
+                </div>
 
+              </div>
             </div>
+
+            {/* Bottom Bar: QUESTION [X] (Left) & RESULTS Button (Center) */}
+            <div className="flex items-center justify-between w-full max-w-6xl mx-auto z-10 pb-1">
+              <div className="px-4 sm:px-6 py-1.5 sm:py-2 rounded-xl bg-slate-950/80 border-2 border-cyan-400 text-cyan-300 font-black text-xs sm:text-sm uppercase tracking-widest shadow-[0_0_15px_rgba(6,182,212,0.6)]">
+                QUESTION {currentLevel}
+              </div>
+              <button
+                onClick={() => setActiveModal(null)}
+                className="px-6 sm:px-12 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 via-cyan-400 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-slate-950 font-black text-xs sm:text-sm uppercase tracking-widest shadow-[0_0_25px_rgba(6,182,212,0.8)] cursor-pointer hover:scale-105 transition"
+              >
+                RESULTS (CONTINUE ➔)
+              </button>
+            </div>
+
           </div>
         );
       })()}
