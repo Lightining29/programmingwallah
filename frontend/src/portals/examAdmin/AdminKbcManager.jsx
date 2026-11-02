@@ -1047,6 +1047,77 @@ export default function AdminKbcManager() {
     }
   };
 
+  const handleAssignCode = async (teamId, teamName, currentCode) => {
+    const { value: newCode } = await Swal.fire({
+      title: 'Assign Team Access Code',
+      text: `Enter unique access code for ${teamName || 'this team'}:`,
+      input: 'text',
+      inputValue: currentCode || '',
+      inputPlaceholder: 'e.g. TEAM-01 or KBC-901',
+      showCancelButton: true,
+      confirmButtonText: 'Assign Code',
+      confirmButtonColor: '#06b6d4',
+      background: '#0f172a',
+      color: '#fff',
+      inputValidator: (value) => {
+        if (!value || !value.trim()) return 'Access code cannot be empty!';
+      }
+    });
+
+    if (newCode) {
+      try {
+        const res = await fetch('/api/kbc/admin/teams/assign-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ teamId, accessCode: newCode.trim() })
+        });
+        const data = await res.json();
+        if (data.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Code Assigned!',
+            text: `Assigned code "${newCode.trim().toUpperCase()}"`,
+            timer: 1500,
+            showConfirmButton: false,
+            background: '#0f172a',
+            color: '#fff'
+          });
+          fetchTeams();
+        } else {
+          Swal.fire('Error', data.message || 'Failed to assign code', 'error');
+        }
+      } catch (e) {
+        Swal.fire('Error', 'Network or server error', 'error');
+      }
+    }
+  };
+
+  const handleAutoAssignCodes = async () => {
+    const confirm = await Swal.fire({
+      title: 'Auto-Assign Clean Unique Codes?',
+      text: 'This will assign unique sequential codes (TEAM-01, TEAM-02...) to all registered teams.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Assign Codes',
+      confirmButtonColor: '#06b6d4'
+    });
+    if (confirm.isConfirmed) {
+      try {
+        const res = await fetch('/api/kbc/admin/teams/auto-assign-codes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (data.success) {
+          Swal.fire('Done!', data.message, 'success');
+          fetchTeams();
+        }
+      } catch (e) {
+        Swal.fire('Error', 'Failed to auto-assign codes', 'error');
+      }
+    }
+  };
+
   const handleSetHotseatTeam = (teamId) => {
     handleUpdateLiveRound({ active_team_id: teamId });
     Swal.fire({
@@ -1479,7 +1550,7 @@ export default function AdminKbcManager() {
   };
 
   const activeTestSet = testSets.find(t => t.is_active);
-  const totalSessionQuestions = Math.max(session?.total_questions || 0, activeTestSet?.question_count || 0, 16);
+  const totalSessionQuestions = session?.total_questions || (activeTestSet?.question_count && activeTestSet.question_count > 0 ? activeTestSet.question_count : 50);
   const currentLevelInfo = getPrizeForLevel(selectedLevel, totalSessionQuestions);
   const effectiveLevel = ((selectedLevel - 1) % 16) + 1;
   const currentLevelData = levelsData[selectedLevel] || levelsData[effectiveLevel] || { pool: [] };
@@ -2407,7 +2478,7 @@ export default function AdminKbcManager() {
                 Participating Contestant Teams ({teams.length})
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                Each team participates from their own laptop by entering their Team Access Code at <strong className="text-amber-400 font-mono">/kbc</strong>.
+                Candidates register at <strong className="text-amber-400 font-mono">/kbc</strong> and wait in the live lounge. When you click <strong className="text-emerald-400">"Confirm & Start KBC Live"</strong>, the quiz starts on all screens automatically!
               </p>
             </div>
 
@@ -2445,41 +2516,31 @@ export default function AdminKbcManager() {
             </div>
           </div>
 
-          {/* Default Exam Password & Gate Access Info */}
-          <div className="bg-gradient-to-r from-amber-950/40 via-slate-900 to-indigo-950/40 border border-amber-400/30 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          {/* Live Standby Lounge Info (No default password - Admin assigns codes) */}
+          <div className="bg-gradient-to-r from-slate-900 via-indigo-950/60 to-slate-900 border border-indigo-500/30 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-400 shrink-0">
-                <Key className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-400 shrink-0">
+                <Users className="w-5 h-5" />
               </div>
               <div>
                 <div className="text-white font-bold flex items-center gap-2">
-                  <span>Default KBC Exam Password:</span>
-                  <span className="font-mono bg-amber-400 text-slate-950 px-2 py-0.5 rounded font-black text-xs">
-                    {session?.default_access_code || 'KBC-101'}
+                  <span>Live Candidate Standby Lounge</span>
+                  <span className="font-mono bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30 font-bold text-xs">
+                    {teams.length} Registered Teams Waiting
                   </span>
                 </div>
                 <div className="text-slate-400 text-[11px] pt-0.5">
-                  Students enter this password at the Exam Gate after candidate registration to join the live waiting room.
+                  Players register at <strong className="text-amber-400 font-mono">/kbc</strong> and automatically wait in standby. Click <strong className="text-emerald-400">"Confirm & Start KBC Live"</strong> to start for all players!
                 </div>
               </div>
             </div>
             <button
-              onClick={() => {
-                navigator.clipboard.writeText(session?.default_access_code || 'KBC-101');
-                Swal.fire({
-                  icon: 'success',
-                  title: 'Password Copied!',
-                  text: `Password "${session?.default_access_code || 'KBC-101'}" copied to clipboard. Share with students!`,
-                  timer: 1800,
-                  showConfirmButton: false,
-                  background: '#0f172a',
-                  color: '#fff'
-                });
-              }}
-              className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-300 font-bold text-xs flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+              onClick={handleAutoAssignCodes}
+              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-cyan-300 font-bold text-xs flex items-center gap-1.5 cursor-pointer whitespace-nowrap transition shadow-sm"
+              title="Automatically assign unique sequential codes (TEAM-01, TEAM-02...) to all teams"
             >
-              <Copy className="w-3.5 h-3.5" />
-              <span>Copy Password</span>
+              <Key className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Auto-Assign All Codes</span>
             </button>
           </div>
 
@@ -2556,9 +2617,18 @@ export default function AdminKbcManager() {
                             </div>
                           </td>
                           <td className="px-4 py-3.5">
-                            <span className="px-2.5 py-1 rounded-lg bg-indigo-950 border border-indigo-500/30 font-mono text-indigo-300 font-bold inline-flex items-center gap-1.5">
-                              {t.access_code}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="px-2.5 py-1 rounded-lg bg-indigo-950 border border-indigo-500/40 font-mono text-amber-300 font-bold text-xs shadow-sm">
+                                {t.access_code || 'None'}
+                              </span>
+                              <button
+                                onClick={() => handleAssignCode(t.id, t.leader_name || t.team_name, t.access_code)}
+                                className="p-1 rounded hover:bg-amber-500/20 text-slate-400 hover:text-amber-300 transition cursor-pointer"
+                                title="Assign or edit team access code"
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </td>
                           <td className="px-4 py-3.5">
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${

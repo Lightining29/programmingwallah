@@ -40,7 +40,26 @@ export default function KbcExam() {
   const [team, setTeam] = useState(() => {
     try {
       const saved = localStorage.getItem('kbc_team');
-      return saved ? JSON.parse(saved) : null;
+      if (saved) return JSON.parse(saved);
+      const studentSaved = localStorage.getItem('kbc_registered_student');
+      if (studentSaved) {
+        const s = JSON.parse(studentSaved);
+        const autoTeam = {
+          id: s.id,
+          team_name: s.full_name,
+          leader_name: s.full_name,
+          email: s.email,
+          course: s.course,
+          profile_photo: s.profile_photo,
+          access_code: s.access_code || 'Pending',
+          points: Number(s.points) || 0,
+          current_level: 1,
+          status: 'REGISTERED'
+        };
+        localStorage.setItem('kbc_team', JSON.stringify(autoTeam));
+        return autoTeam;
+      }
+      return null;
     } catch (e) {
       return null;
     }
@@ -57,7 +76,7 @@ export default function KbcExam() {
 
   const [authStep, setAuthStep] = useState(() => {
     if (localStorage.getItem('kbc_team')) return 'WAITING';
-    if (localStorage.getItem('kbc_registered_student')) return 'GATE';
+    if (localStorage.getItem('kbc_registered_student')) return 'WAITING';
     return 'REGISTER';
   });
 
@@ -88,10 +107,10 @@ export default function KbcExam() {
       const s = localStorage.getItem('kbc_registered_student');
       if (s) {
         const parsed = JSON.parse(s);
-        return parsed.access_code || 'KBC-101';
+        return parsed.access_code || '';
       }
     } catch(e) {}
-    return 'KBC-101';
+    return '';
   });
   const [teamJoinLoading, setTeamJoinLoading] = useState(false);
   const [teamJoinError, setTeamJoinError] = useState('');
@@ -213,7 +232,7 @@ export default function KbcExam() {
             mobile: s.mobile || '',
             course: s.course || s.college || 'Full Stack Coder',
             profile_photo: s.profile_photo || null,
-            access_code: s.access_code || 'KBC-101',
+            access_code: s.access_code || '',
             points: Number(s.points) || 0,
             isLoggedIn: true
           };
@@ -232,7 +251,7 @@ export default function KbcExam() {
             mobile: teamObj.mobile || '',
             course: teamObj.course || teamObj.college || 'Full Stack Coder',
             profile_photo: teamObj.profile_photo || null,
-            access_code: teamObj.access_code || 'KBC-101',
+            access_code: teamObj.access_code || '',
             points: Number(teamObj.points) || 0,
             isLoggedIn: true
           };
@@ -251,7 +270,7 @@ export default function KbcExam() {
             mobile: '',
             course: s.course || s.college || 'Full Stack Coder',
             profile_photo: s.profile_photo || null,
-            access_code: 'KBC-101',
+            access_code: s.access_code || '',
             points: 0,
             isLoggedIn: true
           };
@@ -270,7 +289,7 @@ export default function KbcExam() {
             mobile: '',
             course: userObj.course || 'Full Stack Coder',
             profile_photo: userObj.profile_photo || null,
-            access_code: 'KBC-101',
+            access_code: '',
             points: 0,
             isLoggedIn: true
           };
@@ -286,7 +305,7 @@ export default function KbcExam() {
       mobile: '',
       course: 'Full Stack Coder',
       profile_photo: null,
-      access_code: 'KBC-101',
+      access_code: '',
       points: 0,
       isLoggedIn: false
     };
@@ -304,7 +323,7 @@ export default function KbcExam() {
         mobile: registeredStudent.mobile || '',
         course: registeredStudent.course || registeredStudent.college || 'Full Stack Coder',
         profile_photo: registeredStudent.profile_photo || null,
-        access_code: registeredStudent.access_code || 'KBC-101',
+        access_code: registeredStudent.access_code || '',
         points: Number(registeredStudent.points) || 0,
         isLoggedIn: true
       };
@@ -319,7 +338,7 @@ export default function KbcExam() {
         mobile: team.mobile || '',
         course: team.course || team.college || 'Full Stack Coder',
         profile_photo: team.profile_photo || null,
-        access_code: team.access_code || 'KBC-101',
+        access_code: team.access_code || '',
         points: Number(team.points) || 0,
         isLoggedIn: true
       };
@@ -888,7 +907,7 @@ export default function KbcExam() {
     try {
       const res = await fetch('/api/kbc/questions');
       const data = await res.json();
-      if (data.success && Array.isArray(data.questions) && data.questions.length >= 16) {
+      if (data.success && Array.isArray(data.questions) && data.questions.length > 0) {
         setQuestions(data.questions);
         setFlipPool(data.flipPool || {});
       } else {
@@ -1012,6 +1031,19 @@ export default function KbcExam() {
 
       if (data.success && data.student) {
         localStorage.setItem('kbc_registered_student', JSON.stringify(data.student));
+        const activeTeam = data.team || {
+          id: data.student.id || data.team_id,
+          team_name: data.student.full_name,
+          leader_name: data.student.full_name,
+          email: data.student.email,
+          course: data.student.course,
+          profile_photo: data.student.profile_photo,
+          access_code: data.access_code || data.student.access_code || '',
+          points: 0,
+          current_level: 1,
+          status: 'REGISTERED'
+        };
+        localStorage.setItem('kbc_team', JSON.stringify(activeTeam));
         try {
           const studentProfile = {
             id: data.student.id,
@@ -1024,9 +1056,11 @@ export default function KbcExam() {
           localStorage.setItem('exam_student', JSON.stringify(studentProfile));
         } catch (e) {}
         setRegisteredStudent(data.student);
+        setTeam(activeTeam);
         setPlayerName(data.student.full_name);
-        setTeamAccessCodeInput(data.access_code || 'KBC-101');
-        setAuthStep('GATE');
+        setTeamAccessCodeInput(data.access_code || data.student.access_code || '');
+        setPlayMode('TEAM');
+        setAuthStep('WAITING');
         kbcAudio.playSelect();
       } else if (data.alreadyRegistered) {
         setRegError(data.message || 'This email is already registered! Please login using your registered Email and Date of Birth.');
@@ -1070,6 +1104,19 @@ export default function KbcExam() {
 
       if (data.success && data.student) {
         localStorage.setItem('kbc_registered_student', JSON.stringify(data.student));
+        const activeTeam = data.team || {
+          id: data.student.id,
+          team_name: data.student.full_name,
+          leader_name: data.student.full_name,
+          email: data.student.email,
+          course: data.student.course,
+          profile_photo: data.student.profile_photo,
+          access_code: data.access_code || data.student.access_code || '',
+          points: Number(data.student.points) || 0,
+          current_level: 1,
+          status: 'REGISTERED'
+        };
+        localStorage.setItem('kbc_team', JSON.stringify(activeTeam));
         try {
           const studentProfile = {
             id: data.student.id,
@@ -1082,16 +1129,11 @@ export default function KbcExam() {
           localStorage.setItem('exam_student', JSON.stringify(studentProfile));
         } catch (e) {}
         setRegisteredStudent(data.student);
+        setTeam(activeTeam);
         setPlayerName(data.student.full_name);
-        setTeamAccessCodeInput(data.access_code || 'KBC-101');
-        if (data.team) {
-          localStorage.setItem('kbc_team', JSON.stringify(data.team));
-          setTeam(data.team);
-          setPlayMode('TEAM');
-          setAuthStep('WAITING');
-        } else {
-          setAuthStep('GATE');
-        }
+        setTeamAccessCodeInput(data.access_code || data.student.access_code || '');
+        setPlayMode('TEAM');
+        setAuthStep('WAITING');
         kbcAudio.playSelect();
       } else {
         setLoginError(data.message || 'Login failed. Please verify your Email and Date of Birth.');
@@ -1868,8 +1910,12 @@ export default function KbcExam() {
                 <span>Course: <strong className="text-white">{candidateProfile.course || 'Full Stack Coder'}</strong></span>
                 <span>•</span>
                 <span className="font-mono text-yellow-300 font-bold bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30">⭐ {team?.points || candidateProfile.points || 0} pts</span>
-                <span>•</span>
-                <span>Code: <span className="font-mono text-white bg-slate-900 px-2 py-0.5 rounded border border-slate-700">{team?.access_code || candidateProfile.access_code}</span></span>
+                {team?.access_code && team.access_code !== 'KBC-101' && (
+                  <>
+                    <span>•</span>
+                    <span>Assigned Code: <span className="font-mono text-cyan-300 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-700/60 font-bold">{team.access_code}</span></span>
+                  </>
+                )}
               </div>
             </div>
 
@@ -2296,7 +2342,7 @@ export default function KbcExam() {
                     disabled={regLoading}
                     className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-600 via-teal-500 to-cyan-700 hover:from-cyan-500 hover:to-teal-400 text-white font-black text-sm sm:text-base tracking-wider shadow-lg shadow-cyan-600/30 transition transform hover:scale-[1.01] active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2"
                   >
-                    {regLoading ? 'Saving to Hostinger Database...' : 'Submit Registration & Proceed 🚀'}
+                    {regLoading ? 'Saving to Hostinger Database...' : 'Register & Enter Live Waiting Room 🚀'}
                   </button>
 
                   {/* Footer Switch to Login / Gate */}
@@ -2314,7 +2360,7 @@ export default function KbcExam() {
                       onClick={() => setAuthStep('GATE')}
                       className="text-xs sm:text-sm font-bold text-slate-400 hover:text-white transition cursor-pointer"
                     >
-                      Go to Exam Gate →
+                      Have an assigned Team Code? Join Directly →
                     </button>
                   </div>
                 </form>
@@ -2349,41 +2395,32 @@ export default function KbcExam() {
                   MERN Stack & SQL Grand Examination Hotseat
                 </p>
                 <p className="text-slate-300 text-xs sm:text-sm max-w-md mx-auto pt-1 leading-relaxed">
-                  Participate live with your laptop in the Admin-controlled classroom competition! Face the 16-level championship questions in real-time.
+                  Participate live with your laptop in the Admin-controlled classroom competition!
                 </p>
-                <div className="pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setPlayMode('SOLO')}
-                    className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-black text-xs uppercase tracking-wider shadow-md transition cursor-pointer"
-                  >
-                    Enter Hotseat Arena Directly ➔
-                  </button>
-                </div>
               </div>
 
-              {/* FORM: Team Access Code / Default Password Entry */}
+              {/* FORM: Team Access Code Entry */}
               <form onSubmit={handleJoinTeam} className="pt-2 max-w-md mx-auto space-y-4 text-left">
                 <div className="bg-slate-950/90 text-white rounded-2xl p-6 space-y-4 shadow-2xl border-2 border-cyan-400/80">
                   <div className="flex items-center gap-2 pb-2 border-b border-indigo-900/60 text-amber-400 text-xs font-black uppercase tracking-wider">
                     <Laptop className="w-4 h-4 text-amber-400" />
-                    <span>JOIN TEAM VIA LAPTOP</span>
+                    <span>CONNECT WITH ASSIGNED TEAM CODE</span>
                   </div>
 
                   <div>
                     <label className="block text-xs font-black text-slate-300 mb-1.5 uppercase tracking-wider">
-                      ENTER TEAM ACCESS CODE
+                      ENTER ASSIGNED TEAM CODE
                     </label>
                     <input
                       type="text"
                       value={teamAccessCodeInput}
                       onChange={e => setTeamAccessCodeInput(e.target.value)}
-                      placeholder="E.G.  KBC-101"
+                      placeholder="E.G.  TEAM-01"
                       className="w-full bg-slate-900 border-2 border-cyan-400/60 focus:border-amber-400 rounded-xl px-4 py-3.5 text-yellow-300 font-mono font-black text-center text-xl sm:text-2xl tracking-widest uppercase focus:outline-none shadow-inner"
                       autoFocus
                     />
                     <span className="text-[11px] text-slate-400 block mt-2 text-center font-medium">
-                      Ask your Exam Admin / Host for your Team Access Code.
+                      Enter the unique Access Code assigned to your team by the Exam Admin.
                     </span>
                   </div>
 
