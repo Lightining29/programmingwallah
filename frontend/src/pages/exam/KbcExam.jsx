@@ -655,7 +655,7 @@ export default function KbcExam() {
   const currentUserIndex = displayPlayers.findIndex(p => p.isUser);
   const currentUserRank = currentUserIndex >= 0 ? currentUserIndex + 1 : 1;
   const currentUserPlayer = currentUserIndex >= 0 ? displayPlayers[currentUserIndex] : null;
-  const totalQuestions = adminSession?.total_questions || questions?.length || 50;
+  const totalQuestions = (adminSession?.total_questions && adminSession?.total_questions !== 16) ? adminSession.total_questions : (questions?.length > 16 ? questions.length : 50);
   const userPoints = currentUserPlayer ? currentUserPlayer.points : (team ? (Number(team.points) || 0) : 0);
   const isUserOut = gameOver || (currentUserPlayer?.status === 'OUT') || (team && team.status === 'OUT');
   const safePadavLevel = Math.max(0, Math.floor(getSafePoints(currentLevel, totalQuestions) / 100));
@@ -726,14 +726,18 @@ export default function KbcExam() {
                 submitted_option: myTeamData.submitted_option
               }));
 
-              // ONLY lock option if THIS PARTICULAR PLAYER submitted their option
-              if (myTeamData.submitted_option !== null && myTeamData.submitted_option !== undefined) {
+              // ONLY lock option if THIS PARTICULAR PLAYER submitted their option for THIS CURRENT ROUND
+              const isMatchRound = Number(myTeamData.current_level) === Number(sess.current_level) && Number(sess.current_level) === Number(currentLevel);
+              if (myTeamData.submitted_option !== null && myTeamData.submitted_option !== undefined && isMatchRound) {
                 setSelectedOption(Number(myTeamData.submitted_option));
                 setIsLocked(true);
                 setTeamAnswerSubmitted(true);
                 if (sess.revealed_correct === null) {
                   setAnswerStatus('locked');
                 }
+              } else if (!teamAnswerSubmitted && sess.revealed_correct === null && !isTimeUp) {
+                // If candidate has not submitted yet for this question, keep local lock unlocked
+                setIsLocked(false);
               }
             }
           }
@@ -795,6 +799,12 @@ export default function KbcExam() {
             lastQuestionTrackRef.current.timerStartedAt = sess.timer_started_at;
 
             if (!isNowLive) {
+              setIsLocked(false);
+              setIsTimeUp(false);
+              setAnswerStatus(null);
+              setSelectedOption(null);
+              setTeamAnswerSubmitted(false);
+              setTimeLeft(getLevelCountdown(sess.current_level || 1));
               kbcAudio.stopClock();
               kbcAudio.stopLockSuspense();
               if (timerRef.current) {
@@ -1317,6 +1327,14 @@ export default function KbcExam() {
       const initialSeconds = getLevelCountdown(currentLevel);
       setTimeLeft(initialSeconds);
       setIsTimeUp(false);
+      setSelectedOption(null);
+      setIsLocked(false);
+      setAnswerStatus(null);
+      setTeamAnswerSubmitted(false);
+      setRevealedCorrect(null);
+      setEliminatedOptions([]);
+      setIsWrongAnswer(false);
+      setIsCelebratingCorrect(false);
       if (isClockActive) {
         kbcAudio.startClock();
       } else {
@@ -1403,8 +1421,8 @@ export default function KbcExam() {
     setHostQuote(AMITABH_QUOTES.questionIntro(1, KBC_PRIZE_LADDER[0]?.prize || '₹1,000'));
   };
 
-  // Option Disabled condition: when locked, time is up (0 sec), or answer revealed
-  const isOptionDisabled = isLocked || isTimeUp || timeLeft <= 0 || (revealedCorrect !== null);
+  // Option Disabled condition: when contestant locked & submitted their answer, time is up (0 sec), or answer revealed
+  const isOptionDisabled = (isLocked && teamAnswerSubmitted) || (isTimeUp && timeLeft <= 0) || (revealedCorrect !== null);
 
   // Option Click
   const handleOptionClick = (idx) => {
@@ -1418,7 +1436,7 @@ export default function KbcExam() {
 
   // Confirm Lock Option ("Computer Ji, option [X] ko lock kiya jaye!")
   const handleLockOption = () => {
-    if (selectedOption === null || isLocked || (revealedCorrect !== null)) return;
+    if (selectedOption === null || teamAnswerSubmitted || (revealedCorrect !== null)) return;
     setIsLocked(true);
     setAnswerStatus('locked');
     setTeamAnswerSubmitted(true);

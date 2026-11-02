@@ -50,7 +50,7 @@ export const getMySQLConfig = (override = {}) => {
     database: resolvedDb,
     port: resolvedPort,
     waitForConnections: true,
-    connectionLimit: 20,
+    connectionLimit: 10,
     queueLimit: 0,
     enableKeepAlive: true,
     keepAliveInitialDelay: 10000,

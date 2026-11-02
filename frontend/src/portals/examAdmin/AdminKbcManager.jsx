@@ -1550,7 +1550,7 @@ export default function AdminKbcManager() {
   };
 
   const activeTestSet = testSets.find(t => t.is_active);
-  const totalSessionQuestions = session?.total_questions || (activeTestSet?.question_count && activeTestSet.question_count > 0 ? activeTestSet.question_count : 50);
+  const totalSessionQuestions = (session?.total_questions && session?.total_questions !== 16) ? session.total_questions : (activeTestSet?.question_count && activeTestSet.question_count > 0 ? activeTestSet.question_count : 50);
   const currentLevelInfo = getPrizeForLevel(selectedLevel, totalSessionQuestions);
   const effectiveLevel = ((selectedLevel - 1) % 16) + 1;
   const currentLevelData = levelsData[selectedLevel] || levelsData[effectiveLevel] || { pool: [] };

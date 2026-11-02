@@ -191,6 +191,13 @@ export async function ensureKbcTable() {
       await pool.query("DELETE FROM kbc_questions WHERE id LIKE 'q-%'");
     } catch (e) {}
 
+    // Check if questions are already seeded to prevent startup lock / 503 timeout on Hostinger
+    const [cntRows] = await pool.query('SELECT COUNT(*) as cnt FROM kbc_questions');
+    if ((cntRows[0]?.cnt || 0) >= 1000) {
+      tableEnsured = true;
+      return true;
+    }
+
     // 3. Ensure all 1,008 verified pure SQL questions are seeded and updated in Hostinger MySQL kbc_questions table
     if (SQL_QUESTION_BANK.length > 0) {
       console.log(`Syncing ${SQL_QUESTION_BANK.length} verified pure SQL questions into Hostinger MySQL kbc_questions table...`);
@@ -2090,16 +2097,10 @@ async function ensureKbcSessionsAndTeams() {
       try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN last_submitted_at BIGINT DEFAULT NULL'); } catch(e) {}
       try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN submitted_at BIGINT DEFAULT NULL'); } catch(e) {}
 
-      // Ensure starter teams if none exist
-      const [teamRows] = await pool.query('SELECT COUNT(*) as cnt FROM kbc_teams');
-      if ((teamRows[0]?.cnt || 0) === 0) {
-        for (const t of memoryTeams) {
-          await pool.query(`
-            INSERT INTO kbc_teams (id, team_name, leader_name, access_code, current_level, score_amount, points, status, laptop_info)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `, [t.id, t.team_name, t.leader_name, t.access_code, t.current_level, t.score_amount, t.points || 0, t.status, t.laptop_info]);
-        }
-      }
+      // Auto-migrate total_questions to 50 if legacy default 16
+      try {
+        await pool.query('UPDATE kbc_sessions SET total_questions = 50 WHERE total_questions = 16 OR total_questions IS NULL');
+      } catch (e) {}
 
       // Auto-migrate legacy 'KBC-101' codes to clean individual team codes so candidates have unique codes
       try {
@@ -2503,6 +2504,16 @@ router.post('/admin/session/toggle', async (req, res) => {
               status = 'CONNECTED', lifelines_used_json = NULL
         `);
 
+        for (const t of cachedTeamsMap.values()) {
+          t.submitted_option = null;
+          t.submitted_at = null;
+          t.current_level = 1;
+          t.points = 0;
+          t.score_amount = 0;
+          t.correct_count = 0;
+          t.wrong_count = 0;
+        }
+
         // Reset all students back to 0 points for fresh KBC run
         try {
           await pool.query(`
@@ -2634,12 +2645,12 @@ router.post('/admin/session/update', async (req, res) => {
           updates.push('current_question_id = ?');
           params.push(current_question_id);
         }
-        if (current_level !== undefined || current_question_id !== undefined) {
+        if (current_level !== undefined || current_question_id !== undefined || req.body.reset_round) {
           const targetLvl = current_level ? parseInt(current_level, 10) : (preSess[0]?.current_level || 1);
           const dur = getKbcLevelCountdown(targetLvl);
           updates.push('timer_duration = ?', 'timer_started_at = ?', 'timer_paused = 0', 'timer_remaining = ?', 'is_locked = 0', 'locked_option = NULL', 'revealed_correct = NULL');
           params.push(dur, Date.now(), dur);
-          // New question / level: clear individual player submissions across database and cache
+          // New question / level / reset: clear individual player submissions across database and cache
           await pool.query('UPDATE kbc_teams SET submitted_option = NULL, submitted_at = NULL');
           for (const t of cachedTeamsMap.values()) {
             t.submitted_option = null;
