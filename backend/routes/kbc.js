@@ -169,6 +169,11 @@ export async function ensureKbcTable() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
+    // Ensure test_set_id column in kbc_questions before seeding
+    try {
+      await pool.query("ALTER TABLE kbc_questions ADD COLUMN test_set_id VARCHAR(100) DEFAULT 'kbc-sql-mastery'");
+    } catch (e) {}
+
     // 2. Remove legacy MERN seeded questions (ids like 'q-%')
     try {
       await pool.query("DELETE FROM kbc_questions WHERE id LIKE 'q-%'");
@@ -2199,7 +2204,6 @@ router.get('/session/status', async (req, res) => {
   } catch (err) {
     console.warn('MySQL /session/status error:', err.message);
   }
-  }
 
   // Fallback in-memory
   const sortedMemory = [...memoryTeams].sort((a, b) => {
@@ -2906,10 +2910,40 @@ router.get('/teams', async (req, res) => {
 router.post('/student/register', async (req, res) => {
   const { full_name, email, dob, mobile, course, profile_photo } = req.body;
 
-  if (!full_name || !full_name.trim() || !email || !email.trim() || !dob || !dob.trim()) {
+  if (!profile_photo) {
     return res.status(400).json({ 
       success: false, 
-      message: 'Full Name, Email Address, and Date of Birth (DOB) are mandatory for registration.' 
+      message: 'Candidate Profile Photo is mandatory (required for leaderboard podium & certificate).' 
+    });
+  }
+  if (!full_name || !full_name.trim()) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Full Name is mandatory.' 
+    });
+  }
+  if (!email || !email.trim()) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Email Address is mandatory.' 
+    });
+  }
+  if (!dob || !dob.trim()) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Date of Birth (DOB) is mandatory.' 
+    });
+  }
+  if (!mobile || !mobile.trim() || mobile.trim().replace(/\D/g, '').length < 10) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'A valid 10-digit Mobile / WhatsApp Number is mandatory.' 
+    });
+  }
+  if (!course || !course.trim()) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Course / Specialization selection is mandatory.' 
     });
   }
 

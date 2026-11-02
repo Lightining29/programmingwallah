@@ -964,10 +964,15 @@ export default function KbcExam() {
       setRegError('Please select your Date of Birth (DOB).');
       return;
     }
+    const cleanMobile = regForm.mobile.trim().replace(/\D/g, '');
+    if (!cleanMobile || cleanMobile.length < 10) {
+      setRegError('Please enter a valid 10-digit Mobile / WhatsApp Number (mandatory).');
+      return;
+    }
 
     const courseSelected = regForm.course === 'Other' ? (regForm.customCourse || '').trim() : regForm.course;
     if (!courseSelected) {
-      setRegError('Please select or specify your Course Name.');
+      setRegError('Please select or specify your Course Name (mandatory).');
       return;
     }
 
@@ -2190,15 +2195,17 @@ export default function KbcExam() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-cyan-300 uppercase tracking-wider mb-1.5">
-                        MOBILE / WHATSAPP
+                        MOBILE / WHATSAPP NUMBER <span className="text-red-400">*</span>
                       </label>
                       <div className="relative">
                         <Smartphone className="w-4 h-4 text-cyan-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                         <input
                           type="tel"
+                          required
                           value={regForm.mobile}
                           onChange={e => setRegForm(p => ({ ...p, mobile: e.target.value }))}
-                          placeholder="98XXXXXXXX"
+                          placeholder="10-digit mobile (e.g. 98XXXXXXXX)"
+                          maxLength={15}
                           className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-700 bg-slate-900/90 text-white placeholder:text-slate-500 text-sm font-medium focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 shadow-inner"
                         />
                       </div>
