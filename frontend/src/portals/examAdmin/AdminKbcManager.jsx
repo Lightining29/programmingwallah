@@ -722,7 +722,7 @@ export default function AdminKbcManager() {
   const handleNextLevel = () => {
     kbcAudio.stopLockSuspense();
     const activeTestSet = testSets.find(t => t.is_active);
-    const totalQ = session?.total_questions || activeTestSet?.question_count || 10;
+    const totalQ = session?.total_questions || activeTestSet?.question_count || 16;
     if (selectedLevel >= totalQ) {
       handleAnnounceWinner();
       return;
@@ -781,7 +781,7 @@ export default function AdminKbcManager() {
     });
 
     const activeTestSet = testSets.find(t => t.is_active);
-    const totalQ = session?.total_questions || activeTestSet?.question_count || 10;
+    const totalQ = session?.total_questions || activeTestSet?.question_count || 16;
     if (currLvl >= totalQ) {
       setTimeout(() => {
         Swal.fire({
@@ -1355,10 +1355,11 @@ export default function AdminKbcManager() {
   };
 
   const activeTestSet = testSets.find(t => t.is_active);
-  const totalSessionQuestions = session?.total_questions || activeTestSet?.question_count || 10;
-  const currentLevelInfo = KBC_PRIZE_LADDER[selectedLevel - 1] || KBC_PRIZE_LADDER[0];
-  const currentLevelData = levelsData[selectedLevel] || { pool: [] };
-  const activeQ = currentLevelData.activeQuestion;
+  const totalSessionQuestions = session?.total_questions || activeTestSet?.question_count || 16;
+  const currentLevelInfo = KBC_PRIZE_LADDER[Math.min(selectedLevel - 1, KBC_PRIZE_LADDER.length - 1)] || KBC_PRIZE_LADDER[0];
+  const effectiveLevel = ((selectedLevel - 1) % 16) + 1;
+  const currentLevelData = levelsData[selectedLevel] || levelsData[effectiveLevel] || { pool: [] };
+  const activeQ = session.current_question || currentLevelData.activeQuestion || (currentLevelData.pool && currentLevelData.pool[0]) || null;
   const isLiveNow = session.status === 'LIVE';
 
   return (
@@ -1466,7 +1467,7 @@ export default function AdminKbcManager() {
         {[
           { id: 'test_sets', label: '📦 KBC Quiz Sets & Test Boxes', count: testSets.length },
           { id: 'live', label: '🖥️ Admin Live Screen (Host Monitor)', count: null },
-          { id: 'teams', label: '💻 Participating Laptop Teams', count: teams.length },
+          { id: 'teams', label: '👥 Registered Candidates & Teams', count: teams.length },
           { id: 'questions', label: '📚 16-Level Question Curators', count: 16 },
           { id: 'bank', label: '🏛️ Question Bank (SQL, HTML, CSS, JS)', count: bankTotal || 2016 }
         ].map(tab => (
@@ -1944,7 +1945,7 @@ export default function AdminKbcManager() {
                         className="px-4 py-2 rounded-xl bg-gradient-to-r from-yellow-500 via-amber-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-lg shadow-amber-500/30 border border-yellow-300 animate-pulse"
                         title="Announce player with max points and play Saat Crore meme"
                       >
-                        <Trophy className="w-4 h-4 text-slate-950" /> Announce Winner (Saat Crore Meme)
+                        <Trophy className="w-4 h-4 text-slate-950" /> Announce Grand Winner 🏆
                       </button>
                       <button
                         onClick={handleToggleBroadcastLeaderboard}
@@ -2250,7 +2251,7 @@ export default function AdminKbcManager() {
                 onClick={handleAnnounceWinner}
                 className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-yellow-500 via-amber-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-slate-950 font-black text-xs flex items-center gap-2 cursor-pointer shadow-lg shadow-amber-500/20 border border-yellow-300 animate-pulse"
               >
-                <Trophy className="w-4 h-4 text-slate-950" /> Announce Top Scorer (Saat Crore Meme)
+                <Trophy className="w-4 h-4 text-slate-950" /> Announce Grand Winner & Champion
               </button>
               <button
                 onClick={handleToggleBroadcastLeaderboard}
@@ -2311,7 +2312,7 @@ export default function AdminKbcManager() {
           </div>
 
           {/* Teams Table */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-x-auto overflow-y-auto max-h-[72vh] shadow-xl">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-950/80 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
                 <tr>

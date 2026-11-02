@@ -84,7 +84,7 @@ export const AMITABH_QUOTES = {
   timeOut: "Samay samapt! Tik-tiki ji ne ghanti baja di hai. Khel yahin par rukta hai.",
   quitConfirm: "Kya aap sach mein khel chhodkar apni jeeti hui dhanrashi lekar jana chahte hain?",
   quitSuccess: (prize) => `Bohot hi samajhdari bhara nirnay! Aap jeet chuke hain ${prize}! Badhai ho!`,
-  crorepati: "7 CRORE!! Deviyo aur sajjano, itihaas rach diya hai! Aap ban chuke hain MAHA CODER CHAMPION!!",
+  crorepati: "GRAND FINALE VICTORY!! Deviyo aur sajjano, itihaas rach diya hai! Aap ban chuke hain MAHA CODER CHAMPION!!",
   lifelines: {
     fifty: "Computer Ji, 2 galat uttar mita diye jayein!",
     poll: "Deviyo aur sajjano, audience poll ka samay aa gaya hai. Kripya apna mat dein!",

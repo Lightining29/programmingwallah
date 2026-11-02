@@ -455,30 +455,14 @@ class KbcSoundManager {
     } catch (e) {}
   }
 
-  // 8. High Points Victory Tune (Plays authentic "SAAT CRORE!!" audio on high points / milestone questions)
+  // 8. High Points Victory Tune (Grand musical fanfare without jarring 7 crore voice clip)
   playHighPoints() {
     this.stopLockSuspense();
     if (this.isMuted) return;
     this.stopClock();
     this.init();
     this.stopDrone();
-    try {
-      if (this.currentAudio) {
-        try { this.currentAudio.pause(); } catch (e) {}
-        this.currentAudio = null;
-      }
-      const audio = new Audio('/kbc-high-points.mp3');
-      audio.volume = 1.0;
-      this.currentAudio = audio;
-      const p = audio.play();
-      if (p && typeof p.catch === 'function') {
-        p.catch(() => {
-          this.playFanfare();
-        });
-      }
-    } catch (e) {
-      this.playFanfare();
-    }
+    this.playFanfare();
   }
 
   playSaatCrore() {

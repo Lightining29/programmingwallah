@@ -30,7 +30,18 @@ export default function SaatCroreWinnerModal({ winner, onClose, isCurrentPlayer 
 
   if (!winner) return null;
 
-  const playerName = winner.leader_name || winner.team_name || 'Champion';
+  const playerName = winner.full_name || winner.leader_name || (isCurrentPlayer ? (() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('kbc_registered_student');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.full_name || parsed.name) return parsed.full_name || parsed.name;
+        }
+      }
+    } catch (e) {}
+    return null;
+  })() : null) || winner.team_name || 'Champion';
   const teamName = winner.team_name || 'Team KBC';
   const points = winner.points !== undefined ? winner.points : 0;
   const correctCount = winner.correct_count !== undefined ? winner.correct_count : 0;
@@ -160,7 +171,7 @@ export default function SaatCroreWinnerModal({ winner, onClose, isCurrentPlayer 
             onClick={handleReplayAudio}
             className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer shadow-lg shadow-amber-500/20 transition active:scale-95"
           >
-            <Volume2 className="w-4 h-4" /> Replay "Saat Crore!"
+            <Volume2 className="w-4 h-4" /> Play Victory Fanfare
           </button>
 
           <button

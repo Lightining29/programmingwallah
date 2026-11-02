@@ -192,24 +192,145 @@ export default function KbcExam() {
   const [currentLevel, setCurrentLevel] = useState(1); // 1 to 16
   const [loading, setLoading] = useState(false);
 
-  // Player / Game State (Solo Mode)
-  const [playerName, setPlayerName] = useState(() => {
+  // ── Universal Candidate Profile Resolution helper ──
+  const resolveStoredCandidateProfile = () => {
     try {
-      const stored = localStorage.getItem('exam_student') || localStorage.getItem('user');
-      if (stored) {
-        const u = JSON.parse(stored);
-        return u.name || u.fullName || 'Hotseat Contestant';
+      const reg = localStorage.getItem('kbc_registered_student');
+      if (reg) {
+        const s = JSON.parse(reg);
+        const name = s.full_name || s.name || s.fullName;
+        if (name && name.trim()) {
+          return {
+            name: name.trim(),
+            fullName: name.trim(),
+            email: s.email || '',
+            dob: s.dob || '',
+            mobile: s.mobile || '',
+            course: s.course || s.college || 'Full Stack Coder',
+            profile_photo: s.profile_photo || null,
+            access_code: s.access_code || 'KBC-101',
+            points: Number(s.points) || 0,
+            isLoggedIn: true
+          };
+        }
+      }
+      const t = localStorage.getItem('kbc_team');
+      if (t) {
+        const teamObj = JSON.parse(t);
+        const name = teamObj.leader_name || teamObj.full_name || teamObj.team_name;
+        if (name && name.trim() && !name.toLowerCase().startsWith('laptop-') && !name.toLowerCase().startsWith('team-')) {
+          return {
+            name: name.trim(),
+            fullName: name.trim(),
+            email: teamObj.email || '',
+            dob: teamObj.dob || '',
+            mobile: teamObj.mobile || '',
+            course: teamObj.course || teamObj.college || 'Full Stack Coder',
+            profile_photo: teamObj.profile_photo || null,
+            access_code: teamObj.access_code || 'KBC-101',
+            points: Number(teamObj.points) || 0,
+            isLoggedIn: true
+          };
+        }
+      }
+      const st = localStorage.getItem('exam_student');
+      if (st) {
+        const s = JSON.parse(st);
+        const name = s.name || s.fullName || s.studentName;
+        if (name && name.trim()) {
+          return {
+            name: name.trim(),
+            fullName: name.trim(),
+            email: s.email || '',
+            dob: '',
+            mobile: '',
+            course: s.course || s.college || 'Full Stack Coder',
+            profile_photo: s.profile_photo || null,
+            access_code: 'KBC-101',
+            points: 0,
+            isLoggedIn: true
+          };
+        }
+      }
+      const u = localStorage.getItem('user');
+      if (u) {
+        const userObj = JSON.parse(u);
+        const name = userObj.name || userObj.fullName;
+        if (name && name.trim()) {
+          return {
+            name: name.trim(),
+            fullName: name.trim(),
+            email: userObj.email || '',
+            dob: '',
+            mobile: '',
+            course: userObj.course || 'Full Stack Coder',
+            profile_photo: userObj.profile_photo || null,
+            access_code: 'KBC-101',
+            points: 0,
+            isLoggedIn: true
+          };
+        }
       }
     } catch (e) {}
-    return 'Hotseat Contestant';
-  });
+
+    return {
+      name: 'Hotseat Contestant',
+      fullName: 'Hotseat Contestant',
+      email: '',
+      dob: '',
+      mobile: '',
+      course: 'Full Stack Coder',
+      profile_photo: null,
+      access_code: 'KBC-101',
+      points: 0,
+      isLoggedIn: false
+    };
+  };
+
+  // Active memoized candidate profile
+  const candidateProfile = useMemo(() => {
+    if (registeredStudent && (registeredStudent.full_name || registeredStudent.name)) {
+      const name = (registeredStudent.full_name || registeredStudent.name).trim();
+      return {
+        name,
+        fullName: name,
+        email: registeredStudent.email || '',
+        dob: registeredStudent.dob || '',
+        mobile: registeredStudent.mobile || '',
+        course: registeredStudent.course || registeredStudent.college || 'Full Stack Coder',
+        profile_photo: registeredStudent.profile_photo || null,
+        access_code: registeredStudent.access_code || 'KBC-101',
+        points: Number(registeredStudent.points) || 0,
+        isLoggedIn: true
+      };
+    }
+    if (team && (team.leader_name || team.full_name || team.team_name)) {
+      const name = (team.leader_name || team.full_name || team.team_name).trim();
+      return {
+        name,
+        fullName: name,
+        email: team.email || '',
+        dob: team.dob || '',
+        mobile: team.mobile || '',
+        course: team.course || team.college || 'Full Stack Coder',
+        profile_photo: team.profile_photo || null,
+        access_code: team.access_code || 'KBC-101',
+        points: Number(team.points) || 0,
+        isLoggedIn: true
+      };
+    }
+    return resolveStoredCandidateProfile();
+  }, [registeredStudent, team]);
+
+  // Player / Game State (Solo Mode)
+  const [playerName, setPlayerName] = useState(() => candidateProfile.name);
 
   // ── Live Players Leaderboard (Calculated after every question) ──
   const [livePlayers, setLivePlayers] = useState(() => [
     { id: 'player-rohan', name: 'Rohan Sharma', isUser: false, points: 0, currentLevel: 1, correctCount: 0, wrongCount: 0, lastPointsGained: 0, lastStatus: null, avatar: '⚡', accuracy: 0.85 },
     { id: 'player-priya', name: 'Priya Patel', isUser: false, points: 0, currentLevel: 1, correctCount: 0, wrongCount: 0, lastPointsGained: 0, lastStatus: null, avatar: '🌟', accuracy: 0.80 },
     { id: 'player-aman', name: 'Aman Verma', isUser: false, points: 0, currentLevel: 1, correctCount: 0, wrongCount: 0, lastPointsGained: 0, lastStatus: null, avatar: '🔥', accuracy: 0.75 },
-    { id: 'player-user', name: 'Hotseat Contestant', isUser: true, points: 0, currentLevel: 1, correctCount: 0, wrongCount: 0, lastPointsGained: 0, lastStatus: null, avatar: '👤', accuracy: 1.0 },
+    { id: 'player-user', name: candidateProfile.name, isUser: true, points: 0, currentLevel: 1, correctCount: 0, wrongCount: 0, lastPointsGained: 0, lastStatus: null, avatar: '👤', accuracy: 1.0, profile_photo: candidateProfile.profile_photo, course: candidateProfile.course },
     { id: 'player-neha', name: 'Neha Gupta', isUser: false, points: 0, currentLevel: 1, correctCount: 0, wrongCount: 0, lastPointsGained: 0, lastStatus: null, avatar: '🎯', accuracy: 0.70 },
     { id: 'player-vikram', name: 'Vikram Singh', isUser: false, points: 0, currentLevel: 1, correctCount: 0, wrongCount: 0, lastPointsGained: 0, lastStatus: null, avatar: '🚀', accuracy: 0.65 },
     { id: 'player-ananya', name: 'Ananya Roy', isUser: false, points: 0, currentLevel: 1, correctCount: 0, wrongCount: 0, lastPointsGained: 0, lastStatus: null, avatar: '💎', accuracy: 0.60 }
@@ -217,10 +338,16 @@ export default function KbcExam() {
 
   // Synchronize contestant's actual profile name into user player card
   useEffect(() => {
-    if (playerName) {
-      setLivePlayers(prev => prev.map(p => p.isUser ? { ...p, name: playerName } : p));
+    if (candidateProfile.name) {
+      setPlayerName(candidateProfile.name);
+      setLivePlayers(prev => prev.map(p => p.isUser ? { 
+        ...p, 
+        name: candidateProfile.name,
+        profile_photo: candidateProfile.profile_photo,
+        course: candidateProfile.course
+      } : p));
     }
-  }, [playerName]);
+  }, [candidateProfile]);
 
   // Helper for safe points cutoff
   const getSafePoints = (lvl, totalQ) => {
@@ -386,12 +513,14 @@ export default function KbcExam() {
               (t.leader_name && t.leader_name.toLowerCase() === playerName.toLowerCase())
             ))
           );
-          const displayName = formatDisplayName(t.team_name, t.leader_name, t.access_code);
+          const displayName = isUser 
+            ? candidateProfile.name 
+            : formatDisplayName(t.team_name, t.leader_name, t.access_code);
           const pts = isUser ? (team.points !== undefined ? Number(team.points) : Number(t.points) || 0) : Number(t.points) || 0;
           const correctCount = isUser ? (team.correct_count !== undefined ? Number(team.correct_count) : Number(t.correct_count) || 0) : Number(t.correct_count) || 0;
           const status = isUser ? (team.status || t.status || 'CONNECTED') : (t.status || 'CONNECTED');
           const photo = isUser 
-            ? (team.profile_photo || registeredStudent?.profile_photo || t.profile_photo || null)
+            ? (candidateProfile.profile_photo || team.profile_photo || registeredStudent?.profile_photo || t.profile_photo || null)
             : (t.profile_photo || null);
 
           return {
@@ -408,7 +537,7 @@ export default function KbcExam() {
             status,
             submittedOption: t.submitted_option,
             profile_photo: photo,
-            course: t.course || (isUser ? (team.course || registeredStudent?.course) : '') || t.college || ''
+            course: isUser ? (candidateProfile.course || team.course || registeredStudent?.course || '') : (t.course || t.college || '')
           };
         });
 
@@ -417,7 +546,7 @@ export default function KbcExam() {
         if (!userExists) {
           teams.push({
             id: `team-user-${team.id || 'current'}`,
-            name: formatDisplayName(team.team_name, team.leader_name, team.access_code),
+            name: candidateProfile.name || formatDisplayName(team.team_name, team.leader_name, team.access_code),
             isUser: true,
             points: Number(team.points) || 0,
             currentLevel: currentLevel,
@@ -428,8 +557,8 @@ export default function KbcExam() {
             avatar: '👤',
             status: team.status || 'CONNECTED',
             submittedOption: selectedOption,
-            profile_photo: team.profile_photo || registeredStudent?.profile_photo || null,
-            course: team.course || registeredStudent?.course || team.college || ''
+            profile_photo: candidateProfile.profile_photo || team.profile_photo || registeredStudent?.profile_photo || null,
+            course: candidateProfile.course || team.course || registeredStudent?.course || team.college || ''
           });
         }
 
@@ -461,7 +590,7 @@ export default function KbcExam() {
       // Single connected laptop team
       return [{
         id: `team-user-${team.id}`,
-        name: formatDisplayName(team.team_name, team.leader_name, team.access_code),
+        name: candidateProfile.name || formatDisplayName(team.team_name, team.leader_name, team.access_code),
         isUser: true,
         points: Number(team.points) || 0,
         currentLevel: currentLevel,
@@ -473,8 +602,8 @@ export default function KbcExam() {
         status: team.status || 'CONNECTED',
         rank: 1,
         rankDelta: 0,
-        profile_photo: team.profile_photo || registeredStudent?.profile_photo || null,
-        course: team.course || registeredStudent?.course || team.college || ''
+        profile_photo: candidateProfile.profile_photo || team.profile_photo || registeredStudent?.profile_photo || null,
+        course: candidateProfile.course || team.course || registeredStudent?.course || team.college || ''
       }];
     }
 
@@ -499,7 +628,7 @@ export default function KbcExam() {
         rankDelta
       };
     });
-  }, [playMode, team, adminSession?.top_teams, livePlayers, answerStatus, currentLevel, playerName, selectedOption]);
+  }, [playMode, team, adminSession?.top_teams, livePlayers, answerStatus, currentLevel, playerName, selectedOption, candidateProfile]);
 
   const currentUserIndex = displayPlayers.findIndex(p => p.isUser);
   const currentUserRank = currentUserIndex >= 0 ? currentUserIndex + 1 : 1;
@@ -862,6 +991,17 @@ export default function KbcExam() {
 
       if (data.success && data.student) {
         localStorage.setItem('kbc_registered_student', JSON.stringify(data.student));
+        try {
+          const studentProfile = {
+            id: data.student.id,
+            name: data.student.full_name,
+            fullName: data.student.full_name,
+            email: data.student.email,
+            course: data.student.course,
+            profile_photo: data.student.profile_photo
+          };
+          localStorage.setItem('exam_student', JSON.stringify(studentProfile));
+        } catch (e) {}
         setRegisteredStudent(data.student);
         setPlayerName(data.student.full_name);
         setTeamAccessCodeInput(data.access_code || 'KBC-101');
@@ -909,6 +1049,17 @@ export default function KbcExam() {
 
       if (data.success && data.student) {
         localStorage.setItem('kbc_registered_student', JSON.stringify(data.student));
+        try {
+          const studentProfile = {
+            id: data.student.id,
+            name: data.student.full_name,
+            fullName: data.student.full_name,
+            email: data.student.email,
+            course: data.student.course,
+            profile_photo: data.student.profile_photo
+          };
+          localStorage.setItem('exam_student', JSON.stringify(studentProfile));
+        } catch (e) {}
         setRegisteredStudent(data.student);
         setPlayerName(data.student.full_name);
         setTeamAccessCodeInput(data.access_code || 'KBC-101');
@@ -928,6 +1079,20 @@ export default function KbcExam() {
       setLoginLoading(false);
       setLoginError('Network error connecting to Hostinger database: ' + err.message);
     }
+  };
+
+  // ── Switch / Logout Candidate Account ──
+  const handleCandidateSwitch = () => {
+    try {
+      localStorage.removeItem('kbc_registered_student');
+      localStorage.removeItem('kbc_team');
+    } catch (e) {}
+    setRegisteredStudent(null);
+    setTeam(null);
+    setPlayerName('Hotseat Contestant');
+    setAuthStep('REGISTER');
+    setAuthMode('LOGIN');
+    setPlayMode('TEAM');
   };
 
   // ── Team Login / Exam Gate Entry with Access Code / Password ──
@@ -1010,10 +1175,24 @@ export default function KbcExam() {
   };
 
   // Current Question Object (Live Host broadcast in Team mode or Level Question in Solo)
+  // Guarantees question and all 4 options NEVER disappear even at Level 17+ or beyond test sets
   const currentQ = (team && adminSession.current_question) 
     ? adminSession.current_question 
-    : (questions[currentLevel - 1] || null);
-  const currentPrize = KBC_PRIZE_LADDER[currentLevel - 1] || KBC_PRIZE_LADDER[0];
+    : (questions[currentLevel - 1] || (questions.length > 0 ? questions[(currentLevel - 1) % questions.length] : null) || {
+        id: `q_active_${currentLevel}`,
+        level: currentLevel,
+        topic: 'OOP & PROGRAMMING CONCEPTS',
+        question: 'Which object-oriented concept focuses on hiding internal implementation details and exposing only essential interface?',
+        options: [
+          'Abstraction',
+          'Compilation',
+          'Iteration',
+          'Inheritance'
+        ],
+        correct: 0,
+        explanation: 'Abstraction hides internal implementation details and shows only necessary features to the outside world.'
+      });
+  const currentPrize = KBC_PRIZE_LADDER[Math.min(currentLevel - 1, KBC_PRIZE_LADDER.length - 1)] || KBC_PRIZE_LADDER[0];
 
   // Helper to determine countdown seconds based on level (Tik-Tiki Ji)
   const getLevelCountdown = (lvl) => {
@@ -1484,7 +1663,7 @@ export default function KbcExam() {
     : (safeWonPrizeLabel !== '₹0' ? safeWonPrizeLabel : '₹0');
 
   return (
-    <div className="kbc-dark-root min-h-screen lg:h-screen lg:max-h-screen text-white flex flex-col justify-between relative overflow-hidden select-none font-sans bg-[#020617]">
+    <div className="kbc-dark-root min-h-screen text-white flex flex-col justify-between relative overflow-y-auto select-none font-sans bg-[#020617]">
       
       {/* ── Atmospheric Stage Lasers & Correct Answer Celebration Lights ── */}
       <KbcStageLasers
@@ -1529,24 +1708,41 @@ export default function KbcExam() {
               </div>
             </Link>
 
-            {/* Team Laptop Connected Pill */}
-            {team && (
-              <div className="hidden sm:flex items-center gap-2 px-3 py-0.5 rounded-full bg-indigo-950/90 border border-amber-400/60 text-xs shadow-md">
-                <Laptop className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-slate-300">Team: <strong className="text-amber-300">{team.team_name}</strong></span>
-                <span className="text-[10px] bg-slate-900 px-2 py-0.5 rounded text-slate-400 font-mono font-bold">{team.access_code}</span>
-                <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-black border border-amber-400/40 font-mono text-[11px] flex items-center gap-1">
-                  ⭐ {team.points || 0} pts
-                </span>
-                <button
-                  onClick={handleDisconnectTeam}
-                  className="text-red-400 hover:text-red-300 text-[10px] font-bold ml-1 hover:underline cursor-pointer"
-                  title="Disconnect Laptop"
-                >
-                  Exit
-                </button>
+            {/* Universal Candidate Status Pill (Always Visible on Mobile & Desktop) */}
+            <div className="flex items-center gap-2 px-2.5 sm:px-3 py-1 rounded-full bg-gradient-to-r from-slate-950/95 via-[#0b1433]/95 to-slate-950/95 border border-cyan-400/60 shadow-[0_0_15px_rgba(6,182,212,0.25)] text-xs backdrop-blur-md">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full p-0.5 bg-gradient-to-tr from-amber-400 to-yellow-300 shrink-0 shadow-sm flex items-center justify-center">
+                {candidateProfile.profile_photo ? (
+                  <img src={candidateProfile.profile_photo} alt={candidateProfile.name} className="w-full h-full object-cover rounded-full" />
+                ) : (
+                  <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-amber-300 font-black text-[10px] sm:text-xs">
+                    {candidateProfile.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
               </div>
-            )}
+              <div className="flex flex-col text-left min-w-0 max-w-[90px] xs:max-w-[120px] sm:max-w-[170px] md:max-w-[210px]">
+                <span className="text-[10.5px] sm:text-xs font-black text-white truncate leading-tight drop-shadow-[0_0_4px_rgba(255,255,255,0.4)]">
+                  {candidateProfile.name}
+                </span>
+                <span className="text-[8px] sm:text-[9px] text-cyan-300 font-bold truncate leading-none">
+                  {candidateProfile.course || 'Hotseat Candidate'}
+                </span>
+              </div>
+              <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-black border border-amber-400/40 font-mono text-[10px] sm:text-[11px] items-center gap-1 shrink-0">
+                ⭐ {(userPoints || 0).toLocaleString()} pts
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setPlayMode('TEAM');
+                  setAuthStep('REGISTER');
+                  setAuthMode('LOGIN');
+                }}
+                className="text-[9px] sm:text-[10px] font-bold text-cyan-400 hover:text-cyan-200 underline ml-0.5 cursor-pointer shrink-0"
+                title="Switch Candidate Profile / Login"
+              >
+                Switch
+              </button>
+            </div>
 
             {/* Live Broadcast Indicator */}
             {adminSession.status === 'LIVE' && (
@@ -1593,7 +1789,7 @@ export default function KbcExam() {
       </header>
 
       {/* ── Main Arena: Host, Question, Options, and Money Ladder ── */}
-      <main className="relative z-20 flex-1 max-w-7xl w-full mx-auto p-1 sm:p-2 flex flex-col justify-between min-h-0 overflow-hidden">
+      <main className="relative z-20 flex-1 max-w-7xl w-full mx-auto p-1 sm:p-2 flex flex-col justify-between min-h-0 overflow-y-auto">
         
         {/* CASE 1: Connected Team Waiting for Admin to start Live Broadcast */}
         {playMode === 'TEAM' && team && adminSession.status !== 'LIVE' ? (
@@ -1618,12 +1814,18 @@ export default function KbcExam() {
 
               {/* Contestant / Student Registered Avatar */}
               <div className="relative inline-block text-center">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full p-1 bg-gradient-to-tr from-emerald-500 via-teal-400 to-emerald-600 shadow-xl shadow-emerald-500/30 overflow-hidden mx-auto">
-                  <img
-                    src={team.profile_photo || registeredStudent?.profile_photo || '/girl_avatar.jpg'}
-                    alt="Student Contestant"
-                    className="w-full h-full object-cover rounded-full"
-                  />
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full p-1 bg-gradient-to-tr from-emerald-500 via-teal-400 to-emerald-600 shadow-xl shadow-emerald-500/30 overflow-hidden mx-auto flex items-center justify-center">
+                  {candidateProfile.profile_photo ? (
+                    <img
+                      src={candidateProfile.profile_photo}
+                      alt="Student Contestant"
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-emerald-300 font-black text-2xl">
+                      {candidateProfile.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
                 </div>
                 <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-emerald-500 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow whitespace-nowrap">
                   Candidate
@@ -1637,14 +1839,14 @@ export default function KbcExam() {
                 Live Hotseat Broadcast Lounge
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-100">
-                Swagat Hai, {team.leader_name || team.team_name}!
+                Swagat Hai, {candidateProfile.name}!
               </h2>
               <div className="text-amber-400/90 font-bold text-xs uppercase tracking-widest flex flex-wrap items-center justify-center gap-2">
-                <span>Course: <strong className="text-white">{team.course || registeredStudent?.course || team.college || 'Registered'}</strong></span>
+                <span>Course: <strong className="text-white">{candidateProfile.course || 'Full Stack Coder'}</strong></span>
                 <span>•</span>
-                <span className="font-mono text-yellow-300 font-bold bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30">⭐ {team.points || 0} pts</span>
+                <span className="font-mono text-yellow-300 font-bold bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30">⭐ {team?.points || candidateProfile.points || 0} pts</span>
                 <span>•</span>
-                <span>Code: <span className="font-mono text-white bg-slate-900 px-2 py-0.5 rounded border border-slate-700">{team.access_code}</span></span>
+                <span>Code: <span className="font-mono text-white bg-slate-900 px-2 py-0.5 rounded border border-slate-700">{team?.access_code || candidateProfile.access_code}</span></span>
               </div>
             </div>
 
@@ -1675,7 +1877,7 @@ export default function KbcExam() {
               <div className="flex items-center justify-between text-xs">
                 <span className="text-slate-400">Registered Email:</span>
                 <span className="text-slate-200 font-mono">
-                  {team.email || registeredStudent?.email || 'N/A'}
+                  {candidateProfile.email || team?.email || 'N/A'}
                 </span>
               </div>
 
@@ -1684,10 +1886,16 @@ export default function KbcExam() {
               </p>
             </div>
 
-            <div className="flex items-center justify-center pt-2">
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <button
+                onClick={() => setPlayMode('SOLO')}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg transition cursor-pointer flex items-center gap-2"
+              >
+                <span>Enter Hotseat Practice Arena Directly ➔</span>
+              </button>
               <button
                 onClick={handleDisconnectTeam}
-                className="px-6 py-2.5 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-300 font-bold text-xs cursor-pointer transition flex items-center gap-2"
+                className="px-5 py-2.5 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-300 font-bold text-xs cursor-pointer transition flex items-center gap-2"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span>Disconnect Team / Change Code</span>
@@ -1719,6 +1927,53 @@ export default function KbcExam() {
                   <span>Play Solo Hotseat →</span>
                 </button>
               </div>
+
+              {/* Currently Active / Logged-in Candidate Banner */}
+              {candidateProfile.isLoggedIn && (
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/90 via-[#0a1b2a]/90 to-slate-900/90 border-2 border-emerald-400/80 shadow-[0_0_30px_rgba(16,185,129,0.3)] flex flex-col sm:flex-row items-center justify-between gap-3.5">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="w-12 h-12 rounded-full p-0.5 bg-gradient-to-tr from-emerald-400 to-teal-300 shadow-md shrink-0 flex items-center justify-center">
+                      {candidateProfile.profile_photo ? (
+                        <img src={candidateProfile.profile_photo} alt={candidateProfile.name} className="w-full h-full object-cover rounded-full" />
+                      ) : (
+                        <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-emerald-300 font-black text-base">
+                          {candidateProfile.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 text-left">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-500/50">
+                          Active Candidate Session ✓
+                        </span>
+                      </div>
+                      <h2 className="text-base sm:text-lg font-black text-white truncate drop-shadow-[0_0_6px_rgba(255,255,255,0.5)]">
+                        {candidateProfile.name}
+                      </h2>
+                      <p className="text-xs text-slate-300 truncate">
+                        {candidateProfile.email} • <span className="text-emerald-300 font-bold">{candidateProfile.course}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                    <button
+                      type="button"
+                      onClick={() => setPlayMode('SOLO')}
+                      className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg transition cursor-pointer"
+                    >
+                      Enter Hotseat Arena ➔
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCandidateSwitch}
+                      className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-600 text-xs font-bold transition cursor-pointer"
+                      title="Log out and sign in with a different account"
+                    >
+                      Switch
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Mode Toggle: Register vs Login */}
               <div className="flex rounded-2xl bg-slate-900/90 p-1.5 border border-indigo-900/60">
@@ -1752,18 +2007,18 @@ export default function KbcExam() {
                 /* ── CANDIDATE LOGIN FORM (Email + DOB) ── */
                 <form onSubmit={handleLoginSubmit} className="space-y-4 pt-1">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                      REGISTERED EMAIL ADDRESS <span className="text-red-500">*</span>
+                    <label className="block text-xs font-bold text-cyan-300 uppercase tracking-wider mb-1.5">
+                      REGISTERED EMAIL ADDRESS <span className="text-red-400">*</span>
                     </label>
                     <div className="relative">
-                      <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                      <Mail className="w-4 h-4 text-cyan-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                       <input
                         type="email"
                         required
                         value={loginForm.email}
                         onChange={e => setLoginForm(p => ({ ...p, email: e.target.value }))}
                         placeholder="e.g. manish@example.com"
-                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 text-sm font-medium focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 shadow-sm"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-700 bg-slate-900/90 text-white placeholder:text-slate-500 text-sm font-medium focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 shadow-inner"
                         autoFocus
                       />
                     </div>
@@ -1771,27 +2026,27 @@ export default function KbcExam() {
 
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                        DATE OF BIRTH (DOB) <span className="text-red-500">*</span>
+                      <label className="text-xs font-bold text-cyan-300 uppercase tracking-wider">
+                        DATE OF BIRTH (DOB) <span className="text-red-400">*</span>
                       </label>
-                      <span className="text-[10px] font-bold text-emerald-600">login password</span>
+                      <span className="text-[10px] font-bold text-emerald-400">login password</span>
                     </div>
                     <div className="relative">
-                      <Calendar className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <Calendar className="w-4 h-4 text-cyan-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                       <input
                         type="date"
                         required
                         value={loginForm.dob}
                         onChange={e => setLoginForm(p => ({ ...p, dob: e.target.value }))}
-                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm font-medium focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 shadow-sm"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-700 bg-slate-900/90 text-white text-sm font-medium focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 shadow-inner [color-scheme:dark]"
                       />
                     </div>
                   </div>
 
                   {loginError && (
-                    <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center justify-between gap-2">
+                    <div className="p-3 rounded-xl bg-red-950/80 border border-red-500/50 text-red-200 text-xs font-bold flex items-center justify-between gap-2 shadow-inner">
                       <div className="flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
+                        <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
                         <span>{loginError}</span>
                       </div>
                     </div>
@@ -1800,7 +2055,7 @@ export default function KbcExam() {
                   <button
                     type="submit"
                     disabled={loginLoading}
-                    className="w-full py-4 rounded-xl bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-700 hover:from-teal-500 hover:to-emerald-500 text-white font-black text-sm sm:text-base tracking-wider shadow-lg shadow-teal-700/30 transition transform hover:scale-[1.01] active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2"
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-sm sm:text-base tracking-wider shadow-lg shadow-amber-500/30 transition transform hover:scale-[1.01] active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2"
                   >
                     {loginLoading ? 'Authenticating with Hostinger DB...' : 'Log In to Exam 🔐'}
                   </button>
@@ -1809,9 +2064,9 @@ export default function KbcExam() {
                     <button
                       type="button"
                       onClick={() => { setAuthMode('REGISTER'); setLoginError(''); }}
-                      className="text-xs sm:text-sm font-bold text-slate-500 hover:text-teal-700 transition cursor-pointer"
+                      className="text-xs sm:text-sm font-bold text-slate-400 hover:text-cyan-300 transition cursor-pointer"
                     >
-                      New student? <span className="text-teal-600 underline font-bold">Register Candidate Profile 📝 →</span>
+                      New student? <span className="text-cyan-400 underline font-bold">Register Candidate Profile 📝 →</span>
                     </button>
                   </div>
                 </form>
@@ -1820,13 +2075,13 @@ export default function KbcExam() {
                 <form onSubmit={handleRegisterSubmit} className="space-y-4 pt-1">
                   
                   {/* 1. Student Profile Photo Box */}
-                  <div className="p-4 sm:p-5 rounded-2xl border border-slate-200/90 bg-slate-50/70 space-y-3">
+                  <div className="p-4 sm:p-5 rounded-2xl border border-cyan-500/30 bg-slate-900/80 space-y-3">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-2 text-xs font-bold text-cyan-300 uppercase tracking-wider">
                         <span>📸 STUDENT PROFILE PHOTO</span>
-                        <span className="text-red-500">*</span>
+                        <span className="text-red-400">*</span>
                       </div>
-                      <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                      <span className="text-[11px] font-bold text-emerald-400 bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-500/40">
                         shown on leaderboard & certificate
                       </span>
                     </div>
@@ -1835,15 +2090,15 @@ export default function KbcExam() {
                       {/* Avatar Preview Box */}
                       <div className="relative shrink-0">
                         {photoPreview ? (
-                          <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-emerald-500 shadow-md">
+                          <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)]">
                             <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
                           </div>
                         ) : (
-                          <div className="w-24 h-24 rounded-2xl border-2 border-emerald-400 bg-emerald-50/50 flex flex-col items-center justify-center p-2 text-center text-emerald-800">
-                            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-1">
+                          <div className="w-24 h-24 rounded-2xl border-2 border-dashed border-cyan-400/60 bg-slate-950/60 flex flex-col items-center justify-center p-2 text-center text-cyan-300">
+                            <div className="w-10 h-10 rounded-full bg-cyan-950 flex items-center justify-center text-cyan-400 mb-1 border border-cyan-500/40">
                               <User className="w-6 h-6" />
                             </div>
-                            <span className="text-[11px] font-bold text-emerald-700">Required</span>
+                            <span className="text-[11px] font-bold text-cyan-300">Required</span>
                           </div>
                         )}
                       </div>
@@ -1852,7 +2107,7 @@ export default function KbcExam() {
                         <button
                           type="button"
                           onClick={() => photoInputRef.current?.click()}
-                          className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-md shadow-teal-700/20 transition transform hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer mx-auto sm:mx-0"
+                          className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-md shadow-cyan-500/20 transition transform hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer mx-auto sm:mx-0"
                         >
                           <Camera className="w-4 h-4" />
                           <span>Upload Profile Photo *</span>
@@ -1864,8 +2119,8 @@ export default function KbcExam() {
                           onChange={handlePhotoSelect}
                           className="hidden"
                         />
-                        <p className="text-[11px] text-slate-500 leading-relaxed">
-                          Upload a clear face portrait (JPG, PNG). Candidates who pass with top scores will be placed on the <strong className="text-slate-700 font-semibold">Leaderboard 1st, 2nd, and 3rd Podium!</strong>
+                        <p className="text-[11px] text-slate-300 leading-relaxed">
+                          Upload a clear face portrait (JPG, PNG). Candidates who pass with top scores will be placed on the <strong className="text-amber-300 font-semibold">Leaderboard 1st, 2nd, and 3rd Podium!</strong>
                         </p>
                       </div>
                     </div>
@@ -1873,18 +2128,18 @@ export default function KbcExam() {
 
                   {/* 2. Full Name */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                      FULL NAME <span className="text-red-500">*</span>
+                    <label className="block text-xs font-bold text-cyan-300 uppercase tracking-wider mb-1.5">
+                      FULL NAME <span className="text-red-400">*</span>
                     </label>
                     <div className="relative">
-                      <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                      <User className="w-4 h-4 text-cyan-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                       <input
                         type="text"
                         required
                         value={regForm.fullName}
                         onChange={e => setRegForm(p => ({ ...p, fullName: e.target.value }))}
                         placeholder="e.g. Manish Kumar"
-                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 text-sm font-medium focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 shadow-sm"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-700 bg-slate-900/90 text-white placeholder:text-slate-500 text-sm font-medium focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 shadow-inner"
                       />
                     </div>
                   </div>
@@ -1893,39 +2148,39 @@ export default function KbcExam() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                          EMAIL ADDRESS <span className="text-red-500">*</span>
+                        <label className="text-xs font-bold text-cyan-300 uppercase tracking-wider">
+                          EMAIL ADDRESS <span className="text-red-400">*</span>
                         </label>
-                        <span className="text-[10px] font-bold text-emerald-600">primary key (unique)</span>
+                        <span className="text-[10px] font-bold text-emerald-400">primary key (unique)</span>
                       </div>
                       <div className="relative">
-                        <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                        <Mail className="w-4 h-4 text-cyan-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                         <input
                           type="email"
                           required
                           value={regForm.email}
                           onChange={e => setRegForm(p => ({ ...p, email: e.target.value }))}
                           placeholder="e.g. manish@example.com"
-                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 text-sm font-medium focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 shadow-sm"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-700 bg-slate-900/90 text-white placeholder:text-slate-500 text-sm font-medium focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 shadow-inner"
                         />
                       </div>
                     </div>
 
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                          DATE OF BIRTH (DOB) <span className="text-red-500">*</span>
+                        <label className="text-xs font-bold text-cyan-300 uppercase tracking-wider">
+                          DATE OF BIRTH (DOB) <span className="text-red-400">*</span>
                         </label>
-                        <span className="text-[10px] font-bold text-emerald-600">for exam entry</span>
+                        <span className="text-[10px] font-bold text-emerald-400">for exam entry</span>
                       </div>
                       <div className="relative">
-                        <Calendar className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <Calendar className="w-4 h-4 text-cyan-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                         <input
                           type="date"
                           required
                           value={regForm.dob}
                           onChange={e => setRegForm(p => ({ ...p, dob: e.target.value }))}
-                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm font-medium focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 shadow-sm"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-700 bg-slate-900/90 text-white text-sm font-medium focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 shadow-inner [color-scheme:dark]"
                         />
                       </div>
                     </div>
@@ -1934,47 +2189,47 @@ export default function KbcExam() {
                   {/* 4. Two Columns: Mobile / WhatsApp & Course Name */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                      <label className="block text-xs font-bold text-cyan-300 uppercase tracking-wider mb-1.5">
                         MOBILE / WHATSAPP
                       </label>
                       <div className="relative">
-                        <Smartphone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                        <Smartphone className="w-4 h-4 text-cyan-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                         <input
                           type="tel"
                           value={regForm.mobile}
                           onChange={e => setRegForm(p => ({ ...p, mobile: e.target.value }))}
                           placeholder="98XXXXXXXX"
-                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 text-sm font-medium focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 shadow-sm"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-700 bg-slate-900/90 text-white placeholder:text-slate-500 text-sm font-medium focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 shadow-inner"
                         />
                       </div>
                     </div>
 
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                          COURSE NAME <span className="text-red-500">*</span>
+                        <label className="text-xs font-bold text-cyan-300 uppercase tracking-wider">
+                          COURSE NAME <span className="text-red-400">*</span>
                         </label>
-                        <span className="text-[10px] font-bold text-emerald-600">specialization</span>
+                        <span className="text-[10px] font-bold text-emerald-400">specialization</span>
                       </div>
                       <div className="relative">
-                        <GraduationCap className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <GraduationCap className="w-4 h-4 text-cyan-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                         <select
                           required
                           value={regForm.course}
                           onChange={e => setRegForm(p => ({ ...p, course: e.target.value }))}
-                          className="w-full pl-10 pr-8 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm font-medium focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 shadow-sm appearance-none cursor-pointer"
+                          className="w-full pl-10 pr-8 py-3 rounded-xl border border-slate-700 bg-slate-900 text-white text-sm font-medium focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 shadow-inner appearance-none cursor-pointer"
                         >
-                          <option value="">-- Select Course / Specialization ▼</option>
-                          <option value="Full Stack Web Development (MERN)">Full Stack Web Development (MERN)</option>
-                          <option value="Java Full Stack & Data Structures (DSA)">Java Full Stack & Data Structures (DSA)</option>
-                          <option value="Python & AI / Data Science">Python & AI / Data Science</option>
-                          <option value="B.Tech Computer Science (CSE)">B.Tech Computer Science (CSE)</option>
-                          <option value="BCA (Bachelor of Computer Applications)">BCA (Bachelor of Computer Applications)</option>
-                          <option value="MCA (Master of Computer Applications)">MCA (Master of Computer Applications)</option>
-                          <option value="Diploma / Polytechnic in CS/IT">Diploma / Polytechnic in CS/IT</option>
-                          <option value="Other">Other Course / Specialization</option>
+                          <option value="" className="bg-slate-900 text-slate-300">-- Select Course / Specialization ▼</option>
+                          <option value="Full Stack Web Development (MERN)" className="bg-slate-900 text-white">Full Stack Web Development (MERN)</option>
+                          <option value="Java Full Stack & Data Structures (DSA)" className="bg-slate-900 text-white">Java Full Stack & Data Structures (DSA)</option>
+                          <option value="Python & AI / Data Science" className="bg-slate-900 text-white">Python & AI / Data Science</option>
+                          <option value="B.Tech Computer Science (CSE)" className="bg-slate-900 text-white">B.Tech Computer Science (CSE)</option>
+                          <option value="BCA (Bachelor of Computer Applications)" className="bg-slate-900 text-white">BCA (Bachelor of Computer Applications)</option>
+                          <option value="MCA (Master of Computer Applications)" className="bg-slate-900 text-white">MCA (Master of Computer Applications)</option>
+                          <option value="Diploma / Polytechnic in CS/IT" className="bg-slate-900 text-white">Diploma / Polytechnic in CS/IT</option>
+                          <option value="Other" className="bg-slate-900 text-white">Other Course / Specialization</option>
                         </select>
-                        <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <ChevronDown className="w-4 h-4 text-cyan-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                       </div>
                     </div>
                   </div>
@@ -1988,15 +2243,15 @@ export default function KbcExam() {
                         value={regForm.customCourse}
                         onChange={e => setRegForm(p => ({ ...p, customCourse: e.target.value }))}
                         placeholder="Enter your exact Course Name (e.g. B.Sc IT, Data Engineering)"
-                        className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 text-sm font-medium focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 shadow-sm"
+                        className="w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-900/90 text-white placeholder:text-slate-500 text-sm font-medium focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 shadow-inner"
                       />
                     </div>
                   )}
 
                   {regError && (
-                    <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold space-y-2">
+                    <div className="p-3 rounded-xl bg-red-950/80 border border-red-500/50 text-red-200 text-xs font-bold space-y-2 shadow-inner">
                       <div className="flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
+                        <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
                         <span>{regError}</span>
                       </div>
                       {regError.includes('already registered') && (
@@ -2007,7 +2262,7 @@ export default function KbcExam() {
                             setAuthMode('LOGIN');
                             setRegError('');
                           }}
-                          className="w-full py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-black text-xs uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1.5"
+                          className="w-full py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1.5"
                         >
                           <Lock className="w-3.5 h-3.5" />
                           <span>Click Here to Log In with Date of Birth →</span>
@@ -2020,7 +2275,7 @@ export default function KbcExam() {
                   <button
                     type="submit"
                     disabled={regLoading}
-                    className="w-full py-4 rounded-xl bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-700 hover:from-teal-500 hover:to-emerald-500 text-white font-black text-sm sm:text-base tracking-wider shadow-lg shadow-teal-700/30 transition transform hover:scale-[1.01] active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2"
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-600 via-teal-500 to-cyan-700 hover:from-cyan-500 hover:to-teal-400 text-white font-black text-sm sm:text-base tracking-wider shadow-lg shadow-cyan-600/30 transition transform hover:scale-[1.01] active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2"
                   >
                     {regLoading ? 'Saving to Hostinger Database...' : 'Submit Registration & Proceed 🚀'}
                   </button>
@@ -2030,15 +2285,15 @@ export default function KbcExam() {
                     <button
                       type="button"
                       onClick={() => { setAuthMode('LOGIN'); setRegError(''); }}
-                      className="text-xs sm:text-sm font-bold text-teal-600 hover:text-teal-800 transition cursor-pointer underline"
+                      className="text-xs sm:text-sm font-bold text-cyan-400 hover:text-cyan-200 transition cursor-pointer underline"
                     >
                       Already registered? Log in with Email & DOB →
                     </button>
-                    <span className="hidden sm:inline text-slate-300">•</span>
+                    <span className="hidden sm:inline text-slate-500">•</span>
                     <button
                       type="button"
                       onClick={() => setAuthStep('GATE')}
-                      className="text-xs sm:text-sm font-bold text-slate-500 hover:text-slate-800 transition cursor-pointer"
+                      className="text-xs sm:text-sm font-bold text-slate-400 hover:text-white transition cursor-pointer"
                     >
                       Go to Exam Gate →
                     </button>
@@ -2113,28 +2368,39 @@ export default function KbcExam() {
                     </span>
                   </div>
 
-                  {registeredStudent && (
-                    <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-amber-50/80 border border-amber-200/90">
+                  {candidateProfile.isLoggedIn && (
+                    <div className="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-gradient-to-r from-slate-900/90 via-[#0d1633]/90 to-slate-900/90 border border-amber-400/70 shadow-[0_0_20px_rgba(245,158,11,0.25)]">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-full overflow-hidden border border-amber-400 shrink-0">
-                          <img 
-                            src={registeredStudent.profile_photo || '/kbc-host.jpg'} 
-                            alt="Student Avatar" 
-                            className="w-full h-full object-cover" 
-                          />
+                        <div className="w-11 h-11 rounded-full p-0.5 bg-gradient-to-tr from-amber-400 to-yellow-300 shadow-sm shrink-0 flex items-center justify-center">
+                          {candidateProfile.profile_photo ? (
+                            <img 
+                              src={candidateProfile.profile_photo} 
+                              alt="Student Avatar" 
+                              className="w-full h-full object-cover rounded-full" 
+                            />
+                          ) : (
+                            <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-amber-300 font-black text-sm">
+                              {candidateProfile.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
                         </div>
-                        <div className="text-xs min-w-0">
-                          <div className="font-black text-slate-900 truncate">{registeredStudent.full_name}</div>
-                          <div className="text-[11px] text-slate-600 truncate">{registeredStudent.email} • {registeredStudent.course || registeredStudent.college || 'Registered'}</div>
+                        <div className="text-xs min-w-0 text-left">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[9.5px] font-black uppercase tracking-wider text-amber-400">
+                              LOGGED IN CANDIDATE
+                            </span>
+                            <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 font-bold">
+                              Verified ✓
+                            </span>
+                          </div>
+                          <div className="font-black text-white text-sm truncate">{candidateProfile.name}</div>
+                          <div className="text-[11px] text-cyan-200/90 truncate">{candidateProfile.email} • {candidateProfile.course}</div>
                         </div>
                       </div>
                       <button
                         type="button"
-                        onClick={() => {
-                          setAuthStep('REGISTER');
-                          setAuthMode('LOGIN');
-                        }}
-                        className="text-[11px] font-bold text-amber-800 hover:text-amber-950 underline shrink-0 cursor-pointer"
+                        onClick={handleCandidateSwitch}
+                        className="text-[11px] font-bold text-amber-400 hover:text-amber-300 underline shrink-0 cursor-pointer px-2 py-1"
                       >
                         Switch
                       </button>
@@ -2142,8 +2408,8 @@ export default function KbcExam() {
                   )}
 
                   {teamJoinError && (
-                    <div className="p-2.5 rounded-lg bg-red-50 border border-red-300 text-red-700 text-xs font-bold flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
+                    <div className="p-2.5 rounded-lg bg-red-950/80 border border-red-500/60 text-red-200 text-xs font-bold flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
                       <span>{teamJoinError}</span>
                     </div>
                   )}
@@ -2156,25 +2422,25 @@ export default function KbcExam() {
                     {teamJoinLoading ? 'Connecting Laptop...' : 'CONNECT TO LIVE HOTSEAT →'}
                   </button>
 
-                  <div className="text-center pt-2 border-t border-slate-100 flex items-center justify-center gap-4">
+                  <div className="text-center pt-2 border-t border-slate-800 flex items-center justify-center gap-4">
                     <button
                       type="button"
                       onClick={() => {
                         setAuthStep('REGISTER');
                         setAuthMode('LOGIN');
                       }}
-                      className="text-xs font-bold text-slate-600 hover:text-teal-700 transition cursor-pointer underline"
+                      className="text-xs font-bold text-cyan-400 hover:text-cyan-200 transition cursor-pointer underline"
                     >
                       Login with Email & DOB 🔐
                     </button>
-                    <span className="text-slate-300">•</span>
+                    <span className="text-slate-600">•</span>
                     <button
                       type="button"
                       onClick={() => {
                         setAuthStep('REGISTER');
                         setAuthMode('REGISTER');
                       }}
-                      className="text-xs font-bold text-teal-600 hover:text-teal-700 transition cursor-pointer underline"
+                      className="text-xs font-bold text-amber-400 hover:text-amber-200 transition cursor-pointer underline"
                     >
                       Register New Candidate 📝
                     </button>
@@ -2193,30 +2459,44 @@ export default function KbcExam() {
           >
             {/* Mobile Header Quick Points Pill & Point Ladder Drawer Toggle */}
             <div className="lg:hidden flex items-center justify-between p-2 rounded-xl bg-[#0c102a]/90 border border-amber-400/40 backdrop-blur-md shadow-lg shrink-0 mb-1">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-black text-amber-300">
-                  ⭐ {(userPoints || 0).toLocaleString()} pts
-                </span>
-                <span className="text-xs text-slate-300">
-                  • Q{currentLevel}/{totalQuestions}
-                </span>
-                {isUserOut ? (
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/40 font-bold">
-                    OUT (CUTOFF)
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-6 h-6 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-amber-400 to-yellow-300 shrink-0 flex items-center justify-center">
+                  {candidateProfile.profile_photo ? (
+                    <img src={candidateProfile.profile_photo} alt={candidateProfile.name} className="w-full h-full object-cover rounded-full" />
+                  ) : (
+                    <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-amber-300 font-bold text-[10px]">
+                      {candidateProfile.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <span className="text-xs font-black text-white truncate block leading-tight">
+                    {candidateProfile.name}
                   </span>
-                ) : (
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold">
-                    Safe: {safePadavPoints} pts
-                  </span>
-                )}
+                  <div className="flex items-center gap-1.5 text-[10px]">
+                    <span className="text-amber-300 font-bold">
+                      ⭐ {(userPoints || 0).toLocaleString()} pts
+                    </span>
+                    <span className="text-slate-400">• Q{currentLevel}/{totalQuestions}</span>
+                    {isUserOut ? (
+                      <span className="text-[8.5px] px-1.5 py-0.2 rounded bg-red-500/20 text-red-400 border border-red-500/40 font-bold">
+                        OUT
+                      </span>
+                    ) : (
+                      <span className="text-[8.5px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold">
+                        Safe: {safePadavPoints}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowMobileLeaderboard(prev => !prev)}
-                className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-[11px] uppercase tracking-wider flex items-center gap-1 shadow-md shadow-amber-500/20 cursor-pointer"
+                className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-[11px] uppercase tracking-wider flex items-center gap-1 shadow-md shadow-amber-500/20 cursor-pointer shrink-0"
               >
                 <Trophy className="w-3.5 h-3.5" />
-                {showMobileLeaderboard ? 'Hide' : 'Point Ladder'}
+                {showMobileLeaderboard ? 'Hide' : 'Ladder'}
               </button>
             </div>
 
@@ -2296,6 +2576,63 @@ export default function KbcExam() {
                     </div>
                     <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-cyan-300 mt-0.5 drop-shadow-[0_0_4px_#06b6d4]">DOUBLE DIP</span>
                   </button>
+                </div>
+              </div>
+
+              {/* ── Active Hotseat Candidate Holographic Badge in Arena ── */}
+              <div className="w-full max-w-2xl mx-auto px-1 shrink-0 z-20">
+                <div className="flex items-center justify-between gap-3 px-3 sm:px-4 py-1.5 rounded-2xl bg-gradient-to-r from-slate-950/90 via-[#0a1432]/90 to-slate-950/90 border border-cyan-400/60 shadow-[0_0_20px_rgba(6,182,212,0.3),inset_0_0_10px_rgba(6,182,212,0.15)] backdrop-blur-md">
+                  
+                  {/* Left: Avatar + Candidate Full Name + Course */}
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <div className="relative shrink-0">
+                      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full p-0.5 bg-gradient-to-tr from-amber-400 via-yellow-300 to-amber-500 shadow-[0_0_15px_rgba(251,191,36,0.5)] flex items-center justify-center">
+                        {candidateProfile.profile_photo ? (
+                          <img src={candidateProfile.profile_photo} alt={candidateProfile.name} className="w-full h-full object-cover rounded-full" />
+                        ) : (
+                          <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-amber-300 font-black text-xs sm:text-sm">
+                            {candidateProfile.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-950 shadow-sm" title="Active Contestant" />
+                    </div>
+
+                    <div className="min-w-0 text-left">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-black uppercase tracking-wider text-cyan-400 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+                          HOTSEAT CANDIDATE
+                        </span>
+                        {candidateProfile.course && (
+                          <span className="text-[8.5px] px-2 py-0.2 rounded-full bg-indigo-500/30 text-indigo-200 border border-indigo-400/40 font-bold truncate max-w-[120px] sm:max-w-[180px]">
+                            {candidateProfile.course}
+                          </span>
+                        )}
+                      </div>
+                      <h2 className="text-xs sm:text-sm md:text-base font-black text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.7)] truncate tracking-tight">
+                        {candidateProfile.name}
+                      </h2>
+                    </div>
+                  </div>
+
+                  {/* Right: Live Points & Safe Padav */}
+                  <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                    <div className="text-right">
+                      <span className="text-[8.5px] text-slate-300 uppercase tracking-wider block font-bold">Current Score</span>
+                      <span className="text-xs sm:text-sm font-black font-mono text-amber-300 flex items-center gap-1 justify-end drop-shadow-[0_0_6px_rgba(251,191,36,0.5)]">
+                        ⭐ {(userPoints || 0).toLocaleString()} <span className="text-[9px] text-amber-400 font-sans">pts</span>
+                      </span>
+                    </div>
+                    <div className="h-6 w-[1px] bg-indigo-900/80 hidden xs:block" />
+                    <div className="text-right hidden sm:block">
+                      <span className="text-[8.5px] text-slate-300 uppercase tracking-wider block font-bold">Safe Padav</span>
+                      <span className="text-xs sm:text-sm font-black font-mono text-emerald-400">
+                        {safePadavPrize}
+                      </span>
+                    </div>
+                  </div>
+
                 </div>
               </div>
 
@@ -2567,8 +2904,8 @@ export default function KbcExam() {
                       strokeWidth = '2.5';
                       filterDrop = 'drop-shadow(0 0 20px rgba(103, 232, 249, 0.75))';
                     } else if (isLocked && revealedCorrect === null) {
-                      strokeColor = '#241e3d';
-                      innerStrokeColor = '#1e1933';
+                      strokeColor = '#0284c7';
+                      innerStrokeColor = '#38bdf8';
                       textColor = 'text-white';
                     }
 
@@ -2582,8 +2919,8 @@ export default function KbcExam() {
                         className={`group relative text-left py-2 px-4 sm:px-6 min-h-[46px] sm:min-h-[50px] transition-all overflow-hidden flex items-center justify-between select-none ${
                           isOptionDisabled
                             ? (isSelected && isLocked) 
-                              ? 'cursor-default ring-1 ring-amber-300 shadow-amber-400/40' 
-                              : 'cursor-not-allowed opacity-40 grayscale-[40%] pointer-events-none'
+                              ? 'cursor-default ring-2 ring-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.6)] z-20' 
+                              : 'cursor-default opacity-90 pointer-events-none'
                             : 'cursor-pointer transform hover:scale-[1.02] active:scale-[0.98]'
                         } ${
                           isSelected && (answerStatus === 'evaluating' || answerStatus === 'locked') ? 'animate-pulse' : ''
@@ -2664,7 +3001,9 @@ export default function KbcExam() {
                                   ? 'bg-gradient-to-b from-red-500 to-red-900 border-2 border-red-300 text-white font-black shadow-[0_0_12px_rgba(239,68,68,0.9)]'
                                   : 'bg-gradient-to-b from-slate-900 via-[#111936] to-slate-950 border border-cyan-400/80 text-white font-black shadow-[0_0_10px_rgba(56,189,248,0.5)] group-hover:border-yellow-300'
                           }`}>
-                            <span className="font-mono text-xs sm:text-sm tracking-tight text-white font-black drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">{letter}</span>
+                            <span className={`font-mono text-xs sm:text-sm tracking-tight font-black ${
+                              isSelected ? 'text-slate-950 font-black' : 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]'
+                            }`}>{letter}</span>
                           </div>
 
                           {/* Option Text: Pure Crisp White */}
@@ -2816,6 +3155,8 @@ export default function KbcExam() {
                   isWrongAnswer={isWrongAnswer}
                   safePoints={safePadavPoints}
                   safePrize={safePadavPrize}
+                  candidateName={candidateProfile.name}
+                  candidatePhoto={candidateProfile.profile_photo}
                 />
               </div>
 
@@ -2852,6 +3193,8 @@ export default function KbcExam() {
                       isWrongAnswer={isWrongAnswer}
                       safePoints={safePadavPoints}
                       safePrize={safePadavPrize}
+                      candidateName={candidateProfile.name}
+                      candidatePhoto={candidateProfile.profile_photo}
                     />
                   </motion.div>
                 </div>

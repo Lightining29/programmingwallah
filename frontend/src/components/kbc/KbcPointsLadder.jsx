@@ -18,7 +18,9 @@ export default function KbcPointsLadder({
   isOut = false,
   isWrongAnswer = false,
   safePoints = 0,
-  safePrize = '₹0'
+  safePrize = '₹0',
+  candidateName = 'Hotseat Contestant',
+  candidatePhoto = null
 }) {
   const currentStepRef = useRef(null);
 
@@ -88,19 +90,40 @@ export default function KbcPointsLadder({
       }}
     >
       {/* ── HIGH-TECH CONTESTANT HUD (Top Banner) ── */}
-      <div className="pb-1.5 mb-1 border-b border-indigo-900/70 relative z-10 flex items-center justify-between text-[10px] font-mono leading-none">
-        <span className={`font-black flex items-center gap-1 ${
-          isWrongAnswer ? 'text-red-300 animate-pulse' : isOut ? 'text-red-400 line-through' : 'text-amber-300'
-        }`}>
-          ⭐ {(userPoints || 0).toLocaleString()}
-        </span>
-        <span className="text-emerald-400 font-bold flex items-center gap-0.5 text-[9px]">
-          <ShieldCheck className="w-2.5 h-2.5 text-emerald-400" />
-          {safePoints} pts
-        </span>
-        <span className="text-cyan-300 font-black text-[9px] px-1.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40">
-          Q{activeLevel}/{totalQuestions}
-        </span>
+      <div className="pb-1.5 mb-1 border-b border-indigo-900/70 relative z-10 flex flex-col gap-1 text-[10px] font-mono leading-none">
+        {/* Candidate Info Line */}
+        <div className="flex items-center justify-between gap-1.5">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <div className="w-5 h-5 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-amber-400 to-yellow-300 shrink-0 flex items-center justify-center">
+              {candidatePhoto ? (
+                <img src={candidatePhoto} alt={candidateName} className="w-full h-full object-cover rounded-full" />
+              ) : (
+                <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-amber-300 font-bold text-[9px]">
+                  {(candidateName || 'C').charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+            <span className="font-sans font-bold text-[10.5px] text-white truncate max-w-[95px] drop-shadow-[0_0_4px_rgba(255,255,255,0.4)]">
+              {candidateName || 'Contestant'}
+            </span>
+          </div>
+          <span className="text-cyan-300 font-black text-[9px] px-1.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 shrink-0">
+            Q{activeLevel}/{totalQuestions}
+          </span>
+        </div>
+
+        {/* Live Points & Safe Padav Line */}
+        <div className="flex items-center justify-between text-[9px]">
+          <span className={`font-black flex items-center gap-1 ${
+            isWrongAnswer ? 'text-red-300 animate-pulse' : isOut ? 'text-red-400 line-through' : 'text-amber-300'
+          }`}>
+            ⭐ {(userPoints || 0).toLocaleString()} <span className="text-[8px] text-amber-400/80 font-sans">pts</span>
+          </span>
+          <span className="text-emerald-400 font-bold flex items-center gap-0.5 text-[8.5px]">
+            <ShieldCheck className="w-2.5 h-2.5 text-emerald-400" />
+            {safePoints} pts
+          </span>
+        </div>
       </div>
 
       {/* ── TOP BEVELED DOUBLE-HEXAGON POD (Jackpot Milestone - Increased Height & 200px Fit) ── */}
@@ -153,16 +176,16 @@ export default function KbcPointsLadder({
           </svg>
 
           {/* Crisp Top Typography */}
-          <div className="relative z-10 flex flex-col items-center justify-center leading-tight px-2">
-            <span className={`font-serif font-black text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-yellow-300 to-amber-500 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] tracking-tight ${
-              topPrizeInfo.isLargeUnit ? 'text-xl leading-none' : 'text-sm sm:text-base font-sans font-black'
+          <div className="relative z-10 flex flex-col items-center justify-center leading-tight px-2 w-full">
+            <span className={`font-sans font-black whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-yellow-300 to-amber-500 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] tracking-tight ${
+              topPrizeInfo.isLargeUnit ? 'text-lg sm:text-xl leading-none' : 'text-xs sm:text-sm font-black'
             }`}>
               {topPrizeInfo.main}
             </span>
-            <span className="font-sans font-black text-[9.5px] text-amber-300 uppercase tracking-[0.2em] drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]">
+            <span className="font-sans font-black text-[9px] text-amber-300 uppercase tracking-[0.15em] whitespace-nowrap drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]">
               {topPrizeInfo.sub}
             </span>
-            <span className="text-[8px] font-mono font-bold text-amber-400/90 -mt-0.5">
+            <span className="text-[8px] font-mono font-bold text-amber-400/90 -mt-0.5 whitespace-nowrap">
               {(topStep.level * 100).toLocaleString()} pts
             </span>
           </div>
