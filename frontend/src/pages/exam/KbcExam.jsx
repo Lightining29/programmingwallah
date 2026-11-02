@@ -29,9 +29,11 @@ import {
 export default function KbcExam() {
   const navigate = useNavigate();
 
-  // ── Participation Mode: Live Arena (Solo Hotseat by default, Team if connected) ──
+  // ── Participation Mode: Team mode by default so all contestants register & sync with Admin ──
   const [playMode, setPlayMode] = useState(() => {
-    return localStorage.getItem('kbc_team') ? 'TEAM' : 'SOLO';
+    const saved = localStorage.getItem('kbc_play_mode');
+    if (saved === 'SOLO') return 'SOLO';
+    return 'TEAM';
   });
 
   // Team Laptop Session State
@@ -771,7 +773,14 @@ export default function KbcExam() {
             lastQuestionTrackRef.current.wasLocked = Boolean(sess.is_locked);
             lastQuestionTrackRef.current.timerStartedAt = sess.timer_started_at;
 
-            if (isNowLive) {
+            if (!isNowLive) {
+              kbcAudio.stopClock();
+              kbcAudio.stopLockSuspense();
+              if (timerRef.current) {
+                clearInterval(timerRef.current);
+                timerRef.current = null;
+              }
+            } else {
               // Admin locks the session question
               if (sess.is_locked && !isLocked) {
                 setIsLocked(true);
@@ -863,6 +872,9 @@ export default function KbcExam() {
     return () => {
       isMounted = false;
       clearInterval(interval);
+      kbcAudio.stopClock();
+      kbcAudio.stopLockSuspense();
+      kbcAudio.stopDrone();
     };
   }, [team, currentLevel, selectedOption, isLocked]);
 
@@ -1263,11 +1275,13 @@ export default function KbcExam() {
       const initialSeconds = getLevelCountdown(currentLevel);
       setTimeLeft(initialSeconds);
       setIsTimeUp(false);
-      if (!isLocked && revealedCorrect === null) {
+      if (isClockActive) {
         kbcAudio.startClock();
+      } else {
+        kbcAudio.stopClock();
       }
     }
-  }, [activeQuestionKey, currentLevel, isLocked, revealedCorrect]);
+  }, [activeQuestionKey, currentLevel, isClockActive]);
 
   // 2. Reliable 1-second countdown interval while round is actively playing
   useEffect(() => {

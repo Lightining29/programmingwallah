@@ -117,7 +117,7 @@ class KbcSoundManager {
 
   // Called on every 1-second countdown tick in KbcExam
   onTimerTick(timeLeft, isUrgent = false) {
-    if (this.isMuted) return;
+    if (!this.isClockRunning || this.isMuted) return;
     this.init();
 
     // If clock mp3 is paused or blocked by browser autoplay, synthesize authentic tick!

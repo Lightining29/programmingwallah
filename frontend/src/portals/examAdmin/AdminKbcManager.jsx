@@ -67,6 +67,8 @@ export default function AdminKbcManager() {
     active_team_id: null
   });
 
+  const isLiveNow = session?.status === 'LIVE';
+
   // Participating Teams State
   const [teams, setTeams] = useState([]);
   const [showAddTeamModal, setShowAddTeamModal] = useState(false);
@@ -93,7 +95,7 @@ export default function AdminKbcManager() {
 
   // ── Host Screen Tik-Tiki Ji Clock (Live Timer level to level) ──
   const [hostTimeLeft, setHostTimeLeft] = useState(30);
-  const [hostTimerActive, setHostTimerActive] = useState(true);
+  const [hostTimerActive, setHostTimerActive] = useState(false); // Strictly false until Admin starts KBC Live!
   const hostTimerRef = useRef(null);
 
   const getHostCountdown = (lvl) => {
@@ -103,6 +105,7 @@ export default function AdminKbcManager() {
   };
 
   const handleHostTimerToggle = async () => {
+    if (!isLiveNow) return;
     const nextActive = !hostTimerActive;
     setHostTimerActive(nextActive);
     try {
@@ -117,7 +120,11 @@ export default function AdminKbcManager() {
   const handleHostTimerReset = async () => {
     const maxT = getHostCountdown(selectedLevel);
     setHostTimeLeft(maxT);
-    setHostTimerActive(true);
+    if (isLiveNow) {
+      setHostTimerActive(true);
+    } else {
+      setHostTimerActive(false);
+    }
     try {
       await fetch('/api/kbc/admin/session/timer', {
         method: 'POST',
@@ -127,14 +134,22 @@ export default function AdminKbcManager() {
     } catch (e) {}
   };
 
+  // Synchronize timer seconds with level & active question, strictly guarded by Live status
   useEffect(() => {
     const maxT = getHostCountdown(selectedLevel);
     setHostTimeLeft(maxT);
-    setHostTimerActive(true);
-  }, [selectedLevel, session?.current_question_id]);
+    if (session?.status === 'LIVE') {
+      setHostTimerActive(true);
+    } else {
+      setHostTimerActive(false);
+      if (hostTimerRef.current) clearInterval(hostTimerRef.current);
+      kbcAudio.stopClock();
+    }
+  }, [selectedLevel, session?.current_question_id, session?.status]);
 
+  // Reliable 1-second interval for Tik-Tiki Ji on Host Screen (Only while session is LIVE)
   useEffect(() => {
-    if (!hostTimerActive || session?.is_locked || session?.revealed_correct !== null) {
+    if (session?.status !== 'LIVE' || !hostTimerActive || session?.is_locked || session?.revealed_correct !== null) {
       if (hostTimerRef.current) clearInterval(hostTimerRef.current);
       kbcAudio.stopClock();
       return;
@@ -161,7 +176,17 @@ export default function AdminKbcManager() {
       if (hostTimerRef.current) clearInterval(hostTimerRef.current);
       kbcAudio.stopClock();
     };
-  }, [hostTimerActive, session?.is_locked, session?.revealed_correct, selectedLevel]);
+  }, [session?.status, hostTimerActive, session?.is_locked, session?.revealed_correct, selectedLevel]);
+
+  // Clean up timers & audio on component unmount
+  useEffect(() => {
+    return () => {
+      if (hostTimerRef.current) clearInterval(hostTimerRef.current);
+      kbcAudio.stopClock();
+      kbcAudio.stopLockSuspense();
+      kbcAudio.stopDrone();
+    };
+  }, []);
 
   // Load KBC Admin Data & Poll Live Session
   useEffect(() => {
@@ -642,6 +667,14 @@ export default function AdminKbcManager() {
       if (data.success) {
         if (shouldBeLive) {
           setSelectedLevel(1);
+          setHostTimerActive(true);
+          setHostTimeLeft(getHostCountdown(1));
+        } else {
+          setHostTimerActive(false);
+          kbcAudio.stopClock();
+          kbcAudio.stopLockSuspense();
+          if (hostTimerRef.current) clearInterval(hostTimerRef.current);
+          setHostTimeLeft(getHostCountdown(selectedLevel));
         }
         setSession(prev => ({
           ...prev,
@@ -1414,7 +1447,6 @@ export default function AdminKbcManager() {
   const effectiveLevel = ((selectedLevel - 1) % 16) + 1;
   const currentLevelData = levelsData[selectedLevel] || levelsData[effectiveLevel] || { pool: [] };
   const activeQ = session.current_question || currentLevelData.activeQuestion || (currentLevelData.pool && currentLevelData.pool[0]) || null;
-  const isLiveNow = session.status === 'LIVE';
 
   return (
     <div className="space-y-6 select-none font-sans">
@@ -1742,29 +1774,45 @@ export default function AdminKbcManager() {
               <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-2xl bg-black/70 border border-amber-500/50 shadow-inner">
                 <div className="flex items-center gap-2">
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center font-mono font-black text-sm border-2 transition-all ${
-                    hostTimeLeft <= 10 
-                      ? 'border-red-500 text-white bg-red-950/90 shadow-[0_0_15px_#ef4444] animate-pulse' 
-                      : 'border-amber-400 text-amber-300 bg-amber-950/40'
+                    !isLiveNow
+                      ? 'border-slate-600 text-slate-400 bg-slate-900/40'
+                      : hostTimeLeft <= 10 
+                        ? 'border-red-500 text-white bg-red-950/90 shadow-[0_0_15px_#ef4444] animate-pulse' 
+                        : 'border-amber-400 text-amber-300 bg-amber-950/40'
                   }`}>
                     {hostTimeLeft}
                   </div>
                   <div className="text-left">
                     <span className="block text-[8px] font-black uppercase tracking-wider text-amber-400">Tik-Tiki Ji</span>
-                    <span className="block text-[11px] font-bold text-slate-300">{hostTimeLeft}s remaining</span>
+                    <span className="block text-[11px] font-bold text-slate-300">
+                      {isLiveNow 
+                        ? (hostTimerActive ? `${hostTimeLeft}s remaining` : `${hostTimeLeft}s (Paused)`) 
+                        : 'Standby Mode'}
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-1 pl-1.5 border-l border-slate-800">
                   <button
                     onClick={handleHostTimerToggle}
-                    className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition cursor-pointer"
-                    title={hostTimerActive ? 'Pause Clock (Sync with all screens)' : 'Resume Clock (Sync with all screens)'}
+                    disabled={!isLiveNow}
+                    className={`p-1.5 rounded-lg text-slate-300 transition ${
+                      !isLiveNow 
+                        ? 'opacity-40 cursor-not-allowed' 
+                        : 'hover:bg-slate-800 hover:text-white cursor-pointer'
+                    }`}
+                    title={!isLiveNow ? 'Start KBC Live to enable clock' : (hostTimerActive ? 'Pause Clock (Sync with all screens)' : 'Resume Clock (Sync with all screens)')}
                   >
-                    {hostTimerActive ? <Pause className="w-3.5 h-3.5 text-amber-300" /> : <Play className="w-3.5 h-3.5 text-emerald-400" />}
+                    {hostTimerActive && isLiveNow ? <Pause className="w-3.5 h-3.5 text-amber-300" /> : <Play className="w-3.5 h-3.5 text-emerald-400" />}
                   </button>
                   <button
                     onClick={handleHostTimerReset}
-                    className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition cursor-pointer"
-                    title="Reset Clock for this Question (Sync with all screens)"
+                    disabled={!isLiveNow}
+                    className={`p-1.5 rounded-lg text-slate-300 transition ${
+                      !isLiveNow 
+                        ? 'opacity-40 cursor-not-allowed' 
+                        : 'hover:bg-slate-800 hover:text-white cursor-pointer'
+                    }`}
+                    title={!isLiveNow ? 'Start KBC Live to enable clock' : "Reset Clock for this Question (Sync with all screens)"}
                   >
                     <RotateCcw className="w-3.5 h-3.5 text-amber-300" />
                   </button>
