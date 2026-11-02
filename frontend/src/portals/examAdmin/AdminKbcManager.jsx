@@ -2482,7 +2482,7 @@ export default function AdminKbcManager() {
                             )}
                             <div>
                               <div className="flex items-center gap-1.5">
-                                <span>{t.team_name}</span>
+                                <span>{t.team_name || t.leader_name || 'Contestant'}</span>
                                 {isTop && (
                                   <span className="px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300 text-[10px] font-black border border-yellow-400/40">
                                     👑 TOP SCORER
@@ -2502,7 +2502,7 @@ export default function AdminKbcManager() {
                             </div>
                           </td>
                           <td className="px-4 py-3.5 font-medium">
-                            <div>{t.leader_name}</div>
+                            <div>{t.leader_name || t.team_name || 'Contestant'}</div>
                             {t.email && <div className="text-[10px] text-slate-500 font-mono">{t.email}</div>}
                           </td>
                           <td className="px-4 py-3.5">

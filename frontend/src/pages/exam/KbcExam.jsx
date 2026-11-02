@@ -1134,9 +1134,9 @@ export default function KbcExam() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           access_code: code,
-          email: registeredStudent?.email || '',
-          full_name: registeredStudent?.full_name || playerName,
-          profile_photo: registeredStudent?.profile_photo || null,
+          email: registeredStudent?.email || candidateProfile?.email || '',
+          full_name: registeredStudent?.full_name || candidateProfile?.name || playerName,
+          profile_photo: registeredStudent?.profile_photo || candidateProfile?.profile_photo || null,
           laptop_info: laptopInfo
         })
       });

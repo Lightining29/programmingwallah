@@ -1947,155 +1947,171 @@ let memoryTeams = [
   }
 ];
 
-// Helper to ensure tables and initialize main session in Hostinger MySQL
+// Helper to ensure tables and initialize main session in Hostinger MySQL (Runs ONCE, avoids metadata lock churn)
+let tablesEnsured = false;
+let tablesEnsuringPromise = null;
+
 async function ensureKbcSessionsAndTeams() {
-  const pool = getMySQLPool();
-  if (!pool) return false;
+  if (tablesEnsured) return true;
+  if (tablesEnsuringPromise) return tablesEnsuringPromise;
 
-  try {
-    // 1. Ensure kbc_sessions table
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS kbc_sessions (
-        id VARCHAR(50) PRIMARY KEY,
-        status ENUM('INACTIVE', 'WAITING', 'LIVE', 'COMPLETED') DEFAULT 'INACTIVE',
-        show_in_navbar TINYINT(1) DEFAULT 0,
-        current_level INT DEFAULT 1,
-        total_questions INT DEFAULT 16,
-        current_question_id VARCHAR(100) DEFAULT NULL,
-        is_locked TINYINT(1) DEFAULT 0,
-        locked_option INT DEFAULT NULL,
-        revealed_correct INT DEFAULT NULL,
-        active_team_id VARCHAR(100) DEFAULT NULL,
-        winner_team_id VARCHAR(100) DEFAULT NULL,
-        winner_name VARCHAR(255) DEFAULT NULL,
-        winner_points INT DEFAULT 0,
-        winner_prize VARCHAR(100) DEFAULT NULL,
-        show_winner TINYINT(1) DEFAULT 0,
-        show_leaderboard TINYINT(1) DEFAULT 0,
-        timer_duration INT DEFAULT 30,
-        timer_started_at BIGINT DEFAULT NULL,
-        timer_paused TINYINT(1) DEFAULT 0,
-        timer_remaining INT DEFAULT 30,
-        default_access_code VARCHAR(50) DEFAULT 'KBC-101',
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    `);
+  tablesEnsuringPromise = (async () => {
+    const pool = getMySQLPool();
+    if (!pool) return false;
 
-    // Ensure session record exists
-    const [sessRows] = await pool.query('SELECT * FROM kbc_sessions WHERE id = ?', ['main_session']);
-    if (sessRows.length === 0) {
+    try {
+      // 1. Ensure kbc_sessions table
       await pool.query(`
-        INSERT INTO kbc_sessions (id, status, show_in_navbar, current_level, total_questions, default_access_code)
-        VALUES ('main_session', 'INACTIVE', 0, 1, 16, 'KBC-101')
+        CREATE TABLE IF NOT EXISTS kbc_sessions (
+          id VARCHAR(50) PRIMARY KEY,
+          status ENUM('INACTIVE', 'WAITING', 'LIVE', 'COMPLETED') DEFAULT 'INACTIVE',
+          show_in_navbar TINYINT(1) DEFAULT 0,
+          current_level INT DEFAULT 1,
+          total_questions INT DEFAULT 16,
+          current_question_id VARCHAR(100) DEFAULT NULL,
+          is_locked TINYINT(1) DEFAULT 0,
+          locked_option INT DEFAULT NULL,
+          revealed_correct INT DEFAULT NULL,
+          active_team_id VARCHAR(100) DEFAULT NULL,
+          winner_team_id VARCHAR(100) DEFAULT NULL,
+          winner_name VARCHAR(255) DEFAULT NULL,
+          winner_points INT DEFAULT 0,
+          winner_prize VARCHAR(100) DEFAULT NULL,
+          show_winner TINYINT(1) DEFAULT 0,
+          show_leaderboard TINYINT(1) DEFAULT 0,
+          timer_duration INT DEFAULT 30,
+          timer_started_at BIGINT DEFAULT NULL,
+          timer_paused TINYINT(1) DEFAULT 0,
+          timer_remaining INT DEFAULT 30,
+          default_access_code VARCHAR(50) DEFAULT 'KBC-101',
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
       `);
-    }
 
-    // Dynamic schema migrations for kbc_sessions
-    try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN total_questions INT DEFAULT 16'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN winner_team_id VARCHAR(100) DEFAULT NULL'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN winner_name VARCHAR(255) DEFAULT NULL'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN winner_points INT DEFAULT 0'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN winner_prize VARCHAR(100) DEFAULT NULL'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN show_winner TINYINT(1) DEFAULT 0'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN show_leaderboard TINYINT(1) DEFAULT 0'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN timer_duration INT DEFAULT 30'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN timer_started_at BIGINT DEFAULT NULL'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN timer_paused TINYINT(1) DEFAULT 0'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN timer_remaining INT DEFAULT 30'); } catch(e) {}
-    try { await pool.query("ALTER TABLE kbc_sessions ADD COLUMN default_access_code VARCHAR(50) DEFAULT 'KBC-101'"); } catch(e) {}
-
-    // 1b. Ensure kbc_students table for Candidate Registration with image
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS kbc_students (
-        id VARCHAR(100) PRIMARY KEY,
-        full_name VARCHAR(255) NOT NULL,
-        email VARCHAR(255) NOT NULL UNIQUE,
-        dob VARCHAR(50) NOT NULL,
-        mobile VARCHAR(50) DEFAULT '',
-        college VARCHAR(255) DEFAULT '',
-        roll_no VARCHAR(100) DEFAULT '',
-        profile_photo LONGTEXT,
-        access_code VARCHAR(50) DEFAULT 'KBC-101',
-        points INT DEFAULT 0,
-        current_level INT DEFAULT 1,
-        correct_count INT DEFAULT 0,
-        wrong_count INT DEFAULT 0,
-        total_response_time_ms BIGINT DEFAULT 0,
-        last_submitted_at BIGINT DEFAULT NULL,
-        status VARCHAR(50) DEFAULT 'REGISTERED',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_kbc_email (email),
-        INDEX idx_kbc_access_code (access_code)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    `);
-
-    // 2. Ensure kbc_teams table
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS kbc_teams (
-        id VARCHAR(100) PRIMARY KEY,
-        team_name VARCHAR(255) NOT NULL,
-        leader_name VARCHAR(255) NOT NULL,
-        access_code VARCHAR(50) NOT NULL,
-        current_level INT DEFAULT 1,
-        score_amount INT DEFAULT 0,
-        points INT DEFAULT 0,
-        correct_count INT DEFAULT 0,
-        wrong_count INT DEFAULT 0,
-        safe_amount INT DEFAULT 0,
-        status VARCHAR(50) DEFAULT 'REGISTERED',
-        submitted_option INT DEFAULT NULL,
-        submitted_at BIGINT DEFAULT NULL,
-        lifelines_used_json TEXT DEFAULT NULL,
-        laptop_info VARCHAR(255) DEFAULT '',
-        email VARCHAR(255) DEFAULT NULL,
-        dob VARCHAR(50) DEFAULT NULL,
-        mobile VARCHAR(50) DEFAULT NULL,
-        college VARCHAR(255) DEFAULT NULL,
-        roll_no VARCHAR(100) DEFAULT NULL,
-        profile_photo LONGTEXT DEFAULT NULL,
-        total_response_time_ms BIGINT DEFAULT 0,
-        last_submitted_at BIGINT DEFAULT NULL,
-        last_active_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_team_code (access_code),
-        INDEX idx_team_email (email)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    `);
-
-    // Dynamic schema migrations for kbc_teams
-    try { await pool.query("ALTER TABLE kbc_teams MODIFY COLUMN status VARCHAR(50) DEFAULT 'REGISTERED'"); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN points INT DEFAULT 0'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN correct_count INT DEFAULT 0'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN wrong_count INT DEFAULT 0'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN email VARCHAR(255) DEFAULT NULL'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN dob VARCHAR(50) DEFAULT NULL'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN mobile VARCHAR(50) DEFAULT NULL'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN course VARCHAR(255) DEFAULT NULL'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_students ADD COLUMN course VARCHAR(255) DEFAULT NULL'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN college VARCHAR(255) DEFAULT NULL'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN roll_no VARCHAR(100) DEFAULT NULL'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN profile_photo LONGTEXT DEFAULT NULL'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN total_response_time_ms BIGINT DEFAULT 0'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN last_submitted_at BIGINT DEFAULT NULL'); } catch(e) {}
-    try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN submitted_at BIGINT DEFAULT NULL'); } catch(e) {}
-
-    // Ensure starter teams if none exist
-    const [teamRows] = await pool.query('SELECT COUNT(*) as cnt FROM kbc_teams');
-    if ((teamRows[0]?.cnt || 0) === 0) {
-      for (const t of memoryTeams) {
+      // Ensure session record exists
+      const [sessRows] = await pool.query('SELECT * FROM kbc_sessions WHERE id = ?', ['main_session']);
+      if (sessRows.length === 0) {
         await pool.query(`
-          INSERT INTO kbc_teams (id, team_name, leader_name, access_code, current_level, score_amount, points, status, laptop_info)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [t.id, t.team_name, t.leader_name, t.access_code, t.current_level, t.score_amount, t.points || 0, t.status, t.laptop_info]);
+          INSERT INTO kbc_sessions (id, status, show_in_navbar, current_level, total_questions, default_access_code)
+          VALUES ('main_session', 'INACTIVE', 0, 1, 16, 'KBC-101')
+        `);
       }
-    }
 
-    return true;
-  } catch (err) {
-    console.warn('MySQL session/teams setup warning:', err.message);
-    return false;
-  }
+      // Dynamic schema migrations for kbc_sessions
+      try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN total_questions INT DEFAULT 16'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN winner_team_id VARCHAR(100) DEFAULT NULL'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN winner_name VARCHAR(255) DEFAULT NULL'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN winner_points INT DEFAULT 0'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN winner_prize VARCHAR(100) DEFAULT NULL'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN show_winner TINYINT(1) DEFAULT 0'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN show_leaderboard TINYINT(1) DEFAULT 0'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN timer_duration INT DEFAULT 30'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN timer_started_at BIGINT DEFAULT NULL'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN timer_paused TINYINT(1) DEFAULT 0'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_sessions ADD COLUMN timer_remaining INT DEFAULT 30'); } catch(e) {}
+      try { await pool.query("ALTER TABLE kbc_sessions ADD COLUMN default_access_code VARCHAR(50) DEFAULT 'KBC-101'"); } catch(e) {}
+
+      // 1b. Ensure kbc_students table for Candidate Registration with image
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS kbc_students (
+          id VARCHAR(100) PRIMARY KEY,
+          full_name VARCHAR(255) NOT NULL,
+          email VARCHAR(255) NOT NULL UNIQUE,
+          dob VARCHAR(50) NOT NULL,
+          mobile VARCHAR(50) DEFAULT '',
+          course VARCHAR(255) DEFAULT '',
+          college VARCHAR(255) DEFAULT '',
+          roll_no VARCHAR(100) DEFAULT '',
+          profile_photo LONGTEXT,
+          access_code VARCHAR(50) DEFAULT 'KBC-101',
+          points INT DEFAULT 0,
+          current_level INT DEFAULT 1,
+          correct_count INT DEFAULT 0,
+          wrong_count INT DEFAULT 0,
+          total_response_time_ms BIGINT DEFAULT 0,
+          last_submitted_at BIGINT DEFAULT NULL,
+          status VARCHAR(50) DEFAULT 'REGISTERED',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          INDEX idx_kbc_email (email),
+          INDEX idx_kbc_access_code (access_code)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `);
+
+      // 2. Ensure kbc_teams table
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS kbc_teams (
+          id VARCHAR(100) PRIMARY KEY,
+          team_name VARCHAR(255) NOT NULL,
+          leader_name VARCHAR(255) NOT NULL,
+          access_code VARCHAR(50) NOT NULL,
+          current_level INT DEFAULT 1,
+          score_amount INT DEFAULT 0,
+          points INT DEFAULT 0,
+          correct_count INT DEFAULT 0,
+          wrong_count INT DEFAULT 0,
+          safe_amount INT DEFAULT 0,
+          status VARCHAR(50) DEFAULT 'REGISTERED',
+          submitted_option INT DEFAULT NULL,
+          submitted_at BIGINT DEFAULT NULL,
+          lifelines_used_json TEXT DEFAULT NULL,
+          laptop_info VARCHAR(255) DEFAULT '',
+          email VARCHAR(255) DEFAULT NULL,
+          dob VARCHAR(50) DEFAULT NULL,
+          mobile VARCHAR(50) DEFAULT NULL,
+          course VARCHAR(255) DEFAULT '',
+          college VARCHAR(255) DEFAULT NULL,
+          roll_no VARCHAR(100) DEFAULT NULL,
+          profile_photo LONGTEXT DEFAULT NULL,
+          total_response_time_ms BIGINT DEFAULT 0,
+          last_submitted_at BIGINT DEFAULT NULL,
+          last_active_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          INDEX idx_team_code (access_code),
+          INDEX idx_team_email (email)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `);
+
+      // Dynamic schema migrations for kbc_teams
+      try { await pool.query("ALTER TABLE kbc_teams MODIFY COLUMN status VARCHAR(50) DEFAULT 'REGISTERED'"); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN points INT DEFAULT 0'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN correct_count INT DEFAULT 0'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN wrong_count INT DEFAULT 0'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN email VARCHAR(255) DEFAULT NULL'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN dob VARCHAR(50) DEFAULT NULL'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN mobile VARCHAR(50) DEFAULT NULL'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN course VARCHAR(255) DEFAULT NULL'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_students ADD COLUMN course VARCHAR(255) DEFAULT NULL'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN college VARCHAR(255) DEFAULT NULL'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN roll_no VARCHAR(100) DEFAULT NULL'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN profile_photo LONGTEXT DEFAULT NULL'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_students ADD COLUMN profile_photo LONGTEXT DEFAULT NULL'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN total_response_time_ms BIGINT DEFAULT 0'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN last_submitted_at BIGINT DEFAULT NULL'); } catch(e) {}
+      try { await pool.query('ALTER TABLE kbc_teams ADD COLUMN submitted_at BIGINT DEFAULT NULL'); } catch(e) {}
+
+      // Ensure starter teams if none exist
+      const [teamRows] = await pool.query('SELECT COUNT(*) as cnt FROM kbc_teams');
+      if ((teamRows[0]?.cnt || 0) === 0) {
+        for (const t of memoryTeams) {
+          await pool.query(`
+            INSERT INTO kbc_teams (id, team_name, leader_name, access_code, current_level, score_amount, points, status, laptop_info)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `, [t.id, t.team_name, t.leader_name, t.access_code, t.current_level, t.score_amount, t.points || 0, t.status, t.laptop_info]);
+        }
+      }
+
+      tablesEnsured = true;
+      return true;
+    } catch (err) {
+      console.warn('MySQL session/teams setup warning:', err.message);
+      return false;
+    } finally {
+      tablesEnsuringPromise = null;
+    }
+  })();
+
+  return tablesEnsuringPromise;
 }
 
 // ── HIGH-CONCURRENCY IN-MEMORY RESPONSE CACHE (Supports 1,000+ Concurrent Players with Sub-5ms Latency) ──
@@ -3070,27 +3086,75 @@ router.get('/teams', async (req, res) => {
           INSERT INTO kbc_teams (id, team_name, leader_name, access_code, current_level, score_amount, points, status, email, course, college, profile_photo)
           SELECT s.id, s.full_name, s.full_name, s.access_code, s.current_level, 0, s.points, 'REGISTERED', s.email, s.course, s.college, s.profile_photo
           FROM kbc_students s
-          LEFT JOIN kbc_teams t ON LOWER(s.email) = LOWER(t.email)
+          LEFT JOIN kbc_teams t ON (LOWER(s.email) = LOWER(t.email) OR s.id = t.id)
           WHERE t.id IS NULL
+          ON DUPLICATE KEY UPDATE
+            team_name = VALUES(team_name),
+            leader_name = VALUES(leader_name),
+            email = VALUES(email),
+            course = VALUES(course),
+            college = VALUES(college),
+            profile_photo = COALESCE(VALUES(profile_photo), profile_photo)
         `);
       } catch (e) {}
 
-      // 2. Fetch all registered candidates & teams with photos, names, courses, points
+      // 2. Fetch all registered candidates & teams: combines kbc_students and kbc_teams so 100% of registrations show up!
       const [rows] = await pool.query(`
         SELECT 
-          t.id, t.team_name, t.leader_name, t.access_code, t.current_level, 
-          t.score_amount, t.points, t.correct_count, t.wrong_count, t.safe_amount, 
-          t.status, t.submitted_option, t.submitted_at, t.total_response_time_ms, 
-          t.last_submitted_at, 
-          COALESCE(t.profile_photo, s.profile_photo) AS profile_photo, 
-          COALESCE(t.course, s.course, '') AS course, 
-          COALESCE(t.college, s.college, '') AS college, 
-          COALESCE(t.roll_no, s.roll_no, '') AS roll_no, 
-          COALESCE(t.email, s.email) AS email, 
-          t.laptop_info, t.last_active_at, t.created_at 
-        FROM kbc_teams t 
-        LEFT JOIN kbc_students s ON LOWER(t.email) = LOWER(s.email)
-        ORDER BY t.points DESC, t.total_response_time_ms ASC, t.last_submitted_at ASC, t.id ASC
+          COALESCE(t.id, s.id) AS id,
+          COALESCE(t.team_name, s.full_name) AS team_name,
+          COALESCE(t.leader_name, s.full_name) AS leader_name,
+          COALESCE(t.access_code, s.access_code, 'KBC-101') AS access_code,
+          COALESCE(t.current_level, s.current_level, 1) AS current_level,
+          COALESCE(t.score_amount, 0) AS score_amount,
+          COALESCE(t.points, s.points, 0) AS points,
+          COALESCE(t.correct_count, s.correct_count, 0) AS correct_count,
+          COALESCE(t.wrong_count, s.wrong_count, 0) AS wrong_count,
+          COALESCE(t.safe_amount, 0) AS safe_amount,
+          COALESCE(t.status, s.status, 'REGISTERED') AS status,
+          t.submitted_option,
+          t.submitted_at,
+          COALESCE(t.total_response_time_ms, s.total_response_time_ms, 0) AS total_response_time_ms,
+          COALESCE(t.last_submitted_at, s.last_submitted_at) AS last_submitted_at,
+          COALESCE(t.profile_photo, s.profile_photo) AS profile_photo,
+          COALESCE(t.course, s.course, '') AS course,
+          COALESCE(t.college, s.college, '') AS college,
+          COALESCE(t.roll_no, s.roll_no, '') AS roll_no,
+          COALESCE(t.email, s.email) AS email,
+          COALESCE(t.laptop_info, 'Contestant Laptop') AS laptop_info,
+          COALESCE(t.last_active_at, s.updated_at, s.created_at) AS last_active_at,
+          COALESCE(t.created_at, s.created_at) AS created_at
+        FROM kbc_students s
+        LEFT JOIN kbc_teams t ON (LOWER(s.email) = LOWER(t.email) OR s.id = t.id)
+        UNION
+        SELECT 
+          t.id,
+          t.team_name,
+          t.leader_name,
+          t.access_code,
+          t.current_level,
+          t.score_amount,
+          t.points,
+          t.correct_count,
+          t.wrong_count,
+          t.safe_amount,
+          t.status,
+          t.submitted_option,
+          t.submitted_at,
+          t.total_response_time_ms,
+          t.last_submitted_at,
+          COALESCE(t.profile_photo, s.profile_photo) AS profile_photo,
+          COALESCE(t.course, s.course, '') AS course,
+          COALESCE(t.college, s.college, '') AS college,
+          COALESCE(t.roll_no, s.roll_no, '') AS roll_no,
+          COALESCE(t.email, s.email) AS email,
+          t.laptop_info,
+          t.last_active_at,
+          t.created_at
+        FROM kbc_teams t
+        LEFT JOIN kbc_students s ON (LOWER(t.email) = LOWER(s.email) OR t.id = s.id)
+        WHERE s.id IS NULL
+        ORDER BY points DESC, total_response_time_ms ASC, last_submitted_at ASC, id ASC
       `);
 
       const payload = {
@@ -3169,17 +3233,11 @@ router.post('/student/register', async (req, res) => {
     await ensureKbcSessionsAndTeams();
 
     if (pool) {
-      // 1. Strict duplicate check: Cannot create more candidates with this email!
+      // 1. Check if candidate with this email exists
       const [existingStudent] = await pool.query('SELECT * FROM kbc_students WHERE LOWER(email) = ?', [normEmail]);
-      if (existingStudent.length > 0) {
-        return res.status(409).json({
-          success: false,
-          alreadyRegistered: true,
-          message: 'This email is already registered! Multiple accounts cannot be created with the same email. Please log in using your registered Email and Date of Birth (DOB).'
-        });
-      }
+      const effectiveStudentId = existingStudent.length > 0 ? existingStudent[0].id : studentId;
 
-      // 2. Insert new student into Hostinger database (kbc_students)
+      // 2. Insert or update student in Hostinger database (kbc_students)
       await pool.query(`
         INSERT INTO kbc_students (id, full_name, email, dob, mobile, course, college, profile_photo, access_code, status)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'REGISTERED')
@@ -3190,9 +3248,9 @@ router.post('/student/register', async (req, res) => {
           course = VALUES(course),
           college = VALUES(college),
           profile_photo = COALESCE(VALUES(profile_photo), profile_photo)
-      `, [studentId, full_name.trim(), normEmail, dob.trim(), (mobile || '').trim(), courseClean, courseClean, profile_photo || null, defaultCode]);
+      `, [effectiveStudentId, full_name.trim(), normEmail, dob.trim(), (mobile || '').trim(), courseClean, courseClean, profile_photo || null, defaultCode]);
 
-      // 3. Guarantee candidate is inserted/synced into kbc_teams table so candidate shows on admin monitor
+      // 3. Guarantee candidate is inserted/synced into kbc_teams table so candidate immediately appears on admin monitor
       const [existingTeam] = await pool.query('SELECT id FROM kbc_teams WHERE LOWER(email) = ?', [normEmail]);
       if (existingTeam.length > 0) {
         await pool.query(`
@@ -3205,8 +3263,38 @@ router.post('/student/register', async (req, res) => {
         await pool.query(`
           INSERT INTO kbc_teams (id, team_name, leader_name, email, dob, mobile, course, college, profile_photo, access_code, current_level, score_amount, points, status)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, 0, 'REGISTERED')
-        `, [studentId, full_name.trim(), full_name.trim(), normEmail, dob.trim(), (mobile || '').trim(), courseClean, courseClean, profile_photo || null, defaultCode]);
+          ON DUPLICATE KEY UPDATE
+            team_name = VALUES(team_name),
+            leader_name = VALUES(leader_name),
+            dob = VALUES(dob),
+            mobile = VALUES(mobile),
+            course = VALUES(course),
+            college = VALUES(college),
+            profile_photo = COALESCE(VALUES(profile_photo), profile_photo),
+            status = 'REGISTERED'
+        `, [effectiveStudentId, full_name.trim(), full_name.trim(), normEmail, dob.trim(), (mobile || '').trim(), courseClean, courseClean, profile_photo || null, defaultCode]);
       }
+
+      // 4. Cache student in memory for ultra-fast O(1) lookups
+      const studentObj = {
+        id: effectiveStudentId,
+        team_name: full_name.trim(),
+        leader_name: full_name.trim(),
+        email: normEmail,
+        course: courseClean,
+        college: courseClean,
+        profile_photo: profile_photo || null,
+        access_code: defaultCode,
+        current_level: 1,
+        points: 0,
+        score_amount: 0,
+        correct_count: 0,
+        wrong_count: 0,
+        status: 'REGISTERED',
+        submitted_option: null
+      };
+      cachedTeamsMap.set(effectiveStudentId, studentObj);
+      cachedTeamsMap.set(normEmail, studentObj);
 
       // Invalidate caches so Admin Screen and session status immediately reflect new candidate
       invalidateKbcTeamsCache();
@@ -3218,7 +3306,7 @@ router.post('/student/register', async (req, res) => {
         success: true,
         message: `Welcome, ${full_name}! Registration completed successfully. Proceed to enter Exam Access Code.`,
         student: updatedRows[0] || {
-          id: studentId,
+          id: effectiveStudentId,
           full_name: full_name.trim(),
           email: normEmail,
           dob: dob.trim(),
@@ -3227,13 +3315,17 @@ router.post('/student/register', async (req, res) => {
           profile_photo: profile_photo || null,
           access_code: defaultCode
         },
-        team_id: studentId,
+        team_id: effectiveStudentId,
         access_code: defaultCode,
         database: 'Hostinger MySQL'
       });
     }
   } catch (err) {
-    console.warn('MySQL /student/register query error:', err.message);
+    console.error('MySQL /student/register query error:', err.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to save candidate registration to database: ' + err.message
+    });
   }
 
   // Memory fallback
