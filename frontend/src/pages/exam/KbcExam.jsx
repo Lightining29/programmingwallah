@@ -1911,12 +1911,6 @@ export default function KbcExam() {
 
             <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
               <button
-                onClick={() => setPlayMode('SOLO')}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg transition cursor-pointer flex items-center gap-2"
-              >
-                <span>Enter Hotseat Practice Arena Directly ➔</span>
-              </button>
-              <button
                 onClick={handleDisconnectTeam}
                 className="px-5 py-2.5 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-300 font-bold text-xs cursor-pointer transition flex items-center gap-2"
               >
