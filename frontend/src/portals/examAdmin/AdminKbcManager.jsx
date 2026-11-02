@@ -991,22 +991,59 @@ export default function AdminKbcManager() {
     }
   };
 
-  const handleDeleteTeam = async (teamId) => {
+  const handleDeleteTeam = async (teamId, email) => {
     const confirm = await Swal.fire({
-      title: 'Remove Team?',
-      text: 'Are you sure you want to remove this team?',
+      title: 'Remove Candidate / Team?',
+      text: 'Are you sure you want to permanently delete this candidate from the database?',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Yes, Remove',
+      confirmButtonText: 'Yes, Delete Permanently',
       confirmButtonColor: '#ef4444'
     });
     if (confirm.isConfirmed) {
-      await fetch('/api/kbc/admin/teams/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ teamId })
-      });
-      fetchTeams();
+      try {
+        const res = await fetch('/api/kbc/admin/teams/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ teamId, email })
+        });
+        const data = await res.json();
+        if (data.success) {
+          fetchTeams();
+        } else {
+          Swal.fire('Error', data.message || 'Failed to delete candidate', 'error');
+        }
+      } catch (e) {
+        Swal.fire('Error', 'Unable to delete candidate', 'error');
+      }
+    }
+  };
+
+  const handleDeleteAllTeams = async () => {
+    const confirm = await Swal.fire({
+      title: 'Clear ALL Candidates & Teams?',
+      text: 'Are you sure you want to permanently delete ALL registered candidates and teams? This will wipe test data completely!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Wipe All Data',
+      confirmButtonColor: '#ef4444'
+    });
+    if (confirm.isConfirmed) {
+      try {
+        const res = await fetch('/api/kbc/admin/teams/delete-all', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (data.success) {
+          Swal.fire('Cleared!', 'All candidates and teams have been removed.', 'success');
+          fetchTeams();
+        } else {
+          Swal.fire('Error', data.message || 'Failed to clear candidates', 'error');
+        }
+      } catch (e) {
+        Swal.fire('Error', 'Network or server error', 'error');
+      }
     }
   };
 
@@ -1476,7 +1513,7 @@ export default function AdminKbcManager() {
             </div>
 
             <h2 className="text-2xl sm:text-3xl font-black text-white tracking-wide">
-              Kaun Banega Crorepati — Live Host & Multi-Team Control Screen
+              Kaun Banega Coder — Live Host & Multi-Team Control Screen
             </h2>
             <p className="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
               When you confirm and start the session, the KBC option immediately activates in the website Navbar. Teams can log in from their own laptops, answer questions in real time, and face the 16-level MERN & SQL challenge!
@@ -2398,6 +2435,13 @@ export default function AdminKbcManager() {
               >
                 <PlusCircle className="w-4 h-4" /> Add New Team
               </button>
+              <button
+                onClick={handleDeleteAllTeams}
+                className="px-4 py-2.5 rounded-xl bg-red-950/70 hover:bg-red-900 border border-red-500/50 text-red-200 hover:text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-lg shadow-red-950/30 transition"
+                title="Wipe all candidate registrations and test teams"
+              >
+                <Trash2 className="w-4 h-4 text-red-400" /> Clear All Candidates
+              </button>
             </div>
           </div>
 
@@ -2552,9 +2596,9 @@ export default function AdminKbcManager() {
                               Hotseat
                             </button>
                             <button
-                              onClick={() => handleDeleteTeam(t.id)}
-                              className="p-1 rounded-lg hover:bg-red-500/20 text-red-400 transition cursor-pointer"
-                              title="Remove team"
+                              onClick={() => handleDeleteTeam(t.id, t.email)}
+                              className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 hover:text-red-300 transition cursor-pointer"
+                              title="Delete candidate permanently"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>

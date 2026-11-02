@@ -2945,12 +2945,12 @@ export default function KbcExam() {
                           isOptionDisabled
                             ? (isSelected && isLocked) 
                               ? 'cursor-default ring-2 ring-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.6)] z-20' 
-                              : 'cursor-default opacity-90 pointer-events-none'
+                              : 'cursor-default pointer-events-none'
                             : 'cursor-pointer transform hover:scale-[1.02] active:scale-[0.98]'
                         } ${
                           isSelected && (answerStatus === 'evaluating' || answerStatus === 'locked') ? 'animate-pulse' : ''
                         }`}
-                        style={{ filter: filterDrop }}
+                        style={{ filter: filterDrop, color: isSelected ? '#0f172a' : '#ffffff' }}
                       >
                         {/* SVG 3D Sculpted Beveled Hexagon Chassis */}
                         <svg 
@@ -3024,17 +3024,29 @@ export default function KbcExam() {
                                 ? 'bg-gradient-to-b from-emerald-400 to-emerald-800 border-2 border-emerald-300 text-white font-black shadow-[0_0_12px_rgba(16,185,129,0.9)]'
                                 : isWrongSelected
                                   ? 'bg-gradient-to-b from-red-500 to-red-900 border-2 border-red-300 text-white font-black shadow-[0_0_12px_rgba(239,68,68,0.9)]'
-                                  : 'bg-gradient-to-b from-slate-900 via-[#111936] to-slate-950 border border-cyan-400/80 text-white font-black shadow-[0_0_10px_rgba(56,189,248,0.5)] group-hover:border-yellow-300'
+                                  : 'bg-gradient-to-b from-slate-900 via-[#111936] to-slate-950 border border-amber-400/80 text-amber-300 font-black shadow-[0_0_10px_rgba(245,158,11,0.5)] group-hover:border-yellow-300'
                           }`}>
-                            <span className={`font-mono text-xs sm:text-sm tracking-tight font-black ${
-                              isSelected ? 'text-slate-950 font-black' : 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]'
-                            }`}>{letter}</span>
+                            <span 
+                              className={`font-mono text-xs sm:text-sm tracking-tight font-black ${
+                                isSelected ? 'text-slate-950 font-black' : 'text-amber-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]'
+                              }`}
+                              style={{ color: isSelected ? '#0f172a' : '#fde047' }}
+                            >
+                              {letter}
+                            </span>
                           </div>
 
-                          {/* Option Text: Pure Crisp White */}
-                          <span className={`text-xs sm:text-sm md:text-[14px] font-black flex-1 uppercase tracking-wider truncate text-white drop-shadow-[0_2px_5px_rgba(0,0,0,1)] ${
-                            isSelected ? '!text-slate-950 !drop-shadow-none' : ''
-                          }`}>
+                          {/* Option Text: Pure Crisp White Guaranteed */}
+                          <span 
+                            className={`text-xs sm:text-sm md:text-[14.5px] font-extrabold flex-1 uppercase tracking-wider truncate drop-shadow-[0_2px_5px_rgba(0,0,0,1)] ${
+                              isSelected ? '!text-slate-950 !drop-shadow-none' : '!text-white'
+                            }`}
+                            style={{
+                              color: isSelected ? '#0f172a' : '#ffffff',
+                              WebkitTextFillColor: isSelected ? '#0f172a' : '#ffffff',
+                              textShadow: isSelected ? 'none' : '0 2px 4px rgba(0,0,0,0.95)'
+                            }}
+                          >
                             {opt}
                           </span>
 

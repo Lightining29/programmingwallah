@@ -2976,7 +2976,7 @@ export default function AdminDashboard() {
                     </span>
                   </div>
                   <h3 className="text-base sm:text-lg font-black tracking-wide text-white mt-0.5">
-                    Kaun Banega Crorepati — Host Screen & Laptop Team Manager
+                    Kaun Banega Coder — Host Screen & Laptop Team Manager
                   </h3>
                   <p className="text-xs text-slate-300">
                     Control live questions, reveal answers, add classroom laptop teams, and toggle Navbar visibility in real-time.

@@ -3080,25 +3080,7 @@ router.get('/teams', async (req, res) => {
     await ensureKbcSessionsAndTeams();
 
     if (pool) {
-      // 1. Proactively sync any students registered in kbc_students into kbc_teams
-      try {
-        await pool.query(`
-          INSERT INTO kbc_teams (id, team_name, leader_name, access_code, current_level, score_amount, points, status, email, course, college, profile_photo)
-          SELECT s.id, s.full_name, s.full_name, s.access_code, s.current_level, 0, s.points, 'REGISTERED', s.email, s.course, s.college, s.profile_photo
-          FROM kbc_students s
-          LEFT JOIN kbc_teams t ON (LOWER(s.email) = LOWER(t.email) OR s.id = t.id)
-          WHERE t.id IS NULL
-          ON DUPLICATE KEY UPDATE
-            team_name = VALUES(team_name),
-            leader_name = VALUES(leader_name),
-            email = VALUES(email),
-            course = VALUES(course),
-            college = VALUES(college),
-            profile_photo = COALESCE(VALUES(profile_photo), profile_photo)
-        `);
-      } catch (e) {}
-
-      // 2. Fetch all registered candidates & teams: combines kbc_students and kbc_teams so 100% of registrations show up!
+      // 1. Fetch all registered candidates & teams: combines kbc_students and kbc_teams so 100% of registrations show up!
       const [rows] = await pool.query(`
         SELECT 
           COALESCE(t.id, s.id) AS id,
@@ -3547,23 +3529,84 @@ router.post('/admin/teams/add', async (req, res) => {
   });
 });
 
-// ── 11. ADMIN: Delete Team ──
+// ── 11. ADMIN: Delete Team / Student Permanently ──
 router.post('/admin/teams/delete', async (req, res) => {
-  const { teamId } = req.body;
-  if (!teamId) return res.status(400).json({ success: false, message: 'teamId is required.' });
+  const { teamId, email } = req.body;
+  if (!teamId && !email) {
+    return res.status(400).json({ success: false, message: 'teamId or email is required.' });
+  }
 
   const pool = getMySQLPool();
   try {
     if (pool) {
-      await pool.query('DELETE FROM kbc_teams WHERE id = ?', [teamId]);
+      let targetEmail = (email || '').trim().toLowerCase();
+      // If email was not explicitly passed, query both tables by id to get associated email
+      if (!targetEmail && teamId) {
+        try {
+          const [tRows] = await pool.query('SELECT email FROM kbc_teams WHERE id = ?', [teamId]);
+          if (tRows.length > 0 && tRows[0].email) {
+            targetEmail = tRows[0].email.trim().toLowerCase();
+          } else {
+            const [sRows] = await pool.query('SELECT email FROM kbc_students WHERE id = ?', [teamId]);
+            if (sRows.length > 0 && sRows[0].email) {
+              targetEmail = sRows[0].email.trim().toLowerCase();
+            }
+          }
+        } catch (e) {}
+      }
+
+      // Delete from both kbc_teams and kbc_students by ID
+      if (teamId) {
+        await pool.query('DELETE FROM kbc_teams WHERE id = ?', [teamId]);
+        await pool.query('DELETE FROM kbc_students WHERE id = ?', [teamId]);
+      }
+
+      // Delete from both kbc_teams and kbc_students by Email
+      if (targetEmail) {
+        await pool.query('DELETE FROM kbc_teams WHERE LOWER(email) = ?', [targetEmail]);
+        await pool.query('DELETE FROM kbc_students WHERE LOWER(email) = ?', [targetEmail]);
+      }
+
+      // Evict from fast in-memory maps
+      if (teamId) cachedTeamsMap.delete(teamId);
+      if (targetEmail) cachedTeamsMap.delete(targetEmail);
       invalidateKbcTeamsCache();
       invalidateKbcSessionCache();
-      return res.json({ success: true, message: 'Team deleted.' });
-    }
-  } catch (err) {}
 
-  memoryTeams = memoryTeams.filter(t => t.id !== teamId);
+      return res.json({ success: true, message: 'Candidate and team permanently deleted from database.' });
+    }
+  } catch (err) {
+    console.error('Error deleting team:', err.message);
+  }
+
+  if (teamId) memoryTeams = memoryTeams.filter(t => t.id !== teamId);
+  if (email) memoryTeams = memoryTeams.filter(t => (t.email || '').toLowerCase() !== email.toLowerCase());
+  invalidateKbcTeamsCache();
+  invalidateKbcSessionCache();
   return res.json({ success: true, message: 'Team deleted from fallback.' });
+});
+
+// ── 11b. ADMIN: Delete All Teams / Candidates (Wipe Test Data) ──
+router.post('/admin/teams/delete-all', async (req, res) => {
+  const pool = getMySQLPool();
+  try {
+    if (pool) {
+      await pool.query('DELETE FROM kbc_teams');
+      await pool.query('DELETE FROM kbc_students');
+      cachedTeamsMap.clear();
+      invalidateKbcTeamsCache();
+      invalidateKbcSessionCache();
+      return res.json({ success: true, message: 'All candidate and team records permanently deleted.' });
+    }
+  } catch (err) {
+    console.error('Error deleting all teams:', err.message);
+  }
+
+  memoryTeams = [];
+  cachedTeamsMap.clear();
+  invalidateKbcTeamsCache();
+  invalidateKbcSessionCache();
+  return res.json({ success: true, message: 'All teams deleted from fallback.' });
 });
 
 // ── 12. TEAMS: Laptop Join Gate with Access Code / Default Password ──
