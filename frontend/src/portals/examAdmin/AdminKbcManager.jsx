@@ -787,11 +787,10 @@ export default function AdminKbcManager() {
   };
 
   // Lock Question on Laptop screens
-  const handleAdminLock = (optIdx) => {
+  const handleAdminLock = () => {
     kbcAudio.startLockSuspense();
     handleUpdateLiveRound({
-      is_locked: 1,
-      locked_option: optIdx
+      is_locked: 1
     });
   };
 
@@ -2157,7 +2156,7 @@ export default function AdminKbcManager() {
                   <div className="pt-4 border-t border-indigo-900/50 flex flex-wrap items-center justify-between gap-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <button
-                        onClick={() => handleAdminLock(activeQ.correct)}
+                        onClick={handleAdminLock}
                         className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-md"
                       >
                         <Lock className="w-3.5 h-3.5" /> Lock Option

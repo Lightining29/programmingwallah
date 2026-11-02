@@ -763,6 +763,7 @@ export default function KbcExam() {
             setIsWrongAnswer(false); // Reset wrong answer red beams back to normal blue
             setIsTimeUp(false);
             setTimeLeft(maxCountdown); // Immediately set initial countdown on arrival!
+            setRevealedCorrect(null);  // CRITICAL: Cleanly reset revealed correct answer so no option lights up green!
             activeQuestionKeyRef.current = `${newLvl}_${sess.current_question?.id || 'q'}`;
 
               // Automatically dismiss the middle-screen leaderboard when next question comes
@@ -819,6 +820,8 @@ export default function KbcExam() {
                 // Each of the 1,000 contestants keeps their own individual option selection.
                 setAnswerStatus(prevStatus => prevStatus === 'locked' ? 'locked' : (selectedOption !== null ? 'locked' : 'evaluating'));
                 kbcAudio.startLockSuspense();
+              } else if (!sess.is_locked && isLocked && !teamAnswerSubmitted && (sess.revealed_correct === null || sess.revealed_correct === undefined)) {
+                setIsLocked(false);
               }
 
               // Server-synchronized Tik-Tiki Ji countdown clock for contestant laptop:
@@ -841,11 +844,11 @@ export default function KbcExam() {
               if (sess.revealed_correct !== null && sess.revealed_correct !== undefined) {
                 if (lastQuestionTrackRef.current.lastRevealed !== sess.revealed_correct) {
                   lastQuestionTrackRef.current.lastRevealed = sess.revealed_correct;
-                  setRevealedCorrect(sess.revealed_correct);
+                  setRevealedCorrect(Number(sess.revealed_correct));
                   kbcAudio.stopLockSuspense();
 
                   // Explicit wrong answer from Admin or mismatch with contestant option
-                  const isWrongExplicit = sess.revealed_correct === 99;
+                  const isWrongExplicit = Number(sess.revealed_correct) === 99;
                   const isCorrect = !isWrongExplicit && selectedOption !== null && Number(selectedOption) === Number(sess.revealed_correct);
                   setAnswerStatus(isCorrect ? 'correct' : 'wrong');
                   calculateRoundPoints(isCorrect, 0);
@@ -887,8 +890,11 @@ export default function KbcExam() {
                     setHostQuote(correctLetter ? AMITABH_QUOTES.wrongAnswer(correctLetter) : 'Galat uttar! Khel samapt.');
                   }
                 }
-              } else if (sess.revealed_correct === null) {
-                // Clear tracking when round is reset so reveals trigger reliably every time
+              } else {
+                // When server says revealed_correct is null, candidate MUST NOT show any option as revealed or correct
+                if (revealedCorrect !== null) {
+                  setRevealedCorrect(null);
+                }
                 lastQuestionTrackRef.current.lastRevealed = null;
               }
             }
@@ -2910,8 +2916,8 @@ export default function KbcExam() {
                     const letter = String.fromCharCode(65 + idx);
                     const isSelected = selectedOption === idx;
                     const isEliminated = eliminatedOptions.includes(idx);
-                    const isCorrect = revealedCorrect === idx;
-                    const isWrongSelected = answerStatus === 'wrong' && isSelected;
+                    const isCorrect = (isLocked || isTimeUp) && revealedCorrect !== null && Number(revealedCorrect) === idx;
+                    const isWrongSelected = (isLocked || isTimeUp) && answerStatus === 'wrong' && isSelected;
                     const isHovered = hoveredOption === idx && !isOptionDisabled;
 
                     if (isEliminated) {

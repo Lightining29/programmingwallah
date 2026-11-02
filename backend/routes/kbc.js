@@ -2650,6 +2650,9 @@ router.post('/admin/session/update', async (req, res) => {
           const dur = getKbcLevelCountdown(targetLvl);
           updates.push('timer_duration = ?', 'timer_started_at = ?', 'timer_paused = 0', 'timer_remaining = ?', 'is_locked = 0', 'locked_option = NULL', 'revealed_correct = NULL');
           params.push(dur, Date.now(), dur);
+          if (current_level !== undefined && current_question_id === undefined) {
+            updates.push('current_question_id = NULL');
+          }
           // New question / level / reset: clear individual player submissions across database and cache
           await pool.query('UPDATE kbc_teams SET submitted_option = NULL, submitted_at = NULL');
           for (const t of cachedTeamsMap.values()) {
