@@ -512,11 +512,9 @@ export default function KbcExam() {
 
         const teams = sourceList.map((t) => {
           const isUser = Boolean(
-            (team && (t.id === team.id || t.access_code === team.access_code)) ||
-            (playerName && (
-              (t.team_name && t.team_name.toLowerCase() === playerName.toLowerCase()) ||
-              (t.leader_name && t.leader_name.toLowerCase() === playerName.toLowerCase())
-            ))
+            (team && (t.id === team.id || (team.email && t.email && t.email.toLowerCase() === team.email.toLowerCase()))) ||
+            (candidateProfile?.email && t.email && t.email.toLowerCase() === candidateProfile.email.toLowerCase()) ||
+            (candidateProfile?.name && t.team_name && t.team_name.toLowerCase() === candidateProfile.name.toLowerCase() && t.id === team?.id)
           );
           const displayName = isUser 
             ? candidateProfile.name 
@@ -659,7 +657,10 @@ export default function KbcExam() {
     let isMounted = true;
     const fetchStatus = async () => {
       try {
-        const res = await fetch('/api/kbc/session/status');
+        const teamParam = team?.id 
+          ? `?team_id=${encodeURIComponent(team.id)}` 
+          : (candidateProfile?.email ? `?team_id=${encodeURIComponent(candidateProfile.email)}` : '');
+        const res = await fetch(`/api/kbc/session/status${teamParam}`);
         const data = await res.json();
         if (isMounted && data.success && data.session) {
           const sess = data.session;
@@ -687,58 +688,59 @@ export default function KbcExam() {
             setShowBroadcastLeaderboard(false);
           }
 
-          // If playing in team mode, synchronize level, new question arrival, and host states
+          // ── Synchronize THIS SPECIFIC CONTESTANT'S individual team points and submission state ──
           if (team) {
-            // Synchronize live points and stats from top_teams
-            if (Array.isArray(sess.top_teams)) {
-              const found = sess.top_teams.find(t => t.id === team.id || t.access_code === team.access_code);
-              if (found) {
-                setTeam(prev => ({
-                  ...prev,
-                  points: Number(found.points) || 0,
-                  correct_count: Number(found.correct_count) || 0,
-                  wrong_count: Number(found.wrong_count) || 0,
-                  score_amount: Number(found.score_amount) || 0,
-                  current_level: found.current_level || prev.current_level,
-                  status: found.status || prev.status,
-                  submitted_option: found.submitted_option
-                }));
+            // Find this specific contestant's personal team record (data.my_team or matching EXACT id/email)
+            const myTeamData = data.my_team || (Array.isArray(sess.top_teams) 
+              ? sess.top_teams.find(t => t.id === team.id || (team.email && t.email && t.email.toLowerCase() === team.email.toLowerCase())) 
+              : null);
 
-                // If this team has locked / submitted an answer on the server:
-                if (found.submitted_option !== null && found.submitted_option !== undefined) {
-                  setSelectedOption(Number(found.submitted_option));
-                  setIsLocked(true);
-                  setTeamAnswerSubmitted(true);
-                  if (sess.revealed_correct === null) {
-                    setAnswerStatus('locked');
-                  }
+            if (myTeamData) {
+              setTeam(prev => ({
+                ...prev,
+                points: Number(myTeamData.points) || 0,
+                correct_count: Number(myTeamData.correct_count) || 0,
+                wrong_count: Number(myTeamData.wrong_count) || 0,
+                score_amount: Number(myTeamData.score_amount) || 0,
+                current_level: myTeamData.current_level || prev?.current_level,
+                status: myTeamData.status || prev?.status,
+                submitted_option: myTeamData.submitted_option
+              }));
+
+              // ONLY lock option if THIS PARTICULAR PLAYER submitted their option
+              if (myTeamData.submitted_option !== null && myTeamData.submitted_option !== undefined) {
+                setSelectedOption(Number(myTeamData.submitted_option));
+                setIsLocked(true);
+                setTeamAnswerSubmitted(true);
+                if (sess.revealed_correct === null) {
+                  setAnswerStatus('locked');
                 }
               }
             }
+          }
 
-            const isNowLive = sess.status === 'LIVE';
-            const levelChanged = sess.current_level && sess.current_level !== lastQuestionTrackRef.current.level;
-            const qChanged = sess.current_question?.id && sess.current_question.id !== lastQuestionTrackRef.current.qId;
-            const justWentLive = isNowLive && !lastQuestionTrackRef.current.isLive;
-            const roundReset = isNowLive && (sess.revealed_correct === null && lastQuestionTrackRef.current.lastRevealed !== null);
-            const adminUnlocked = isNowLive && (!sess.is_locked && lastQuestionTrackRef.current.wasLocked);
-            const timerReset = isNowLive && sess.timer_started_at && sess.timer_started_at !== lastQuestionTrackRef.current.timerStartedAt;
+          const isNowLive = sess.status === 'LIVE';
+          const levelChanged = sess.current_level && sess.current_level !== lastQuestionTrackRef.current.level;
+          const qChanged = sess.current_question?.id && sess.current_question.id !== lastQuestionTrackRef.current.qId;
+          const justWentLive = isNowLive && !lastQuestionTrackRef.current.isLive;
+          const roundReset = isNowLive && (sess.revealed_correct === null && lastQuestionTrackRef.current.lastRevealed !== null);
+          const adminUnlocked = isNowLive && (!sess.is_locked && lastQuestionTrackRef.current.wasLocked);
+          const timerReset = isNowLive && sess.timer_started_at && sess.timer_started_at !== lastQuestionTrackRef.current.timerStartedAt;
 
-            // When a new question arrives on contestant laptop (Admin started or advanced round or reset round)
-            if (isNowLive && (levelChanged || qChanged || justWentLive || roundReset || timerReset)) {
-              const newLvl = sess.current_level || 1;
-              const maxCountdown = getLevelCountdown(newLvl);
-              setCurrentLevel(newLvl);
-              setSelectedOption(sess.locked_option ?? null);
-              setIsLocked(Boolean(sess.is_locked));
-              setAnswerStatus(sess.is_locked ? 'evaluating' : null);
-              setRevealedCorrect(null);
-              setTeamAnswerSubmitted(Boolean(sess.locked_option !== null && sess.locked_option !== undefined));
-              setEliminatedOptions([]);
-              setIsWrongAnswer(false); // Reset wrong answer red beams back to normal blue
-              setIsTimeUp(false);
-              setTimeLeft(maxCountdown); // Immediately set initial countdown on arrival!
-              activeQuestionKeyRef.current = `${newLvl}_${sess.current_question?.id || 'q'}`;
+          // When a new question arrives on contestant laptop (Admin started or advanced round or reset round)
+          if (isNowLive && (levelChanged || qChanged || justWentLive || roundReset || timerReset)) {
+            const newLvl = sess.current_level || 1;
+            const maxCountdown = getLevelCountdown(newLvl);
+            setCurrentLevel(newLvl);
+            setSelectedOption(null); // ALWAYS reset selected option to null for new question!
+            setIsLocked(false);      // ALWAYS unlock for new question!
+            setAnswerStatus(null);
+            setTeamAnswerSubmitted(false);
+            setEliminatedOptions([]);
+            setIsWrongAnswer(false); // Reset wrong answer red beams back to normal blue
+            setIsTimeUp(false);
+            setTimeLeft(maxCountdown); // Immediately set initial countdown on arrival!
+            activeQuestionKeyRef.current = `${newLvl}_${sess.current_question?.id || 'q'}`;
 
               // Automatically dismiss the middle-screen leaderboard when next question comes
               setShowBroadcastLeaderboard(false);
@@ -781,13 +783,12 @@ export default function KbcExam() {
                 timerRef.current = null;
               }
             } else {
-              // Admin locks the session question
+              // Admin locks the session question / time is up
               if (sess.is_locked && !isLocked) {
                 setIsLocked(true);
-                if (sess.locked_option !== null && sess.locked_option !== undefined) {
-                  setSelectedOption(sess.locked_option);
-                }
-                setAnswerStatus('evaluating');
+                // Do NOT overwrite this student's selectedOption with sess.locked_option!
+                // Each of the 1,000 contestants keeps their own individual option selection.
+                setAnswerStatus(prevStatus => prevStatus === 'locked' ? 'locked' : (selectedOption !== null ? 'locked' : 'evaluating'));
                 kbcAudio.startLockSuspense();
               }
 
@@ -863,8 +864,7 @@ export default function KbcExam() {
               }
             }
           }
-        }
-      } catch (e) {}
+        } catch (e) {}
     };
 
     fetchStatus();
@@ -3561,7 +3561,7 @@ export default function KbcExam() {
         <SaatCroreWinnerModal
           winner={winnerData}
           onClose={() => setActiveModal(null)}
-          isCurrentPlayer={Boolean(team && (team.id === winnerData.id || team.access_code === winnerData.access_code))}
+          isCurrentPlayer={Boolean(team && (team.id === winnerData.id || (team.email && winnerData.email && team.email.toLowerCase() === winnerData.email.toLowerCase())))}
         />
       )}
 

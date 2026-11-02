@@ -2112,18 +2112,36 @@ let cachedTeamsResponse = null;
 let cachedTeamsTime = 0;
 const TEAMS_CACHE_TTL = 1000; // 1000ms TTL for team list
 
+// In-Memory Fast Lookup Map: O(1) instantaneous access for 1,000 concurrent contestants
+export const cachedTeamsMap = new Map();
+let lastTeamsMapSyncTime = 0;
+const TEAMS_MAP_SYNC_TTL = 1000; // 1000ms TTL
+
 export function invalidateKbcTeamsCache() {
   cachedTeamsResponse = null;
   cachedTeamsTime = 0;
+  lastTeamsMapSyncTime = 0;
 }
 
 // ── 6. PUBLIC: Get Live Session Status (used by Navbar & Contestant Laptops) ──
 router.get('/session/status', async (req, res) => {
   const nowTime = Date.now();
+  const teamId = (req.query.team_id || req.query.teamId || '').trim();
+  const email = (req.query.email || '').trim().toLowerCase();
+
+  const getMyTeam = () => {
+    let t = null;
+    if (teamId) t = cachedTeamsMap.get(teamId);
+    if (!t && email) t = cachedTeamsMap.get(email);
+    if (!t && teamId && teamId.includes('@')) t = cachedTeamsMap.get(teamId.toLowerCase());
+    return t || null;
+  };
+
   // Ultra-Fast High-Concurrency Cache: Serves 1000+ concurrent players with ZERO MySQL overload
   if (cachedSessionResponse && (nowTime - cachedSessionTime < SESSION_CACHE_TTL)) {
     return res.json({
       ...cachedSessionResponse,
+      my_team: getMyTeam(),
       server_now: nowTime
     });
   }
@@ -2133,6 +2151,25 @@ router.get('/session/status', async (req, res) => {
     await ensureKbcSessionsAndTeams();
 
     if (pool) {
+      // Periodically refresh all active teams into cachedTeamsMap (1 query/sec for all 1,000 contestants)
+      if (nowTime - lastTeamsMapSyncTime > TEAMS_MAP_SYNC_TTL || cachedTeamsMap.size === 0) {
+        try {
+          const [allTeamsRows] = await pool.query(`
+            SELECT id, team_name, leader_name, email, current_level, points, score_amount, 
+                   correct_count, wrong_count, submitted_option, submitted_at, total_response_time_ms, 
+                   status, access_code, profile_photo, course, college, roll_no
+            FROM kbc_teams
+          `);
+          cachedTeamsMap.clear();
+          for (const t of allTeamsRows) {
+            cachedTeamsMap.set(t.id, t);
+            if (t.email) cachedTeamsMap.set(t.email.toLowerCase(), t);
+          }
+          lastTeamsMapSyncTime = nowTime;
+        } catch (e) {
+          console.warn('Teams map sync error:', e.message);
+        }
+      }
       const [rows] = await pool.query('SELECT * FROM kbc_sessions WHERE id = ?', ['main_session']);
       if (rows.length > 0) {
         const s = rows[0];
@@ -2299,7 +2336,10 @@ router.get('/session/status', async (req, res) => {
         cachedSessionResponse = payload;
         cachedSessionTime = Date.now();
 
-        return res.json(payload);
+        return res.json({
+          ...payload,
+          my_team: getMyTeam()
+        });
       }
     }
   } catch (err) {
@@ -2320,9 +2360,12 @@ router.get('/session/status', async (req, res) => {
   const qList = DEFAULT_MERN_SQL_QUESTIONS[memorySession.current_level] || DEFAULT_MERN_SQL_QUESTIONS[1];
   const memLvl = memorySession.current_level || 1;
   const memTimerDur = memorySession.timer_duration || getKbcLevelCountdown(memLvl);
+  const myMemTeam = memoryTeams.find(t => (teamId && t.id === teamId) || (email && t.email && t.email.toLowerCase() === email)) || null;
+
   return res.json({
     success: true,
     server_now: Date.now(),
+    my_team: myMemTeam,
     session: {
       ...memorySession,
       timer_duration: memTimerDur,
@@ -2478,6 +2521,10 @@ router.post('/admin/session/update', async (req, res) => {
 
         // Also clear teams submitted options for the new round while preserving total response time
         await pool.query('UPDATE kbc_teams SET submitted_option = NULL, submitted_at = NULL');
+        for (const t of cachedTeamsMap.values()) {
+          t.submitted_option = null;
+          t.submitted_at = null;
+        }
       } else {
         // Fetch current session BEFORE updating to check if answer was already revealed
         const [preSess] = await pool.query('SELECT current_level, total_questions, revealed_correct, active_team_id FROM kbc_sessions WHERE id = "main_session"');
@@ -2501,8 +2548,14 @@ router.post('/admin/session/update', async (req, res) => {
         if (current_level !== undefined || current_question_id !== undefined) {
           const targetLvl = current_level ? parseInt(current_level, 10) : (preSess[0]?.current_level || 1);
           const dur = getKbcLevelCountdown(targetLvl);
-          updates.push('timer_duration = ?', 'timer_started_at = ?', 'timer_paused = 0', 'timer_remaining = ?');
+          updates.push('timer_duration = ?', 'timer_started_at = ?', 'timer_paused = 0', 'timer_remaining = ?', 'is_locked = 0', 'locked_option = NULL', 'revealed_correct = NULL');
           params.push(dur, Date.now(), dur);
+          // New question / level: clear individual player submissions across database and cache
+          await pool.query('UPDATE kbc_teams SET submitted_option = NULL, submitted_at = NULL');
+          for (const t of cachedTeamsMap.values()) {
+            t.submitted_option = null;
+            t.submitted_at = null;
+          }
         }
         if (is_locked !== undefined) {
           updates.push('is_locked = ?');
@@ -3441,65 +3494,70 @@ router.post('/team/join', async (req, res) => {
       const activeSession = sessRows[0] || memorySession;
       const defaultPassword = (activeSession.default_access_code || 'KBC-101').toUpperCase();
 
+      const normEmail = (email || '').trim().toLowerCase();
+
       // Check if student with this email is registered
       let student = null;
-      if (email) {
-        const [stRows] = await pool.query('SELECT * FROM kbc_students WHERE email = ?', [email]);
+      if (normEmail) {
+        const [stRows] = await pool.query('SELECT * FROM kbc_students WHERE LOWER(email) = ?', [normEmail]);
         if (stRows.length > 0) student = stRows[0];
       }
 
       // Check access code validity:
       // Can be:
       // 1. Session default password (e.g. KBC-101)
-      // 2. Team's custom access code
-      // 3. Active test set access code
+      // 2. Active test set access code
+      // 3. Team's custom access code (NOT KBC-101)
+      const isDefaultCode = (code.toUpperCase() === defaultPassword || code.toUpperCase() === 'KBC-101');
+      let isSetCode = false;
+      let targetSet = null;
+
+      if (!isDefaultCode) {
+        const [setRows] = await pool.query('SELECT * FROM kbc_test_sets WHERE UPPER(access_code) = ?', [code.toUpperCase()]);
+        if (setRows.length > 0) {
+          isSetCode = true;
+          targetSet = setRows[0];
+        }
+      }
+
       let team = null;
 
-      if (email && student) {
-        // If student is logged in, find or link their team
-        const [emailTeams] = await pool.query('SELECT * FROM kbc_teams WHERE email = ?', [email]);
+      // 1. If student logged in or provided email, find THEIR unique team record by email!
+      if (normEmail) {
+        const [emailTeams] = await pool.query('SELECT * FROM kbc_teams WHERE LOWER(email) = ?', [normEmail]);
         if (emailTeams.length > 0) {
           team = emailTeams[0];
         }
       }
 
-      if (!team) {
-        const [codeTeams] = await pool.query('SELECT * FROM kbc_teams WHERE access_code = ?', [code]);
+      // 2. Only if NOT the shared classroom password (KBC-101) and not default code, look up by unique custom access code
+      if (!team && !isDefaultCode && !isSetCode) {
+        const [codeTeams] = await pool.query('SELECT * FROM kbc_teams WHERE UPPER(access_code) = ? AND UPPER(access_code) != "KBC-101" AND UPPER(access_code) != ?', [code.toUpperCase(), defaultPassword]);
         if (codeTeams.length > 0) {
           team = codeTeams[0];
         }
       }
 
-      // If code matches default password or active session, and student is registered:
-      if (!team && (code === defaultPassword || code === 'KBC-101')) {
-        const teamId = student ? student.id : `team-${Date.now()}`;
-        const teamName = student ? student.full_name : 'Classroom Contestant';
-        const photo = student ? student.profile_photo : null;
+      // 3. If code matches default classroom password (KBC-101 / default) or active test set code, and team does not exist yet:
+      // Create a brand-new, unique team record for this contestant so each of the 1,000 contestants has their own independent row!
+      if (!team && (isDefaultCode || isSetCode)) {
+        const teamId = student?.id || `team-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+        const teamName = student?.full_name || (normEmail ? normEmail.split('@')[0] : 'Classroom Contestant');
+        const photo = student?.profile_photo || null;
+        const studentCourse = student?.course || '';
+        const studentCollege = student?.college || '';
+        const studentDob = student?.dob || '';
+        const studentMobile = student?.mobile || '';
+        const studentRollNo = student?.roll_no || '';
+
         await pool.query(`
-          INSERT INTO kbc_teams (id, team_name, leader_name, email, access_code, profile_photo, current_level, score_amount, points, status, laptop_info)
-          VALUES (?, ?, ?, ?, ?, ?, 1, 0, 0, 'CONNECTED', ?)
+          INSERT INTO kbc_teams (id, team_name, leader_name, email, dob, mobile, course, college, roll_no, access_code, profile_photo, current_level, score_amount, points, status, laptop_info)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, 0, 'CONNECTED', ?)
           ON DUPLICATE KEY UPDATE status = 'CONNECTED', laptop_info = ?
-        `, [teamId, teamName, teamName, email || null, code, photo, laptopInfo, laptopInfo]);
+        `, [teamId, teamName, teamName, normEmail || null, studentDob, studentMobile, studentCourse, studentCollege, studentRollNo, code, photo, laptopInfo, laptopInfo]);
 
         const [createdRows] = await pool.query('SELECT * FROM kbc_teams WHERE id = ?', [teamId]);
         team = createdRows[0];
-      }
-
-      if (!team) {
-        // Check if code matches any test set access code
-        const [setRows] = await pool.query('SELECT * FROM kbc_test_sets WHERE access_code = ?', [code]);
-        if (setRows.length > 0) {
-          const teamId = student ? student.id : `team-${Date.now()}`;
-          const teamName = student ? student.full_name : 'Hotseat Contestant';
-          await pool.query(`
-            INSERT INTO kbc_teams (id, team_name, leader_name, email, access_code, current_level, score_amount, points, status, laptop_info)
-            VALUES (?, ?, ?, ?, ?, 1, 0, 0, 'CONNECTED', ?)
-            ON DUPLICATE KEY UPDATE status = 'CONNECTED', laptop_info = ?
-          `, [teamId, teamName, teamName, email || null, code, laptopInfo, laptopInfo]);
-
-          const [createdRows] = await pool.query('SELECT * FROM kbc_teams WHERE id = ?', [teamId]);
-          team = createdRows[0];
-        }
       }
 
       if (!team) {
@@ -3514,6 +3572,10 @@ router.post('/team/join', async (req, res) => {
         SET status = 'CONNECTED', laptop_info = ?, last_active_at = NOW() 
         WHERE id = ?
       `, [laptopInfo, team.id]);
+
+      // Cache this team in cachedTeamsMap for fast O(1) response
+      cachedTeamsMap.set(team.id, team);
+      if (team.email) cachedTeamsMap.set(team.email.toLowerCase(), team);
 
       invalidateKbcTeamsCache();
       invalidateKbcSessionCache();
@@ -3545,15 +3607,33 @@ router.post('/team/join', async (req, res) => {
     console.warn('MySQL /team/join error:', err.message);
   }
 
-  // Fallback
-  const team = memoryTeams.find(t => t.access_code === code || code === 'KBC-101' || (email && t.email === email));
-  if (team) {
-    team.status = 'CONNECTED';
-    team.laptop_info = laptopInfo;
+  // Fallback in-memory
+  const normEmail = (email || '').trim().toLowerCase();
+  let memTeam = normEmail ? memoryTeams.find(t => t.email && t.email.toLowerCase() === normEmail) : null;
+  if (!memTeam && (code.toUpperCase() === 'KBC-101' || code.toUpperCase() === (memorySession.default_access_code || 'KBC-101').toUpperCase())) {
+    memTeam = {
+      id: `team-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      team_name: normEmail ? normEmail.split('@')[0] : 'Classroom Contestant',
+      leader_name: 'Contestant',
+      email: normEmail || '',
+      access_code: code,
+      points: 0,
+      correct_count: 0,
+      wrong_count: 0,
+      score_amount: 0,
+      current_level: 1,
+      status: 'CONNECTED',
+      submitted_option: null
+    };
+    memoryTeams.push(memTeam);
+  }
+  if (memTeam) {
+    memTeam.status = 'CONNECTED';
+    memTeam.laptop_info = laptopInfo;
     return res.json({
       success: true,
-      message: `Welcome, ${team.team_name}!`,
-      team,
+      message: `Welcome, ${memTeam.team_name}!`,
+      team: memTeam,
       session: memorySession
     });
   }
@@ -3620,6 +3700,14 @@ router.post('/team/submit-answer', async (req, res) => {
             s.last_submitted_at = ?
         WHERE t.id = ?
       `, [responseTimeMs, now, team_id]);
+
+      // Update in-memory fast cache map immediately
+      const cachedT = cachedTeamsMap.get(team_id);
+      if (cachedT) {
+        cachedT.submitted_option = opt;
+        cachedT.submitted_at = now;
+        cachedT.last_submitted_at = now;
+      }
 
       invalidateKbcSessionCache();
       invalidateKbcTeamsCache();
