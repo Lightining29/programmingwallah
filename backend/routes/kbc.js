@@ -68,13 +68,25 @@ export function shuffleOptionsAccurately(options, correct) {
 }
 
 export const DEFAULT_SQL_QUESTIONS = {};
-for (let lvl = 1; lvl <= 16; lvl++) {
-  DEFAULT_SQL_QUESTIONS[lvl] = SQL_QUESTION_BANK.filter(q => q.level === lvl);
+for (let lvl = 1; lvl <= 100; lvl++) {
+  const matching = SQL_QUESTION_BANK.filter(q => q.level === lvl);
+  if (matching.length > 0) {
+    DEFAULT_SQL_QUESTIONS[lvl] = matching;
+  } else {
+    const wrapLvl = ((lvl - 1) % 16) + 1;
+    DEFAULT_SQL_QUESTIONS[lvl] = SQL_QUESTION_BANK.filter(q => q.level === wrapLvl);
+  }
 }
 
 export const DEFAULT_WEB_QUESTIONS = {};
-for (let lvl = 1; lvl <= 16; lvl++) {
-  DEFAULT_WEB_QUESTIONS[lvl] = WEB_QUESTION_BANK.filter(q => q.level === lvl);
+for (let lvl = 1; lvl <= 100; lvl++) {
+  const matching = WEB_QUESTION_BANK.filter(q => q.level === lvl);
+  if (matching.length > 0) {
+    DEFAULT_WEB_QUESTIONS[lvl] = matching;
+  } else {
+    const wrapLvl = ((lvl - 1) % 16) + 1;
+    DEFAULT_WEB_QUESTIONS[lvl] = WEB_QUESTION_BANK.filter(q => q.level === wrapLvl);
+  }
 }
 
 // Backward compatibility alias for any component expecting DEFAULT_MERN_SQL_QUESTIONS
@@ -575,18 +587,40 @@ router.post('/admin/test-sets/activate', async (req, res) => {
       const [setRows] = await pool.query('SELECT * FROM kbc_test_sets WHERE id = ?', [setId]);
       const activeSet = setRows[0];
 
-      // 5. If this set is HTML or Excel or MERN, activate its curated questions into kbc_questions
+      // 5. Determine accurate question count for this test set
       let totalQ = 16;
+      if (activeSet?.question_count && activeSet.question_count > 0) {
+        totalQ = activeSet.question_count;
+      }
+
+      // Check count of questions in kbc_questions belonging to this test set
+      const [customQRows] = await pool.query('SELECT COUNT(*) as cnt, COUNT(DISTINCT level) as lvl_cnt FROM kbc_questions WHERE test_set_id = ?', [setId]);
+      if (customQRows[0]?.cnt > 0) {
+        totalQ = Math.max(totalQ, customQRows[0].cnt);
+      }
+
+      // If questions_json is present
+      if (activeSet?.questions_json) {
+        try {
+          const parsed = JSON.parse(activeSet.questions_json);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            totalQ = Math.max(totalQ, parsed.length);
+          }
+        } catch(e) {}
+      }
+
+      await pool.query('UPDATE kbc_questions SET is_active = 0');
+
       if (setId === 'kbc-html-quiz') {
-        await pool.query("UPDATE kbc_questions SET is_active = 0");
-        for (let lvl = 1; lvl <= 16; lvl++) {
+        for (let lvl = 1; lvl <= totalQ; lvl++) {
+          const wrapLvl = ((lvl - 1) % 16) + 1;
           await pool.query(`
             UPDATE kbc_questions 
             SET is_active = 1 
-            WHERE level = ? AND test_set_id = 'kbc-html-quiz' AND id = CONCAT('web_l', ?, '_001')
-          `, [lvl, lvl]);
+            WHERE test_set_id = 'kbc-html-quiz' AND level = ? 
+            LIMIT 1
+          `, [wrapLvl]);
         }
-        totalQ = 16;
       } else if (setId === 'kbc-excel-analytics' && CURATED_TEST_SETS.excel?.length > 0) {
         for (const q of CURATED_TEST_SETS.excel) {
           const shuffled = shuffleOptionsAccurately(q.options, q.correct);
@@ -597,24 +631,30 @@ router.post('/admin/test-sets/activate', async (req, res) => {
               options_json = VALUES(options_json), correct = VALUES(correct), is_active = 1
           `, [q.id, q.level, q.topic, q.question, JSON.stringify(shuffled.options), shuffled.correct, q.explanation]);
         }
-        totalQ = CURATED_TEST_SETS.excel.length || 16;
+        totalQ = Math.max(totalQ, CURATED_TEST_SETS.excel.length);
       } else if (setId === 'kbc-sql-mastery') {
-        // Activate standard SQL questions
-        for (let lvl = 1; lvl <= 16; lvl++) {
-          await pool.query(`
-            UPDATE kbc_questions SET is_active = (id LIKE 'sql_l${lvl}_001%') WHERE level = ?
-          `, [lvl]);
+        // Activate standard SQL questions for every level up to totalQ
+        for (let lvl = 1; lvl <= totalQ; lvl++) {
+          const wrapLvl = ((lvl - 1) % 16) + 1;
+          const [exists] = await pool.query('SELECT id FROM kbc_questions WHERE level = ? AND test_set_id = "kbc-sql-mastery" LIMIT 1', [lvl]);
+          if (exists.length > 0) {
+            await pool.query('UPDATE kbc_questions SET is_active = 1 WHERE id = ?', [exists[0].id]);
+          } else {
+            await pool.query(`
+              UPDATE kbc_questions SET is_active = 1 
+              WHERE test_set_id = 'kbc-sql-mastery' AND level = ? 
+              LIMIT 1
+            `, [wrapLvl]);
+          }
         }
-        totalQ = 16;
       } else {
-        // Custom test set (e.g. 'python' with 10 questions): activate its selected questions
-        await pool.query('UPDATE kbc_questions SET is_active = 0 WHERE test_set_id != ?', [setId]);
+        // Custom test set (e.g. 50 questions created by admin): activate its questions
         await pool.query('UPDATE kbc_questions SET is_active = 1 WHERE test_set_id = ?', [setId]);
-
-        const [customQRows] = await pool.query('SELECT COUNT(*) as cnt FROM kbc_questions WHERE test_set_id = ? AND is_active = 1', [setId]);
-        totalQ = customQRows[0]?.cnt || activeSet?.question_count || 10;
-        await pool.query('UPDATE kbc_test_sets SET question_count = ? WHERE id = ?', [totalQ, setId]);
+        const [actQRows] = await pool.query('SELECT COUNT(*) as cnt FROM kbc_questions WHERE test_set_id = ? AND is_active = 1', [setId]);
+        totalQ = Math.max(actQRows[0]?.cnt || 0, activeSet?.question_count || 10);
       }
+
+      await pool.query('UPDATE kbc_test_sets SET question_count = ? WHERE id = ?', [totalQ, setId]);
 
       // 3. Reset live KBC session to Level 1 with exact total_questions
       const [firstQ] = await pool.query('SELECT id FROM kbc_questions WHERE test_set_id = ? AND level = 1 AND is_active = 1 LIMIT 1', [setId]);
@@ -624,6 +664,9 @@ router.post('/admin/test-sets/activate', async (req, res) => {
             is_locked = 0, locked_option = NULL, revealed_correct = NULL, show_winner = 0, show_leaderboard = 0
         WHERE id = 'main_session'
       `, [totalQ, firstQ[0]?.id || null]);
+
+      invalidateKbcSessionCache();
+      invalidateKbcTeamsCache();
 
       // 4. Reset teams to Level 1, 0 points
       await pool.query(`
@@ -1002,8 +1045,13 @@ router.get('/admin/all', async (req, res) => {
       `);
 
       if (allRows && allRows.length > 0) {
+        const [sessRows] = await pool.query("SELECT total_questions FROM kbc_sessions WHERE id = 'main_session'");
+        const sessionTotalQ = sessRows[0]?.total_questions || 16;
+        const highestDbLevel = allRows.reduce((max, r) => Math.max(max, r.level || 1), 1);
+        const maxLevelToCurate = Math.max(16, sessionTotalQ, highestDbLevel);
+
         const levels = {};
-        for (let lvl = 1; lvl <= 16; lvl++) {
+        for (let lvl = 1; lvl <= maxLevelToCurate; lvl++) {
           const poolForLevel = allRows
             .filter(r => r.level === lvl)
             .map(r => ({
@@ -1018,12 +1066,16 @@ router.get('/admin/all', async (req, res) => {
               isActive: Boolean(r.is_active)
             }));
 
-          const activeQ = poolForLevel.find(q => q.isActive) || poolForLevel[0];
+          const fallbackPool = poolForLevel.length > 0 
+            ? poolForLevel 
+            : (DEFAULT_SQL_QUESTIONS[lvl] || DEFAULT_SQL_QUESTIONS[((lvl - 1) % 16) + 1] || []);
+
+          const activeQ = poolForLevel.find(q => q.isActive) || fallbackPool[0];
           levels[lvl] = {
             level: lvl,
             activeQuestionId: activeQ ? activeQ.id : null,
             activeQuestion: activeQ,
-            pool: poolForLevel
+            pool: poolForLevel.length > 0 ? poolForLevel : fallbackPool
           };
         }
 
@@ -1039,9 +1091,11 @@ router.get('/admin/all', async (req, res) => {
   }
 
   // Fallback
+  const maxFallbackLvl = memorySession.total_questions || 16;
   const levels = {};
-  for (let lvl = 1; lvl <= 16; lvl++) {
-    const defaultPool = DEFAULT_MERN_SQL_QUESTIONS[lvl] || [];
+  for (let lvl = 1; lvl <= maxFallbackLvl; lvl++) {
+    const wrap = ((lvl - 1) % 16) + 1;
+    const defaultPool = DEFAULT_MERN_SQL_QUESTIONS[lvl] || DEFAULT_MERN_SQL_QUESTIONS[wrap] || [];
     const customPool = memoryStore.customQuestions[lvl] || [];
     const allPool = [...defaultPool, ...customPool];
     const activeId = memoryStore.activeSelections[lvl] || (allPool[0] ? allPool[0].id : null);
@@ -1192,8 +1246,8 @@ router.post('/admin/select', async (req, res) => {
   const { level, questionId } = req.body;
   const lvl = parseInt(level, 10);
 
-  if (!lvl || lvl < 1 || lvl > 16 || !questionId) {
-    return res.status(400).json({ success: false, message: 'Valid level (1-16) and questionId are required.' });
+  if (!lvl || lvl < 1 || lvl > 100 || !questionId) {
+    return res.status(400).json({ success: false, message: 'Valid level (1-100) and questionId are required.' });
   }
 
   const pool = getMySQLPool();
@@ -1238,8 +1292,8 @@ router.post('/admin/add-custom', async (req, res) => {
   const { level, topic, question, options, correct, explanation, setAsActive, test_set_id, shuffle = false } = req.body;
   const lvl = parseInt(level, 10);
 
-  if (!lvl || lvl < 1 || lvl > 16) {
-    return res.status(400).json({ success: false, message: 'Level must be between 1 and 16.' });
+  if (!lvl || lvl < 1 || lvl > 100) {
+    return res.status(400).json({ success: false, message: 'Level must be between 1 and 100.' });
   }
   if (!question || !question.trim()) {
     return res.status(400).json({ success: false, message: 'Question text is required.' });
@@ -1357,8 +1411,8 @@ router.post('/admin/ai-generate', async (req, res) => {
   const { level, topicOrPhrase, setAsActive, count } = req.body;
   const lvl = parseInt(level, 10);
 
-  if (!lvl || lvl < 1 || lvl > 16) {
-    return res.status(400).json({ success: false, message: 'Level must be between 1 and 16.' });
+  if (!lvl || lvl < 1 || lvl > 100) {
+    return res.status(400).json({ success: false, message: 'Level must be between 1 and 100.' });
   }
 
   const promptText = (topicOrPhrase || '').trim();
@@ -1777,14 +1831,52 @@ export const KBC_PRIZE_LADDER_BACKEND = [
   { level: 27, prize: '₹17 Crore',    amount: 170000000 },
   { level: 28, prize: '₹18 Crore',    amount: 180000000 },
   { level: 29, prize: '₹20 Crore',    amount: 200000000 },
-  { level: 30, prize: '₹25 Crore',    amount: 250000000 }
+  { level: 30, prize: '₹25 Crore',    amount: 250000000 },
+  { level: 31, prize: '₹26 Crore',    amount: 260000000 },
+  { level: 32, prize: '₹27 Crore',    amount: 270000000 },
+  { level: 33, prize: '₹28 Crore',    amount: 280000000 },
+  { level: 34, prize: '₹29 Crore',    amount: 290000000 },
+  { level: 35, prize: '₹30 Crore',    amount: 300000000 },
+  { level: 36, prize: '₹32 Crore',    amount: 320000000 },
+  { level: 37, prize: '₹34 Crore',    amount: 340000000 },
+  { level: 38, prize: '₹36 Crore',    amount: 360000000 },
+  { level: 39, prize: '₹38 Crore',    amount: 380000000 },
+  { level: 40, prize: '₹40 Crore',    amount: 400000000 },
+  { level: 41, prize: '₹42 Crore',    amount: 420000000 },
+  { level: 42, prize: '₹44 Crore',    amount: 440000000 },
+  { level: 43, prize: '₹46 Crore',    amount: 460000000 },
+  { level: 44, prize: '₹48 Crore',    amount: 480000000 },
+  { level: 45, prize: '₹50 Crore',    amount: 500000000 },
+  { level: 46, prize: '₹55 Crore',    amount: 550000000 },
+  { level: 47, prize: '₹60 Crore',    amount: 600000000 },
+  { level: 48, prize: '₹65 Crore',    amount: 650000000 },
+  { level: 49, prize: '₹75 Crore',    amount: 750000000 },
+  { level: 50, prize: '₹100 Crore',   amount: 1000000000 }
 ];
 
-// Safe Padav Milestone & Points Cutoff Calculation for 16 or 30 questions
+export function getDynamicPrizeLadderBackend(totalCount = 16) {
+  const count = Math.max(1, parseInt(totalCount, 10) || 16);
+  if (count <= KBC_PRIZE_LADDER_BACKEND.length) {
+    return KBC_PRIZE_LADDER_BACKEND.slice(0, count);
+  }
+  const result = [...KBC_PRIZE_LADDER_BACKEND];
+  for (let lvl = KBC_PRIZE_LADDER_BACKEND.length + 1; lvl <= count; lvl++) {
+    const cr = 100 + (lvl - 50) * 2;
+    result.push({
+      level: lvl,
+      prize: `₹${cr} Crore`,
+      amount: cr * 10000000
+    });
+  }
+  return result;
+}
+
+// Safe Padav Milestone & Points Cutoff Calculation for arbitrary questions
 export function getSafePointsAndAmount(level, totalQuestions = 16) {
   const lvl = parseInt(level, 10) || 1;
+  const totalQ = parseInt(totalQuestions, 10) || 16;
   let safeLevel = 0;
-  if (totalQuestions > 16) {
+  if (totalQ > 16) {
     safeLevel = Math.floor((lvl - 1) / 5) * 5;
   } else {
     if (lvl > 15) safeLevel = 15;
@@ -1794,7 +1886,8 @@ export function getSafePointsAndAmount(level, totalQuestions = 16) {
   }
   // Cumulative safe points up to the safe padav milestone
   const safePoints = (safeLevel * (safeLevel + 1) / 2) * 100;
-  const safePrize = safeLevel > 0 ? (KBC_PRIZE_LADDER_BACKEND[safeLevel - 1]?.amount || safeLevel * 10000) : 0;
+  const ladder = getDynamicPrizeLadderBackend(totalQ);
+  const safePrize = safeLevel > 0 ? (ladder[safeLevel - 1]?.amount || safeLevel * 10000000) : 0;
   return { safeLevel, safePoints, safePrize };
 }
 
@@ -2052,13 +2145,21 @@ router.get('/session/status', async (req, res) => {
           if (setRows.length > 0) {
             activeSet = setRows[0];
             const [cntRows] = await pool.query('SELECT COUNT(*) as cnt FROM kbc_questions WHERE test_set_id = ? AND is_active = 1', [activeSet.id]);
-            if (cntRows[0]?.cnt > 0) {
-              totalQ = cntRows[0].cnt;
-            } else if (activeSet.question_count > 0) {
-              totalQ = activeSet.question_count;
+            if (activeSet.question_count && activeSet.question_count > 0) {
+              totalQ = Math.max(totalQ, activeSet.question_count);
+            } else if (cntRows[0]?.cnt > 0) {
+              totalQ = Math.max(totalQ, cntRows[0].cnt);
             }
           }
         } catch (e) {}
+
+        if (s.total_questions && s.total_questions > 0) {
+          totalQ = Math.max(totalQ, s.total_questions);
+        }
+
+        if (s.total_questions !== totalQ) {
+          pool.query('UPDATE kbc_sessions SET total_questions = ? WHERE id = ?', [totalQ, 'main_session']).catch(() => {});
+        }
 
         // Fetch current active question details
         let currentQuestion = null;
@@ -2837,6 +2938,64 @@ router.post('/admin/session/choose-30-questions', async (req, res) => {
     questionCount: 30,
     totalQuestions: 30,
     database: 'Memory Fallback'
+  });
+});
+
+// ── 8F. ADMIN: Directly Change Live Test Question Count (e.g. 10, 16, 25, 30, 50, 100) ──
+router.post('/admin/session/set-total-questions', async (req, res) => {
+  const { total_questions } = req.body;
+  const newTotal = parseInt(total_questions, 10);
+  if (!newTotal || newTotal < 1 || newTotal > 100) {
+    return res.status(400).json({ success: false, message: 'Please provide a valid question count between 1 and 100.' });
+  }
+
+  const pool = getMySQLPool();
+  try {
+    await ensureKbcSessionsAndTeams();
+    if (pool) {
+      // 1. Update kbc_sessions total_questions
+      await pool.query('UPDATE kbc_sessions SET total_questions = ? WHERE id = "main_session"', [newTotal]);
+
+      // 2. Also update currently active test set if one exists
+      const [actSets] = await pool.query('SELECT id FROM kbc_test_sets WHERE is_active = 1 LIMIT 1');
+      if (actSets.length > 0) {
+        const actId = actSets[0].id;
+        await pool.query('UPDATE kbc_test_sets SET question_count = ? WHERE id = ?', [newTotal, actId]);
+
+        // If it's sql or html test set, ensure active questions exist up to newTotal
+        if (actId === 'kbc-sql-mastery' || actId === 'kbc-html-quiz') {
+          for (let lvl = 1; lvl <= newTotal; lvl++) {
+            const wrapLvl = ((lvl - 1) % 16) + 1;
+            await pool.query(`
+              UPDATE kbc_questions SET is_active = 1 
+              WHERE test_set_id = ? AND level = ? 
+              LIMIT 1
+            `, [actId, wrapLvl]);
+          }
+        }
+      }
+
+      invalidateKbcSessionCache();
+      invalidateKbcTeamsCache();
+
+      return res.json({
+        success: true,
+        message: `KBC test length updated to ${newTotal} questions!`,
+        total_questions: newTotal,
+        database: 'Hostinger MySQL'
+      });
+    }
+  } catch (err) {
+    console.warn('set-total-questions error:', err.message);
+  }
+
+  memorySession.total_questions = newTotal;
+  invalidateKbcSessionCache();
+  invalidateKbcTeamsCache();
+  return res.json({ 
+    success: true, 
+    message: `KBC test length updated to ${newTotal} questions (memory fallback).`, 
+    total_questions: newTotal 
   });
 });
 

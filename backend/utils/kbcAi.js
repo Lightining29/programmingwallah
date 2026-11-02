@@ -19,13 +19,13 @@ export async function generateKbcQuestionWithGemini({
     throw new Error('GEMINI_API_KEY is not configured in backend environment.');
   }
 
-  const lvl = Math.max(1, Math.min(16, parseInt(level, 10) || 1));
+  const lvl = Math.max(1, Math.min(100, parseInt(level, 10) || 1));
 
   // Determine difficulty context based on level
   let difficultyContext = "Foundation / Syntax / Beginner friendly";
-  if (lvl >= 6 && lvl <= 10) {
+  if (lvl >= 6 && lvl <= 15) {
     difficultyContext = "Intermediate / Practical problem solving / Real-world scenarios";
-  } else if (lvl >= 11) {
+  } else if (lvl >= 16) {
     difficultyContext = "Advanced / Deep architectural internals / Tricky edge cases";
   }
 
@@ -33,7 +33,7 @@ export async function generateKbcQuestionWithGemini({
 
   const prompt = `You are the technical question master for Kaun Banega Crorepati (KBC) Software Engineering Edition, hosted by Amitabh Bachchan.
 Generate ${count === 1 ? '1 high-quality multiple choice question' : `${count} high-quality multiple choice questions`} on: "${topicOrPhrase}".
-Target: KBC Level ${lvl} of 16 (Difficulty: ${difficultyContext}).
+Target: KBC Level ${lvl} (Difficulty: ${difficultyContext}).
 
 Strict Rules:
 1. Every question MUST have EXACTLY 4 distinct options (Option A, B, C, D).

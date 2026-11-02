@@ -7,7 +7,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import Swal from 'sweetalert2';
-import { KBC_PRIZE_LADDER, DEFAULT_MERN_SQL_QUESTIONS } from '../../data/kbcQuestions.js';
+import { KBC_PRIZE_LADDER, DEFAULT_MERN_SQL_QUESTIONS, getDynamicPrizeLadder, getPrizeForLevel, getSafePoints } from '../../data/kbcQuestions.js';
 import { kbcAudio } from '../../utils/kbcAudio.js';
 import SaatCroreWinnerModal from '../../components/kbc/SaatCroreWinnerModal.jsx';
 import KbcStageLasers from '../../components/kbc/KbcStageLasers.jsx';
@@ -1354,9 +1354,63 @@ export default function AdminKbcManager() {
     setSetImmediatelyActive(true);
   };
 
+  const handleSetTotalQuestions = async (newCount) => {
+    try {
+      const res = await fetch('/api/kbc/admin/session/set-total-questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ total_questions: newCount })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSession(prev => ({ ...prev, total_questions: newCount }));
+        if (activeTestSet) {
+          setTestSets(prev => prev.map(t => t.id === activeTestSet.id ? { ...t, question_count: newCount } : t));
+        }
+        await fetchSessionStatus();
+        Swal.fire({
+          icon: 'success',
+          title: `KBC Test Length Set to ${newCount} Questions!`,
+          text: `All contestant screens and the admin monitor are now dynamically synced to a ${newCount}-question challenge.`,
+          timer: 2000,
+          showConfirmButton: false,
+          toast: true,
+          position: 'top-end'
+        });
+      }
+    } catch (err) {
+      Swal.fire('Error', 'Failed to update test length.', 'error');
+    }
+  };
+
+  const handleCustomTotalQuestionsPrompt = async () => {
+    const { value: count } = await Swal.fire({
+      title: 'Enter Total Questions for Test',
+      input: 'number',
+      inputLabel: 'Total questions (e.g. 10, 20, 50, 100):',
+      inputValue: totalSessionQuestions || 50,
+      inputAttributes: {
+        min: '1',
+        max: '100',
+        step: '1'
+      },
+      showCancelButton: true,
+      confirmButtonText: 'Set Test Length',
+      confirmButtonColor: '#f59e0b',
+      inputValidator: (val) => {
+        const n = parseInt(val, 10);
+        if (!n || n < 1 || n > 100) return 'Please enter a number between 1 and 100.';
+      }
+    });
+
+    if (count) {
+      handleSetTotalQuestions(parseInt(count, 10));
+    }
+  };
+
   const activeTestSet = testSets.find(t => t.is_active);
-  const totalSessionQuestions = session?.total_questions || activeTestSet?.question_count || 16;
-  const currentLevelInfo = KBC_PRIZE_LADDER[Math.min(selectedLevel - 1, KBC_PRIZE_LADDER.length - 1)] || KBC_PRIZE_LADDER[0];
+  const totalSessionQuestions = Math.max(session?.total_questions || 0, activeTestSet?.question_count || 0, 16);
+  const currentLevelInfo = getPrizeForLevel(selectedLevel, totalSessionQuestions);
   const effectiveLevel = ((selectedLevel - 1) % 16) + 1;
   const currentLevelData = levelsData[selectedLevel] || levelsData[effectiveLevel] || { pool: [] };
   const activeQ = session.current_question || currentLevelData.activeQuestion || (currentLevelData.pool && currentLevelData.pool[0]) || null;
@@ -1644,8 +1698,8 @@ export default function AdminKbcManager() {
             
             {/* Level & Controls Header */}
             <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <span className="px-3 py-1 rounded-xl bg-amber-500 text-slate-950 font-black text-sm">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <span className="px-3 py-1 rounded-xl bg-amber-500 text-slate-950 font-black text-sm shadow-md">
                   LEVEL {selectedLevel} OF {totalSessionQuestions}
                 </span>
                 <span className="text-xl font-black text-amber-300">
@@ -1656,6 +1710,32 @@ export default function AdminKbcManager() {
                     Safe Padav
                   </span>
                 )}
+
+                {/* Interactive Question Count Switcher */}
+                <div className="flex items-center gap-1 bg-black/70 p-1 rounded-xl border border-slate-700/80 shadow-inner">
+                  <span className="text-[10px] font-black text-slate-400 px-1.5 uppercase">Test Qs:</span>
+                  {[10, 16, 25, 30, 50].map(cnt => (
+                    <button
+                      key={cnt}
+                      onClick={() => handleSetTotalQuestions(cnt)}
+                      className={`px-2 py-0.5 rounded-lg text-xs font-black transition cursor-pointer ${
+                        totalSessionQuestions === cnt
+                          ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-400/30 scale-105'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+                      }`}
+                      title={`Set live test length to ${cnt} questions`}
+                    >
+                      {cnt}
+                    </button>
+                  ))}
+                  <button
+                    onClick={handleCustomTotalQuestionsPrompt}
+                    className="px-2 py-0.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-amber-300 cursor-pointer"
+                    title="Set custom test question count"
+                  >
+                    Custom
+                  </button>
+                </div>
               </div>
 
               {/* ── Host Tik-Tiki Ji Live Clock (Circular Countdown) ── */}
@@ -2195,8 +2275,8 @@ export default function AdminKbcManager() {
                 <span className="text-[10px] text-slate-400 font-normal">Click to jump</span>
               </div>
 
-              <div className="space-y-1 max-h-[380px] overflow-y-auto pr-1">
-                {KBC_PRIZE_LADDER.slice(0, totalSessionQuestions).reverse().map(step => {
+              <div className="space-y-1 max-h-[420px] overflow-y-auto pr-1">
+                {getDynamicPrizeLadder(totalSessionQuestions).reverse().map(step => {
                   const isCurrent = selectedLevel === step.level;
                   return (
                     <button

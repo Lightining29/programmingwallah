@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ShieldCheck } from 'lucide-react';
-import { KBC_PRIZE_LADDER } from '../../data/kbcQuestions.js';
+import { KBC_PRIZE_LADDER, getDynamicPrizeLadder } from '../../data/kbcQuestions.js';
 
 /**
  * Authentic KBC Point Leaderboard / Ladder
@@ -42,14 +42,14 @@ export default function KbcPointsLadder({
     }
   }, [activeLevel]);
 
-  // Total steps matching question count (10, 16 or 30)
-  const stepsSlice = KBC_PRIZE_LADDER.slice(0, Math.min(totalQuestions, KBC_PRIZE_LADDER.length));
+  // Total steps dynamically matching any question count (e.g. 10, 16, 25, 30, 50, 100)
+  const stepsSlice = getDynamicPrizeLadder(totalQuestions);
   
-  // Top milestone step (Level 16 or Level 10 or Level 30)
+  // Top milestone step (e.g. Level 50 Supreme Jackpot, Level 30 Grand Padav, or Level 16 Jackpot)
   const topStep = stepsSlice[stepsSlice.length - 1] || {
-    level: 16,
-    prize: '₹7 Crore',
-    points: 1600
+    level: totalQuestions || 16,
+    prize: '₹100 Crore',
+    points: (totalQuestions || 16) * 100
   };
   const isTopActive = activeLevel === topStep.level;
 
@@ -69,7 +69,7 @@ export default function KbcPointsLadder({
     })
     .reverse();
 
-  // Robust parsing of top prize amount (handles ₹7 Crore as well as ₹3,20,000 without split errors)
+  // Robust parsing of top prize amount (handles ₹100 Crore, ₹7 Crore, as well as ₹3,20,000 without split errors)
   const topPrizeInfo = useMemo(() => {
     const raw = (topStep.prize || '₹7 Crore').trim();
     const unitMatch = raw.match(/(crore|cr|lakh|lakhs|thousand|k)/i);
@@ -176,16 +176,19 @@ export default function KbcPointsLadder({
           </svg>
 
           {/* Crisp Top Typography */}
-          <div className="relative z-10 flex flex-col items-center justify-center leading-tight px-2 w-full">
-            <span className={`font-sans font-black whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-yellow-300 to-amber-500 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] tracking-tight ${
-              topPrizeInfo.isLargeUnit ? 'text-lg sm:text-xl leading-none' : 'text-xs sm:text-sm font-black'
-            }`}>
+          <div className="relative z-10 flex flex-col items-center justify-center leading-tight px-1.5 w-full text-center select-none" style={{ whiteSpace: 'nowrap' }}>
+            <span 
+              className={`font-sans font-black whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-yellow-300 to-amber-500 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] tracking-tight ${
+                topPrizeInfo.isLargeUnit ? 'text-lg sm:text-xl leading-none' : 'text-xs sm:text-sm font-black'
+              }`}
+              style={{ whiteSpace: 'nowrap', display: 'inline-block' }}
+            >
               {topPrizeInfo.main}
             </span>
-            <span className="font-sans font-black text-[9px] text-amber-300 uppercase tracking-[0.15em] whitespace-nowrap drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]">
+            <span className="font-sans font-black text-[9px] text-amber-300 uppercase tracking-[0.15em] whitespace-nowrap drop-shadow-[0_0_8px_rgba(245,158,11,0.6)] block mt-0.5">
               {topPrizeInfo.sub}
             </span>
-            <span className="text-[8px] font-mono font-bold text-amber-400/90 -mt-0.5 whitespace-nowrap">
+            <span className="text-[8px] font-mono font-bold text-amber-400/90 whitespace-nowrap block">
               {(topStep.level * 100).toLocaleString()} pts
             </span>
           </div>
@@ -203,8 +206,8 @@ export default function KbcPointsLadder({
         </div>
       </div>
 
-      {/* ── THE VERTICAL LADDER (CYAN LASER SPINE & RUNGS WITH INCREASED HEIGHT) ── */}
-      <div className="relative w-full my-0.5">
+      {/* ── THE VERTICAL LADDER (CYAN LASER SPINE & RUNGS WITH SCROLL SUPPORT FOR 50 LEVELS) ── */}
+      <div className={`relative w-full my-0.5 ${totalQuestions > 16 ? 'max-h-[500px] overflow-y-auto pr-0.5' : ''}`}>
         
         {/* Cyan Vertical Laser Spine Line */}
         <div 
@@ -215,7 +218,7 @@ export default function KbcPointsLadder({
           }}
         />
 
-        {/* Stacked Rungs: Fits completely without scrolling with comfortable height */}
+        {/* Stacked Rungs: Fits completely with comfortable height & smooth auto-scroll */}
         <div className="space-y-[3px] relative z-10">
           {ladderSteps.map(step => {
             const isCurrent = step.level === activeLevel;

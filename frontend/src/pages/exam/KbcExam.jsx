@@ -20,7 +20,10 @@ import {
   KBC_PRIZE_LADDER, 
   DEFAULT_MERN_SQL_QUESTIONS, 
   AMITABH_QUOTES, 
-  EXPERT_FRIENDS 
+  EXPERT_FRIENDS,
+  getDynamicPrizeLadder,
+  getPrizeForLevel,
+  getSafePoints
 } from '../../data/kbcQuestions.js';
 
 export default function KbcExam() {
@@ -365,7 +368,7 @@ export default function KbcExam() {
 
   // Calculate live points after every question and smoothly re-rank
   const calculateRoundPoints = (userCorrect, speedBonus = 0) => {
-    const totalQ = adminSession?.total_questions || (questions?.length >= 30 ? 30 : 16);
+    const totalQ = adminSession?.total_questions || questions?.length || 50;
     const basePoints = currentLevel * 100;
     const userEarned = userCorrect ? (basePoints + speedBonus) : 0;
     const cutoffPoints = getSafePoints(currentLevel, totalQ);
@@ -633,12 +636,12 @@ export default function KbcExam() {
   const currentUserIndex = displayPlayers.findIndex(p => p.isUser);
   const currentUserRank = currentUserIndex >= 0 ? currentUserIndex + 1 : 1;
   const currentUserPlayer = currentUserIndex >= 0 ? displayPlayers[currentUserIndex] : null;
-  const totalQuestions = adminSession?.total_questions || (questions?.length >= 30 ? 30 : 16);
+  const totalQuestions = adminSession?.total_questions || questions?.length || 50;
   const userPoints = currentUserPlayer ? currentUserPlayer.points : (team ? (Number(team.points) || 0) : 0);
   const isUserOut = gameOver || (currentUserPlayer?.status === 'OUT') || (team && team.status === 'OUT');
   const safePadavLevel = Math.max(0, Math.floor(getSafePoints(currentLevel, totalQuestions) / 100));
   const safePadavPoints = safePadavLevel * 100;
-  const safePadavPrize = safeWonPrizeLabel !== '₹0' ? safeWonPrizeLabel : (safePadavLevel > 0 ? (KBC_PRIZE_LADDER[safePadavLevel - 1]?.prize || '₹0') : '₹0');
+  const safePadavPrize = safeWonPrizeLabel !== '₹0' ? safeWonPrizeLabel : (safePadavLevel > 0 ? (getPrizeForLevel(safePadavLevel, totalQuestions)?.prize || '₹0') : '₹0');
 
   // Track previous question and session state to detect arrival & answer reveal
   const lastQuestionTrackRef = useRef({
@@ -754,7 +757,7 @@ export default function KbcExam() {
               // Play Question Arrival Audio on contestant laptop!
               kbcAudio.playQuestionArrival();
 
-              const prizeLabel = KBC_PRIZE_LADDER[newLvl - 1]?.prize || '₹1,000';
+              const prizeLabel = getPrizeForLevel(newLvl, totalQuestions)?.prize || '₹1,000';
               setHostQuote(AMITABH_QUOTES.questionIntro(newLvl, prizeLabel));
 
               lastQuestionTrackRef.current.level = newLvl;
@@ -815,8 +818,9 @@ export default function KbcExam() {
                     setTimeout(() => setIsCelebratingCorrect(false), 4200);
 
                     const currentLvl = sess.current_level || currentLevel;
-                    const winAmount = KBC_PRIZE_LADDER[currentLvl - 1]?.amount || 0;
-                    const winLabel = KBC_PRIZE_LADDER[currentLvl - 1]?.prize || '₹0';
+                    const winInfo = getPrizeForLevel(currentLvl, totalQuestions);
+                    const winAmount = winInfo?.amount || 0;
+                    const winLabel = winInfo?.prize || '₹0';
                     setEarnedAmount(winAmount);
                     setEarnedPrizeLabel(winLabel);
 
@@ -1197,7 +1201,7 @@ export default function KbcExam() {
         correct: 0,
         explanation: 'Abstraction hides internal implementation details and shows only necessary features to the outside world.'
       });
-  const currentPrize = KBC_PRIZE_LADDER[Math.min(currentLevel - 1, KBC_PRIZE_LADDER.length - 1)] || KBC_PRIZE_LADDER[0];
+  const currentPrize = getPrizeForLevel(currentLevel, totalQuestions);
 
   // Helper to determine countdown seconds based on level (Tik-Tiki Ji)
   const getLevelCountdown = (lvl) => {
@@ -1456,7 +1460,7 @@ export default function KbcExam() {
     setShowBroadcastLeaderboard(false);
     userDismissedLeaderboardRef.current = false;
     setLivePlayers(prev => prev.map(p => ({ ...p, lastPointsGained: 0, lastStatus: null })));
-    const nextPrize = KBC_PRIZE_LADDER[nextLvl - 1];
+    const nextPrize = getPrizeForLevel(nextLvl, totalQuestions);
     setHostQuote(AMITABH_QUOTES.questionIntro(nextLvl, nextPrize.prize));
     setLaserUpwardTrigger(prev => !prev);
     kbcAudio.playLaserSweep();
@@ -1868,7 +1872,7 @@ export default function KbcExam() {
               <div className="flex items-center justify-between text-xs">
                 <span className="text-slate-400">Current Round in Queue:</span>
                 <span className="text-amber-300 font-black">
-                  Level {adminSession.current_level || 1} ({KBC_PRIZE_LADDER[(adminSession.current_level || 1) - 1]?.prize})
+                  Level {adminSession.current_level || 1} ({getPrizeForLevel(adminSession.current_level || 1, totalQuestions)?.prize})
                 </span>
               </div>
 
@@ -2645,7 +2649,7 @@ export default function KbcExam() {
 
               {/* ── Center Concentric Holographic Countdown Timer (Matching TV Reference "24") ── */}
               <div className="flex items-center justify-center pt-0.5 pb-0.5 relative z-20 shrink-0">
-                {currentLevel <= (adminSession?.total_questions || 30) ? (
+                {currentLevel <= totalQuestions ? (
                   <div className="relative flex items-center justify-center">
                     {/* Glowing outer halo */}
                     <div className={`absolute w-24 h-24 sm:w-28 sm:h-28 rounded-full blur-2xl pointer-events-none transition-all duration-500 ${
