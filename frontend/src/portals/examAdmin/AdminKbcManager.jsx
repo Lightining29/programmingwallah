@@ -1552,9 +1552,11 @@ export default function AdminKbcManager() {
   const activeTestSet = testSets.find(t => t.is_active);
   const totalSessionQuestions = (session?.total_questions && session?.total_questions !== 16) ? session.total_questions : (activeTestSet?.question_count && activeTestSet.question_count > 0 ? activeTestSet.question_count : 50);
   const currentLevelInfo = getPrizeForLevel(selectedLevel, totalSessionQuestions);
-  const effectiveLevel = activeTestSet ? (((selectedLevel - 1) % (activeTestSet.question_count || 50)) + 1) : (((selectedLevel - 1) % 16) + 1);
+  const effectiveLevel = ((selectedLevel - 1) % (totalSessionQuestions || 50)) + 1;
   const currentLevelData = levelsData[selectedLevel] || levelsData[effectiveLevel] || { pool: [] };
-  const activeQ = session.current_question || currentLevelData.activeQuestion || (currentLevelData.pool && currentLevelData.pool[0]) || null;
+  const activeQ = (session?.current_level === selectedLevel && session?.current_question) 
+    ? session.current_question 
+    : (currentLevelData.activeQuestion || (currentLevelData.pool && currentLevelData.pool[0]) || session?.current_question || null);
 
   return (
     <div className="space-y-6 select-none font-sans">

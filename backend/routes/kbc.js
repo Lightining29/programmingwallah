@@ -154,6 +154,61 @@ let memoryStore = {
   updatedAt: new Date().toISOString()
 };
 
+// ── HELPER: Strictly Normalize Levels for a Test Set (1 to N, zero duplicates, zero gaps) ──
+export async function normalizeTestSetLevels(pool, setId) {
+  if (!pool || !setId) return [];
+  try {
+    const [rows] = await pool.query(
+      'SELECT id, level, question, topic, options_json, correct, explanation, is_custom, is_active FROM kbc_questions WHERE test_set_id = ? ORDER BY level ASC, created_at ASC, id ASC',
+      [setId]
+    );
+
+    if (!rows || rows.length === 0) return [];
+
+    // Deduplicate exact duplicate question text if accidentally inserted multiple times
+    const seen = new Set();
+    const unique = [];
+    const duplicateIds = [];
+
+    for (const r of rows) {
+      const normalizedQ = (r.question || '').trim().toLowerCase();
+      if (!seen.has(normalizedQ)) {
+        seen.add(normalizedQ);
+        unique.push(r);
+      } else {
+        duplicateIds.push(r.id);
+      }
+    }
+
+    if (duplicateIds.length > 0) {
+      await pool.query('DELETE FROM kbc_questions WHERE id IN (?)', [duplicateIds]);
+    }
+
+    // Sequentially assign level = 1, 2, ..., N and mark active
+    for (let i = 0; i < unique.length; i++) {
+      const seqLevel = i + 1;
+      if (unique[i].level !== seqLevel || !unique[i].is_active) {
+        await pool.query(
+          'UPDATE kbc_questions SET level = ?, is_active = 1 WHERE id = ?',
+          [seqLevel, unique[i].id]
+        );
+        unique[i].level = seqLevel;
+        unique[i].is_active = 1;
+      }
+    }
+
+    await pool.query(
+      'UPDATE kbc_test_sets SET question_count = ? WHERE id = ?',
+      [unique.length, setId]
+    );
+
+    return unique;
+  } catch (err) {
+    console.warn(`normalizeTestSetLevels warning for ${setId}:`, err.message);
+    return [];
+  }
+}
+
 // ── Ensure Hostinger MySQL Table & Seed 1,000+ SQL Questions ──
 let tableEnsured = false;
 export async function ensureKbcTable() {
@@ -349,21 +404,10 @@ export async function ensureKbcTable() {
         WHERE s.id NOT IN ('kbc-sql-mastery', 'kbc-html-quiz', 'kbc-excel-analytics')
       `);
 
-      // Ensure kbc-sql-mastery has active SQL questions for all 50 levels
-      for (let lvl = 1; lvl <= 50; lvl++) {
-        const [hasActive] = await pool.query('SELECT id FROM kbc_questions WHERE test_set_id = "kbc-sql-mastery" AND level = ? AND is_active = 1 LIMIT 1', [lvl]);
-        if (hasActive.length === 0) {
-          const [hasAny] = await pool.query('SELECT id FROM kbc_questions WHERE test_set_id = "kbc-sql-mastery" AND level = ? LIMIT 1', [lvl]);
-          if (hasAny.length > 0) {
-            await pool.query('UPDATE kbc_questions SET is_active = 1 WHERE id = ?', [hasAny[0].id]);
-          } else {
-            const wrapLvl = ((lvl - 1) % 16) + 1;
-            const [avail] = await pool.query('SELECT id FROM kbc_questions WHERE test_set_id = "kbc-sql-mastery" AND level = ? AND is_active = 0 LIMIT 1', [wrapLvl]);
-            if (avail.length > 0) {
-              await pool.query('UPDATE kbc_questions SET level = ?, is_active = 1 WHERE id = ?', [lvl, avail[0].id]);
-            }
-          }
-        }
+      // Ensure active test set has strictly normalized sequential levels 1..N
+      const [actSet] = await pool.query('SELECT id FROM kbc_test_sets WHERE is_active = 1 LIMIT 1');
+      if (actSet.length > 0) {
+        await normalizeTestSetLevels(pool, actSet[0].id);
       }
     } catch (e) {}
 
@@ -628,40 +672,29 @@ router.post('/admin/test-sets/activate', async (req, res) => {
       const [setRows] = await pool.query('SELECT * FROM kbc_test_sets WHERE id = ?', [setId]);
       const activeSet = setRows[0];
 
-      // 5. Determine accurate question count for this test set
-      let totalQ = 16;
-      if (activeSet?.question_count && activeSet.question_count > 0) {
-        totalQ = activeSet.question_count;
-      }
+      await pool.query('UPDATE kbc_questions SET is_active = 0');
 
-      // Check count of questions in kbc_questions belonging to this test set
-      const [customQRows] = await pool.query('SELECT COUNT(*) as cnt, COUNT(DISTINCT level) as lvl_cnt FROM kbc_questions WHERE test_set_id = ?', [setId]);
-      if (customQRows[0]?.cnt > 0) {
-        totalQ = Math.max(totalQ, customQRows[0].cnt);
-      }
-
-      // If questions_json is present
+      // 3. Sync from questions_json if present and kbc_questions has fewer items
       if (activeSet?.questions_json) {
         try {
           const parsed = JSON.parse(activeSet.questions_json);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            totalQ = Math.max(totalQ, parsed.length);
+            const [existingQ] = await pool.query('SELECT COUNT(*) as cnt FROM kbc_questions WHERE test_set_id = ?', [setId]);
+            const existingCount = existingQ[0]?.cnt || 0;
+            if (parsed.length > existingCount) {
+              for (let i = 0; i < parsed.length; i++) {
+                const pq = parsed[i];
+                const pqId = pq.id || `${setId}_q_${Date.now()}_${i + 1}`;
+                const cleanOpts = Array.isArray(pq.options) ? pq.options : [];
+                await pool.query(`
+                  INSERT INTO kbc_questions (id, level, topic, question, options_json, correct, explanation, is_custom, is_active, test_set_id)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, ?)
+                  ON DUPLICATE KEY UPDATE level = VALUES(level), is_active = 1
+                `, [pqId, i + 1, pq.topic || activeSet.topic || 'Database', pq.question, JSON.stringify(cleanOpts), pq.correct || 0, pq.explanation || '', setId]);
+              }
+            }
           }
-        } catch(e) {}
-      }
-
-      await pool.query('UPDATE kbc_questions SET is_active = 0');
-
-      if (setId === 'kbc-html-quiz') {
-        for (let lvl = 1; lvl <= totalQ; lvl++) {
-          const wrapLvl = ((lvl - 1) % 16) + 1;
-          await pool.query(`
-            UPDATE kbc_questions 
-            SET is_active = 1 
-            WHERE test_set_id = 'kbc-html-quiz' AND level = ? 
-            LIMIT 1
-          `, [wrapLvl]);
-        }
+        } catch (e) {}
       } else if (setId === 'kbc-excel-analytics' && CURATED_TEST_SETS.excel?.length > 0) {
         for (const q of CURATED_TEST_SETS.excel) {
           const shuffled = shuffleOptionsAccurately(q.options, q.correct);
@@ -672,78 +705,27 @@ router.post('/admin/test-sets/activate', async (req, res) => {
               options_json = VALUES(options_json), correct = VALUES(correct), is_active = 1
           `, [q.id, q.level, q.topic, q.question, JSON.stringify(shuffled.options), shuffled.correct, q.explanation]);
         }
-        totalQ = Math.max(totalQ, CURATED_TEST_SETS.excel.length);
-      } else if (setId === 'kbc-sql-mastery') {
-        // Activate standard SQL questions for every level up to totalQ (minimum 50 levels)
-        totalQ = Math.max(totalQ, 50);
-        for (let lvl = 1; lvl <= totalQ; lvl++) {
-          const [exists] = await pool.query('SELECT id FROM kbc_questions WHERE level = ? AND test_set_id = "kbc-sql-mastery" LIMIT 1', [lvl]);
-          if (exists.length > 0) {
-            await pool.query('UPDATE kbc_questions SET is_active = 1 WHERE id = ?', [exists[0].id]);
-          } else {
-            const wrapLvl = ((lvl - 1) % 16) + 1;
-            const [avail] = await pool.query('SELECT id FROM kbc_questions WHERE test_set_id = "kbc-sql-mastery" AND level = ? AND is_active = 0 LIMIT 1', [wrapLvl]);
-            if (avail.length > 0) {
-              await pool.query('UPDATE kbc_questions SET level = ?, is_active = 1 WHERE id = ?', [lvl, avail[0].id]);
-            }
-          }
-        }
-      } else {
-        // Custom test set (e.g. MySQL MCQ Test with 50 manual questions)
-        // 1. Sync from questions_json if present and kbc_questions has fewer items
-        if (activeSet?.questions_json) {
-          try {
-            const parsed = JSON.parse(activeSet.questions_json);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              const [existingQ] = await pool.query('SELECT COUNT(*) as cnt FROM kbc_questions WHERE test_set_id = ?', [setId]);
-              const existingCount = existingQ[0]?.cnt || 0;
-              if (parsed.length > existingCount) {
-                for (let i = 0; i < parsed.length; i++) {
-                  const pq = parsed[i];
-                  const pqId = pq.id || `${setId}_q_${Date.now()}_${i + 1}`;
-                  const cleanOpts = Array.isArray(pq.options) ? pq.options : [];
-                  await pool.query(`
-                    INSERT INTO kbc_questions (id, level, topic, question, options_json, correct, explanation, is_custom, is_active, test_set_id)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, ?)
-                    ON DUPLICATE KEY UPDATE level = VALUES(level), is_active = 1
-                  `, [pqId, i + 1, pq.topic || activeSet.topic || 'Database', pq.question, JSON.stringify(cleanOpts), pq.correct || 0, pq.explanation || '', setId]);
-                }
-              }
-            }
-          } catch (e) {}
-        }
-
-        // 2. Fetch all questions for this test set
-        const [allSetQ] = await pool.query(
-          'SELECT id, level FROM kbc_questions WHERE test_set_id = ? ORDER BY level ASC, created_at ASC, id ASC',
-          [setId]
-        );
-
-        if (allSetQ.length > 0) {
-          totalQ = Math.max(allSetQ.length, activeSet?.question_count || 0);
-          // CRITICAL: Sequentially normalize levels from 1 to N so Question 1 is Level 1, Question 2 is Level 2 ... Question 50 is Level 50!
-          for (let i = 0; i < allSetQ.length; i++) {
-            const seqLevel = i + 1;
-            await pool.query(
-              'UPDATE kbc_questions SET level = ?, is_active = 1 WHERE id = ?',
-              [seqLevel, allSetQ[i].id]
-            );
-          }
-        } else {
-          totalQ = Math.max(totalQ, activeSet?.question_count || 50);
-        }
       }
+
+      // 4. Strictly normalize all questions in this test set: sequential level = 1..N, is_active = 1
+      const normalizedQ = await normalizeTestSetLevels(pool, setId);
+
+      let totalQ = normalizedQ.length;
+      if (activeSet?.question_count && activeSet.question_count > 0) {
+        totalQ = Math.max(totalQ, activeSet.question_count);
+      }
+      if (totalQ === 0) totalQ = 50;
 
       await pool.query('UPDATE kbc_test_sets SET question_count = ? WHERE id = ?', [totalQ, setId]);
 
-      // 3. Reset live KBC session to Level 1 with exact total_questions
-      const [firstQ] = await pool.query('SELECT id FROM kbc_questions WHERE test_set_id = ? AND level = 1 AND is_active = 1 LIMIT 1', [setId]);
+      // 5. Reset live KBC session to Level 1 with exact total_questions and first question
+      const firstQId = normalizedQ[0]?.id || null;
       await pool.query(`
         UPDATE kbc_sessions 
         SET status = 'LIVE', show_in_navbar = 1, current_level = 1, total_questions = ?, current_question_id = ?,
             is_locked = 0, locked_option = NULL, revealed_correct = NULL, show_winner = 0, show_leaderboard = 0
         WHERE id = 'main_session'
-      `, [totalQ, firstQ[0]?.id || null]);
+      `, [totalQ, firstQId]);
 
       invalidateKbcSessionCache();
       invalidateKbcTeamsCache();
@@ -896,11 +878,11 @@ router.get('/test-sets/:id/questions', async (req, res) => {
         rows = reRows;
       }
 
-      const questions = rows.map(r => {
+      const questions = rows.map((r, idx) => {
         const opts = typeof r.options_json === 'string' ? JSON.parse(r.options_json) : r.options_json;
         return {
           id: r.id,
-          level: r.level,
+          level: idx + 1,
           topic: r.topic,
           question: r.question,
           options: opts,
@@ -1002,6 +984,9 @@ router.post('/admin/test-sets/:id/questions/delete', async (req, res) => {
     if (pool) {
       await pool.query('DELETE FROM kbc_questions WHERE id = ? AND test_set_id = ?', [questionId, setId]);
 
+      // Re-normalize all remaining levels so there are zero gaps
+      await normalizeTestSetLevels(pool, setId);
+
       const [countRows] = await pool.query(
         'SELECT COUNT(*) as cnt FROM kbc_questions WHERE test_set_id = ? AND is_active = 1',
         [setId]
@@ -1035,10 +1020,17 @@ router.post('/admin/test-sets/:id/questions/add', async (req, res) => {
       const finalOptions = shuffle ? shuffleOptionsAccurately(cleanOptions, cleanCorrect).options : cleanOptions;
       const finalCorrect = shuffle ? shuffleOptionsAccurately(cleanOptions, cleanCorrect).correct : cleanCorrect;
 
+      // Determine next sequential level for this test set
+      const [cntRow] = await pool.query('SELECT COUNT(*) as cnt FROM kbc_questions WHERE test_set_id = ?', [setId]);
+      const nextLevel = (cntRow[0]?.cnt || 0) + 1;
+
       await pool.query(`
         INSERT INTO kbc_questions (id, level, topic, question, options_json, correct, explanation, is_custom, is_active, test_set_id)
         VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, ?)
-      `, [qId, parseInt(level, 10) || 1, topic.trim(), question.trim(), JSON.stringify(finalOptions), finalCorrect, (explanation || '').trim(), setId]);
+      `, [qId, nextLevel, topic.trim(), question.trim(), JSON.stringify(finalOptions), finalCorrect, (explanation || '').trim(), setId]);
+
+      // Re-normalize all levels in this test set
+      await normalizeTestSetLevels(pool, setId);
 
       const [countRows] = await pool.query(
         'SELECT COUNT(*) as cnt FROM kbc_questions WHERE test_set_id = ? AND is_active = 1',
@@ -1052,7 +1044,7 @@ router.post('/admin/test-sets/:id/questions/add', async (req, res) => {
         message: 'Question added to test set!',
         question: {
           id: qId,
-          level: parseInt(level, 10) || 1,
+          level: nextLevel,
           topic: topic.trim(),
           question: question.trim(),
           options: finalOptions,
@@ -1150,24 +1142,11 @@ router.get('/admin/all', async (req, res) => {
 
         const levels = {};
         for (let lvl = 1; lvl <= maxLevelToCurate; lvl++) {
-          let poolForLevel = allRows
-            .filter(r => r.level === lvl)
-            .map(r => ({
-              id: r.id,
-              level: r.level,
-              topic: r.topic,
-              question: r.question,
-              options: typeof r.options_json === 'string' ? JSON.parse(r.options_json) : r.options_json,
-              correct: r.correct,
-              explanation: r.explanation,
-              isCustom: Boolean(r.is_custom),
-              isActive: Boolean(r.is_active)
-            }));
-
-          // If no row has level === lvl but allRows has a question at index (lvl - 1)
-          if (poolForLevel.length === 0 && allRows[lvl - 1]) {
-            const r = allRows[lvl - 1];
-            poolForLevel = [{
+          if (activeSetId) {
+            // Strictly 1-to-1 deterministic mapping: Level lvl maps to allRows[lvl - 1]
+            const targetIndex = lvl <= allRows.length ? (lvl - 1) : ((lvl - 1) % allRows.length);
+            const r = allRows[targetIndex];
+            const qObj = r ? {
               id: r.id,
               level: lvl,
               topic: r.topic,
@@ -1177,31 +1156,42 @@ router.get('/admin/all', async (req, res) => {
               explanation: r.explanation,
               isCustom: Boolean(r.is_custom),
               isActive: true
-            }];
+            } : null;
+
+            levels[lvl] = {
+              level: lvl,
+              activeQuestionId: qObj ? qObj.id : null,
+              activeQuestion: qObj,
+              pool: qObj ? [qObj] : []
+            };
+          } else {
+            let poolForLevel = allRows
+              .filter(r => r.level === lvl)
+              .map(r => ({
+                id: r.id,
+                level: r.level,
+                topic: r.topic,
+                question: r.question,
+                options: typeof r.options_json === 'string' ? JSON.parse(r.options_json) : r.options_json,
+                correct: r.correct,
+                explanation: r.explanation,
+                isCustom: Boolean(r.is_custom),
+                isActive: Boolean(r.is_active)
+              }));
+
+            const fallbackPool = poolForLevel.length > 0 
+              ? poolForLevel 
+              : (DEFAULT_SQL_QUESTIONS[lvl] || DEFAULT_SQL_QUESTIONS[((lvl - 1) % 16) + 1] || []);
+
+            const activeQ = poolForLevel.find(q => q.isActive) || fallbackPool[0] || null;
+
+            levels[lvl] = {
+              level: lvl,
+              activeQuestionId: activeQ ? activeQ.id : null,
+              activeQuestion: activeQ,
+              pool: poolForLevel.length > 0 ? poolForLevel : fallbackPool
+            };
           }
-
-          const fallbackPool = poolForLevel.length > 0 
-            ? poolForLevel 
-            : (activeSetId ? poolForLevel : (DEFAULT_SQL_QUESTIONS[lvl] || DEFAULT_SQL_QUESTIONS[((lvl - 1) % 16) + 1] || []));
-
-          const activeQ = poolForLevel.find(q => q.isActive) || fallbackPool[0] || (activeSetId && allRows[0] ? {
-            id: allRows[0].id,
-            level: lvl,
-            topic: allRows[0].topic,
-            question: allRows[0].question,
-            options: typeof allRows[0].options_json === 'string' ? JSON.parse(allRows[0].options_json) : allRows[0].options_json,
-            correct: allRows[0].correct,
-            explanation: allRows[0].explanation,
-            isCustom: Boolean(allRows[0].is_custom),
-            isActive: true
-          } : null);
-
-          levels[lvl] = {
-            level: lvl,
-            activeQuestionId: activeQ ? activeQ.id : null,
-            activeQuestion: activeQ,
-            pool: poolForLevel.length > 0 ? poolForLevel : fallbackPool
-          };
         }
 
         return res.json({
@@ -2377,93 +2367,92 @@ async function refreshLiveSessionStatus() {
       const curLvl = s.current_level || 1;
 
       if (curLvl <= totalQ) {
-        let qRows = [];
-        if (s.current_question_id) {
-          if (activeSet) {
-            const [qR] = await pool.query('SELECT * FROM kbc_questions WHERE id = ? AND test_set_id = ? LIMIT 1', [s.current_question_id, activeSet.id]);
-            qRows = qR;
-          } else {
-            const [qR] = await pool.query('SELECT * FROM kbc_questions WHERE id = ? LIMIT 1', [s.current_question_id]);
-            qRows = qR;
-          }
-        }
+        if (activeSet) {
+          // Strict 1-to-1 sequential mapping: Level curLvl maps directly to question (curLvl - 1)
+          let [setQuestions] = await pool.query(
+            'SELECT * FROM kbc_questions WHERE test_set_id = ? ORDER BY level ASC, created_at ASC, id ASC',
+            [activeSet.id]
+          );
 
-        if (qRows.length === 0 && activeSet) {
-          // 1. Try exact level match within active test set with is_active = 1
-          const [qR] = await pool.query('SELECT * FROM kbc_questions WHERE test_set_id = ? AND level = ? AND is_active = 1 LIMIT 1', [activeSet.id, curLvl]);
-          if (qR.length > 0) {
-            qRows = qR;
-          } else {
-            // 2. Try exact level match within active test set without is_active requirement
-            const [qRNoActive] = await pool.query('SELECT * FROM kbc_questions WHERE test_set_id = ? AND level = ? LIMIT 1', [activeSet.id, curLvl]);
-            if (qRNoActive.length > 0) {
-              qRows = qRNoActive;
-            } else {
-              // 3. Sequential offset lookup (curLvl - 1) within active test set
-              const [qROffset] = await pool.query('SELECT * FROM kbc_questions WHERE test_set_id = ? ORDER BY level ASC, created_at ASC, id ASC LIMIT 1 OFFSET ?', [activeSet.id, Math.max(0, curLvl - 1)]);
-              if (qROffset.length > 0) {
-                qRows = qROffset;
-              } else {
-                // 4. Cycle strictly within active test set if current level exceeds count
-                const [cntRows] = await pool.query('SELECT COUNT(*) as cnt FROM kbc_questions WHERE test_set_id = ?', [activeSet.id]);
-                const setCnt = cntRows[0]?.cnt || 0;
-                if (setCnt > 0) {
-                  const wrapOffset = (curLvl - 1) % setCnt;
-                  const [qRWrap] = await pool.query('SELECT * FROM kbc_questions WHERE test_set_id = ? ORDER BY level ASC, created_at ASC, id ASC LIMIT 1 OFFSET ?', [activeSet.id, wrapOffset]);
-                  qRows = qRWrap;
-                }
-              }
-            }
-          }
-
-          // 5. If kbc_questions was empty but questions_json exists in kbc_test_sets
-          if (qRows.length === 0 && activeSet.questions_json) {
+          if (setQuestions.length === 0 && activeSet.questions_json) {
             try {
               const parsed = JSON.parse(activeSet.questions_json);
               if (Array.isArray(parsed) && parsed.length > 0) {
-                const targetQ = parsed[curLvl - 1] || parsed[(curLvl - 1) % parsed.length];
-                if (targetQ) {
-                  currentQuestion = {
-                    id: targetQ.id || `${activeSet.id}_json_${curLvl}`,
-                    level: curLvl,
-                    topic: targetQ.topic || activeSet.topic || 'Database',
-                    question: targetQ.question,
-                    options: typeof targetQ.options === 'string' ? JSON.parse(targetQ.options) : targetQ.options,
-                    correct: typeof targetQ.correct === 'number' ? targetQ.correct : 0,
-                    explanation: targetQ.explanation || ''
-                  };
-                }
+                setQuestions = parsed.map((pq, idx) => ({
+                  id: pq.id || `${activeSet.id}_json_${idx + 1}`,
+                  level: idx + 1,
+                  topic: pq.topic || activeSet.topic || 'Database',
+                  question: pq.question,
+                  options_json: typeof pq.options === 'string' ? pq.options : JSON.stringify(pq.options),
+                  correct: pq.correct || 0,
+                  explanation: pq.explanation || '',
+                  is_active: 1
+                }));
               }
             } catch (e) {}
           }
-        } else if (qRows.length === 0) {
-          // Standard / default bank mode when no test set is active
-          const [qR] = await pool.query('SELECT * FROM kbc_questions WHERE level = ? AND is_active = 1 LIMIT 1', [curLvl]);
-          if (qR.length > 0) {
-            qRows = qR;
-          } else {
-            const [fallbackRows] = await pool.query('SELECT * FROM kbc_questions WHERE level = ? LIMIT 1', [curLvl]);
-            if (fallbackRows.length > 0) {
-              qRows = fallbackRows;
-            } else {
-              const bankLvl = ((curLvl - 1) % 16) + 1;
-              const [dynRows] = await pool.query('SELECT * FROM kbc_questions WHERE level = ? ORDER BY id ASC LIMIT 1', [bankLvl]);
-              qRows = dynRows;
+
+          if (setQuestions.length > 0) {
+            totalQ = Math.max(totalQ, setQuestions.length);
+
+            // Deterministic 1-to-1 index: Level 1 = item 0, Level 2 = item 1 ... Level 50 = item 49 (ZERO REPETITION)
+            const targetIndex = curLvl <= setQuestions.length 
+              ? (curLvl - 1) 
+              : ((curLvl - 1) % setQuestions.length);
+
+            const q = setQuestions[targetIndex];
+            if (q) {
+              currentQuestion = {
+                id: q.id,
+                level: curLvl,
+                topic: q.topic || activeSet.topic || 'Database',
+                question: q.question,
+                options: typeof q.options_json === 'string' ? JSON.parse(q.options_json) : (q.options || []),
+                correct: typeof q.correct === 'number' ? q.correct : 0,
+                explanation: q.explanation || ''
+              };
+
+              // Auto-sync main_session.current_question_id in MySQL if mismatched
+              if (s.current_question_id !== q.id) {
+                await pool.query('UPDATE kbc_sessions SET current_question_id = ? WHERE id = "main_session"', [q.id]).catch(() => {});
+                s.current_question_id = q.id;
+              }
             }
           }
-        }
-
-        if (qRows.length > 0 && !currentQuestion) {
-          const q = qRows[0];
-          currentQuestion = {
-            id: q.id,
-            level: curLvl,
-            topic: q.topic,
-            question: q.question,
-            options: typeof q.options_json === 'string' ? JSON.parse(q.options_json) : q.options_json,
-            correct: q.correct,
-            explanation: q.explanation
-          };
+        } else {
+          // Standard / default bank mode when NO test set is active
+          let qRows = [];
+          if (s.current_question_id) {
+            const [qR] = await pool.query('SELECT * FROM kbc_questions WHERE id = ? LIMIT 1', [s.current_question_id]);
+            qRows = qR;
+          }
+          if (qRows.length === 0) {
+            const [qR] = await pool.query('SELECT * FROM kbc_questions WHERE level = ? AND is_active = 1 LIMIT 1', [curLvl]);
+            if (qR.length > 0) {
+              qRows = qR;
+            } else {
+              const [fallbackRows] = await pool.query('SELECT * FROM kbc_questions WHERE level = ? LIMIT 1', [curLvl]);
+              if (fallbackRows.length > 0) {
+                qRows = fallbackRows;
+              } else {
+                const bankLvl = ((curLvl - 1) % 16) + 1;
+                const [dynRows] = await pool.query('SELECT * FROM kbc_questions WHERE level = ? ORDER BY id ASC LIMIT 1', [bankLvl]);
+                qRows = dynRows;
+              }
+            }
+          }
+          if (qRows.length > 0) {
+            const q = qRows[0];
+            currentQuestion = {
+              id: q.id,
+              level: curLvl,
+              topic: q.topic,
+              question: q.question,
+              options: typeof q.options_json === 'string' ? JSON.parse(q.options_json) : q.options_json,
+              correct: q.correct,
+              explanation: q.explanation
+            };
+          }
         }
       } else {
         s.show_winner = 1;
@@ -2798,26 +2787,20 @@ router.post('/admin/session/update', async (req, res) => {
         const dur = getKbcLevelCountdown(lvl);
         const now = Date.now();
 
-        // Resolve question ID for this level from active test set if not explicitly passed
+        // Resolve question ID for this level strictly from active test set (index lvl - 1) with ZERO repetition
         let resolvedQId = current_question_id || null;
         if (!resolvedQId) {
           try {
             const [actSets] = await pool.query('SELECT id FROM kbc_test_sets WHERE is_active = 1 LIMIT 1');
             if (actSets.length > 0) {
               const actId = actSets[0].id;
-              const [qLvl] = await pool.query('SELECT id FROM kbc_questions WHERE test_set_id = ? AND level = ? AND is_active = 1 LIMIT 1', [actId, lvl]);
-              if (qLvl.length > 0) {
-                resolvedQId = qLvl[0].id;
-              } else {
-                const [qLvlAny] = await pool.query('SELECT id FROM kbc_questions WHERE test_set_id = ? AND level = ? LIMIT 1', [actId, lvl]);
-                if (qLvlAny.length > 0) {
-                  resolvedQId = qLvlAny[0].id;
-                } else {
-                  const [qOff] = await pool.query('SELECT id FROM kbc_questions WHERE test_set_id = ? ORDER BY level ASC, created_at ASC, id ASC LIMIT 1 OFFSET ?', [actId, Math.max(0, lvl - 1)]);
-                  if (qOff.length > 0) {
-                    resolvedQId = qOff[0].id;
-                  }
-                }
+              const [setQuestions] = await pool.query(
+                'SELECT id FROM kbc_questions WHERE test_set_id = ? ORDER BY level ASC, created_at ASC, id ASC',
+                [actId]
+              );
+              if (setQuestions.length > 0) {
+                const targetIndex = lvl <= setQuestions.length ? (lvl - 1) : ((lvl - 1) % setQuestions.length);
+                resolvedQId = setQuestions[targetIndex]?.id || null;
               }
             }
           } catch(e) {}
@@ -2863,7 +2846,27 @@ router.post('/admin/session/update', async (req, res) => {
           updates.push('timer_duration = ?', 'timer_started_at = ?', 'timer_paused = 0', 'timer_remaining = ?', 'is_locked = 0', 'locked_option = NULL', 'revealed_correct = NULL');
           params.push(dur, Date.now(), dur);
           if (current_level !== undefined && current_question_id === undefined) {
-            updates.push('current_question_id = NULL');
+            let autoQId = null;
+            try {
+              const [actSets] = await pool.query('SELECT id FROM kbc_test_sets WHERE is_active = 1 LIMIT 1');
+              if (actSets.length > 0) {
+                const actId = actSets[0].id;
+                const [setQuestions] = await pool.query(
+                  'SELECT id FROM kbc_questions WHERE test_set_id = ? ORDER BY level ASC, created_at ASC, id ASC',
+                  [actId]
+                );
+                if (setQuestions.length > 0) {
+                  const targetIndex = targetLvl <= setQuestions.length ? (targetLvl - 1) : ((targetLvl - 1) % setQuestions.length);
+                  autoQId = setQuestions[targetIndex]?.id || null;
+                }
+              }
+            } catch (e) {}
+            if (autoQId) {
+              updates.push('current_question_id = ?');
+              params.push(autoQId);
+            } else {
+              updates.push('current_question_id = NULL');
+            }
           }
           // New question / level / reset: clear individual player submissions across database and cache
           await pool.query('UPDATE kbc_teams SET submitted_option = NULL, submitted_at = NULL');

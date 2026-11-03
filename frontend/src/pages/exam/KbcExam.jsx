@@ -918,6 +918,13 @@ export default function KbcExam() {
     fetchQuestions();
   }, []);
 
+  // Re-sync questions if admin changes test set length (e.g. from 16 to 50 questions)
+  useEffect(() => {
+    if (adminSession?.total_questions && adminSession.total_questions !== questions.length) {
+      fetchQuestions();
+    }
+  }, [adminSession?.total_questions]);
+
   const fetchQuestions = async () => {
     setLoading(true);
     try {
