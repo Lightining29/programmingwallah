@@ -410,45 +410,61 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Phusion Passenger / Hostinger Application Manager Configuration
-if (typeof PhusionPassenger !== 'undefined') {
-  PhusionPassenger.configure({ autoInstall: false });
-}
-
-const PORT = (typeof PhusionPassenger !== 'undefined') ? 'passenger' : (process.env.PORT || 5000);
-const httpServer = http.createServer(app);
-
-const server = httpServer.listen(PORT, async () => {
-  console.log(`\x1b[32m✔ Pranidha School Backend running in ${process.env.NODE_ENV || 'production'} mode on ${PORT}\x1b[0m`);
-  
-  // Connect to Hostinger MySQL Database
+// Startup Database Initialization (Runs safely in all environments)
+(async () => {
   try {
     await connectDB();
   } catch (err) {
     console.warn('Database connection notice on startup:', err.message);
   }
-
-  // Initialize Examination Models and Tables
   try {
     await initExamDatabase();
   } catch (err) {
     console.warn('Exam database initialization notice on startup:', err.message);
   }
-});
+})();
 
-// Graceful shutdown handling
-process.on('SIGTERM', () => {
-  console.log('SIGTERM signal received: closing HTTP server');
-  server.close(() => {
-    console.log('HTTP server closed');
+// Health check endpoint for uptime monitors and frontend connectivity checks
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    uptime: process.uptime(),
+    timestamp: Date.now(),
+    environment: process.env.NODE_ENV || 'production'
   });
 });
 
-process.on('SIGINT', () => {
-  console.log('SIGINT signal received: closing HTTP server');
-  server.close(() => {
-    console.log('HTTP server closed');
+// Phusion Passenger / Hostinger Application Manager Configuration
+// When running under Passenger via server.js, server.js exports handler to Passenger.
+// When running in standalone Node.js mode (local or non-passenger host), listen on PORT.
+if (typeof PhusionPassenger !== 'undefined') {
+  PhusionPassenger.configure({ autoInstall: false });
+  console.log('✔ Pranidha School Backend initialized in Phusion Passenger mode.');
+} else {
+  const PORT = process.env.PORT || 5000;
+  const httpServer = http.createServer(app);
+
+  httpServer.on('error', (err) => {
+    console.error('[HTTP Server Error]:', err.message);
   });
-});
+
+  const server = httpServer.listen(PORT, () => {
+    console.log(`\x1b[32m✔ Pranidha School Backend running in ${process.env.NODE_ENV || 'production'} mode on ${PORT}\x1b[0m`);
+  });
+
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM signal received: closing HTTP server');
+    server.close(() => {
+      console.log('HTTP server closed');
+    });
+  });
+
+  process.on('SIGINT', () => {
+    console.log('SIGINT signal received: closing HTTP server');
+    server.close(() => {
+      console.log('HTTP server closed');
+    });
+  });
+}
 
 export default app;

@@ -23,17 +23,18 @@ export const AuthProvider = ({ children }) => {
             Authorization: `Bearer ${token}`
           }
         });
-        const data = await res.json();
-        if (data.success) {
-          setUser(data.user);
-          setProfile(data.profile);
-        } else {
-          // Token expired or invalid
-          logout();
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data.success) {
+            setUser(data.user);
+            setProfile(data.profile);
+          } else if (res.status === 401 || res.status === 403) {
+            logout();
+          }
         }
       } catch (err) {
-        console.error('Session restore failed:', err);
-        logout();
+        console.warn('Session restore network notice:', err);
       } finally {
         setLoading(false);
       }
@@ -47,37 +48,77 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
+      let res;
+      let retries = 0;
+      // Auto-retry up to 2 times if server is cold-booting (503) or briefly unreachable
+      while (retries < 3) {
+        try {
+          res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          if (res.status !== 503) break;
+          retries++;
+          if (retries < 3) await new Promise(r => setTimeout(r, 1200));
+        } catch (netErr) {
+          retries++;
+          if (retries < 3) await new Promise(r => setTimeout(r, 1200));
+          else throw netErr;
+        }
+      }
+
+      const contentType = res.headers.get('content-type') || '';
+      let data = null;
+      if (contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = await res.text().catch(() => '');
+        if (res.status === 503) {
+          setError('Server is starting up. Please wait a few moments and try again.');
+          setLoading(false);
+          return { success: false, message: 'Server is starting up. Please wait a few moments.' };
+        }
+        throw new Error(`Server returned status ${res.status}`);
+      }
       
-      if (data.success) {
+      if (data && data.success) {
         localStorage.setItem('token', data.token);
         setToken(data.token);
         setUser(data.user);
         
-        // Fetch detailed profile
-        const meRes = await fetch('/api/auth/me', {
-          headers: { Authorization: `Bearer ${data.token}` }
-        });
-        const meData = await meRes.json();
-        if (meData.success) {
-          setProfile(meData.profile);
+        // Fetch detailed profile safely (isolated to prevent login failure)
+        try {
+          const meRes = await fetch('/api/auth/me', {
+            headers: { Authorization: `Bearer ${data.token}` }
+          });
+          if (meRes.ok) {
+            const meData = await meRes.json();
+            if (meData && meData.success) {
+              setProfile(meData.profile);
+            }
+          }
+        } catch (meErr) {
+          console.warn('Profile fetch notice on login:', meErr);
         }
+
         setLoading(false);
         return { success: true, user: data.user };
       } else {
-        setError(data.message || 'Invalid credentials');
+        const msg = data?.message || 'Invalid credentials';
+        setError(msg);
         setLoading(false);
-        return { success: false, message: data.message };
+        return { success: false, message: msg };
       }
     } catch (err) {
-      setError('Server connection failed. Try again.');
+      console.error('Login error:', err);
+      const is503 = err?.message && err.message.includes('503');
+      const errorMsg = is503
+        ? 'Server is starting up. Please wait a moment and try again.'
+        : 'Server connection failed. Please ensure the backend server is running and try again.';
+      setError(errorMsg);
       setLoading(false);
-      return { success: false, message: 'Server connection failed.' };
+      return { success: false, message: errorMsg };
     }
   };
 
