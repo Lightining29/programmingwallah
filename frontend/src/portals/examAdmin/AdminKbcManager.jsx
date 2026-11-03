@@ -755,7 +755,7 @@ export default function AdminKbcManager() {
   const handleNextLevel = () => {
     kbcAudio.stopLockSuspense();
     const activeTestSet = testSets.find(t => t.is_active);
-    const totalQ = session?.total_questions || activeTestSet?.question_count || 16;
+    const totalQ = session?.total_questions || activeTestSet?.question_count || 50;
     if (selectedLevel >= totalQ) {
       handleAnnounceWinner();
       return;
@@ -1246,7 +1246,8 @@ export default function AdminKbcManager() {
     // Determine the next empty level in this set if any
     const existingLevels = new Set(setQuestionsList.map(q => Number(q.level)));
     let nextLvl = 1;
-    for (let l = 1; l <= 16; l++) {
+    const maxScan = Math.max(50, (targetSet.question_count || 0) + 10);
+    for (let l = 1; l <= maxScan; l++) {
       if (!existingLevels.has(l)) {
         nextLvl = l;
         break;
@@ -1362,7 +1363,7 @@ export default function AdminKbcManager() {
             await fetchAdminKbcData();
 
             if (keepOpenForNext) {
-              setManualLevel(prev => Math.min(16, (Number(prev) || 1) + 1));
+              setManualLevel(prev => (Number(prev) || 1) + 1);
               resetForm();
               Swal.fire({
                 icon: 'success',
@@ -1551,7 +1552,7 @@ export default function AdminKbcManager() {
   const activeTestSet = testSets.find(t => t.is_active);
   const totalSessionQuestions = (session?.total_questions && session?.total_questions !== 16) ? session.total_questions : (activeTestSet?.question_count && activeTestSet.question_count > 0 ? activeTestSet.question_count : 50);
   const currentLevelInfo = getPrizeForLevel(selectedLevel, totalSessionQuestions);
-  const effectiveLevel = ((selectedLevel - 1) % 16) + 1;
+  const effectiveLevel = activeTestSet ? (((selectedLevel - 1) % (activeTestSet.question_count || 50)) + 1) : (((selectedLevel - 1) % 16) + 1);
   const currentLevelData = levelsData[selectedLevel] || levelsData[effectiveLevel] || { pool: [] };
   const activeQ = session.current_question || currentLevelData.activeQuestion || (currentLevelData.pool && currentLevelData.pool[0]) || null;
 
@@ -2697,7 +2698,7 @@ export default function AdminKbcManager() {
             <div className="space-y-1.5 max-h-[620px] overflow-y-auto pr-1">
               {KBC_PRIZE_LADDER.slice(0, totalSessionQuestions).reverse().map(step => {
                 const isSelected = selectedLevel === step.level;
-                const topic = levelsData[step.level]?.activeQuestion?.topic || 'MERN/SQL';
+                const topic = levelsData[step.level]?.activeQuestion?.topic || activeTestSet?.topic || 'SQL';
 
                 return (
                   <button

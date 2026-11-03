@@ -1255,7 +1255,7 @@ export default function KbcExam() {
 
   // Current Question Object (Live Host broadcast in Team mode or Level Question in Solo)
   // Guarantees question and all 4 options NEVER disappear even at Level 17+ or beyond test sets
-  const currentQ = (team && adminSession.current_question) 
+  const currentQ = (adminSession?.current_question) 
     ? adminSession.current_question 
     : (questions[currentLevel - 1] || (questions.length > 0 ? questions[(currentLevel - 1) % questions.length] : null) || {
         id: `q_active_${currentLevel}`,
