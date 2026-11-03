@@ -2996,7 +2996,8 @@ export default function KbcExam() {
                         onMouseEnter={() => setHoveredOption(idx)}
                         onMouseLeave={() => setHoveredOption(null)}
                         disabled={isOptionDisabled}
-                        className={`group relative text-left py-2 px-4 sm:px-6 min-h-[46px] sm:min-h-[50px] transition-all overflow-hidden flex items-center justify-between select-none ${
+                        title={opt}
+                        className={`group relative text-left py-2.5 sm:py-3 px-3.5 sm:px-6 min-h-[50px] sm:min-h-[54px] h-auto transition-all overflow-hidden flex items-center justify-between select-none ${
                           isOptionDisabled
                             ? (isSelected && isLocked) 
                               ? 'cursor-default ring-2 ring-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.6)] z-20' 
@@ -3091,9 +3092,15 @@ export default function KbcExam() {
                             </span>
                           </div>
 
-                          {/* Option Text: Pure Crisp White Guaranteed */}
+                          {/* Option Text: Pure Crisp White Guaranteed (Full view, no ellipsis cut-off) */}
                           <span 
-                            className={`text-xs sm:text-sm md:text-[14.5px] font-extrabold flex-1 uppercase tracking-wider truncate drop-shadow-[0_2px_5px_rgba(0,0,0,1)] ${
+                            className={`font-extrabold flex-1 uppercase tracking-wide break-words whitespace-normal leading-snug drop-shadow-[0_2px_5px_rgba(0,0,0,1)] ${
+                              opt && opt.length > 55
+                                ? 'text-[11px] sm:text-xs md:text-[12.5px]'
+                                : opt && opt.length > 35
+                                  ? 'text-xs sm:text-[13px] md:text-[13.5px]'
+                                  : 'text-xs sm:text-sm md:text-[14.5px]'
+                            } ${
                               isSelected ? '!text-slate-950 !drop-shadow-none' : '!text-white'
                             }`}
                             style={{
@@ -3101,6 +3108,7 @@ export default function KbcExam() {
                               WebkitTextFillColor: isSelected ? '#0f172a' : '#ffffff',
                               textShadow: isSelected ? 'none' : '0 2px 4px rgba(0,0,0,0.95)'
                             }}
+                            title={opt}
                           >
                             {opt}
                           </span>

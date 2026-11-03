@@ -2133,7 +2133,7 @@ export default function AdminKbcManager() {
                             }`}>
                               {letter}
                             </span>
-                            <span className="text-sm font-semibold">{opt}</span>
+                            <span className="text-sm font-semibold break-words whitespace-normal leading-snug">{opt}</span>
                           </div>
 
                           <div className="flex items-center gap-2 shrink-0">
@@ -3106,7 +3106,7 @@ export default function AdminKbcManager() {
                                 }`}>
                                   {String.fromCharCode(65 + oi)}
                                 </span>
-                                <span className="flex-1 truncate">{opt}</span>
+                                <span className="flex-1 break-words whitespace-normal text-xs" title={opt}>{opt}</span>
                                 {isCorrect && (
                                   <span className="text-[10px] text-emerald-400 font-black shrink-0">✓ Correct</span>
                                 )}
